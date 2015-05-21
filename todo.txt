@@ -1,0 +1,36 @@
+configuration
+    how to read? dinglibs?
+    max input per message
+    max output per message
+    max timing per message
+    max message latency
+    log sink
+    default shell
+environment
+    shell
+filename
+    shell?
+command line
+    can we have any options?
+I/O transfer
+    propagate window size changes
+    do polling properly (check flags and behavior)
+recording
+    allocate max input buffer
+    allocate max output buffer
+    allocate max timing buffer
+    allocate fixed I/O message buffer based on max input, max output and max
+    timing data - fill when a limit is hit
+    need some place to keep data that didn't fit
+    can start with file storage
+    write escaped JSON directly, collect with writev?
+
+can tlog be used as sudo shell?
+    we can allow commands starting with "tlog" only
+    assign shell for target user?
+
+shall we rename to logsh?
+    no - the name's taken
+
+need monotonic clock for playback, but also need realtime clock for search,
+how to combine?

@@ -21,3 +21,4 @@ dist_doc_DATA = README.md
 dist_noinst_DATA = tlog.spec
 bin_PROGRAMS = tlog
 tlog_SOURCES = tlog.c
+tlog_LDADD = -lutil
