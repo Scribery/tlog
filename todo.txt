@@ -12,8 +12,6 @@ filename
     shell?
 command line
     can we have any options?
-I/O transfer
-    propagate window size changes
 recording
     allocate max input buffer
     allocate max output buffer

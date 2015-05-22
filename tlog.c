@@ -42,6 +42,16 @@ exit_sighandler(int signum)
         exit_signum = signum;
 }
 
+/* Number of WINCH signals caught */
+static volatile sig_atomic_t sigwinch_caught = 0;
+
+static void
+winch_sighandler(int signum)
+{
+    (void)signum;
+    sigwinch_caught++;
+}
+
 enum fd_idx {
     FD_IDX_STDIN,
     FD_IDX_MASTER,
@@ -55,14 +65,21 @@ main(int argc, char **argv)
     ssize_t rc;
     int master_fd;
     pid_t child_pid;
+    sig_atomic_t last_sigwinch_caught = 0;
+    sig_atomic_t new_sigwinch_caught;
     struct termios orig_termios;
     struct termios raw_termios;
     struct winsize winsize;
+    struct winsize new_winsize;
     size_t i, j;
     struct sigaction sa;
     struct pollfd fds[FD_IDX_NUM];
-    char buf[1024];
-    ssize_t size;
+    char input_buf[1024];
+    size_t input_pos = 0;
+    size_t input_len = 0;
+    char output_buf[1024];
+    size_t output_pos = 0;
+    size_t output_len = 0;
     int status = 1;
 
     (void)argv;
@@ -118,6 +135,13 @@ main(int argc, char **argv)
         }
     }
 
+    /* Setup WINCH signal handler */
+    sa.sa_handler = winch_sighandler;
+    sigemptyset(&sa.sa_mask);
+    /* NOTE: no SA_RESTART on purpose */
+    sa.sa_flags = 0;
+    sigaction(SIGWINCH, &sa, NULL);
+
     /* Switch the terminal to raw mode */
     raw_termios = orig_termios;
     raw_termios.c_lflag &= ~(ICANON | ISIG | IEXTEN | ECHO);
@@ -132,51 +156,135 @@ main(int argc, char **argv)
         return 1;
     }
 
-    /* Transfer I/O */
+    /*
+     * Transfer I/O and window changes
+     */
     fds[FD_IDX_STDIN].fd        = STDIN_FILENO;
     fds[FD_IDX_STDIN].events    = POLLIN;
     fds[FD_IDX_MASTER].fd       = master_fd;
     fds[FD_IDX_MASTER].events   = POLLIN;
-    while (exit_signal == 0) {
-        rc = poll(fds, sizeof(fds) / sizeof(fds[0]), -1);
-        if (rc < 0) {
-            if (errno != EINTR)
-                fprintf(stderr, "Failed waiting for I/O: %s\n", strerror(errno));
-            break;
-        }
-        if (fds[FD_IDX_STDIN].revents & (POLLIN | POLLHUP | POLLERR)) {
-            rc = read(STDIN_FILENO, buf, sizeof(buf));
-            if (rc <= 0) {
-                status = 0;
+
+    while (exit_signum == 0) {
+        /*
+         * Handle SIGWINCH
+         */
+        new_sigwinch_caught = sigwinch_caught;
+        if (new_sigwinch_caught != last_sigwinch_caught) {
+            /* Retrieve window size */
+            rc = ioctl(STDIN_FILENO, TIOCGWINSZ, &new_winsize);
+            if (rc < 0) {
+                if (errno == EINTR)
+                    continue;
+                else if (errno == EBADF)
+                    status = 0;
+                else
+                    fprintf(stderr, "Failed retrieving window size: %s\n",
+                            strerror(errno));
                 break;
             }
-            size = rc;
-            rc = write(master_fd, buf, size);
-            if (rc != size) {
-                if (rc >=0)
-                    fprintf(stderr, "Partial write to master\n");
-                else if (errno != EINTR)
+            /* Propagate window size, if necessary */
+            if (new_winsize.ws_row != winsize.ws_row ||
+                new_winsize.ws_col != winsize.ws_col) {
+                winsize = new_winsize;
+                rc = ioctl(master_fd, TIOCSWINSZ, &new_winsize);
+                if (rc < 0) {
+                    if (errno == EINTR)
+                        continue;
+                    else if (errno == EBADF)
+                        status = 0;
+                    else
+                        fprintf(stderr, "Failed setting window size: %s\n",
+                                strerror(errno));
+                    break;
+                }
+            }
+            /* Mark SIGWINCH processed */
+            last_sigwinch_caught = new_sigwinch_caught;
+        }
+
+        /*
+         * Deliver I/O
+         */
+        if (input_pos < input_len) {
+            rc = write(master_fd, input_buf + input_pos,
+                       input_len - input_pos);
+            if (rc >= 0) {
+                input_pos += rc;
+                /* If interrupted by a signal handler */
+                if (input_pos < input_len)
+                    continue;
+                /* Exhausted */
+                input_pos = input_len = 0;
+            } else {
+                if (errno == EINTR)
+                    continue;
+                else if (errno == EBADF || errno == EINVAL)
+                    status = 0;
+                else
                     fprintf(stderr, "Failed to write to master: %s\n",
                             strerror(errno));
                 break;
             };
         }
-        if (fds[FD_IDX_MASTER].revents & (POLLIN | POLLHUP | POLLERR)) {
-            rc = read(master_fd, buf, sizeof(buf));
-            if (rc <= 0) {
-                status = 0;
-                break;
-            }
-            size = rc;
-            rc = write(STDOUT_FILENO, buf, size);
-            if (rc != size) {
-                if (rc >=0)
-                    fprintf(stderr, "Partial write to stdout\n");
-                else if (errno != EINTR)
+        if (output_pos < output_len) {
+            rc = write(STDOUT_FILENO, output_buf + output_pos,
+                       output_len - output_pos);
+            if (rc >= 0) {
+                output_pos += rc;
+                /* If interrupted by a signal handler */
+                if (output_pos < output_len)
+                    continue;
+                /* Exhausted */
+                output_pos = output_len = 0;
+            } else {
+                if (errno == EINTR)
+                    continue;
+                else if (errno == EBADF || errno == EINVAL)
+                    status = 0;
+                else
                     fprintf(stderr, "Failed to write to stdout: %s\n",
                             strerror(errno));
                 break;
             };
+        }
+
+        /*
+         * Wait for I/O
+         */
+        rc = poll(fds, sizeof(fds) / sizeof(fds[0]), -1);
+        if (rc < 0) {
+            if (errno == EINTR)
+                continue;
+            else
+                fprintf(stderr, "Failed waiting for I/O: %s\n", strerror(errno));
+            break;
+        }
+
+        /*
+         * Retrieve I/O
+         *
+         * NOTE: Reading master first in case child went away.
+         *       Otherwise writing to it can block
+         */
+        if (fds[FD_IDX_MASTER].revents & (POLLIN | POLLHUP | POLLERR)) {
+            rc = read(master_fd, output_buf, sizeof(output_buf));
+            if (rc <= 0) {
+                if (rc < 0 && errno == EINTR)
+                    continue;
+                status = 0;
+                break;
+            }
+            output_len = rc;
+        }
+        if (fds[FD_IDX_STDIN].revents & (POLLIN | POLLHUP | POLLERR)) {
+            rc = read(STDIN_FILENO, input_buf, sizeof(input_buf));
+            if (rc <= 0) {
+                if (rc < 0 && errno == EINTR)
+                    continue;
+                status = 0;
+                break;
+            }
+            input_len = rc;
         }
     }
 
