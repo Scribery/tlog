@@ -31,3 +31,7 @@ shall we rename to logsh?
 
 need monotonic clock for playback, but also need realtime clock for search,
 how to combine?
+
+publish design document on FreeIPA wiki
+focus on client side, wait for the server side
+have realtime playback as the first demo milestone
