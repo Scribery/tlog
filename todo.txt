@@ -35,3 +35,7 @@ how to combine?
 publish design document on FreeIPA wiki
 focus on client side, wait for the server side
 have realtime playback as the first demo milestone
+
+Ask Jakub and Martin for review once logging is working.
+
+Retrieve character encoding and convert to UTF-8 in JSON.
