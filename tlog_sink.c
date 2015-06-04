@@ -225,6 +225,9 @@ tlog_sink_write_window(struct tlog_sink *sink,
 
     clock_gettime(sink->clock_id, &timestamp);
     tlog_timespec_sub(&timestamp, &sink->start, &pos);
+
+    tlog_sink_flush(sink);
+
     len = snprintf(
         (char *)sink->message_buf, sink->message_len,
         "{"
