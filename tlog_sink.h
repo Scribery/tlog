@@ -77,7 +77,7 @@ extern bool tlog_sink_valid(const struct tlog_sink *sink);
  * Initialize a log sink.
  *
  * @param sink              Pointer to the sink to initialize.
- * @param filename          Name of the file to write the log to.
+ * @param fd                File descriptor to write the log to.
  * @param hostname          Hostname to use in log messages.
  * @param session_id        Session ID to use in log messages.
  * @param io_max_len        Maximum I/O message payload length.
@@ -85,7 +85,7 @@ extern bool tlog_sink_valid(const struct tlog_sink *sink);
  * @return Status code.
  */
 extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
-                              const char *filename,
+                              int fd,
                               const char *hostname,
                               unsigned int session_id,
                               size_t io_max_len);
@@ -94,13 +94,15 @@ extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
  * Create (allocate and initialize) a log sink.
  *
  * @param psink             Location for created sink pointer.
- * @param filename          Name of the file to write the log to.
+ * @param fd                File descriptor to write the log to.
+ * @param hostname          Hostname to use in log messages.
+ * @param session_id        Session ID to use in log messages.
  * @param io_max_len        Maximum I/O message payload length.
  *
  * @return Status code.
  */
 extern tlog_rc tlog_sink_create(struct tlog_sink **psink,
-                                const char *filename,
+                                int fd,
                                 const char *hostname,
                                 unsigned int session_id,
                                 size_t io_max_len);

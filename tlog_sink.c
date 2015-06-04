@@ -52,10 +52,6 @@ tlog_sink_cleanup(struct tlog_sink *sink)
     sink->message_buf = NULL;
     free(sink->hostname);
     sink->hostname = NULL;
-    if (sink->fd >= 0) {
-        close(sink->fd);
-        sink->fd = -1;
-    }
 }
 
 static tlog_rc
@@ -92,7 +88,7 @@ error:
 
 tlog_rc
 tlog_sink_init(struct tlog_sink *sink,
-               const char *filename,
+               int fd,
                const char *hostname,
                unsigned int session_id,
                size_t io_max_len)
@@ -100,17 +96,13 @@ tlog_sink_init(struct tlog_sink *sink,
     int orig_errno;
 
     assert(sink != NULL);
-    assert(filename != NULL);
+    assert(fd >= 0);
     assert(hostname != NULL);
     assert(io_max_len >= TLOG_SINK_IO_MAX_LEN_MIN);
 
     memset(sink, 0, sizeof(*sink));
 
-    sink->fd = open(filename,
-                    O_WRONLY | O_CREAT | O_TRUNC,
-                    S_IRWXU | S_IRWXG | S_IRWXO);
-    if (sink->fd < 0)
-        goto error;
+    sink->fd = fd;
 
     sink->hostname = strdup(hostname);
     if (sink->hostname == NULL)
@@ -152,14 +144,14 @@ error:
 
 tlog_rc
 tlog_sink_create(struct tlog_sink **psink,
-                 const char *filename,
+                 int fd,
                  const char *hostname,
                  unsigned int session_id,
                  size_t io_max_len)
 {
     struct tlog_sink *sink;
 
-    assert(filename != NULL);
+    assert(fd >= 0);
     assert(hostname != NULL);
     assert(io_max_len >= TLOG_SINK_IO_MAX_LEN_MIN);
 
@@ -167,7 +159,7 @@ tlog_sink_create(struct tlog_sink **psink,
     if (sink == NULL)
         return TLOG_RC_FAILURE;
 
-    if (tlog_sink_init(sink, filename, hostname, session_id, io_max_len) !=
+    if (tlog_sink_init(sink, fd, hostname, session_id, io_max_len) !=
             TLOG_RC_OK) {
         free(sink);
         return TLOG_RC_FAILURE;
