@@ -58,7 +58,7 @@ struct tlog_sink {
     unsigned int            session_id;     /**< Session ID */
     size_t                  message_id;     /**< Next message ID */
     clockid_t               clock_id;       /**< ID of the clock to use */
-    struct timespec         start;          /**< First message timestamp */
+    struct timespec         start;          /**< Sink creation timestamp */
     struct tlog_sink_io     io;             /**< I/O state and parameters */
     uint8_t                *message_buf;    /**< Message buffer pointer */
     size_t                  message_len;    /**< Message buffer length */
