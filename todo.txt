@@ -1,26 +1,15 @@
 configuration
     how to read? dinglibs?
-    max input per message
-    max output per message
-    max timing per message
+    max I/O data size per message
     max message latency
     log sink
     default shell
 environment
     shell
 filename
-    shell?
+    shell in command's name?
 command line
     can we have any options?
-recording
-    allocate max input buffer
-    allocate max output buffer
-    allocate max timing buffer
-    allocate fixed I/O message buffer based on max input, max output and max
-    timing data - fill when a limit is hit
-    need some place to keep data that didn't fit
-    can start with file storage
-    write escaped JSON directly, collect with writev?
 
 can tlog be used as sudo shell?
     we can allow commands starting with "tlog" only
@@ -41,3 +30,8 @@ Ask Jakub and Martin for review once logging is working.
 Retrieve character encoding and convert to UTF-8 in JSON.
 For the time being check encoding and abort with a message saying only UTF-8
 is supported.
+
+Specify number of characters in timing.
+This also means that we can't encode incomplete UTF-8 characters.
+Round timing delay appropriately so it doesn't drift over the start of the
+next message.
