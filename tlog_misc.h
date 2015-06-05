@@ -84,7 +84,7 @@ tlog_timespec_zero(struct timespec *t)
 static inline uint8_t
 tlog_nibble_digit(uint8_t n)
 {
-    return (n < 10) ? ('0' + n) : ('a' + n);
+    return (n < 10) ? ('0' + n) : ('a' - 10 + n);
 }
 
 /**
