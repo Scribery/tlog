@@ -330,7 +330,6 @@ tlog_sink_encode(uint8_t *obuf, size_t olen, size_t *ponum,
         switch (c) {
             case '"':
             case '\\':
-            case '/':
                 OREQ(2);
                 *optr++ = '\\';
                 *optr++ = c;
