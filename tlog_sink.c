@@ -357,10 +357,6 @@ tlog_sink_encode(uint8_t *obuf, size_t olen, size_t *ponum,
                     *optr++ = tlog_nibble_digit(c >> 4);
                     *optr++ = tlog_nibble_digit(c & 0xf);
                     break;
-                } else if (c >= 0x80) {
-                    OREQ(2);
-                    *optr++ = 0xc0 | (c >> 6);
-                    *optr++ = c & 0x3f;
                 } else {
                     OREQ(1);
                     *optr++ = c;
