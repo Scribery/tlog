@@ -204,6 +204,37 @@ tlog_sink_valid(const struct tlog_sink *sink)
            tlog_sink_io_valid(&sink->io);
 }
 
+/**
+ * Write to a file descriptor, retrying on incomplete writes and EINTR.
+ *
+ * @param fd    File descriptor to write to.
+ * @param buf   Pointer to the buffer to write.
+ * @param len   Length of the buffer to write.
+ *
+ * @return Status code.
+ */
+static tlog_rc
+tlog_sink_retried_write(int fd, uint8_t *buf, size_t len)
+{
+    ssize_t rc;
+    assert(fd >= 0);
+    assert(buf != NULL || len == 0);
+
+    while (true) {
+        rc = write(fd, buf, len);
+        if (rc < 0) {
+            if (errno == EINTR)
+                continue;
+            else
+                return TLOG_RC_FAILURE;
+        }
+        if ((size_t)rc == len)
+            return TLOG_RC_OK;
+        buf += rc;
+        len -= (size_t)rc;
+    }
+}
+
 tlog_rc
 tlog_sink_write_window(struct tlog_sink *sink,
                        unsigned short int width,
@@ -246,10 +277,7 @@ tlog_sink_write_window(struct tlog_sink *sink,
 
     sink->message_id++;
 
-    if (write(sink->fd, sink->message_buf, len) < len)
-        return TLOG_RC_FAILURE;
-
-    return TLOG_RC_OK;
+    return tlog_sink_retried_write(sink->fd, sink->message_buf, len);
 }
 
 /**
@@ -556,7 +584,8 @@ tlog_sink_flush(struct tlog_sink *sink)
 
     sink->message_id++;
 
-    if (write(sink->fd, sink->message_buf, len) < len)
+    if (tlog_sink_retried_write(sink->fd, sink->message_buf, len) !=
+            TLOG_RC_OK)
         return TLOG_RC_FAILURE;
 
     sink->io.timing_len = 0;
