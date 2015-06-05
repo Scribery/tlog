@@ -258,14 +258,14 @@ tlog_sink_write_window(struct tlog_sink *sink,
             "\"hostname\":" "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
-            "\"pos\":"      "%ld.%06ld,"
+            "\"pos\":"      "%ld.%03ld,"
             "\"width\":"    "%hu,"
             "\"height\":"   "%hu"
         "}\n",
         sink->hostname,
         sink->session_id,
         sink->message_id,
-        pos.tv_sec, pos.tv_nsec / 1000,
+        pos.tv_sec, pos.tv_nsec / 1000000,
         width,
         height);
     if (len < 0)
@@ -392,22 +392,22 @@ tlog_sink_format_timing(uint8_t *buf, size_t len,
 {
     size_t olen = 0;
     long sec;
-    long usec;
+    long msec;
     int rc;
 
     assert(buf != NULL || len == 0);
     assert(delay != NULL);
 
     sec = (long)delay->tv_sec;
-    usec = delay->tv_nsec / 1000;
+    msec = delay->tv_nsec / 1000000;
 
     if (sec == 0) {
-        if (usec == 0)
+        if (msec == 0)
             rc = 0;
         else
-            rc = snprintf((char *)buf, len, "+%ld", usec);
+            rc = snprintf((char *)buf, len, "+%ld", msec);
     } else {
-        rc = snprintf((char *)buf, len, "+%ld%06ld", sec, usec);
+        rc = snprintf((char *)buf, len, "+%ld%03ld", sec, msec);
     }
 
     assert(rc >= 0);
@@ -559,7 +559,7 @@ tlog_sink_flush(struct tlog_sink *sink)
             "\"hostname\":" "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
-            "\"pos\":"      "%ld.%06ld,"
+            "\"pos\":"      "%ld.%03ld,"
             "\"timing\":"   "\"%.*s\","
             "\"input\":"    "\"%.*s\","
             "\"output\":"   "\"%.*s\""
@@ -567,7 +567,7 @@ tlog_sink_flush(struct tlog_sink *sink)
         sink->hostname,
         sink->session_id,
         sink->message_id,
-        pos.tv_sec, pos.tv_nsec / 1000,
+        pos.tv_sec, pos.tv_nsec / 1000000,
         (int)sink->io.timing_len, sink->io.timing_buf,
         (int)sink->io.input_len, sink->io.input_buf,
         (int)sink->io.output_len, sink->io.output_buf);
