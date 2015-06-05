@@ -39,3 +39,5 @@ have realtime playback as the first demo milestone
 Ask Jakub and Martin for review once logging is working.
 
 Retrieve character encoding and convert to UTF-8 in JSON.
+For the time being check encoding and abort with a message saying only UTF-8
+is supported.
