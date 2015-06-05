@@ -173,9 +173,7 @@ main(int argc, char **argv)
             /* Retrieve window size */
             rc = ioctl(STDIN_FILENO, TIOCGWINSZ, &new_winsize);
             if (rc < 0) {
-                if (errno == EINTR)
-                    continue;
-                else if (errno == EBADF)
+                if (errno == EBADF)
                     status = 0;
                 else
                     fprintf(stderr, "Failed retrieving window size: %s\n",
@@ -188,9 +186,7 @@ main(int argc, char **argv)
                 winsize = new_winsize;
                 rc = ioctl(master_fd, TIOCSWINSZ, &new_winsize);
                 if (rc < 0) {
-                    if (errno == EINTR)
-                        continue;
-                    else if (errno == EBADF)
+                    if (errno == EBADF)
                         status = 0;
                     else
                         fprintf(stderr, "Failed setting window size: %s\n",
