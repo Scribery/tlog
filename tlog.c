@@ -29,6 +29,7 @@
 #include <stdbool.h>
 #include <poll.h>
 #include <stdio.h>
+#include "tlog_sink.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
@@ -62,6 +63,8 @@ int
 main(int argc, char **argv)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
+    int log_fd;
+    struct tlog_sink *sink;
     ssize_t rc;
     int master_fd;
     pid_t child_pid;
@@ -74,10 +77,10 @@ main(int argc, char **argv)
     size_t i, j;
     struct sigaction sa;
     struct pollfd fds[FD_IDX_NUM];
-    char input_buf[1024];
+    uint8_t input_buf[1024];
     size_t input_pos = 0;
     size_t input_len = 0;
-    char output_buf[1024];
+    uint8_t output_buf[1024];
     size_t output_pos = 0;
     size_t output_len = 0;
     int status = 1;
@@ -85,6 +88,23 @@ main(int argc, char **argv)
     (void)argv;
     if (argc > 1) {
         fprintf(stderr, "Arguments are not accepted\n");
+        return 1;
+    }
+
+    /* Open log file */
+    log_fd = open("tlog.log",
+                  O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
+                  S_IRWXU | S_IRWXG | S_IRWXO);
+    if (log_fd < 0) {
+        fprintf(stderr, "Failed opening log file: %s\n",
+                strerror(errno));
+        return 1;
+    }
+
+    /* Create the log sink */
+    if (tlog_sink_create(&sink, log_fd, "localhost", 1, 1024) != TLOG_RC_OK) {
+        fprintf(stderr, "Failed creating log sink: %s\n",
+                strerror(errno));
         return 1;
     }
 
@@ -120,6 +140,13 @@ main(int argc, char **argv)
     /*
      * Parent
      */
+    /* Log initial window size */
+    if (tlog_sink_write_window(sink, winsize.ws_col, winsize.ws_row) !=
+            TLOG_RC_OK) {
+        fprintf(stderr, "Failed logging window size: %s\n", strerror(errno));
+        return 1;
+    }
+
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < ARRAY_SIZE(exit_sig); i++) {
         sigaction(exit_sig[i], NULL, &sa);
@@ -180,10 +207,18 @@ main(int argc, char **argv)
                             strerror(errno));
                 break;
             }
-            /* Propagate window size, if necessary */
+            /* If window size has changed */
             if (new_winsize.ws_row != winsize.ws_row ||
                 new_winsize.ws_col != winsize.ws_col) {
-                winsize = new_winsize;
+                /* Log window size */
+                if (tlog_sink_write_window(sink, new_winsize.ws_col,
+                                                 new_winsize.ws_row) !=
+                        TLOG_RC_OK) {
+                    fprintf(stderr, "Failed logging window size: %s\n",
+                            strerror(errno));
+                    break;
+                }
+                /* Propagate window size */
                 rc = ioctl(master_fd, TIOCSWINSZ, &new_winsize);
                 if (rc < 0) {
                     if (errno == EBADF)
@@ -193,6 +228,7 @@ main(int argc, char **argv)
                                 strerror(errno));
                     break;
                 }
+                winsize = new_winsize;
             }
             /* Mark SIGWINCH processed */
             last_sigwinch_caught = new_sigwinch_caught;
@@ -205,6 +241,12 @@ main(int argc, char **argv)
             rc = write(master_fd, input_buf + input_pos,
                        input_len - input_pos);
             if (rc >= 0) {
+                /* Log delivered input */
+                if (tlog_sink_write_input(sink, input_buf + input_pos,
+                                          (size_t)rc) != TLOG_RC_OK) {
+                    fprintf(stderr, "Failed logging input: %s\n", strerror(errno));
+                    break;
+                }
                 input_pos += rc;
                 /* If interrupted by a signal handler */
                 if (input_pos < input_len)
@@ -226,6 +268,12 @@ main(int argc, char **argv)
             rc = write(STDOUT_FILENO, output_buf + output_pos,
                        output_len - output_pos);
             if (rc >= 0) {
+                /* Log delivered output */
+                if (tlog_sink_write_output(sink, output_buf + output_pos,
+                                          (size_t)rc) != TLOG_RC_OK) {
+                    fprintf(stderr, "Failed logging output: %s\n", strerror(errno));
+                    break;
+                }
                 output_pos += rc;
                 /* If interrupted by a signal handler */
                 if (output_pos < output_len)
@@ -282,6 +330,12 @@ main(int argc, char **argv)
             }
             input_len = rc;
         }
+    }
+
+    /* Flush I/O log */
+    if (tlog_sink_flush(sink) != TLOG_RC_OK) {
+        fprintf(stderr, "Failed flushing I/O log: %s\n", strerror(errno));
+        return 1;
     }
 
     /* Restore signal handlers */
