@@ -1,0 +1,321 @@
+=====================================================================
+
+BELOW IS A RUNNING STREAM OF NOTES WHICH DON'T HAVE TO MAKE ANY SENSE
+
+=====================================================================
+
+I/O is serialized with timing data
+
+IIIIIIiiIIIIIIIiOOOOOoooOOOOooIIIIIiiIIII
+|              ||     ||     ||         |
+
+needs splitting the timing:
+    both pieces start at the same time, but different messages, keeping order
+    needs tracking absolute time of each piece to put in the next message
+    can't format timing data right away, only when writing
+
+    OR
+
+    store last whitespace time, input/output position
+
+    >25
+    IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+                 ^
+    ^
+
+We'd better not cut anything for the start
+
+
+
+write window to log
+write output to log
+write input to log
+
+read window from terminal
+write window to slave
+
+write output to terminal
+write input to slave
+
+read input from terminal
+read output from slave
+
+why do we even need to be terminated by a signal?
+1. because we need to handle out-of-band SIGWINCH when waiting for output and
+   waiting for input to be consumed
+2. because we need to handle SIGINT, SIGTERM and SIGHUP timely to restore
+   terminal, instead of simply dying
+
+Can we suspend I/O transfer for writing the log entry?
+We should - this provides flow control
+
+However, if we delay data transfer, SIGWINCH might go out of sync with the
+data. So some data in the kernel buffer and pending write on the slave will
+be counting on one window size, while the actual window size will be different.
+
+Do we really care about window size? Really?
+Yes we do care about transferring it, so we might as well record it. *** Delay
+with the transfer should coincide with delay in the log. *** But can it? We
+have no idea if the slave has read all of its input buffers when it gets
+SIGWINCH. So it will be out of sync. Still screen handles this anyway.
+
+Can we do all this without terminating on a signal? With poll even on write?
+Would it work on terminals?
+
+
+WE NEED TO HANDLE INTERRUPTED I/O BECAUSE WE NEED TO HANDLE LATENCY LIMIT
+TIMER
+
+Log is always in UTF-8
+Convert any other encoding to UTF-8
+Write character counts in timing
+Keep incomplete characters to the next write - don't flush them?
+Or assume characters are always complete? THAT IS NOT TRUE!
+OR WAIT! Perhaps it's our code breaking on incomplete characters?
+VERIFY THIS!
+
+Anyway, we can't be sure, we can have a buffer size which won't fit the
+characters.
+
+We have to assume I/O is encoded somehow and for UTF-8 it means multibyte
+characters.
+
+Valid UTF-8 is a smaller subset of arbitrary binary stream. Thus we can't
+represent everything that's being pushed to the terminal.
+
+However, if we need to have our terminal logs searcheable, we need that data
+in a format that ElasticSearch can understand.
+
+What if we add two more timing record types: binary input and binary output?
+Have them encoded in base64?
+
+
+Write both streams while delay is under 0, then flush their timing
+What to do with interleaved binary data? We should keep the pieces before
+flushing, or rather we should flush them as we switch forks.
+
+Delay is put in by code above streams. Data lengths are put in by streams.
+
+So when a new piece of input comes in, check if delay is still within zero.
+If it is more than zero:
+    Ask both streams to flush timing, giving them control of timing buffer,
+    then append delay.
+Hand off the newly received data to the corresponding stream giving it control
+of remaining length and timing buffer
+
+What should the stream reserve space for? Only "cutting" or "flushing" as well?
+Only cutting, flushing will need more space.
+
+if invalid byte encountered
+    if sequence is empty
+        write one byte from input buffer to binary fork
+    else
+        write binary sequence from utf8 buffer
+else
+    if sequence is incomplete
+        add another byte
+        if not added
+            break
+    else
+        write text sequence from utf8 buffer
+
+sequence incomplete and no invalid byte encountered: collecting sequence
+or
+invalid byte encountered: writing non-text sequence: either from utf8 buffer or one byte from the input buffer
+or
+sequence complete: writing text sequence from utf8 buffer
+
+[ ] [ ] [ ] [ ] [ ]
+
+
+ended   valid
+
+0       0           sequence in progress
+
+0       1           impossible
+
+1       0           sequence terminated by invalid byte
+
+1       1           sequence completed
+
+
+ended   complete
+0       0           sequence in progress
+0       0           impossible
+1       0           seqence terminated by invalid byte
+1       1           sequence completed
+
+
+sequence of bytes
+    /      \
+   /        \
+ text     binary
+
+
+while true
+    if the sequence has ended
+        If it is valid UTF-8
+            finish writing it to text fork
+        else
+            finish writing it to binary fork
+    get a sequence
+
+the sequence:
+binary or text
+length
+how much is written
+
+What if we rename the current utf-8 object to a sequence object?
+Then it doesn't have to contain only UTF-8 bytes. But would that be useful?
+
+We only need to keep incomplete sequences between calls because UTF-8
+characters are multi-byte and need to be written atomically.
+
+What if we extend our sequence object to keeping words atomically?
+We'll need to add word length limit as well. Otherwise the rest of the
+machinery will be there already.
+
+So, an incomplete text sequence can be kept between write calls, and can be
+force-flushed.
+
+
+------
+Can we define the sequence?
+
+A sequence can be started.
+A sequence can be ended.
+
+A sequence can be:
+
+    binary,
+    partial character (binary when incomplete),
+    text (partial character when incomplete?),
+    word (text when incomplete
+
+A byte can belong to word, text, binary or unknown (partial character) sequence.
+
+
+Sequence:
+
+        __________________ character
+      /              _____ word
+     /              /
+d0 b0 d0 b1 d0 b2 0a 32
+
+a word is a character sequence
+a character sequence is a binary sequence
+
+------
+
+        __________________ character
+      /             ______ word
+     /             /
+d0 b0  d0 b1  d0 b2  0a
+
+
+do we flush incomplete words?
+do we flush incomplete characters?
+
+store last position of a complete sequence type?
+
+
+
+ff      binary started
+        character not started
+        word not started
+
+d0      binary started
+        character started
+        word not started
+
+Oa      binary started
+        character complete
+        word not started
+
+d0 b0   binary started
+        character complete
+        word started
+
+d0 b0  d0   binary started
+            character started
+            word started
+
+d0 b0  d0 b1  d0 b2     binary started
+                        character complete
+                        word started
+
+d0 b0  d0 b1  d0 b2     binary                  a0
+                        character complete
+                        word ended
+
+
+A binary sequence is a sequence of any bytes
+
+Non-character sequence is a binary sequence that doesn't contain a valid UTF-8
+character.
+
+Character sequence is a binary sequence that is a UTF-8 character.
+
+Text sequence is a sequence of character sequences.
+
+Word sequence is a text sequence that doesn't contain word-break characters.
+
+
+--------------------------
+
+How do we want to use it?
+
+
+forever
+    until we have a complete sequence
+        add a byte to sequence
+    write the sequence
+
+
+        byte          character
+atom    sequence      sequence
+
+byte --- Non-character
+     --- Character --- Non-word
+                   --- Word
+
+So, there are two dimensions: sequencing and alternating.
+
+We can start with the first (byte) sequencing level and leave the second
+(character) sequencing level for later.
+
+A two level solution can be like this:
+
+until we have a complete character sequence
+    forever
+        until the byte sequence ends
+            add a byte to the sequence
+        if it is a character
+            add the character to the character sequence
+            break
+        write the bytes to binary fork
+        empty the byte sequence
+write the character sequence to the text fork
+empty the character sequence
+
+
+So a sequence object provides binary output: valid/non-valid, but only if the
+sequence has ended.
+
+top level stream writing functions return amount of data actually written
+they write to their forks and also to global metadata
+inside they need to do some atomic writes, sometimes to both forks at once
+
+These second level functions can also accept the location for the remaining
+length and write to the buffers opportunistically. However, when atomic
+writing to a few buffers is necessary, we can have intermediate storage for
+meta pointer and remaining length to ensure that we can roll-back the write
+accounting
+
+So on the second level at the moment we're writing a character, which can be
+valid or invalid. A valid character is simply an atomic write to the text
+fork. An invalid character is an atomic write both to text and to binary fork.
+Either of them can write meta records when switching between valid and invalid
+runs. These writes should also account for the necessary meta records, but not
+write them. If the meta record cannot be fit the writing should say that no
+data was written.
