@@ -46,3 +46,7 @@ Check why we get delay at the start of timing sometimes and if possible get
 rid of it.
 
 Fix negative position timestamp we get sometimes.
+
+Add a start message with the terminal type.
+
+Add message versions

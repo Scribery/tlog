@@ -13,10 +13,13 @@
 /stamp-h1
 /tlog
 /cscope.out
+/test-driver
 *~
 .*
 *.tar.gz
 *.o
 *.deps
+*.log
+*.trs
 Makefile
 Makefile.in

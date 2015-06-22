@@ -26,5 +26,21 @@ tlog_SOURCES = \
    tlog_misc.h \
    tlog_rc.h \
    tlog_sink.c \
-   tlog_sink.h
+   tlog_sink.h \
+   tlog_stream.c \
+   tlog_stream.h \
+   tlog_utf8.c \
+   tlog_utf8.h
+
 tlog_LDADD = -lutil
+
+TESTS = \
+    tlog_stream_btoa_test       \
+    tlog_stream_enc_bin_test
+
+check_PROGRAMS = \
+    tlog_stream_btoa_test       \
+    tlog_stream_enc_bin_test
+
+tlog_stream_btoa_test_SOURCES = tlog_stream_btoa_test.c tlog_utf8.c
+tlog_stream_enc_bin_test_SOURCES = tlog_stream_enc_bin_test.c tlog_utf8.c

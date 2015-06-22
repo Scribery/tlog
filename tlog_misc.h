@@ -27,6 +27,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/** Return maximum of two numbers */
+#define TLOG_MAX(_a, _b) ((_a) > (_b) ? (_a) : (_b))
+
+/** Return minimum of two numbers */
+#define TLOG_MIN(_a, _b) ((_a) < (_b) ? (_a) : (_b))
+
 /**
  * Subtract timespec b from timespec a and put the result in res.
  *

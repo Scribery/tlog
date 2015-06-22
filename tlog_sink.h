@@ -28,9 +28,10 @@
 #include <time.h>
 #include <stdbool.h>
 #include "tlog_rc.h"
+#include "tlog_stream.h"
 
 /** Minimum value of io_max_len creation parameter */
-#define TLOG_SINK_IO_MAX_LEN_MIN    64
+#define TLOG_SINK_IO_MAX_LEN_MIN    TLOG_MAX(64, TLOG_STREAM_SIZE_MIN)
 
 /** I/O state and parameters of a sink instance */
 struct tlog_sink_io {
