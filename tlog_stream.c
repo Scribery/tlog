@@ -388,7 +388,7 @@ tlog_stream_cut(struct tlog_stream *stream, uint8_t **pmeta)
  */
 static bool
 tlog_stream_write_seq(struct tlog_stream *stream, bool valid,
-                      uint8_t *buf, size_t len,
+                      const uint8_t *buf, size_t len,
                       uint8_t **pmeta, size_t *prem)
 {
     /* Unicode replacement character (u+fffd) */
@@ -459,10 +459,10 @@ tlog_stream_write_seq(struct tlog_stream *stream, bool valid,
 
 void
 tlog_stream_write(struct tlog_stream *stream,
-                  uint8_t **pbuf, size_t *plen,
+                  const uint8_t **pbuf, size_t *plen,
                   uint8_t **pmeta, size_t *prem)
 {
-    uint8_t *buf;
+    const uint8_t *buf;
     size_t len;
     struct tlog_utf8 *utf8;
 

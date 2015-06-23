@@ -79,7 +79,7 @@ extern bool tlog_stream_is_valid(const struct tlog_stream *stream);
  * @param prem      Location of/for the total remaining output space.
  */
 extern void tlog_stream_write(struct tlog_stream *stream,
-                              uint8_t **pbuf, size_t *plen,
+                              const uint8_t **pbuf, size_t *plen,
                               uint8_t **pmeta,
                               size_t *prem);
 
