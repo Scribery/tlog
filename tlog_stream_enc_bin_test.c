@@ -189,6 +189,18 @@ main(void)
                         .idig_out   = 100,
                         .fit_out    = true);
 
+    /* Not rolling over to second digit */
+    TEST(second_digit_abort,    .ibuf_in    = {0xff},
+                                .ilen_in    = 1,
+                                .obuf_out   = "25",
+                                .orem_in    = 3,
+                                .orem_out   = 3,
+                                .irun_in    = 9,
+                                .irun_out   = 9,
+                                .idig_in    = 10,
+                                .idig_out   = 10,
+                                .fit_out    = false);
+
     /* Rolling over to third digit */
     TEST(third_digit,   .ibuf_in    = {0xff},
                         .ilen_in    = 1,
