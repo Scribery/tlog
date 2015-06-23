@@ -21,5 +21,6 @@
 *.deps
 *.log
 *.trs
+*_test
 Makefile
 Makefile.in
