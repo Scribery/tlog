@@ -544,3 +544,16 @@ tlog_stream_flush(struct tlog_stream *stream,
         return false;
     }
 }
+
+void
+tlog_stream_empty(struct tlog_stream *stream)
+{
+    assert(tlog_stream_is_valid(stream));
+    tlog_utf8_reset(&stream->utf8);
+    stream->txt_run = 0;
+    stream->txt_dig = 0;
+    stream->txt_len = 0;
+    stream->bin_run = 0;
+    stream->bin_dig = 0;
+    stream->bin_len = 0;
+}

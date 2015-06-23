@@ -108,6 +108,13 @@ extern bool tlog_stream_flush(struct tlog_stream *stream,
                               size_t *prem);
 
 /**
+ * Empty buffers of a stream, discarding contents.
+ *
+ * @param stream    The stream to empty.
+ */
+extern void tlog_stream_empty(struct tlog_stream *stream);
+
+/**
  * Cleanup a stream. Can be called repeatedly.
  *
  * @param stream    The stream to cleanup.
