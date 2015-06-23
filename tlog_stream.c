@@ -427,8 +427,8 @@ tlog_stream_write_seq(struct tlog_stream *stream, bool valid,
 
     if (valid) {
         /* Write the character to the text buffer */
-        if (!tlog_stream_enc_txt(stream->txt_buf + txt_len, &rem,
-                                 &txt_run, &txt_dig, &txt_len,
+        if (!tlog_stream_enc_txt(stream->txt_buf + txt_len, &rem, &txt_len,
+                                 &txt_run, &txt_dig,
                                  buf, len))
             return false;
     } else {
@@ -439,8 +439,8 @@ tlog_stream_write_seq(struct tlog_stream *stream, bool valid,
             return false;
 
         /* Write bytes to the binary buffer */
-        if (!tlog_stream_enc_bin(stream->bin_buf + bin_len, &rem,
-                                 &bin_run, &bin_dig, &bin_len,
+        if (!tlog_stream_enc_bin(stream->bin_buf + bin_len, &rem, &bin_len,
+                                 &bin_run, &bin_dig,
                                  buf, len))
             return false;
     }
