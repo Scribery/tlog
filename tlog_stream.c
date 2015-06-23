@@ -45,8 +45,9 @@ tlog_stream_is_valid(const struct tlog_stream *stream)
            stream->txt_buf != NULL &&
            stream->bin_buf != NULL &&
            (stream->txt_len + stream->bin_len) <= stream->size &&
-           stream->txt_run < stream->txt_len &&
-           stream->bin_run < stream->bin_len;
+           stream->txt_run <= stream->txt_len &&
+           stream->bin_run <= stream->bin_len &&
+           (stream->bin_run == 0 || stream->txt_run != 0);
 }
 
 tlog_rc
@@ -472,6 +473,7 @@ tlog_stream_write(struct tlog_stream *stream,
     assert(pmeta != NULL);
     assert(*pmeta != NULL);
     assert(prem != NULL);
+    assert(*prem <= (stream->size - stream->bin_len - stream->txt_len));
 
     buf = *pbuf;
     len = *plen;
@@ -529,6 +531,7 @@ tlog_stream_flush(struct tlog_stream *stream,
     assert(pmeta != NULL);
     assert(*pmeta != NULL);
     assert(prem != NULL);
+    assert(*prem <= (stream->size - stream->bin_len - stream->txt_len));
 
     utf8 = &stream->utf8;
     assert(!tlog_utf8_is_ended(utf8));
