@@ -22,49 +22,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "tlog_test.h"
 #include "tlog_stream_enc_test.h"
 
 #define BOOL_STR(_b) ((_b) ? "true" : "false")
-
-static void
-diff_side(FILE *stream, const char *name,
-          const uint8_t *out, const uint8_t *exp, size_t len)
-{
-    size_t col;
-    size_t i;
-    const uint8_t *o;
-    const uint8_t *e;
-    uint8_t c;
-
-    fprintf(stream, "%s str:\n", name);
-    for (o = out, i = len; i > 0; o++, i--) {
-        c = *o;
-        fputc(((c >= 0x20 && c < 0x7f) ? c : ' '), stream);
-    }
-    fputc('\n', stream);
-    for (o = out, e = exp, i = len; i > 0; o++, e++, i--)
-        fprintf(stream, "%c", ((*o == *e) ? ' ' : '^'));
-
-    fprintf(stream, "\n%s hex:\n", name);
-    for (o = out, e = exp, i = len, col = 0; i > 0; o++, e++, i--) {
-        fprintf(stream, " %c%02x", ((*o == *e) ? ' ' : '!'), *o);
-        col++;
-        if (col > 0xf) {
-            col = 0;
-            fprintf(stream, "\n");
-        }
-    }
-    if (col != 0)
-        fprintf(stream, "\n");
-}
-
-static void
-diff(FILE *stream, const uint8_t *res, const uint8_t *exp, size_t len)
-{
-    diff_side(stream, "expected", exp, res, len);
-    fprintf(stream, "\n");
-    diff_side(stream, "result", res, exp, len);
-}
 
 bool
 tlog_stream_enc_test(const char *n, const struct tlog_stream_enc_test t)
@@ -105,7 +66,8 @@ tlog_stream_enc_test(const char *n, const struct tlog_stream_enc_test t)
 
     if (memcmp(obuf, t.obuf_out, TLOG_STREAM_ENC_TEST_BUF_SIZE) != 0) {
         fprintf(stderr, "%s: obuf mismatch:\n", n);
-        diff(stderr, obuf, t.obuf_out, TLOG_STREAM_ENC_TEST_BUF_SIZE);
+        tlog_test_diff(stderr, obuf, t.obuf_out,
+                       TLOG_STREAM_ENC_TEST_BUF_SIZE);
         passed = false;
     }
 

@@ -48,8 +48,10 @@ tlog_stream_btoa_test_SOURCES = tlog_stream_btoa_test.c tlog_utf8.c
 tlog_stream_enc_bin_test_SOURCES = \
     tlog_stream_enc_bin_test.c      \
     tlog_stream_enc_test.c          \
+    tlog_test.c                     \
     tlog_utf8.c
 tlog_stream_enc_txt_test_SOURCES = \
-    tlog_stream_enc_txt_test.c      \
     tlog_stream_enc_test.c          \
+    tlog_stream_enc_txt_test.c      \
+    tlog_test.c                     \
     tlog_utf8.c
