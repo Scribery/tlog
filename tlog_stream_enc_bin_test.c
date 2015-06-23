@@ -31,11 +31,11 @@ main(void)
     bool passed = true;
 
 #define TEST(_name_token, _struct_init_args...) \
-    passed = passed &&                                                  \
-             tlog_stream_enc_test(#_name_token,                         \
+    passed = tlog_stream_enc_test(#_name_token, \
                                   (struct tlog_stream_enc_test)         \
                                        {.func = tlog_stream_enc_bin,    \
-                                        ##_struct_init_args})
+                                        ##_struct_init_args}) &&        \
+             passed
 
     /* No input producing no output */
     TEST(zero,          .idig_in    = 10,
