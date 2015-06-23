@@ -38,18 +38,15 @@ main(void)
              passed
 
     /* No input producing no output */
-    TEST(zero,          .idig_in    = 10,
-                        .idig_out   = 10,
-                        .fit_out    = true);
+    TEST(zero,          .fit_out    = true);
 
     /* Output for one byte input */
     TEST(one,           .ibuf_in    = {0xff},
                         .ilen_in    = 1,
                         .obuf_out   = "255",
-                        .orem_in    = 3,
+                        .orem_in    = 5,
                         .olen_out   = 3,
                         .irun_out   = 1,
-                        .idig_in    = 10,
                         .idig_out   = 10,
                         .fit_out    = true);
 
@@ -57,34 +54,27 @@ main(void)
     TEST(one_out_one,   .ibuf_in    = {0xff},
                         .ilen_in    = 1,
                         .obuf_out   = "25",
-                        .orem_in    = 2,
-                        .orem_out   = 2,
-                        .idig_in    = 10,
-                        .idig_out   = 10);
+                        .orem_in    = 4,
+                        .orem_out   = 4);
 
     /* One byte input, output short of two bytes */
     TEST(one_out_two,   .ibuf_in    = {0xff},
                         .ilen_in    = 1,
                         .obuf_out   = "2",
-                        .orem_in    = 1,
-                        .orem_out   = 1,
-                        .idig_in    = 10,
-                        .idig_out   = 10);
+                        .orem_in    = 3,
+                        .orem_out   = 3);
 
     /* One byte input, output short of three (all) bytes */
     TEST(one_out_three, .ibuf_in    = {0xff},
-                        .ilen_in    = 1,
-                        .idig_in    = 10,
-                        .idig_out   = 10);
+                        .ilen_in    = 1);
 
     /* Output for two bytes input */
     TEST(two,           .ibuf_in    = {0x01, 0x02},
                         .ilen_in    = 2,
                         .obuf_out   = "1,2",
-                        .orem_in    = 3,
+                        .orem_in    = 5,
                         .olen_out   = 3,
                         .irun_out   = 2,
-                        .idig_in    = 10,
                         .idig_out   = 10,
                         .fit_out    = true);
 
@@ -92,19 +82,15 @@ main(void)
     TEST(two_out_one,   .ibuf_in    = {0xfe, 0xff},
                         .ilen_in    = 2,
                         .obuf_out   = "254,25",
-                        .orem_in    = 6,
-                        .orem_out   = 6,
-                        .idig_in    = 10,
-                        .idig_out   = 10);
+                        .orem_in    = 8,
+                        .orem_out   = 8);
 
     /* Two byte input, output short of two bytes */
     TEST(two_out_two,   .ibuf_in    = {0xfe, 0xff},
                         .ilen_in    = 2,
                         .obuf_out   = "254,2",
-                        .orem_in    = 5,
-                        .orem_out   = 5,
-                        .idig_in    = 10,
-                        .idig_out   = 10);
+                        .orem_in    = 7,
+                        .orem_out   = 7);
 
     /*
      * Two byte input, output short of three bytes
@@ -113,10 +99,8 @@ main(void)
     TEST(two_out_three, .ibuf_in    = {0xfe, 0xff},
                         .ilen_in    = 2,
                         .obuf_out   = "254,",
-                        .orem_in    = 4,
-                        .orem_out   = 4,
-                        .idig_in    = 10,
-                        .idig_out   = 10);
+                        .orem_in    = 6,
+                        .orem_out   = 6);
 
     /*
      * Two byte input, output short of four bytes (no space for comma and
@@ -125,10 +109,8 @@ main(void)
     TEST(two_out_four,  .ibuf_in    = {0xfe, 0xff},
                         .ilen_in    = 2,
                         .obuf_out   = "254",
-                        .orem_in    = 3,
-                        .orem_out   = 3,
-                        .idig_in    = 10,
-                        .idig_out   = 10);
+                        .orem_in    = 5,
+                        .orem_out   = 5);
 
     /*
      * Two byte input, output short of five bytes
@@ -137,19 +119,16 @@ main(void)
     TEST(two_out_five,  .ibuf_in    = {0xfe, 0xff},
                         .ilen_in    = 2,
                         .obuf_out   = "25",
-                        .orem_in    = 2,
-                        .orem_out   = 2,
-                        .idig_in    = 10,
-                        .idig_out   = 10);
+                        .orem_in    = 4,
+                        .orem_out   = 4);
 
     /* Output for three bytes input */
     TEST(three,         .ibuf_in    = {0x01, 0x02, 0x03},
                         .ilen_in    = 3,
                         .obuf_out   = "1,2,3",
-                        .orem_in    = 5,
+                        .orem_in    = 7,
                         .olen_out   = 5,
                         .irun_out   = 3,
-                        .idig_in    = 10,
                         .idig_out   = 10,
                         .fit_out    = true);
 
@@ -157,11 +136,10 @@ main(void)
     TEST(non_zero_olen, .ibuf_in    = {0xff},
                         .ilen_in    = 1,
                         .obuf_out   = ",255",
-                        .orem_in    = 4,
-                        .olen_in    = 100,
-                        .olen_out   = 104,
+                        .orem_in    = 6,
+                        .olen_in    = 10,
+                        .olen_out   = 14,
                         .irun_out   = 1,
-                        .idig_in    = 10,
                         .idig_out   = 10,
                         .fit_out    = true);
 

@@ -34,9 +34,6 @@ struct tlog_stream {
 
     struct tlog_utf8    utf8;           /**< UTF-8 filter */
 
-    bool                invalid;        /**< True if current run is invalid,
-                                             false otherwise */
-
     uint8_t             valid_mark;     /**< Valid text record marker */
     uint8_t             invalid_mark;   /**< Invalid text record marker */
 
@@ -87,7 +84,8 @@ extern void tlog_stream_write(struct tlog_stream *stream,
                               size_t *prem);
 
 /**
- * Cut a stream (flush metadata record) on a character boundary.
+ * Cut a stream (flush metadata record to reserved space) on a character
+ * boundary.
  *
  * @param stream    The stream to cut.
  * @param pmeta     Location of/for the metadata output pointer.
@@ -100,8 +98,12 @@ extern void tlog_stream_cut(struct tlog_stream *stream,
  *
  * @param stream    The stream to flush.
  * @param pmeta     Location of/for the meta data output pointer.
+ * @param prem      Location of/for the total remaining output space.
+ *
+ * @return True if data to flush fit into the remaining space, false
+ *         otherwise.
  */
-extern void tlog_stream_flush(struct tlog_stream *stream,
+extern bool tlog_stream_flush(struct tlog_stream *stream,
                               uint8_t **pmeta,
                               size_t *prem);
 

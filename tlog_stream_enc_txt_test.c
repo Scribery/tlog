@@ -37,17 +37,6 @@ main(void)
                                         ##_struct_init_args}) &&        \
              passed
 
-#define TEST_ESC(_char_code_token, _obuf_out) \
-    TEST(esc_ ##_char_code_token,   .ibuf_in = {_char_code_token},  \
-                                    .ilen_in = 1,                   \
-                                    .obuf_out = _obuf_out,          \
-                                    .orem_in = strlen(_obuf_out),   \
-                                    .olen_out = strlen(_obuf_out),  \
-                                    .irun_out = 1,                  \
-                                    .idig_in = 10,                  \
-                                    .idig_out = 10,                 \
-                                    .fit_out = true)
-
     /* No input producing no output */
     TEST(zero,          .idig_in    = 10,
                         .idig_out   = 10,
@@ -57,10 +46,9 @@ main(void)
     TEST(one,           .ibuf_in    = {'A'},
                         .ilen_in    = 1,
                         .obuf_out   = "A",
-                        .orem_in    = 1,
+                        .orem_in    = 3,
                         .olen_out   = 1,
                         .irun_out   = 1,
-                        .idig_in    = 10,
                         .idig_out   = 10,
                         .fit_out    = true);
 
@@ -74,10 +62,9 @@ main(void)
     TEST(two,           .ibuf_in    = {0xd0, 0x90},
                         .ilen_in    = 2,
                         .obuf_out   = "А",
-                        .orem_in    = 2,
+                        .orem_in    = 4,
                         .olen_out   = 2,
                         .irun_out   = 1,
-                        .idig_in    = 10,
                         .idig_out   = 10,
                         .fit_out    = true);
 
@@ -85,24 +72,19 @@ main(void)
     TEST(two_out_one,   .ibuf_in    = {0xd0, 0x90},
                         .ilen_in    = 2,
                         .orem_in    = 1,
-                        .orem_out   = 1,
-                        .idig_in    = 10,
-                        .idig_out   = 10);
+                        .orem_out   = 1);
 
     /* Two byte input, zero byte output */
     TEST(two_out_zero,  .ibuf_in    = {0xd0, 0x90},
-                        .ilen_in    = 2,
-                        .idig_in    = 10,
-                        .idig_out   = 10);
+                        .ilen_in    = 2);
 
     /* Output for three byte input */
     TEST(three,         .ibuf_in    = {0xe5, 0x96, 0x9c},
                         .ilen_in    = 3,
                         .obuf_out   = "喜", /* Chinese "like/love/..." */
-                        .orem_in    = 3,
+                        .orem_in    = 5,
                         .olen_out   = 3,
                         .irun_out   = 1,
-                        .idig_in    = 10,
                         .idig_out   = 10,
                         .fit_out    = true);
 
@@ -110,10 +92,9 @@ main(void)
     TEST(four,          .ibuf_in    = {0xf0, 0x9d, 0x84, 0x9e},
                         .ilen_in    = 4,
                         .obuf_out   = "𝄞", /* G Clef */
-                        .orem_in    = 4,
+                        .orem_in    = 6,
                         .olen_out   = 4,
                         .irun_out   = 1,
-                        .idig_in    = 10,
                         .idig_out   = 10,
                         .fit_out    = true);
 
@@ -151,6 +132,17 @@ main(void)
                         .idig_in    = 100,
                         .idig_out   = 1000,
                         .fit_out    = true);
+
+#define TEST_ESC(_char_code_token, _obuf_out) \
+    TEST(esc_ ##_char_code_token,   .ibuf_in = {_char_code_token},      \
+                                    .ilen_in = 1,                       \
+                                    .obuf_out = _obuf_out,              \
+                                    .orem_in = strlen(_obuf_out) + 2,   \
+                                    .olen_out = strlen(_obuf_out),      \
+                                    .irun_out = 1,                      \
+                                    .idig_in = 10,                      \
+                                    .idig_out = 10,                     \
+                                    .fit_out = true)
 
     /* Control character escaping */
     TEST_ESC(0x00, "\\u0000");

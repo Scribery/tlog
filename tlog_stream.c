@@ -176,6 +176,13 @@ tlog_stream_enc_bin(uint8_t *obuf, size_t *porem, size_t *polen,
     irun = *pirun;
     idig = *pidig;
 
+    /* If this is the start of a run */
+    if (irun == 0) {
+        idig = 10;
+        /* Reserve space for the marker and single digit run */
+        REQ(2);
+    }
+
     for (; ilen > 0; ilen--) {
         irun++;
         if (irun >= idig) {
@@ -239,6 +246,13 @@ tlog_stream_enc_txt(uint8_t *obuf, size_t *porem, size_t *polen,
     irun = *pirun;
     idig = *pidig;
 
+    /* If this is the start of a run */
+    if (irun == 0) {
+        idig = 10;
+        /* Reserve space for the marker and single digit run */
+        REQ(2);
+    }
+
     irun++;
     if (irun >= idig) {
         REQ(1);
@@ -298,12 +312,72 @@ tlog_stream_enc_txt(uint8_t *obuf, size_t *porem, size_t *polen,
 #undef REQ
 
 /**
+ * Write a meta record for text and binary runs, resetting them.
+ *
+ * @param valid_mark    Valid UTF-8 record marker character.
+ * @param invalid_mark  Invalid UTF-8 record marker character.
+ * @param ptxt_run      Location of/for text run.
+ * @param pbin_run      Location of/for binary run.
+ * @param pmeta     Location of/for the meta data output pointer.
+ */
+static void
+tlog_stream_write_meta(uint8_t valid_mark, uint8_t invalid_mark,
+                       size_t *ptxt_run, size_t *pbin_run,
+                       uint8_t **pmeta)
+{
+    int rc;
+    char buf[32];
+    char *meta;
+
+    assert(valid_mark != invalid_mark);
+    assert(ptxt_run != NULL);
+    assert(pbin_run != NULL);
+    assert(pmeta != NULL);
+    assert(*pmeta != NULL);
+
+    meta = (char *)*pmeta;
+
+    if (*ptxt_run != 0) {
+        rc = snprintf(buf, sizeof(buf), "%c%zu",
+                      (*pbin_run == 0 ? valid_mark
+                                            : invalid_mark),
+                      *ptxt_run);
+        assert(rc >= 0);
+        assert(rc < (int)sizeof(buf));
+        memcpy(meta, buf, rc);
+        meta += rc;
+        *ptxt_run = 0;
+    }
+    if (*pbin_run != 0) {
+        rc = snprintf(buf, sizeof(buf), "/%zu", *pbin_run);
+        assert(rc >= 0);
+        assert(rc < (int)sizeof(buf));
+        memcpy(meta, buf, rc);
+        meta += rc;
+        *pbin_run = 0;
+    }
+
+    *pmeta = (uint8_t *)meta;
+}
+
+void
+tlog_stream_cut(struct tlog_stream *stream, uint8_t **pmeta)
+{
+    assert(tlog_stream_is_valid(stream));
+    assert(pmeta != NULL);
+    assert(*pmeta != NULL);
+    tlog_stream_write_meta(stream->valid_mark, stream->invalid_mark,
+                           &stream->txt_run, &stream->bin_run,
+                           pmeta);
+}
+
+/**
  * Atomically write a byte sequence to a stream, the sequence being either a
  * valid or an invalid UTF-8 character. Account for any (potentially) used
  * total remaining space.
  *
  * @param stream    The stream to write to.    
- * @param invalid   True if sequence is an invalid character, false otherwise.
+ * @param valid     True if sequence is a valid character, false otherwise.
  * @param buf       Sequence buffer pointer.
  * @param len       Sequence buffer length.
  * @param pmeta     Location of/for the meta data output pointer.
@@ -312,7 +386,7 @@ tlog_stream_enc_txt(uint8_t *obuf, size_t *porem, size_t *polen,
  * @return True if the sequence was written, false otherwise.
  */
 static bool
-tlog_stream_write_seq(struct tlog_stream *stream, bool invalid,
+tlog_stream_write_seq(struct tlog_stream *stream, bool valid,
                       uint8_t *buf, size_t len,
                       uint8_t **pmeta, size_t *prem)
 {
@@ -326,8 +400,6 @@ tlog_stream_write_seq(struct tlog_stream *stream, bool invalid,
     size_t bin_run;
     size_t bin_dig;
     size_t bin_len;
-    int rc;
-    bool complete;
 
     assert(tlog_stream_is_valid(stream));
     assert(buf != NULL || len == 0);
@@ -337,8 +409,7 @@ tlog_stream_write_seq(struct tlog_stream *stream, bool invalid,
 
     if (len == 0)
         return true;
-
-    complete = false;
+    
     txt_run = stream->txt_run;
     txt_dig = stream->txt_dig;
     txt_len = stream->txt_len;
@@ -348,84 +419,31 @@ tlog_stream_write_seq(struct tlog_stream *stream, bool invalid,
     meta = *pmeta;
     rem = *prem;
 
-#define REQ(_l) \
-    do {                    \
-        if ((_l) > rem)     \
-            return false;   \
-        rem -= (_l);        \
-    } while (0)
+    /* Cut the run, if changing type */
+    if ((!valid) != (stream->bin_run != 0))
+        tlog_stream_write_meta(stream->valid_mark, stream->invalid_mark,
+                               &txt_run, &bin_run, &meta);
 
-#define ADV(_l) \
-    do {                \
-        REQ(_l);        \
-        meta += (_l);   \
-    } while (0)
-
-    /* If changing run type */
-    if (invalid != stream->invalid) {
-        if (stream->invalid) {
-            /* Write meta record for invalid run */
-            if (stream->txt_run != 0 || stream->bin_run != 0) {
-                rc = snprintf((char *)meta, rem, "%c%zu/%zu",
-                              stream->invalid_mark,
-                              stream->txt_run, stream->bin_run);
-                assert(rc >= 0);
-                ADV((size_t)rc);
-            }
-            /* Reset run counters */
-            txt_run = 0;
-            txt_dig = 10;
-            bin_run = 0;
-            bin_dig = 10;
-            /*
-             * Account for the minimal valid meta record
-             * (mark and one digit)
-             */
-            REQ(2);
-        } else {
-            /* Write meta record for valid run */
-            if (stream->txt_run != 0) {
-                rc = snprintf((char *)meta, rem, "%c%zu",
-                              stream->valid_mark, stream->txt_run);
-                assert(rc >= 0);
-                ADV((size_t)rc);
-            }
-            /* Reset run counters */
-            txt_run = 0;
-            txt_dig = 10;
-            /*
-             * Account for the minimal invalid meta record
-             * (mark, two digits, and separator in between)
-             */
-            REQ(4);
-        }
-    }
-
-#undef ADV
-#undef REQ
-
-    if (invalid) {
+    if (valid) {
+        /* Write the character to the text buffer */
+        if (!tlog_stream_enc_txt(stream->txt_buf + txt_len, &rem,
+                                 &txt_run, &txt_dig, &txt_len,
+                                 buf, len))
+            return false;
+    } else {
         /* Write the replacement character to the text buffer */
         if (!tlog_stream_enc_txt(stream->txt_buf + txt_len, &rem, &txt_len,
                                  &txt_run, &txt_dig,
                                  repl_buf, sizeof(repl_buf)))
-            goto exit;
+            return false;
 
         /* Write bytes to the binary buffer */
         if (!tlog_stream_enc_bin(stream->bin_buf + bin_len, &rem,
                                  &bin_run, &bin_dig, &bin_len,
                                  buf, len))
-            goto exit;
-    } else {
-        /* Write the character to the text buffer */
-        if (!tlog_stream_enc_txt(stream->txt_buf + txt_len, &rem,
-                                 &txt_run, &txt_dig, &txt_len,
-                                 buf, len))
-            goto exit;
+            return false;
     }
 
-    complete = true;
-    stream->invalid = invalid;
     stream->txt_run = txt_run;
     stream->txt_dig = txt_dig;
     stream->txt_len = txt_len;
@@ -434,24 +452,20 @@ tlog_stream_write_seq(struct tlog_stream *stream, bool invalid,
     stream->bin_len = bin_len;
     *prem = rem;
     *pmeta = meta;
-exit:
-    return complete;
+    return true;
 }
 
 
 void
 tlog_stream_write(struct tlog_stream *stream,
                   uint8_t **pbuf, size_t *plen,
-                  uint8_t **pmeta,
-                  size_t *prem)
+                  uint8_t **pmeta, size_t *prem)
 {
     uint8_t *buf;
     size_t len;
     struct tlog_utf8 *utf8;
-    bool written;
 
     assert(tlog_stream_is_valid(stream));
-    assert(!tlog_utf8_is_ended(&stream->utf8));
     assert(pbuf != NULL);
     assert(plen != NULL);
     assert(*pbuf != NULL || *plen == 0);
@@ -462,6 +476,7 @@ tlog_stream_write(struct tlog_stream *stream,
     buf = *pbuf;
     len = *plen;
     utf8 = &stream->utf8;
+    assert(!tlog_utf8_is_ended(utf8));
 
     while (true) {
         do {
@@ -480,27 +495,15 @@ tlog_stream_write(struct tlog_stream *stream,
         /* If the first byte we encountered was invalid */
         if (tlog_utf8_is_empty(utf8)) {
             /* Write single input byte as invalid sequence and skip it */
-            if (!tlog_stream_write_seq(stream, true, buf, 1, pmeta, prem))
+            if (!tlog_stream_write_seq(stream, false, buf, 1, pmeta, prem))
                 break;
             buf++;
             len--;
         } else {
-            /* If this is a complete UTF-8 character */
-            if (tlog_utf8_is_complete(utf8)) {
-                /* Write complete utf8 buffer as valid sequence */
-                written = tlog_stream_write_seq(stream, false,
-                                                utf8->buf, utf8->len,
-                                                pmeta, prem);
-            /* If this is an incomplete UTF-8 character */
-            } else {
-                /* Write utf8 buffer as invalid sequence */
-                written = tlog_stream_write_seq(stream, true,
-                                                utf8->buf, utf8->len,
-                                                pmeta, prem);
-            }
-
-            /* If the buffer didn't fit into output */
-            if (!written) {
+            /* If the (in)complete character doesn't fit into output */
+            if (!tlog_stream_write_seq(stream, tlog_utf8_is_complete(utf8),
+                                       utf8->buf, utf8->len,
+                                       pmeta, prem)) {
                 /* Back up unwritten data */
                 buf -= utf8->len;
                 len += utf8->len;
@@ -514,4 +517,27 @@ tlog_stream_write(struct tlog_stream *stream,
 exit:
     *pbuf = buf;
     *plen = len;
+}
+
+bool
+tlog_stream_flush(struct tlog_stream *stream,
+                  uint8_t **pmeta, size_t *prem)
+{
+    struct tlog_utf8 *utf8;
+
+    assert(tlog_stream_is_valid(stream));
+    assert(pmeta != NULL);
+    assert(*pmeta != NULL);
+    assert(prem != NULL);
+
+    utf8 = &stream->utf8;
+    assert(!tlog_utf8_is_ended(utf8));
+
+    if (tlog_stream_write_seq(stream, false, utf8->buf, utf8->len,
+                              pmeta, prem)) {
+        tlog_utf8_reset(utf8);
+        return true;
+    } else {
+        return false;
+    }
 }
