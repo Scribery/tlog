@@ -260,8 +260,8 @@ main(void)
                         .idig_out   = 10,
                         .fit_out    = true);
 
-    /* Rolling over to next digit */
-    TEST(next_digit,    .ibuf_in    = {0xff},
+    /* Rolling over to second digit */
+    TEST(second_digit,  .ibuf_in    = {0xff},
                         .ilen_in    = 1,
                         .obuf_out   = "255",
                         .orem_in    = 4,
@@ -270,6 +270,18 @@ main(void)
                         .irun_out   = 10,
                         .idig_in    = 10,
                         .idig_out   = 100,
+                        .fit_out    = true);
+
+    /* Rolling over to third digit */
+    TEST(third_digit,   .ibuf_in    = {0xff},
+                        .ilen_in    = 1,
+                        .obuf_out   = "255",
+                        .orem_in    = 4,
+                        .olen_out   = 3,
+                        .irun_in    = 99,
+                        .irun_out   = 100,
+                        .idig_in    = 100,
+                        .idig_out   = 1000,
                         .fit_out    = true);
 
     return global_failed;
