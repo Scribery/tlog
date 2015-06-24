@@ -129,11 +129,8 @@ test(const char *n, const struct test t)
     } while (0)
 
 #define FAIL_OP(_fmt, _args...) \
-    do {                                                                \
-        FAIL("op #%zd (%s): " _fmt,                                     \
-             op - t.op_list + 1, op_type_to_str(op->type), ##_args);    \
-        goto cleanup;                                                   \
-    } while (0)
+    FAIL("op #%zd (%s): " _fmt,                                 \
+         op - t.op_list + 1, op_type_to_str(op->type), ##_args)
 
     for (op = t.op_list; op->type != OP_TYPE_NONE; op++) {
         switch (op->type) {
@@ -160,7 +157,10 @@ test(const char *n, const struct test t)
                     FAIL_OP("rem_off %zd != %zd",
                             (rem_last - rem_next), op->data.write.rem_off);
                 rem_last = rem_next;
-                break;
+                if (passed)
+                    break;
+                else
+                    goto cleanup;
             case OP_TYPE_CUT:
                 tlog_stream_cut(&stream, &meta_next);
                 if ((meta_next - meta_last) != op->data.cut.meta_off)
@@ -168,7 +168,10 @@ test(const char *n, const struct test t)
                             (meta_next - meta_last),
                             op->data.cut.meta_off);
                 meta_last = meta_next;
-                break;
+                if (passed)
+                    break;
+                else
+                    goto cleanup;
             case OP_TYPE_FLUSH:
                 tlog_stream_flush(&stream, &meta_next, &rem_next);
                 if ((meta_next - meta_last) != op->data.flush.meta_off)
@@ -181,7 +184,10 @@ test(const char *n, const struct test t)
                             ((ssize_t)rem_last - (ssize_t)rem_next),
                             op->data.flush.rem_off);
                 rem_last = rem_next;
-                break;
+                if (passed)
+                    break;
+                else
+                    goto cleanup;
             case OP_TYPE_EMPTY:
                 tlog_stream_empty(&stream);
                 break;
