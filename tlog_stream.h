@@ -94,7 +94,7 @@ extern void tlog_stream_cut(struct tlog_stream *stream,
                             uint8_t **pmeta);
 
 /**
- * Flush a stream (flush all the data, including incomplete characters).
+ * Flush incomplete pending character in a stream.
  *
  * @param stream    The stream to flush.
  * @param pmeta     Location of/for the meta data output pointer.
