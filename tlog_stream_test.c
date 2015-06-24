@@ -249,18 +249,140 @@ main(void)
 #define OP_EMPTY \
     {.type = OP_TYPE_EMPTY}
 
-    TEST(null,          .op_list = {});
-    TEST(one_char,      .op_list = {
-                            OP_WRITE(.buf = "A",
-                                     .len_in = 1,
-                                     .rem_off = 3),
-                            OP_CUT(.meta_off = 2)
-                        },
-                        .rem_in = 3,
-                        .txt_buf = "A",
-                        .txt_len = 1,
-                        .meta_buf = "<1",
-                        .meta_len = 2);
+    TEST(null,             .op_list = {});
+    TEST(null_cut,         .op_list = {
+                                OP_CUT(0)
+                            },
+                            .rem_in = SIZE,
+                            .rem_out = SIZE);
+    TEST(null_flushed,     .op_list = {
+                                OP_FLUSH(0)
+                            },
+                            .rem_in = SIZE,
+                            .rem_out = SIZE);
+    TEST(null_emptied,     .op_list = {
+                                OP_EMPTY
+                            },
+                            .rem_in = SIZE,
+                            .rem_out = SIZE);
+
+    TEST(one_byte,          .op_list = {
+                                OP_WRITE(.buf = "A",
+                                         .len_in = 1,
+                                         .rem_off = 3)
+                            },
+                            .rem_in = 3,
+                            .txt_buf = "A",
+                            .txt_len = 1);
+    TEST(one_byte_cut,      .op_list = {
+                                OP_WRITE(.buf = "A",
+                                         .len_in = 1,
+                                         .rem_off = 3),
+                                OP_CUT(.meta_off = 2)
+                            },
+                            .rem_in = 3,
+                            .txt_buf = "A",
+                            .txt_len = 1,
+                            .meta_buf = "<1",
+                            .meta_len = 2);
+    TEST(one_byte_flushed,  .op_list = {
+                                OP_WRITE(.buf = "A",
+                                         .len_in = 1,
+                                         .rem_off = 3),
+                                OP_FLUSH(0)
+                            },
+                            .rem_in = 3,
+                            .txt_buf = "A",
+                            .txt_len = 1);
+    TEST(one_byte_emptied,  .op_list = {
+                                OP_WRITE(.buf = "A",
+                                         .len_in = 1,
+                                         .rem_off = 3),
+                                OP_EMPTY
+                            },
+                            .rem_in = 3,
+                            .txt_buf = "A");
+
+    TEST(invalid_byte,          .op_list = {
+                                    OP_WRITE(.buf = {0xff},
+                                             .len_in = 1,
+                                             .rem_off = 10),
+                                    OP_CUT(.meta_off = 4)
+                                },
+                                .rem_in = SIZE,
+                                .rem_out = SIZE - 10,
+                                .txt_buf = "�",
+                                .txt_len = 3,
+                                .bin_buf = "255",
+                                .bin_len = 3,
+                                .meta_buf = "[1/1",
+                                .meta_len = 4);
+
+    TEST(3_invalid_1_valid,     .op_list = {
+                                    OP_WRITE(.buf = {0xf0, 0x9d, 0x84, 'X'},
+                                             .len_in = 4,
+                                             .rem_off = 21,
+                                             .meta_off = 4),
+                                    OP_CUT(.meta_off = 2)
+                                },
+                                .rem_in = SIZE,
+                                .rem_out = SIZE - 21,
+                                .txt_buf = "�X",
+                                .txt_len = 4,
+                                .bin_buf = "240,157,132",
+                                .bin_len = 11,
+                                .meta_buf = "[1/3<1",
+                                .meta_len = 6);
+
+    TEST(split_valid,           .op_list = {
+                                    OP_WRITE(.buf = {0xf0, 0x9d},
+                                             .len_in = 2),
+                                    OP_WRITE(.buf = {0x84, 0x9e},
+                                             .len_in = 2,
+                                             .rem_off = 6),
+                                    OP_CUT(.meta_off = 2)
+                                },
+                                .rem_in = SIZE,
+                                .rem_out = SIZE - 6,
+                                .txt_buf = {0xf0, 0x9d, 0x84, 0x9e},
+                                .txt_len = 4,
+                                .meta_buf = "<1",
+                                .meta_len = 2);
+
+    TEST(split_invalid,         .op_list = {
+                                    OP_WRITE(.buf = {0xf0, 0x9d},
+                                             .len_in = 2),
+                                    OP_WRITE(.buf = {0x84, 'X'},
+                                             .len_in = 2,
+                                             .rem_off = 21,
+                                             .meta_off = 4),
+                                    OP_CUT(.meta_off = 2)
+                                },
+                                .rem_in = SIZE,
+                                .rem_out = SIZE - 21,
+                                .txt_buf = "�X",
+                                .txt_len = 4,
+                                .bin_buf = "240,157,132",
+                                .bin_len = 11,
+                                .meta_buf = "[1/3<1",
+                                .meta_len = 6);
+
+    TEST(flush_incomplete,      .op_list = {
+                                    OP_WRITE(.buf = {'X', 0xf0, 0x9d},
+                                             .len_in = 3,
+                                             .rem_off = 3),
+                                    OP_FLUSH(.rem_off = 14,
+                                             .meta_off = 2),
+                                    OP_CUT(.meta_off = 4)
+                                },
+                                .rem_in = SIZE,
+                                .rem_out = SIZE - 17,
+                                .txt_buf = "X�",
+                                .txt_len = 4,
+                                .bin_buf = "240,157",
+                                .bin_len = 7,
+                                .meta_buf = "<1[1/2",
+                                .meta_len = 6);
 
     return !passed;
 }
