@@ -319,7 +319,7 @@ tlog_stream_enc_txt(uint8_t *obuf, size_t *porem, size_t *polen,
  * @param invalid_mark  Invalid UTF-8 record marker character.
  * @param ptxt_run      Location of/for text run.
  * @param pbin_run      Location of/for binary run.
- * @param pmeta     Location of/for the meta data output pointer.
+ * @param pmeta         Location of/for the meta data output pointer.
  */
 static void
 tlog_stream_write_meta(uint8_t valid_mark, uint8_t invalid_mark,
