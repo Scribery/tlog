@@ -362,7 +362,7 @@ tlog_stream_write_meta(uint8_t valid_mark, uint8_t invalid_mark,
 }
 
 void
-tlog_stream_cut(struct tlog_stream *stream, uint8_t **pmeta)
+tlog_stream_flush(struct tlog_stream *stream, uint8_t **pmeta)
 {
     assert(tlog_stream_is_valid(stream));
     assert(pmeta != NULL);
@@ -522,8 +522,8 @@ exit:
 }
 
 bool
-tlog_stream_flush(struct tlog_stream *stream,
-                  uint8_t **pmeta, size_t *prem)
+tlog_stream_cut(struct tlog_stream *stream,
+                uint8_t **pmeta, size_t *prem)
 {
     struct tlog_utf8 *utf8;
 

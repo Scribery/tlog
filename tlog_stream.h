@@ -84,28 +84,27 @@ extern void tlog_stream_write(struct tlog_stream *stream,
                               size_t *prem);
 
 /**
- * Cut a stream (flush metadata record to reserved space) on a character
- * boundary.
- *
- * @param stream    The stream to cut.
- * @param pmeta     Location of/for the metadata output pointer.
- */
-extern void tlog_stream_cut(struct tlog_stream *stream,
-                            uint8_t **pmeta);
-
-/**
- * Flush incomplete pending character in a stream.
+ * Flush a stream - write metadata record to reserved space and reset runs.
  *
  * @param stream    The stream to flush.
+ * @param pmeta     Location of/for the metadata output pointer.
+ */
+extern void tlog_stream_flush(struct tlog_stream *stream,
+                              uint8_t **pmeta);
+
+/**
+ * Cut a stream - write incomplete pending character to the buffers.
+ *
+ * @param stream    The stream to cut.
  * @param pmeta     Location of/for the meta data output pointer.
  * @param prem      Location of/for the total remaining output space.
  *
- * @return True if data to flush fit into the remaining space, false
+ * @return True if incomplete character fit into the remaining space, false
  *         otherwise.
  */
-extern bool tlog_stream_flush(struct tlog_stream *stream,
-                              uint8_t **pmeta,
-                              size_t *prem);
+extern bool tlog_stream_cut(struct tlog_stream *stream,
+                            uint8_t **pmeta,
+                            size_t *prem);
 
 /**
  * Empty buffers of a stream, discarding contents.

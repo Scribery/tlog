@@ -319,3 +319,14 @@ Either of them can write meta records when switching between valid and invalid
 runs. These writes should also account for the necessary meta records, but not
 write them. If the meta record cannot be fit the writing should say that no
 data was written.
+
+We need these operations:
+    streams:
+        tlog_stream_cut             write withheld incomplete characters
+        tlog_stream_flush           write meta and reset runs
+    io:
+        tlog_io_cut                 write withheld incomplete stream characters
+        tlog_io_flush               flush streams
+    sink:
+        tlog_sink_io_cut            write withheld incomplete I/O characters
+        tlog_sink_io_flush          flush I/O and write it as a message

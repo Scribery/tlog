@@ -31,8 +31,8 @@
 enum op_type {
     OP_TYPE_NONE,
     OP_TYPE_WRITE,
-    OP_TYPE_CUT,
     OP_TYPE_FLUSH,
+    OP_TYPE_CUT,
     OP_TYPE_EMPTY,
     OP_TYPE_NUM
 };
@@ -45,10 +45,10 @@ op_type_to_str(enum op_type t)
             return "none";
         case OP_TYPE_WRITE:
             return "write";
-        case OP_TYPE_CUT:
-            return "cut";
         case OP_TYPE_FLUSH:
             return "flush";
+        case OP_TYPE_CUT:
+            return "cut";
         case OP_TYPE_EMPTY:
             return "empty";
         default:
@@ -64,11 +64,11 @@ struct op_data_write {
     ssize_t     rem_off;
 };
 
-struct op_data_cut {
+struct op_data_flush {
     ssize_t     meta_off;
 };
 
-struct op_data_flush {
+struct op_data_cut {
     ssize_t     meta_off;
     ssize_t     rem_off;
 };
@@ -77,8 +77,8 @@ struct op {
     enum op_type type;
     union {
         struct op_data_write    write;
-        struct op_data_cut      cut;
         struct op_data_flush    flush;
+        struct op_data_cut      cut;
     } data;
 };
 
@@ -161,28 +161,28 @@ test(const char *n, const struct test t)
                     break;
                 else
                     goto cleanup;
-            case OP_TYPE_CUT:
-                tlog_stream_cut(&stream, &meta_next);
-                if ((meta_next - meta_last) != op->data.cut.meta_off)
+            case OP_TYPE_FLUSH:
+                tlog_stream_flush(&stream, &meta_next);
+                if ((meta_next - meta_last) != op->data.flush.meta_off)
                     FAIL_OP("meta_off %zd != %zd",
                             (meta_next - meta_last),
-                            op->data.cut.meta_off);
+                            op->data.flush.meta_off);
                 meta_last = meta_next;
                 if (passed)
                     break;
                 else
                     goto cleanup;
-            case OP_TYPE_FLUSH:
-                tlog_stream_flush(&stream, &meta_next, &rem_next);
-                if ((meta_next - meta_last) != op->data.flush.meta_off)
+            case OP_TYPE_CUT:
+                tlog_stream_cut(&stream, &meta_next, &rem_next);
+                if ((meta_next - meta_last) != op->data.cut.meta_off)
                     FAIL_OP("meta_off %zd != %zd",
-                            (meta_next - meta_last), op->data.flush.meta_off);
+                            (meta_next - meta_last), op->data.cut.meta_off);
                 meta_last = meta_next;
                 if (((ssize_t)rem_last - (ssize_t)rem_next) !=
-                        op->data.flush.rem_off)
+                        op->data.cut.rem_off)
                     FAIL_OP("rem_off %zd != %zd",
                             ((ssize_t)rem_last - (ssize_t)rem_next),
-                            op->data.flush.rem_off);
+                            op->data.cut.rem_off);
                 rem_last = rem_next;
                 if (passed)
                     break;
@@ -240,23 +240,23 @@ main(void)
 #define OP_WRITE(_data_init_args...) \
     {.type = OP_TYPE_WRITE, .data = {.write = {_data_init_args}}}
 
-#define OP_CUT(_data_init_args...) \
-    {.type = OP_TYPE_CUT, .data = {.cut = {_data_init_args}}}
-
 #define OP_FLUSH(_data_init_args...) \
     {.type = OP_TYPE_FLUSH, .data = {.flush = {_data_init_args}}}
+
+#define OP_CUT(_data_init_args...) \
+    {.type = OP_TYPE_CUT, .data = {.cut = {_data_init_args}}}
 
 #define OP_EMPTY \
     {.type = OP_TYPE_EMPTY}
 
     TEST(null,             .op_list = {});
-    TEST(null_cut,         .op_list = {
-                                OP_CUT(0)
+    TEST(null_flushed,     .op_list = {
+                                OP_FLUSH(0)
                             },
                             .rem_in = SIZE,
                             .rem_out = SIZE);
-    TEST(null_flushed,     .op_list = {
-                                OP_FLUSH(0)
+    TEST(null_cut,          .op_list = {
+                                OP_CUT(0)
                             },
                             .rem_in = SIZE,
                             .rem_out = SIZE);
@@ -274,22 +274,22 @@ main(void)
                             .rem_in = 3,
                             .txt_buf = "A",
                             .txt_len = 1);
-    TEST(one_byte_cut,      .op_list = {
+    TEST(one_byte_flushed,  .op_list = {
                                 OP_WRITE(.buf = "A",
                                          .len_in = 1,
                                          .rem_off = 3),
-                                OP_CUT(.meta_off = 2)
+                                OP_FLUSH(.meta_off = 2)
                             },
                             .rem_in = 3,
                             .txt_buf = "A",
                             .txt_len = 1,
                             .meta_buf = "<1",
                             .meta_len = 2);
-    TEST(one_byte_flushed,  .op_list = {
+    TEST(one_byte_cut,      .op_list = {
                                 OP_WRITE(.buf = "A",
                                          .len_in = 1,
                                          .rem_off = 3),
-                                OP_FLUSH(0)
+                                OP_CUT(0)
                             },
                             .rem_in = 3,
                             .txt_buf = "A",
@@ -307,7 +307,7 @@ main(void)
                                     OP_WRITE(.buf = {0xff},
                                              .len_in = 1,
                                              .rem_off = 10),
-                                    OP_CUT(.meta_off = 4)
+                                    OP_FLUSH(.meta_off = 4)
                                 },
                                 .rem_in = SIZE,
                                 .rem_out = SIZE - 10,
@@ -323,7 +323,7 @@ main(void)
                                              .len_in = 4,
                                              .rem_off = 21,
                                              .meta_off = 4),
-                                    OP_CUT(.meta_off = 2)
+                                    OP_FLUSH(.meta_off = 2)
                                 },
                                 .rem_in = SIZE,
                                 .rem_out = SIZE - 21,
@@ -340,7 +340,7 @@ main(void)
                                     OP_WRITE(.buf = {0x84, 0x9e},
                                              .len_in = 2,
                                              .rem_off = 6),
-                                    OP_CUT(.meta_off = 2)
+                                    OP_FLUSH(.meta_off = 2)
                                 },
                                 .rem_in = SIZE,
                                 .rem_out = SIZE - 6,
@@ -356,7 +356,7 @@ main(void)
                                              .len_in = 2,
                                              .rem_off = 21,
                                              .meta_off = 4),
-                                    OP_CUT(.meta_off = 2)
+                                    OP_FLUSH(.meta_off = 2)
                                 },
                                 .rem_in = SIZE,
                                 .rem_out = SIZE - 21,
@@ -367,13 +367,13 @@ main(void)
                                 .meta_buf = "[1/3<1",
                                 .meta_len = 6);
 
-    TEST(flush_incomplete,      .op_list = {
+    TEST(cut_incomplete,        .op_list = {
                                     OP_WRITE(.buf = {'X', 0xf0, 0x9d},
                                              .len_in = 3,
                                              .rem_off = 3),
-                                    OP_FLUSH(.rem_off = 14,
+                                    OP_CUT(.rem_off = 14,
                                              .meta_off = 2),
-                                    OP_CUT(.meta_off = 4)
+                                    OP_FLUSH(.meta_off = 4)
                                 },
                                 .rem_in = SIZE,
                                 .rem_out = SIZE - 17,
