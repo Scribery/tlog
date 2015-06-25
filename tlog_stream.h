@@ -93,7 +93,7 @@ extern void tlog_stream_flush(struct tlog_stream *stream,
                               uint8_t **pmeta);
 
 /**
- * Cut a stream - write incomplete pending character to the buffers.
+ * Cut a stream - write pending incomplete character to the buffers.
  *
  * @param stream    The stream to cut.
  * @param pmeta     Location of/for the meta data output pointer.
@@ -107,7 +107,7 @@ extern bool tlog_stream_cut(struct tlog_stream *stream,
                             size_t *prem);
 
 /**
- * Empty buffers of a stream, discarding contents.
+ * Empty buffers of a stream, but not pending incomplete characters.
  *
  * @param stream    The stream to empty.
  */
