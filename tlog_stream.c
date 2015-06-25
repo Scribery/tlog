@@ -549,7 +549,6 @@ void
 tlog_stream_empty(struct tlog_stream *stream)
 {
     assert(tlog_stream_is_valid(stream));
-    tlog_utf8_reset(&stream->utf8);
     stream->txt_run = 0;
     stream->txt_dig = 0;
     stream->txt_len = 0;
