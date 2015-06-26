@@ -50,6 +50,13 @@ tlog_stream_is_valid(const struct tlog_stream *stream)
            (stream->bin_run == 0 || stream->txt_run != 0);
 }
 
+bool
+tlog_stream_is_empty(const struct tlog_stream *stream)
+{
+    assert(tlog_stream_is_valid(stream));
+    return stream->txt_len == 0 && stream->bin_len == 0;
+}
+
 tlog_rc
 tlog_stream_init(struct tlog_stream *stream, size_t size,
                  uint8_t valid_mark, uint8_t invalid_mark)

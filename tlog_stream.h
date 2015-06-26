@@ -69,6 +69,16 @@ extern tlog_rc tlog_stream_init(struct tlog_stream *stream, size_t size,
 extern bool tlog_stream_is_valid(const struct tlog_stream *stream);
 
 /**
+ * Check if a stream is empty (no data in buffers, except the incomplete
+ * character).
+ *
+ * @param stream    The stream to check.
+ *
+ * @return True if the stream is empty, false otherwise.
+ */
+extern bool tlog_stream_is_empty(const struct tlog_stream *stream);
+
+/**
  * Write to a stream, accounting for any (potentially) used total remaining
  * space.
  *
