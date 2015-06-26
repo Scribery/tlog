@@ -384,5 +384,22 @@ main(void)
                                 .meta_buf = "<1[1/2",
                                 .meta_len = 6);
 
+    TEST(two_flushes,           .op_list = {
+                                    OP_WRITE(.buf = "A",
+                                             .len_in = 1,
+                                             .rem_off = 3),
+                                    OP_FLUSH(.meta_off = 2),
+                                    OP_WRITE(.buf = "B",
+                                             .len_in = 1,
+                                             .rem_off = 3),
+                                    OP_FLUSH(.meta_off = 2),
+                                },
+                                .rem_in = SIZE,
+                                .rem_out = SIZE - 6,
+                                .txt_buf = "AB",
+                                .txt_len = 2,
+                                .meta_buf = "<1<1",
+                                .meta_len = 4);
+
     return !passed;
 }
