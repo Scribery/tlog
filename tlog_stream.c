@@ -464,7 +464,7 @@ tlog_stream_write_seq(struct tlog_stream *stream, bool valid,
 }
 
 
-void
+size_t
 tlog_stream_write(struct tlog_stream *stream,
                   const uint8_t **pbuf, size_t *plen,
                   uint8_t **pmeta, size_t *prem)
@@ -472,6 +472,7 @@ tlog_stream_write(struct tlog_stream *stream,
     const uint8_t *buf;
     size_t len;
     struct tlog_utf8 *utf8;
+    size_t written;
 
     assert(tlog_stream_is_valid(stream));
     assert(pbuf != NULL);
@@ -524,8 +525,10 @@ tlog_stream_write(struct tlog_stream *stream,
 
     tlog_utf8_reset(utf8);
 exit:
+    written = (len - *plen);
     *pbuf = buf;
     *plen = len;
+    return written;
 }
 
 bool

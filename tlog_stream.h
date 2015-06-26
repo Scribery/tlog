@@ -87,11 +87,13 @@ extern bool tlog_stream_is_empty(const struct tlog_stream *stream);
  * @param plen      Location of/for the length of the data to write.
  * @param pmeta     Location of/for the meta data output pointer.
  * @param prem      Location of/for the total remaining output space.
+ *
+ * @return Number of input bytes written.
  */
-extern void tlog_stream_write(struct tlog_stream *stream,
-                              const uint8_t **pbuf, size_t *plen,
-                              uint8_t **pmeta,
-                              size_t *prem);
+extern size_t tlog_stream_write(struct tlog_stream *stream,
+                                const uint8_t **pbuf, size_t *plen,
+                                uint8_t **pmeta,
+                                size_t *prem);
 
 /**
  * Flush a stream - write metadata record to reserved space and reset runs.
