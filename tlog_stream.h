@@ -26,7 +26,7 @@
 #include "tlog_rc.h"
 #include "tlog_utf8.h"
 
-#define TLOG_STREAM_SIZE_MIN    64
+#define TLOG_STREAM_SIZE_MIN    32
 
 /** I/O stream */
 struct tlog_stream {
