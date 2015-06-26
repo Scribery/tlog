@@ -22,6 +22,8 @@ dist_noinst_DATA = tlog.spec
 bin_PROGRAMS = tlog
 tlog_SOURCES = \
     tlog.c          \
+    tlog_io.c       \
+    tlog_io.h       \
     tlog_misc.c     \
     tlog_misc.h     \
     tlog_rc.h       \
@@ -35,12 +37,14 @@ tlog_SOURCES = \
 tlog_LDADD = -lutil
 
 TESTS = \
+    tlog_sink_test              \
     tlog_stream_btoa_test       \
     tlog_stream_enc_bin_test    \
     tlog_stream_enc_txt_test    \
     tlog_stream_test
 
 check_PROGRAMS = \
+    tlog_sink_test              \
     tlog_stream_btoa_test       \
     tlog_stream_enc_bin_test    \
     tlog_stream_enc_txt_test    \
@@ -64,6 +68,14 @@ tlog_stream_enc_txt_test_SOURCES = \
 tlog_stream_test_SOURCES = \
     tlog_stream.c           \
     tlog_stream_test.c      \
+    tlog_test.c             \
+    tlog_test.h             \
+    tlog_utf8.c
+tlog_sink_test_SOURCES = \
+    tlog_io.c               \
+    tlog_sink.c             \
+    tlog_sink_test.c        \
+    tlog_stream.c           \
     tlog_test.c             \
     tlog_test.h             \
     tlog_utf8.c

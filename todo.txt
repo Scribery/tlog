@@ -50,3 +50,6 @@ Fix negative position timestamp we get sometimes.
 Add a start message with the terminal type.
 
 Add message versions
+
+Move clock management outside tlog_sink. This will allow the user code to
+choose the timer and the tests to become reliable.

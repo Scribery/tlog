@@ -141,7 +141,7 @@ main(int argc, char **argv)
      * Parent
      */
     /* Log initial window size */
-    if (tlog_sink_write_window(sink, winsize.ws_col, winsize.ws_row) !=
+    if (tlog_sink_window_write(sink, winsize.ws_col, winsize.ws_row) !=
             TLOG_RC_OK) {
         fprintf(stderr, "Failed logging window size: %s\n", strerror(errno));
         return 1;
@@ -211,7 +211,7 @@ main(int argc, char **argv)
             if (new_winsize.ws_row != winsize.ws_row ||
                 new_winsize.ws_col != winsize.ws_col) {
                 /* Log window size */
-                if (tlog_sink_write_window(sink, new_winsize.ws_col,
+                if (tlog_sink_window_write(sink, new_winsize.ws_col,
                                                  new_winsize.ws_row) !=
                         TLOG_RC_OK) {
                     fprintf(stderr, "Failed logging window size: %s\n",
@@ -242,8 +242,8 @@ main(int argc, char **argv)
                        input_len - input_pos);
             if (rc >= 0) {
                 /* Log delivered input */
-                if (tlog_sink_write_input(sink, input_buf + input_pos,
-                                          (size_t)rc) != TLOG_RC_OK) {
+                if (tlog_sink_io_write(sink, false, input_buf + input_pos,
+                                       (size_t)rc) != TLOG_RC_OK) {
                     fprintf(stderr, "Failed logging input: %s\n", strerror(errno));
                     break;
                 }
@@ -269,8 +269,8 @@ main(int argc, char **argv)
                        output_len - output_pos);
             if (rc >= 0) {
                 /* Log delivered output */
-                if (tlog_sink_write_output(sink, output_buf + output_pos,
-                                          (size_t)rc) != TLOG_RC_OK) {
+                if (tlog_sink_io_write(sink, true, output_buf + output_pos,
+                                       (size_t)rc) != TLOG_RC_OK) {
                     fprintf(stderr, "Failed logging output: %s\n", strerror(errno));
                     break;
                 }
@@ -332,8 +332,14 @@ main(int argc, char **argv)
         }
     }
 
+    /* Cut I/O log (write incomplete characters as binary) */
+    if (tlog_sink_io_cut(sink) != TLOG_RC_OK) {
+        fprintf(stderr, "Failed cutting-off I/O log: %s\n", strerror(errno));
+        return 1;
+    }
+
     /* Flush I/O log */
-    if (tlog_sink_flush(sink) != TLOG_RC_OK) {
+    if (tlog_sink_io_flush(sink) != TLOG_RC_OK) {
         fprintf(stderr, "Failed flushing I/O log: %s\n", strerror(errno));
         return 1;
     }

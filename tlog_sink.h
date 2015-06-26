@@ -28,41 +28,22 @@
 #include <time.h>
 #include <stdbool.h>
 #include "tlog_rc.h"
-#include "tlog_stream.h"
+#include "tlog_io.h"
 
-/** Minimum value of io_max_len creation parameter */
-#define TLOG_SINK_IO_MAX_LEN_MIN    TLOG_MAX(64, TLOG_STREAM_SIZE_MIN)
-
-/** I/O state and parameters of a sink instance */
-struct tlog_sink_io {
-    size_t              max_len;    /**< Maximum total data length and
-                                         size of each buffer below */
-    size_t              len;        /**< Total data length */
-
-    uint8_t            *input_buf;  /**< Input buffer */
-    size_t              input_len;  /**< Input length */
-
-    uint8_t            *output_buf; /**< Output buffer */
-    size_t              output_len; /**< Output length */
-
-    uint8_t            *timing_buf; /**< Timing buffer */
-    size_t              timing_len; /**< Timing length */
-
-    struct timespec     first;      /**< First write timestamp */
-    struct timespec     last;       /**< Last write timestamp */
-};
+/** Minimum value of I/O buffer size */
+#define TLOG_SINK_IO_SIZE_MIN   TLOG_IO_SIZE_MIN
 
 /* Sink instance */
 struct tlog_sink {
-    int                     fd;             /**< Log output file descriptor */
-    char                   *hostname;       /**< Hostname */
-    unsigned int            session_id;     /**< Session ID */
-    size_t                  message_id;     /**< Next message ID */
-    clockid_t               clock_id;       /**< ID of the clock to use */
-    struct timespec         start;          /**< Sink creation timestamp */
-    struct tlog_sink_io     io;             /**< I/O state and parameters */
-    uint8_t                *message_buf;    /**< Message buffer pointer */
-    size_t                  message_len;    /**< Message buffer length */
+    int                 fd;             /**< Log output file descriptor */
+    char               *hostname;       /**< Hostname */
+    unsigned int        session_id;     /**< Session ID */
+    size_t              message_id;     /**< Next message ID */
+    clockid_t           clock_id;       /**< ID of the clock to use */
+    struct timespec     start;          /**< Sink creation timestamp */
+    struct tlog_io      io;             /**< I/O buffer and state */
+    uint8_t            *message_buf;    /**< Message buffer pointer */
+    size_t              message_len;    /**< Message buffer length */
 };
 
 /**
@@ -72,7 +53,7 @@ struct tlog_sink {
  *
  * @return True if the sink is valid, false otherwise.
  */
-extern bool tlog_sink_valid(const struct tlog_sink *sink);
+extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
 
 /**
  * Initialize a log sink.
@@ -81,7 +62,7 @@ extern bool tlog_sink_valid(const struct tlog_sink *sink);
  * @param fd                File descriptor to write the log to.
  * @param hostname          Hostname to use in log messages.
  * @param session_id        Session ID to use in log messages.
- * @param io_max_len        Maximum I/O message payload length.
+ * @param io_size           Maximum I/O message payload length.
  *
  * @return Status code.
  */
@@ -89,7 +70,7 @@ extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
                               int fd,
                               const char *hostname,
                               unsigned int session_id,
-                              size_t io_max_len);
+                              size_t io_size);
 
 /**
  * Create (allocate and initialize) a log sink.
@@ -98,7 +79,7 @@ extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
  * @param fd                File descriptor to write the log to.
  * @param hostname          Hostname to use in log messages.
  * @param session_id        Session ID to use in log messages.
- * @param io_max_len        Maximum I/O message payload length.
+ * @param io_size           Maximum I/O message payload length.
  *
  * @return Status code.
  */
@@ -106,7 +87,7 @@ extern tlog_rc tlog_sink_create(struct tlog_sink **psink,
                                 int fd,
                                 const char *hostname,
                                 unsigned int session_id,
-                                size_t io_max_len);
+                                size_t io_size);
 
 /**
  * Write window size to a log sink.
@@ -117,42 +98,40 @@ extern tlog_rc tlog_sink_create(struct tlog_sink **psink,
  *
  * @return Status code.
  */
-extern tlog_rc tlog_sink_write_window(struct tlog_sink *sink,
+extern tlog_rc tlog_sink_window_write(struct tlog_sink *sink,
                                       unsigned short int width,
                                       unsigned short int height);
 
 /**
- * Write terminal input to a log sink.
+ * Write terminal I/O to a log sink.
  *
- * @param sink  Pointer to the sink to write input to.
- * @param ptr   Input buffer pointer.
- * @param len   Input buffer length.
- *
- * @return Status code.
- */
-extern tlog_rc tlog_sink_write_input(struct tlog_sink *sink,
-                                     const uint8_t *buf, size_t len);
-
-/**
- * Write terminal output to a log sink.
- *
- * @param sink  Pointer to the sink to write output to.
- * @param ptr   Output buffer pointer.
- * @param len   Output buffer length.
+ * @param sink      Pointer to the sink to write I/O to.
+ * @param output    True if writing output, false if input.
+ * @param ptr       Input buffer pointer.
+ * @param len       Input buffer length.
  *
  * @return Status code.
  */
-extern tlog_rc tlog_sink_write_output(struct tlog_sink *sink,
-                                      const uint8_t *buf, size_t len);
+extern tlog_rc tlog_sink_io_write(struct tlog_sink *sink, bool output,
+                                  const uint8_t *buf, size_t len);
 
 /**
- * Flush any I/O data pending in a log sink.
+ * Cut a sink I/O - write pending incomplete characters.
+ *
+ * @param sink  The sink to cut I/O for.
+ *
+ * @return Status code.
+ */
+extern tlog_rc tlog_sink_io_cut(struct tlog_sink *sink);
+
+/**
+ * Flush I/O pending in a log sink, on a character boundary.
  *
  * @param sink  The sink to flush.
  *
  * @return Status code.
  */
-extern tlog_rc tlog_sink_flush(struct tlog_sink *sink);
+extern tlog_rc tlog_sink_io_flush(struct tlog_sink *sink);
 
 /**
  * Cleanup a log sink. Can be called more than once.
