@@ -31,6 +31,9 @@
 #include <stdio.h>
 #include "tlog_sink.h"
 
+#define IO_LATENCY  10
+#define BUF_SIZE    4096
+
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 /**< Number of the signal causing exit */
@@ -53,6 +56,16 @@ winch_sighandler(int signum)
     sigwinch_caught++;
 }
 
+/* Number of ALRM signals caught */
+static volatile sig_atomic_t alarm_caught = 0;
+
+static void
+alarm_sighandler(int signum)
+{
+    (void)signum;
+    alarm_caught++;
+}
+
 enum fd_idx {
     FD_IDX_STDIN,
     FD_IDX_MASTER,
@@ -70,6 +83,10 @@ main(int argc, char **argv)
     pid_t child_pid;
     sig_atomic_t last_sigwinch_caught = 0;
     sig_atomic_t new_sigwinch_caught;
+    sig_atomic_t last_alarm_caught = 0;
+    sig_atomic_t new_alarm_caught;
+    bool alarm_set = false;
+    bool io_pending = false;
     struct termios orig_termios;
     struct termios raw_termios;
     struct winsize winsize;
@@ -77,10 +94,10 @@ main(int argc, char **argv)
     size_t i, j;
     struct sigaction sa;
     struct pollfd fds[FD_IDX_NUM];
-    uint8_t input_buf[1024];
+    uint8_t input_buf[BUF_SIZE];
     size_t input_pos = 0;
     size_t input_len = 0;
-    uint8_t output_buf[1024];
+    uint8_t output_buf[BUF_SIZE];
     size_t output_pos = 0;
     size_t output_len = 0;
     int status = 1;
@@ -102,7 +119,7 @@ main(int argc, char **argv)
     }
 
     /* Create the log sink */
-    if (tlog_sink_create(&sink, log_fd, "localhost", 1, 1024) != TLOG_RC_OK) {
+    if (tlog_sink_create(&sink, log_fd, "localhost", 1, BUF_SIZE) != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
                 strerror(errno));
         return 1;
@@ -168,6 +185,13 @@ main(int argc, char **argv)
     /* NOTE: no SA_RESTART on purpose */
     sa.sa_flags = 0;
     sigaction(SIGWINCH, &sa, NULL);
+
+    /* Setup ALRM signal handler */
+    sa.sa_handler = alarm_sighandler;
+    sigemptyset(&sa.sa_mask);
+    /* NOTE: no SA_RESTART on purpose */
+    sa.sa_flags = 0;
+    sigaction(SIGALRM, &sa, NULL);
 
     /* Switch the terminal to raw mode */
     raw_termios = orig_termios;
@@ -241,13 +265,16 @@ main(int argc, char **argv)
             rc = write(master_fd, input_buf + input_pos,
                        input_len - input_pos);
             if (rc >= 0) {
-                /* Log delivered input */
-                if (tlog_sink_io_write(sink, false, input_buf + input_pos,
-                                       (size_t)rc) != TLOG_RC_OK) {
-                    fprintf(stderr, "Failed logging input: %s\n", strerror(errno));
-                    break;
+                if (rc > 0) {
+                    /* Log delivered input */
+                    if (tlog_sink_io_write(sink, false, input_buf + input_pos,
+                                           (size_t)rc) != TLOG_RC_OK) {
+                        fprintf(stderr, "Failed logging input: %s\n", strerror(errno));
+                        break;
+                    }
+                    io_pending = true;
+                    input_pos += rc;
                 }
-                input_pos += rc;
                 /* If interrupted by a signal handler */
                 if (input_pos < input_len)
                     continue;
@@ -268,13 +295,16 @@ main(int argc, char **argv)
             rc = write(STDOUT_FILENO, output_buf + output_pos,
                        output_len - output_pos);
             if (rc >= 0) {
-                /* Log delivered output */
-                if (tlog_sink_io_write(sink, true, output_buf + output_pos,
-                                       (size_t)rc) != TLOG_RC_OK) {
-                    fprintf(stderr, "Failed logging output: %s\n", strerror(errno));
-                    break;
+                if (rc > 0) {
+                    /* Log delivered output */
+                    if (tlog_sink_io_write(sink, true, output_buf + output_pos,
+                                           (size_t)rc) != TLOG_RC_OK) {
+                        fprintf(stderr, "Failed logging output: %s\n", strerror(errno));
+                        break;
+                    }
+                    io_pending = true;
+                    output_pos += rc;
                 }
-                output_pos += rc;
                 /* If interrupted by a signal handler */
                 if (output_pos < output_len)
                     continue;
@@ -290,6 +320,23 @@ main(int argc, char **argv)
                             strerror(errno));
                 break;
             };
+        }
+
+        /*
+         * Handle I/O latency limit
+         */
+        new_alarm_caught = alarm_caught;
+        if (new_alarm_caught != last_alarm_caught) {
+            alarm_set = false;
+            if (tlog_sink_io_flush(sink) != TLOG_RC_OK) {
+                fprintf(stderr, "Failed flushing I/O log: %s\n", strerror(errno));
+                return 1;
+            }
+            last_alarm_caught = new_alarm_caught;
+            io_pending = false;
+        } else if (io_pending && !alarm_set) {
+            alarm(IO_LATENCY);
+            alarm_set = true;
         }
 
         /*
