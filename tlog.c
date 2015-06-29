@@ -22,6 +22,10 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#include <limits.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
@@ -72,15 +76,87 @@ enum fd_idx {
     FD_IDX_NUM
 };
 
+/**
+ * Get process session ID.
+ *
+ * @param pid   Location for the retrieved session ID.
+ *
+ * @return Status code.
+ */
+static tlog_rc
+get_session_id(unsigned int *pid)
+{
+    FILE *file;
+    int orig_errno;
+    int rc;
+
+    assert(pid != NULL);
+
+    file = fopen("/proc/self/sessionid", "r");
+    if (file == NULL)
+        return TLOG_RC_FAILURE;
+    rc = fscanf(file, "%u", pid);
+    orig_errno = errno;
+    fclose(file);
+    errno = orig_errno;
+    if (rc == 1)
+        return TLOG_RC_OK;
+    if (rc == 0)
+        errno = EINVAL;
+
+    return TLOG_RC_FAILURE;
+}
+
+/**
+ * Get fully-qualified name of this host.
+ *
+ * @param pfqdn     Location for the dynamically-allocated name.
+ *
+ * @return Status code.
+ */
+static tlog_rc
+get_fqdn(char **pfqdn, int *pgai_error)
+{
+    char hostname[HOST_NAME_MAX + 1];
+    struct addrinfo hints = {.ai_family = AF_UNSPEC,
+                             .ai_flags  = AI_CANONNAME};
+    struct addrinfo *info;
+
+    assert(pfqdn != NULL);
+    assert(pgai_error != NULL);
+
+    *pgai_error = 0;
+
+    /* Get hostname */
+    if (gethostname(hostname, sizeof(hostname)) < 0)
+        return TLOG_RC_FAILURE;
+
+    /* Resolve hostname to FQDN */
+    *pgai_error = getaddrinfo(hostname, NULL, &hints, &info);
+    if (*pgai_error != 0)
+        return TLOG_RC_FAILURE;
+
+    /* Duplicate retrieved FQDN */
+    *pfqdn = strdup(info->ai_canonname);
+    freeaddrinfo(info);
+    if (*pfqdn == NULL)
+        return TLOG_RC_FAILURE;
+
+    return TLOG_RC_OK;
+}
+
 int
 main(int argc, char **argv)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     int log_fd;
+    int gai_error;
+    char *fqdn;
     struct tlog_sink *sink;
     ssize_t rc;
     int master_fd;
     pid_t child_pid;
+    unsigned int session_id;
     sig_atomic_t last_sigwinch_caught = 0;
     sig_atomic_t new_sigwinch_caught;
     sig_atomic_t last_alarm_caught = 0;
@@ -108,6 +184,20 @@ main(int argc, char **argv)
         return 1;
     }
 
+    /* Get host FQDN */
+    if (get_fqdn(&fqdn, &gai_error) != TLOG_RC_OK) {
+        fprintf(stderr, "Failed retrieving host FQDN: %s\n",
+                gai_error == 0 ? strerror(errno) : gai_strerror(gai_error));
+        return 1;
+    }
+
+    /* Get session ID */
+    if (get_session_id(&session_id) != TLOG_RC_OK) {
+        fprintf(stderr, "Failed retrieving session ID: %s\n",
+                strerror(errno));
+        return 1;
+    }
+
     /* Open log file */
     log_fd = open("tlog.log",
                   O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
@@ -119,7 +209,8 @@ main(int argc, char **argv)
     }
 
     /* Create the log sink */
-    if (tlog_sink_create(&sink, log_fd, "localhost", 1, BUF_SIZE) != TLOG_RC_OK) {
+    if (tlog_sink_create(&sink, log_fd, fqdn,
+                         session_id, BUF_SIZE) != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
                 strerror(errno));
         return 1;
