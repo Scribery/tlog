@@ -59,3 +59,5 @@ Disable assertions in non-debug build.
 Consider removing tlog_rc type and using bool instead.
 
 Refactor tlog.c
+
+Make proper stream snapshots in tlog_io_write.
