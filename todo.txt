@@ -53,3 +53,9 @@ Add message versions
 
 Move clock management outside tlog_sink. This will allow the user code to
 choose the timer and the tests to become reliable.
+
+Disable assertions in non-debug build.
+
+Consider removing tlog_rc type and using bool instead.
+
+Refactor tlog.c
