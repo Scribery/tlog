@@ -199,7 +199,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
         (char *)sink->message_buf, sink->message_len,
         "{"
             "\"type\":"     "\"window\","
-            "\"hostname\":" "\"%s\","
+            "\"host\":"     "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
             "\"pos\":"      "%ld.%03ld,"
@@ -277,7 +277,7 @@ tlog_sink_io_flush(struct tlog_sink *sink)
         (char *)sink->message_buf, sink->message_len,
         "{"
             "\"type\":"     "\"io\","
-            "\"hostname\":" "\"%s\","
+            "\"host\":"     "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
             "\"pos\":"      "%ld.%03ld,"
