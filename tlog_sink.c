@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <syslog.h>
 #include "tlog_sink.h"
 #include "tlog_misc.h"
 
@@ -53,7 +54,6 @@ tlog_sink_init(struct tlog_sink *sink,
     struct timespec res;
 
     assert(sink != NULL);
-    assert(fd >= 0);
     assert(hostname != NULL);
     assert(io_size >= TLOG_IO_SIZE_MIN);
 
@@ -109,7 +109,6 @@ tlog_sink_create(struct tlog_sink **psink,
 {
     struct tlog_sink *sink;
 
-    assert(fd >= 0);
     assert(hostname != NULL);
     assert(io_size >= TLOG_IO_SIZE_MIN);
 
@@ -143,15 +142,14 @@ bool
 tlog_sink_is_valid(const struct tlog_sink *sink)
 {
     return sink != NULL &&
-           sink->fd >= 0 &&
            sink->hostname != NULL &&
            tlog_io_is_valid(&sink->io);
 }
 
 /**
- * Write to a file descriptor, retrying on incomplete writes and EINTR.
+ * Write to a file descriptor or syslog, retrying on incomplete writes and EINTR.
  *
- * @param fd    File descriptor to write to.
+ * @param fd    File descriptor to write to, or -1 for writing to syslog.
  * @param buf   Pointer to the buffer to write.
  * @param len   Length of the buffer to write.
  *
@@ -161,21 +159,25 @@ static tlog_rc
 tlog_sink_retried_write(int fd, uint8_t *buf, size_t len)
 {
     ssize_t rc;
-    assert(fd >= 0);
     assert(buf != NULL || len == 0);
 
-    while (true) {
-        rc = write(fd, buf, len);
-        if (rc < 0) {
-            if (errno == EINTR)
-                continue;
-            else
-                return TLOG_RC_FAILURE;
+    if (fd < 0) {
+        syslog(LOG_INFO, "%.*s", (int)len, (const char *)buf);
+        return TLOG_RC_OK;
+    } else {
+        while (true) {
+            rc = write(fd, buf, len);
+            if (rc < 0) {
+                if (errno == EINTR)
+                    continue;
+                else
+                    return TLOG_RC_FAILURE;
+            }
+            if ((size_t)rc == len)
+                return TLOG_RC_OK;
+            buf += rc;
+            len -= (size_t)rc;
         }
-        if ((size_t)rc == len)
-            return TLOG_RC_OK;
-        buf += rc;
-        len -= (size_t)rc;
     }
 }
 
