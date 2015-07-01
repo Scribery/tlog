@@ -33,6 +33,7 @@
 #include <stdbool.h>
 #include <poll.h>
 #include <stdio.h>
+#include <syslog.h>
 #include "tlog_sink.h"
 
 #define IO_LATENCY  10
@@ -149,7 +150,6 @@ int
 main(int argc, char **argv)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
-    int log_fd;
     int gai_error;
     char *fqdn;
     struct tlog_sink *sink;
@@ -198,18 +198,11 @@ main(int argc, char **argv)
         return 1;
     }
 
-    /* Open log file */
-    log_fd = open("tlog.log",
-                  O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC,
-                  S_IRWXU | S_IRWXG | S_IRWXO);
-    if (log_fd < 0) {
-        fprintf(stderr, "Failed opening log file: %s\n",
-                strerror(errno));
-        return 1;
-    }
+    /* Open syslog */
+    openlog("tlog", LOG_NDELAY, LOG_LOCAL0);
 
     /* Create the log sink */
-    if (tlog_sink_create(&sink, log_fd, fqdn,
+    if (tlog_sink_create(&sink, -1, fqdn,
                          session_id, BUF_SIZE) != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
                 strerror(errno));
