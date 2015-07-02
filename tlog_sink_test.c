@@ -261,18 +261,18 @@ main(void)
      .data = {.delay = {_data_init_args}}}
 
 #define MSG_WINDOW(_id_tkn, _pos_tkn, _width_tkn, _height_tkn) \
-    "{\"type\":\"window\",\"hostname\":\"localhost\",\"session\":0,"    \
-      "\"id\":" #_id_tkn ",\"pos\":" #_pos_tkn ","                      \
-      "\"width\":" #_width_tkn ",\"height\":" #_height_tkn              \
+    "{\"type\":\"window\",\"host\":\"localhost\",\"session\":0,"    \
+      "\"id\":" #_id_tkn ",\"pos\":" #_pos_tkn ","                  \
+      "\"width\":" #_width_tkn ",\"height\":" #_height_tkn          \
     "}\n"
 
 #define MSG_IO(_id_tkn, _pos_tkn, _timing, \
-               _in_txt, _in_bin, _out_txt, _out_bin)                \
-    "{\"type\":\"io\",\"hostname\":\"localhost\",\"session\":0,"    \
-      "\"id\":" #_id_tkn ",\"pos\":" #_pos_tkn ","                  \
-      "\"timing\":\"" _timing "\","                                 \
-      "\"in_txt\":\"" _in_txt "\",\"in_bin\":[" _in_bin "],"        \
-      "\"out_txt\":\"" _out_txt "\",\"out_bin\":[" _out_bin "]"     \
+               _in_txt, _in_bin, _out_txt, _out_bin)            \
+    "{\"type\":\"io\",\"host\":\"localhost\",\"session\":0,"    \
+      "\"id\":" #_id_tkn ",\"pos\":" #_pos_tkn ","              \
+      "\"timing\":\"" _timing "\","                             \
+      "\"in_txt\":\"" _in_txt "\",\"in_bin\":[" _in_bin "],"    \
+      "\"out_txt\":\"" _out_txt "\",\"out_bin\":[" _out_bin "]" \
     "}\n"
 
     TEST(null,              .op_list = {OP_NONE},
