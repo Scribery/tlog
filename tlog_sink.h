@@ -37,6 +37,7 @@
 struct tlog_sink {
     int                 fd;             /**< Log output file descriptor */
     char               *hostname;       /**< Hostname */
+    char               *username;       /**< Username */
     unsigned int        session_id;     /**< Session ID */
     size_t              message_id;     /**< Next message ID */
     clockid_t           clock_id;       /**< ID of the clock to use */
@@ -69,6 +70,7 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
 extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
                               int fd,
                               const char *hostname,
+                              const char *username,
                               unsigned int session_id,
                               size_t io_size);
 
@@ -86,6 +88,7 @@ extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
 extern tlog_rc tlog_sink_create(struct tlog_sink **psink,
                                 int fd,
                                 const char *hostname,
+                                const char *username,
                                 unsigned int session_id,
                                 size_t io_size);
 

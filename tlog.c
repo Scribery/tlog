@@ -25,6 +25,7 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <pwd.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <string.h>
@@ -152,6 +153,7 @@ main(int argc, char **argv)
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     int gai_error;
     char *fqdn;
+    struct passwd *passwd;
     struct tlog_sink *sink;
     ssize_t rc;
     int master_fd;
@@ -201,8 +203,20 @@ main(int argc, char **argv)
     /* Open syslog */
     openlog("tlog", LOG_NDELAY, LOG_LOCAL0);
 
+    /* Get effective user entry */
+    errno = 0;
+    passwd = getpwuid(geteuid());
+    if (passwd == NULL) {
+        if (errno == 0)
+            fprintf(stderr, "User entry not found\n");
+        else
+            fprintf(stderr, "Failed retrieving user entry: %s\n",
+                    strerror(errno));
+        return 1;
+    }
+
     /* Create the log sink */
-    if (tlog_sink_create(&sink, -1, fqdn,
+    if (tlog_sink_create(&sink, -1, fqdn, passwd->pw_name,
                          session_id, BUF_SIZE) != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
                 strerror(errno));

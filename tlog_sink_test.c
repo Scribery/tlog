@@ -82,6 +82,7 @@ struct op {
 
 struct test {
     const char     *hostname;
+    const char     *username;
     unsigned int    session_id;
     struct op       op_list[16];
     const char     *output;
@@ -114,8 +115,8 @@ test(const char *n, const struct test t)
         exit(1);
     }
 
-    if (tlog_sink_init(&sink, fd, t.hostname, t.session_id, SIZE) !=
-            TLOG_RC_OK) {
+    if (tlog_sink_init(&sink, fd, t.hostname, t.username,
+                       t.session_id, SIZE) != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the sink: %s\n",
                 strerror(errno));
         exit(1);
@@ -237,6 +238,7 @@ main(void)
     passed = test(#_name_token,                 \
                   (struct test){                \
                     .hostname = "localhost",    \
+                    .username = "user",         \
                     .session_id = 0,            \
                     _struct_init_args           \
                   }                             \
@@ -261,14 +263,16 @@ main(void)
      .data = {.delay = {_data_init_args}}}
 
 #define MSG_WINDOW(_id_tkn, _pos_tkn, _width_tkn, _height_tkn) \
-    "{\"type\":\"window\",\"host\":\"localhost\",\"session\":0,"    \
-      "\"id\":" #_id_tkn ",\"pos\":" #_pos_tkn ","                  \
-      "\"width\":" #_width_tkn ",\"height\":" #_height_tkn          \
+    "{\"type\":\"window\",\"host\":\"localhost\","              \
+      "\"user\":\"user\",\"session\":0,"                        \
+      "\"id\":" #_id_tkn ",\"pos\":" #_pos_tkn ","              \
+      "\"width\":" #_width_tkn ",\"height\":" #_height_tkn      \
     "}\n"
 
 #define MSG_IO(_id_tkn, _pos_tkn, _timing, \
                _in_txt, _in_bin, _out_txt, _out_bin)            \
-    "{\"type\":\"io\",\"host\":\"localhost\",\"session\":0,"    \
+    "{\"type\":\"io\",\"host\":\"localhost\","                  \
+      "\"user\":\"user\",\"session\":0,"                        \
       "\"id\":" #_id_tkn ",\"pos\":" #_pos_tkn ","              \
       "\"timing\":\"" _timing "\","                             \
       "\"in_txt\":\"" _in_txt "\",\"in_bin\":[" _in_bin "],"    \

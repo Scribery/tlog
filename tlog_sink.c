@@ -39,6 +39,8 @@ tlog_sink_cleanup(struct tlog_sink *sink)
     tlog_io_cleanup(&sink->io);
     free(sink->message_buf);
     sink->message_buf = NULL;
+    free(sink->username);
+    sink->username = NULL;
     free(sink->hostname);
     sink->hostname = NULL;
 }
@@ -47,6 +49,7 @@ tlog_rc
 tlog_sink_init(struct tlog_sink *sink,
                int fd,
                const char *hostname,
+               const char *username,
                unsigned int session_id,
                size_t io_size)
 {
@@ -63,6 +66,10 @@ tlog_sink_init(struct tlog_sink *sink,
 
     sink->hostname = strdup(hostname);
     if (sink->hostname == NULL)
+        goto error;
+
+    sink->username = strdup(username);
+    if (sink->username == NULL)
         goto error;
 
     sink->session_id = session_id;
@@ -104,6 +111,7 @@ tlog_rc
 tlog_sink_create(struct tlog_sink **psink,
                  int fd,
                  const char *hostname,
+                 const char *username,
                  unsigned int session_id,
                  size_t io_size)
 {
@@ -116,7 +124,7 @@ tlog_sink_create(struct tlog_sink **psink,
     if (sink == NULL)
         return TLOG_RC_FAILURE;
 
-    if (tlog_sink_init(sink, fd, hostname, session_id, io_size) !=
+    if (tlog_sink_init(sink, fd, hostname, username, session_id, io_size) !=
             TLOG_RC_OK) {
         free(sink);
         return TLOG_RC_FAILURE;
@@ -202,6 +210,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
         "{"
             "\"type\":"     "\"window\","
             "\"host\":"     "\"%s\","
+            "\"user\":"     "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
             "\"pos\":"      "%ld.%03ld,"
@@ -209,6 +218,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
             "\"height\":"   "%hu"
         "}\n",
         sink->hostname,
+        sink->username,
         sink->session_id,
         sink->message_id,
         pos.tv_sec, pos.tv_nsec / 1000000,
@@ -280,6 +290,7 @@ tlog_sink_io_flush(struct tlog_sink *sink)
         "{"
             "\"type\":"     "\"io\","
             "\"host\":"     "\"%s\","
+            "\"user\":"     "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
             "\"pos\":"      "%ld.%03ld,"
@@ -290,6 +301,7 @@ tlog_sink_io_flush(struct tlog_sink *sink)
             "\"out_bin\":"  "[%.*s]"
         "}\n",
         sink->hostname,
+        sink->username,
         sink->session_id,
         sink->message_id,
         pos.tv_sec, pos.tv_nsec / 1000000,
