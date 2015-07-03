@@ -31,6 +31,7 @@ tlog_SOURCES = \
     tlog_sink.h     \
     tlog_stream.c   \
     tlog_stream.h   \
+    tlog_trx.h      \
     tlog_utf8.c     \
     tlog_utf8.h
 

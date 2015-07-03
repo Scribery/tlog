@@ -25,6 +25,7 @@
 
 #include "tlog_rc.h"
 #include "tlog_utf8.h"
+#include "tlog_trx.h"
 
 #define TLOG_STREAM_SIZE_MIN    32
 
@@ -47,6 +48,35 @@ struct tlog_stream {
     size_t              bin_dig;        /**< Binary output run digit limit */
     size_t              bin_len;        /**< Binary output length in bytes */
 };
+
+/** Stream transaction store */
+typedef struct tlog_stream tlog_stream_trx_store;
+
+/**
+ * Make a transaction backup of a stream.
+ *
+ * @param store     Transaction store to backup to.
+ * @param object    Stream object to backup.
+ */
+static inline void
+tlog_stream_trx_backup(tlog_stream_trx_store *store,
+                       struct tlog_stream *object)
+{
+    memcpy(store, object, sizeof(*store));
+}
+
+/**
+ * Restore a stream from a transaction backup.
+ *
+ * @param store     Transaction store to restore from.
+ * @param object    Stream object to restore.
+ */
+static inline void
+tlog_stream_trx_restore(tlog_stream_trx_store *store,
+                        struct tlog_stream *object)
+{
+    memcpy(object, store, sizeof(*object));
+}
 
 /**
  * Initialize a stream.

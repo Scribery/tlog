@@ -27,6 +27,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include "tlog_rc.h"
+#include "tlog_trx.h"
 #include "tlog_misc.h"
 #include "tlog_stream.h"
 
@@ -48,6 +49,41 @@ struct tlog_io {
     struct timespec     first;      /**< First write timestamp */
     struct timespec     last;       /**< Last write timestamp */
 };
+
+/** I/O transaction store */
+typedef struct tlog_io_trx_store {
+    struct tlog_io          self;
+    tlog_stream_trx_store   input;
+    tlog_stream_trx_store   output;
+} tlog_io_trx_store;
+
+/**
+ * Make a transaction backup of an I/O.
+ *
+ * @param store     Transaction store to backup to.
+ * @param object    I/O object to backup.
+ */
+static inline void
+tlog_io_trx_backup(tlog_io_trx_store *store, struct tlog_io *object)
+{
+    memcpy(&store->self, object, sizeof(*store));
+    tlog_stream_trx_backup(&store->input, &object->input);
+    tlog_stream_trx_backup(&store->output, &object->output);
+}
+
+/**
+ * Restore an I/O from a transaction backup.
+ *
+ * @param store     Transaction store to restore from.
+ * @param object    I/O object to restore.
+ */
+static inline void
+tlog_io_trx_restore(tlog_io_trx_store *store, struct tlog_io *object)
+{
+    memcpy(object, &store->self, sizeof(*object));
+    tlog_stream_trx_restore(&store->input, &object->input);
+    tlog_stream_trx_restore(&store->output, &object->output);
+}
 
 /**
  * Initialize an I/O buffer.
