@@ -222,6 +222,7 @@ test(const char *n, const struct test t)
     fprintf(stderr, "%s: %s\n", n, (passed ? "PASS" : "FAIL"));
 
 cleanup:
+    free(exp_output);
     free(res_output);
     if (fd >= 0)
         close(fd);
