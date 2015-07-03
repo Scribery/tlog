@@ -330,3 +330,83 @@ We need these operations:
     sink:
         tlog_sink_io_cut            write withheld incomplete I/O characters
         tlog_sink_io_flush          flush I/O and write it as a message
+
+Abstract transaction:
+
+    change some fields
+    if some action changed
+        rollback changes
+        abort
+
+Should we implement single transaction interface?
+I.e. if a transaction started on upper levels, we don't start another one?
+So there is no sub-transaction support? Would that be right? I.e. would there
+ever be a transaction trying some sub-transaction variants, aborting them and
+then settling on one variant, proceeding, and then aborting on a later action?
+Nevertheless, can't we do this with a single transaction storage anyway?
+
+An object should save only what makes sense to rollback according to all the
+possible operations.
+
+So, a tlog_io_write can look like this:
+    tlog_io_trx_start(io)
+        tlog_stream_trx_start(input)
+        tlog_stream_trx_start(output)
+    try writing delay to timing
+    if failed:
+        tlog_io_trx_abort(io)
+            tlog_stream_trx_abort(input)
+            tlog_stream_trx_abort(output)
+    try writing stream
+    if failed:
+        tlog_io_trx_abort(io)
+            tlog_stream_trx_abort(input)
+            tlog_stream_trx_abort(output)
+    tlog_io_trx_commit(io)
+        tlog_stream_trx_commit(input)
+        tlog_stream_trx_commit(output)
+
+
+Copying the state should happen only at the top level transaction start.
+Restoring the state should happen only at the top level transaction abort.
+But this way we can't do sub-transactions. Yeah, and anyway, if we're doing
+sub-transactions we're supposed to have another set of fields saved, so we can
+roll-back properly. So, let's not try to support sub-transactions for now.
+Let's just assume that only top level transactions save/rollback. So, we'll
+need a transaction nesting counter. Any level can call start increasing it, or
+abort/commit decreasing it. But only the top level will actually act on the
+decision (abort/commit). Perhaps we can come up with a facility to make adding
+transaction support to an object easier.
+
+Ah, it seems we need sub-transactions for writing characters / binary pieces
+atomically in streams. Or do we? Yeah, pretty much. We abort character /
+binary piece writing, but we commit pieces written before these. I.e. we're
+not aborting the whole stack.
+
+Another challenge: pmeta. It's not a part of stream object, it's passed into
+functions, all of them. But perhaps it should be? Then we can save it in a
+transaction as well. The same about prem. Shan't we try implementing that
+first? Hmm. It's not like they ever change, after all.
+
+Ah, nope. While we can have these pointers kept in the stream objects for ease
+of calling the object functions, we can't snapshot them as part of streams.
+They're a part of I/O object and need to be preserved as part of its own
+transactions, in tlog_io_write.
+
+Alright, then the needed depth of the transaction stack is determined by the
+upper layers. If they need a copy for their transactions, they're supposed to
+allocate and own it. We shouldn't need to allocate anything dynamically.
+Shall they be stored on the stack, then?
+
+So let's store them on the stack, but copy there only if we need a
+a new, or sub-transaction.
+
+Let's define transaction storage type for each object type, which can simply
+be the object type. Also let's define backup/restore operations for each
+object, which can simply be a memcpy. Still, that storage type should be an
+aggregate for the nested objects.
+
+If a function can't fail, it shouldn't accept a transaction pointer.
+If a function doesn't need to make backups and rollbacks, it shouldn't accept
+a transaction pointer. However, every type expected to support transactions
+should define backup/restore functions.
