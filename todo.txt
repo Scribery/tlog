@@ -65,3 +65,17 @@ Make proper stream snapshots in tlog_io_write.
 Add throttling.
 
 Observe current timestamp in tlog_io_cut.
+
+Provide comprehensive object descriptions in header files.
+
+Implement and use buffer pointer and length accessors. E.g.:
+tlog_io_get_input_ptr
+tlog_io_get_input_len
+tlog_io_get_output_ptr
+tlog_io_get_output_len
+tlog_io_get_timing_ptr
+tlog_io_get_timing_len
+
+Implement a writer interface and two writers: syslog and file.
+
+Implement source. Implement reader interface and some readers.
