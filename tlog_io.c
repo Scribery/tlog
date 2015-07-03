@@ -81,16 +81,13 @@ size_t
 tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
               bool output, const uint8_t **pbuf, size_t *plen)
 {
+    tlog_trx trx = TLOG_TRX_INIT;
+    tlog_io_trx_store trx_store;
     struct timespec delay;
     long sec;
     long msec;
     char delay_buf[32];
     int delay_rc;
-
-    uint8_t *new_timing_ptr;
-    size_t new_rem;
-    struct tlog_stream new_input;
-    struct tlog_stream new_output;
 
     size_t written;
 
@@ -103,17 +100,11 @@ tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
     if (*plen == 0)
         return 0;
 
-    /*
-     * Take a snapshot.
-     * We assume this is equivalent to a proper copy for our purposes.
-     */
-    new_input = io->input;
-    new_output = io->output;
-    new_timing_ptr = io->timing_ptr;
-    new_rem = io->rem;
+    TLOG_TRX_BEGIN(&trx, tlog_io, &trx_store, io);
 
     /* If this is the first write */
     if (tlog_timespec_is_zero(&io->first)) {
+        io->first = *timestamp;
         delay_rc = 0;
     } else {
         tlog_timespec_sub(timestamp, &io->last, &delay);
@@ -131,38 +122,32 @@ tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
     }
     assert(delay_rc >= 0);
     assert((size_t)delay_rc < sizeof(delay_buf));
+    io->last = *timestamp;
 
     /* If we need to add a delay record */
     if (delay_rc > 0) {
         /* If it doesn't fit */
-        if ((size_t)delay_rc > new_rem)
+        if ((size_t)delay_rc > io->rem) {
+            TLOG_TRX_ABORT(&trx, tlog_io, &trx_store, io);
             return 0;
-        tlog_stream_flush(&new_input, &new_timing_ptr);
-        tlog_stream_flush(&new_output, &new_timing_ptr);
-        memcpy(new_timing_ptr, delay_buf, (size_t)delay_rc);
-        new_timing_ptr += delay_rc;
-        new_rem -= delay_rc;
+        }
+        tlog_stream_flush(&io->input, &io->timing_ptr);
+        tlog_stream_flush(&io->output, &io->timing_ptr);
+        memcpy(io->timing_ptr, delay_buf, (size_t)delay_rc);
+        io->timing_ptr += delay_rc;
+        io->rem -= delay_rc;
     }
 
     /* Write as much I/O data as we can */
-    written = tlog_stream_write(output ? &new_output : &new_input,
-                                pbuf, plen, &new_timing_ptr, &new_rem);
+    written = tlog_stream_write(output ? &io->output : &io->input,
+                                pbuf, plen, &io->timing_ptr, &io->rem);
     /* If no I/O data fits */
-    if (written == 0)
+    if (written == 0) {
+        TLOG_TRX_ABORT(&trx, tlog_io, &trx_store, io);
         return 0;
+    }
 
-    /*
-     * Commit our changes.
-     * We assume this is equivalent to a proper copy for our purposes.
-     */
-    /* If this is the first write */
-    if (tlog_timespec_is_zero(&io->first))
-        io->first = *timestamp;
-    io->last = *timestamp;
-    io->input = new_input;
-    io->output = new_output;
-    io->timing_ptr = new_timing_ptr;
-    io->rem = new_rem;
+    TLOG_TRX_COMMIT(&trx);
     return written;
 }
 
