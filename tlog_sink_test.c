@@ -173,7 +173,7 @@ test(const char *n, const struct test t)
                 CHECK_OP(tlog_sink_io_flush(&sink));
                 break;
             case OP_TYPE_IO_CUT:
-                CHECK_OP(tlog_sink_io_cut(&sink, &timestamp));
+                CHECK_OP(tlog_sink_io_cut(&sink));
                 break;
             case OP_TYPE_DELAY:
                 tlog_timespec_add(&timestamp, &op->data.delay, &timestamp);
@@ -498,7 +498,7 @@ main(void)
             OP_IO_CUT,
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", ">1+1]1/1",
+         .output = MSG_IO(0, "0.000", ">1]1/1",
                           "", "", "\xf0\x9d\x84\x9e�", "240")
     );
 
@@ -576,8 +576,8 @@ main(void)
             OP_IO_CUT,
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", ">1", "", "", "\xf0\x9d\x84\x9e", "")
-                   MSG_IO(1, POS_MAX_STR, "]1/1", "", "", "�", "240")
+         .output = MSG_IO(0, "0.000", ">1]1/1",
+                          "", "", "\xf0\x9d\x84\x9e�", "240")
     );
 
     TEST(max_delay_inside_char,

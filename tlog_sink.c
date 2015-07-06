@@ -250,11 +250,10 @@ tlog_sink_io_write(struct tlog_sink *sink,
 }
 
 tlog_rc
-tlog_sink_io_cut(struct tlog_sink *sink, const struct timespec *timestamp)
+tlog_sink_io_cut(struct tlog_sink *sink)
 {
     assert(tlog_sink_is_valid(sink));
-    assert(timestamp != NULL);
-    while (!tlog_io_cut(&sink->io, timestamp)) {
+    while (!tlog_io_cut(&sink->io)) {
         if (tlog_sink_io_flush(sink) != TLOG_RC_OK)
             return TLOG_RC_FAILURE;
     }

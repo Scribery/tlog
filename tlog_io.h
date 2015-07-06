@@ -152,14 +152,12 @@ extern void tlog_io_flush(struct tlog_io *io);
 /**
  * Cut an I/O buffer - write pending incomplete characters to the buffers.
  *
- * @param io        The I/O buffer to cut.
- * @param timestamp Timestamp of the cut-off.
+ * @param io    The I/O buffer to cut.
  *
  * @return True if all incomplete characters fit into the remaining space,
  *         false otherwise.
  */
-extern bool tlog_io_cut(struct tlog_io *io,
-                        const struct timespec *timestamp);
+extern bool tlog_io_cut(struct tlog_io *io);
 
 /**
  * Empty an I/O buffer contents (but not pending incomplete characters).

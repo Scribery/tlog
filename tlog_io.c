@@ -182,21 +182,14 @@ tlog_io_flush(struct tlog_io *io)
 }
 
 bool
-tlog_io_cut(struct tlog_io *io, const struct timespec *timestamp)
+tlog_io_cut(struct tlog_io *io)
 {
     tlog_trx trx = TLOG_TRX_INIT;
     TLOG_TRX_STORE_DECL(tlog_io);
 
     assert(tlog_io_is_valid(io));
-    assert(timestamp != NULL);
 
     TLOG_TRX_BEGIN(&trx, tlog_io, io);
-
-    /* Record new timestamp */
-    if (!tlog_io_timestamp(io, timestamp)) {
-        TLOG_TRX_ABORT(&trx, tlog_io, io);
-        return false;
-    }
 
     /* Cut the streams */
     if (!tlog_stream_cut(&io->input, &io->timing_ptr, &io->rem) ||
