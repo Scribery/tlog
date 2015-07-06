@@ -82,7 +82,7 @@ tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
               bool output, const uint8_t **pbuf, size_t *plen)
 {
     tlog_trx trx = TLOG_TRX_INIT;
-    struct tlog_io_trx_store trx_store;
+    TLOG_TRX_STORE_DECL(tlog_io);
     struct timespec delay;
     long sec;
     long msec;
@@ -100,7 +100,7 @@ tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
     if (*plen == 0)
         return 0;
 
-    TLOG_TRX_BEGIN(&trx, tlog_io, &trx_store, io);
+    TLOG_TRX_BEGIN(&trx, tlog_io, io);
 
     /* If this is the first write */
     if (tlog_timespec_is_zero(&io->first)) {
@@ -128,7 +128,7 @@ tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
     if (delay_rc > 0) {
         /* If it doesn't fit */
         if ((size_t)delay_rc > io->rem) {
-            TLOG_TRX_ABORT(&trx, tlog_io, &trx_store, io);
+            TLOG_TRX_ABORT(&trx, tlog_io, io);
             return 0;
         }
         tlog_stream_flush(&io->input, &io->timing_ptr);
@@ -143,7 +143,7 @@ tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
                                 pbuf, plen, &io->timing_ptr, &io->rem);
     /* If no I/O data fits */
     if (written == 0) {
-        TLOG_TRX_ABORT(&trx, tlog_io, &trx_store, io);
+        TLOG_TRX_ABORT(&trx, tlog_io, io);
         return 0;
     }
 
@@ -163,11 +163,11 @@ bool
 tlog_io_cut(struct tlog_io *io)
 {
     tlog_trx trx = TLOG_TRX_INIT;
-    struct tlog_io_trx_store trx_store;
+    TLOG_TRX_STORE_DECL(tlog_io);
 
     assert(tlog_io_is_valid(io));
 
-    TLOG_TRX_BEGIN(&trx, tlog_io, &trx_store, io);
+    TLOG_TRX_BEGIN(&trx, tlog_io, io);
 
     if (tlog_stream_cut(&io->input, &io->timing_ptr, &io->rem) &&
         tlog_stream_cut(&io->output, &io->timing_ptr, &io->rem)) {
@@ -175,7 +175,7 @@ tlog_io_cut(struct tlog_io *io)
         return true;
     }
 
-    TLOG_TRX_ABORT(&trx, tlog_io, &trx_store, io);
+    TLOG_TRX_ABORT(&trx, tlog_io, io);
     return false;
 }
 

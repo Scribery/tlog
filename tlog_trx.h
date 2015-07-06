@@ -31,17 +31,20 @@ typedef size_t tlog_trx;
 /* Empty transaction initializer */
 #define TLOG_TRX_INIT   0
 
-#define TLOG_TRX_BEGIN(_ptrx, _type_token, _store, _object) \
-    do {                                                    \
-        if ((*(_ptrx))++ == 0)                              \
-            _type_token##_trx_backup(_store, _object);      \
+#define TLOG_TRX_STORE_DECL(_type_token) \
+    struct _type_token##_trx_store _type_token##_trx_store;
+
+#define TLOG_TRX_BEGIN(_ptrx, _type_token, _object) \
+    do {                                                                    \
+        if ((*(_ptrx))++ == 0)                                              \
+            _type_token##_trx_backup(&_type_token##_trx_store, _object);    \
     } while (0)
 
-#define TLOG_TRX_ABORT(_ptrx, _type_token, _store, _object) \
-    do {                                                    \
-        assert(*(_ptrx) != 0);                              \
-        if (--(*(_ptrx)) == 0)                              \
-            _type_token##_trx_restore(_store, _object);     \
+#define TLOG_TRX_ABORT(_ptrx, _type_token, _object) \
+    do {                                                                    \
+        assert(*(_ptrx) != 0);                                              \
+        if (--(*(_ptrx)) == 0)                                              \
+            _type_token##_trx_restore(&_type_token##_trx_store, _object);   \
     } while (0)
 
 #define TLOG_TRX_COMMIT(_ptrx) \
