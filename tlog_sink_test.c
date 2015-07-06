@@ -106,7 +106,7 @@ test(const char *n, const struct test t)
     bool passed = true;
     int fd = -1;
     char filename[] = "tlog_sink_test.XXXXXX";
-    struct timespec timestamp = {1, 0}; /* Must be non-zero */
+    struct timespec timestamp = TLOG_TIMESPEC_ZERO;
     struct tlog_sink sink;
     const struct op *op;
     off_t end;
