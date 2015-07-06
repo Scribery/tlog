@@ -88,6 +88,7 @@ tlog_timespec_is_zero(const struct timespec *t)
 
 /** Zero timespec initializer */
 #define TLOG_TIMESPEC_ZERO  ((struct timespec){0, 0})
+
 /**
  * Set a timespec value to zero.
  *
