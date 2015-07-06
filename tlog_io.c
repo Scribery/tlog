@@ -92,7 +92,7 @@ tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
     size_t written;
 
     assert(tlog_io_is_valid(io));
-    assert(timestamp != 0);
+    assert(timestamp != NULL);
     assert(pbuf != NULL);
     assert(plen != NULL);
     assert(*pbuf != NULL || *plen == 0);
