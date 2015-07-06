@@ -51,11 +51,15 @@ struct tlog_io {
 };
 
 /** I/O transaction store */
-typedef struct tlog_io_trx_store {
-    struct tlog_io          self;
-    tlog_stream_trx_store   input;
-    tlog_stream_trx_store   output;
-} tlog_io_trx_store;
+struct tlog_io_trx_store {
+    size_t              rem;        /**< Remaining total buffer space */
+    uint8_t            *timing_ptr; /**< Timing output pointer */
+    struct timespec     first;      /**< First write timestamp */
+    struct timespec     last;       /**< Last write timestamp */
+
+    struct tlog_stream_trx_store    input;  /**< Input store */
+    struct tlog_stream_trx_store    output; /**< Output store */
+};
 
 /**
  * Make a transaction backup of an I/O.
@@ -64,9 +68,12 @@ typedef struct tlog_io_trx_store {
  * @param object    I/O object to backup.
  */
 static inline void
-tlog_io_trx_backup(tlog_io_trx_store *store, struct tlog_io *object)
+tlog_io_trx_backup(struct tlog_io_trx_store *store, struct tlog_io *object)
 {
-    memcpy(&store->self, object, sizeof(*store));
+    store->rem          = object->rem;
+    store->timing_ptr   = object->timing_ptr;
+    store->first        = object->first;
+    store->last         = object->last;
     tlog_stream_trx_backup(&store->input, &object->input);
     tlog_stream_trx_backup(&store->output, &object->output);
 }
@@ -78,9 +85,12 @@ tlog_io_trx_backup(tlog_io_trx_store *store, struct tlog_io *object)
  * @param object    I/O object to restore.
  */
 static inline void
-tlog_io_trx_restore(tlog_io_trx_store *store, struct tlog_io *object)
+tlog_io_trx_restore(struct tlog_io_trx_store *store, struct tlog_io *object)
 {
-    memcpy(object, &store->self, sizeof(*object));
+    object->rem          = store->rem;
+    object->timing_ptr   = store->timing_ptr;
+    object->first        = store->first;
+    object->last         = store->last;
     tlog_stream_trx_restore(&store->input, &object->input);
     tlog_stream_trx_restore(&store->output, &object->output);
 }

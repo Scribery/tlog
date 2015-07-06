@@ -82,7 +82,7 @@ tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
               bool output, const uint8_t **pbuf, size_t *plen)
 {
     tlog_trx trx = TLOG_TRX_INIT;
-    tlog_io_trx_store trx_store;
+    struct tlog_io_trx_store trx_store;
     struct timespec delay;
     long sec;
     long msec;
@@ -163,7 +163,7 @@ bool
 tlog_io_cut(struct tlog_io *io)
 {
     tlog_trx trx = TLOG_TRX_INIT;
-    tlog_io_trx_store trx_store;
+    struct tlog_io_trx_store trx_store;
 
     assert(tlog_io_is_valid(io));
 

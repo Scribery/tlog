@@ -50,7 +50,17 @@ struct tlog_stream {
 };
 
 /** Stream transaction store */
-typedef struct tlog_stream tlog_stream_trx_store;
+struct tlog_stream_trx_store {
+    struct tlog_utf8    utf8;           /**< UTF-8 filter */
+
+    size_t              txt_run;        /**< Text input run in characters */
+    size_t              txt_dig;        /**< Text output run digit limit */
+    size_t              txt_len;        /**< Text output length in bytes */
+
+    size_t              bin_run;        /**< Binary input run in bytes */
+    size_t              bin_dig;        /**< Binary output run digit limit */
+    size_t              bin_len;        /**< Binary output length in bytes */
+};
 
 /**
  * Make a transaction backup of a stream.
@@ -59,10 +69,18 @@ typedef struct tlog_stream tlog_stream_trx_store;
  * @param object    Stream object to backup.
  */
 static inline void
-tlog_stream_trx_backup(tlog_stream_trx_store *store,
+tlog_stream_trx_backup(struct tlog_stream_trx_store *store,
                        struct tlog_stream *object)
 {
-    memcpy(store, object, sizeof(*store));
+    store->utf8     = object->utf8;
+
+    store->txt_run  = object->txt_run;
+    store->txt_dig  = object->txt_dig;
+    store->txt_len  = object->txt_len;
+
+    store->bin_run  = object->bin_run;
+    store->bin_dig  = object->bin_dig;
+    store->bin_len  = object->bin_len;
 }
 
 /**
@@ -72,10 +90,18 @@ tlog_stream_trx_backup(tlog_stream_trx_store *store,
  * @param object    Stream object to restore.
  */
 static inline void
-tlog_stream_trx_restore(tlog_stream_trx_store *store,
+tlog_stream_trx_restore(struct tlog_stream_trx_store *store,
                         struct tlog_stream *object)
 {
-    memcpy(object, store, sizeof(*object));
+    object->utf8    = store->utf8;
+
+    object->txt_run = store->txt_run;
+    object->txt_dig = store->txt_dig;
+    object->txt_len = store->txt_len;
+
+    object->bin_run = store->bin_run;
+    object->bin_dig = store->bin_dig;
+    object->bin_len = store->bin_len;
 }
 
 /**
