@@ -70,6 +70,14 @@ tlog_io_is_valid(const struct tlog_io *io)
 }
 
 bool
+tlog_io_is_pending(const struct tlog_io *io)
+{
+    assert(tlog_io_is_valid(io));
+    return tlog_stream_is_pending(&io->input) ||
+           tlog_stream_is_pending(&io->output);
+}
+
+bool
 tlog_io_is_empty(const struct tlog_io *io)
 {
     assert(tlog_io_is_valid(io));
@@ -99,7 +107,7 @@ tlog_io_timestamp(struct tlog_io *io, const struct timespec *timestamp)
     assert(timestamp != NULL);
 
     /* If this is the first write */
-    if (tlog_timespec_is_zero(&io->first)) {
+    if (tlog_io_is_empty(io) && !tlog_io_is_pending(io)) {
         io->first = *timestamp;
         delay_rc = 0;
     } else {

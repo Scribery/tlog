@@ -84,6 +84,20 @@ tlog_utf8_reset(struct tlog_utf8 *utf8)
 }
 
 /**
+ * Check if a UTF-8 filter sequence is started (any bytes were added).
+ *
+ * @param utf8  The filter to check.
+ *
+ * @return True if the sequence is started, false otherwise.
+ */
+static inline bool
+tlog_utf8_is_started(const struct tlog_utf8 *utf8)
+{
+    assert(tlog_utf8_is_valid(utf8));
+    return utf8->len > 0;
+}
+
+/**
  * Check if a UTF-8 filter sequence is ended.
  *
  * @param utf8  The filter to check.

@@ -115,8 +115,18 @@ extern tlog_rc tlog_io_init(struct tlog_io *io, size_t size);
 extern bool tlog_io_is_valid(const struct tlog_io *io);
 
 /**
- * Check if an I/O buffer is empty (no data in buffers, except the incomplete
- * characters).
+ * Check if an I/O buffer has any incomplete characters pending.
+ *
+ * @param stream    The I/O buffer to check.
+ *
+ * @return True if the I/O buffer has incomplete characters pending, false
+ *         otherwise.
+ */
+extern bool tlog_io_is_pending(const struct tlog_io *io);
+
+/**
+ * Check if an I/O buffer is empty (no data in buffers, except the possibly
+ * pending incomplete characters).
  *
  * @param io    The I/O buffer to check.
  *

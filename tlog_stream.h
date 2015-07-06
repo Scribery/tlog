@@ -125,8 +125,18 @@ extern tlog_rc tlog_stream_init(struct tlog_stream *stream, size_t size,
 extern bool tlog_stream_is_valid(const struct tlog_stream *stream);
 
 /**
- * Check if a stream is empty (no data in buffers, except the incomplete
- * character).
+ * Check if a stream has an incomplete character pending.
+ *
+ * @param stream    The stream to check.
+ *
+ * @return True if the stream has an incomplete character pending, false
+ *         otherwise.
+ */
+extern bool tlog_stream_is_pending(const struct tlog_stream *stream);
+
+/**
+ * Check if a stream is empty (no data in buffers, except the possibly
+ * pending incomplete character).
  *
  * @param stream    The stream to check.
  *

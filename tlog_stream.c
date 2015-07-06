@@ -51,6 +51,14 @@ tlog_stream_is_valid(const struct tlog_stream *stream)
 }
 
 bool
+tlog_stream_is_pending(const struct tlog_stream *stream)
+{
+    assert(tlog_stream_is_valid(stream));
+    assert(!tlog_utf8_is_ended(&stream->utf8));
+    return tlog_utf8_is_started(&stream->utf8);
+}
+
+bool
 tlog_stream_is_empty(const struct tlog_stream *stream)
 {
     assert(tlog_stream_is_valid(stream));
