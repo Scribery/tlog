@@ -410,3 +410,7 @@ If a function can't fail, it shouldn't accept a transaction pointer.
 If a function doesn't need to make backups and rollbacks, it shouldn't accept
 a transaction pointer. However, every type expected to support transactions
 should define backup/restore functions.
+
+On a closer examination and attempting to do it, we'd better not pass pmeta
+and prem to streams at creation time. This turns out to be more obscure and
+harder to reason about.
