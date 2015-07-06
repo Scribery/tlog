@@ -129,10 +129,12 @@ extern tlog_rc tlog_sink_io_write(struct tlog_sink *sink,
  * Cut a sink I/O - write pending incomplete characters.
  *
  * @param sink      The sink to cut I/O for.
+ * @param timestamp Timestamp of I/O cutting-off.
  *
  * @return Status code.
  */
-extern tlog_rc tlog_sink_io_cut(struct tlog_sink *sink);
+extern tlog_rc tlog_sink_io_cut(struct tlog_sink *sink,
+                                const struct timespec *timestamp);
 
 /**
  * Flush I/O pending in a log sink, on a character boundary.

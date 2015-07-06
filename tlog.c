@@ -503,7 +503,8 @@ main(int argc, char **argv)
     }
 
     /* Cut I/O log (write incomplete characters as binary) */
-    if (tlog_sink_io_cut(sink) != TLOG_RC_OK) {
+    clock_gettime(clock_id, &timestamp);
+    if (tlog_sink_io_cut(sink, &timestamp) != TLOG_RC_OK) {
         fprintf(stderr, "Failed cutting-off I/O log: %s\n", strerror(errno));
         return 1;
     }

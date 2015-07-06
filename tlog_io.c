@@ -77,30 +77,26 @@ tlog_io_is_empty(const struct tlog_io *io)
            tlog_stream_is_empty(&io->output);
 }
 
-size_t
-tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
-              bool output, const uint8_t **pbuf, size_t *plen)
+/**
+ * Record a new timestamp into an I/O, flush streams and add a delay record,
+ * if necessary.
+ *
+ * @param io        The I/O to record timestamp into.
+ * @param timestmp  The timestamp to record.
+ *
+ * @return True if timestamp fit, false otherwise.
+ */
+static bool
+tlog_io_timestamp(struct tlog_io *io, const struct timespec *timestamp)
 {
-    tlog_trx trx = TLOG_TRX_INIT;
-    TLOG_TRX_STORE_DECL(tlog_io);
     struct timespec delay;
     long sec;
     long msec;
     char delay_buf[32];
     int delay_rc;
 
-    size_t written;
-
     assert(tlog_io_is_valid(io));
     assert(timestamp != NULL);
-    assert(pbuf != NULL);
-    assert(plen != NULL);
-    assert(*pbuf != NULL || *plen == 0);
-
-    if (*plen == 0)
-        return 0;
-
-    TLOG_TRX_BEGIN(&trx, tlog_io, io);
 
     /* If this is the first write */
     if (tlog_timespec_is_zero(&io->first)) {
@@ -127,15 +123,41 @@ tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
     /* If we need to add a delay record */
     if (delay_rc > 0) {
         /* If it doesn't fit */
-        if ((size_t)delay_rc > io->rem) {
-            TLOG_TRX_ABORT(&trx, tlog_io, io);
-            return 0;
-        }
+        if ((size_t)delay_rc > io->rem)
+            return false;
         tlog_stream_flush(&io->input, &io->timing_ptr);
         tlog_stream_flush(&io->output, &io->timing_ptr);
         memcpy(io->timing_ptr, delay_buf, (size_t)delay_rc);
         io->timing_ptr += delay_rc;
         io->rem -= delay_rc;
+    }
+
+    return true;
+}
+
+size_t
+tlog_io_write(struct tlog_io *io, const struct timespec *timestamp,
+              bool output, const uint8_t **pbuf, size_t *plen)
+{
+    tlog_trx trx = TLOG_TRX_INIT;
+    TLOG_TRX_STORE_DECL(tlog_io);
+    size_t written;
+
+    assert(tlog_io_is_valid(io));
+    assert(timestamp != NULL);
+    assert(pbuf != NULL);
+    assert(plen != NULL);
+    assert(*pbuf != NULL || *plen == 0);
+
+    if (*plen == 0)
+        return 0;
+
+    TLOG_TRX_BEGIN(&trx, tlog_io, io);
+
+    /* Record new timestamp */
+    if (!tlog_io_timestamp(io, timestamp)) {
+        TLOG_TRX_ABORT(&trx, tlog_io, io);
+        return 0;
     }
 
     /* Write as much I/O data as we can */
@@ -160,23 +182,31 @@ tlog_io_flush(struct tlog_io *io)
 }
 
 bool
-tlog_io_cut(struct tlog_io *io)
+tlog_io_cut(struct tlog_io *io, const struct timespec *timestamp)
 {
     tlog_trx trx = TLOG_TRX_INIT;
     TLOG_TRX_STORE_DECL(tlog_io);
 
     assert(tlog_io_is_valid(io));
+    assert(timestamp != NULL);
 
     TLOG_TRX_BEGIN(&trx, tlog_io, io);
 
-    if (tlog_stream_cut(&io->input, &io->timing_ptr, &io->rem) &&
-        tlog_stream_cut(&io->output, &io->timing_ptr, &io->rem)) {
-        TLOG_TRX_COMMIT(&trx);
-        return true;
+    /* Record new timestamp */
+    if (!tlog_io_timestamp(io, timestamp)) {
+        TLOG_TRX_ABORT(&trx, tlog_io, io);
+        return false;
     }
 
-    TLOG_TRX_ABORT(&trx, tlog_io, io);
-    return false;
+    /* Cut the streams */
+    if (!tlog_stream_cut(&io->input, &io->timing_ptr, &io->rem) ||
+        !tlog_stream_cut(&io->output, &io->timing_ptr, &io->rem)) {
+        TLOG_TRX_ABORT(&trx, tlog_io, io);
+        return false;
+    }
+
+    TLOG_TRX_COMMIT(&trx);
+    return true;
 }
 
 void

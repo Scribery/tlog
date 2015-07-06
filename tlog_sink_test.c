@@ -162,7 +162,7 @@ test(const char *n, const struct test t)
                 CHECK_OP(tlog_sink_io_flush(&sink));
                 break;
             case OP_TYPE_IO_CUT:
-                CHECK_OP(tlog_sink_io_cut(&sink));
+                CHECK_OP(tlog_sink_io_cut(&sink, &timestamp));
                 break;
             case OP_TYPE_DELAY:
                 tlog_timespec_add(&timestamp, &op->data.delay, &timestamp);
