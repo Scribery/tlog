@@ -52,7 +52,6 @@ struct tlog_utf8 {
     const struct tlog_utf8_range   *range;  /**< Next byte value range, refers
                                                  to tlog_utf8_seq_list */
     size_t                          len;    /**< Sequence length so far */
-    size_t                          pos;    /**< Sequence writing position */
     bool                            end;    /**< True if the sequence has
                                                  ended */
 };
@@ -68,8 +67,7 @@ static inline bool
 tlog_utf8_is_valid(const struct tlog_utf8 *utf8)
 {
     return utf8->len <= sizeof(utf8->buf) &&
-           (utf8->len == 0 || utf8->range != NULL) &&
-           utf8->pos <= utf8->len;
+           (utf8->len == 0 || utf8->range != NULL);
 }
 
 /**
