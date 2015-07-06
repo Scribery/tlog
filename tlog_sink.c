@@ -51,14 +51,15 @@ tlog_sink_init(struct tlog_sink *sink,
                const char *hostname,
                const char *username,
                unsigned int session_id,
-               size_t io_size)
+               size_t io_size,
+               const struct timespec *timestamp)
 {
     int orig_errno;
-    struct timespec res;
 
     assert(sink != NULL);
     assert(hostname != NULL);
     assert(io_size >= TLOG_IO_SIZE_MIN);
+    assert(timestamp != NULL);
 
     memset(sink, 0, sizeof(*sink));
 
@@ -76,18 +77,7 @@ tlog_sink_init(struct tlog_sink *sink,
 
     sink->message_id = 0;
 
-    /*
-     * Try to use coarse monotonic clock (which is faster),
-     * if it provides resolution of at least one millisecond.
-     */
-    if (clock_getres(CLOCK_MONOTONIC_COARSE, &res) == 0 &&
-        res.tv_sec == 0 && res.tv_nsec < 1000000)
-        sink->clock_id = CLOCK_MONOTONIC_COARSE;
-    else if (clock_getres(CLOCK_MONOTONIC, NULL) == 0)
-        sink->clock_id = CLOCK_MONOTONIC;
-    else
-        abort();
-    clock_gettime(sink->clock_id, &sink->start);
+    sink->start = *timestamp;
 
     /* NOTE: approximate size */
     sink->message_len = io_size + 1024;
@@ -113,19 +103,21 @@ tlog_sink_create(struct tlog_sink **psink,
                  const char *hostname,
                  const char *username,
                  unsigned int session_id,
-                 size_t io_size)
+                 size_t io_size,
+                 const struct timespec *timestamp)
 {
     struct tlog_sink *sink;
 
     assert(hostname != NULL);
     assert(io_size >= TLOG_IO_SIZE_MIN);
+    assert(timestamp != NULL);
 
     sink = malloc(sizeof(*sink));
     if (sink == NULL)
         return TLOG_RC_FAILURE;
 
-    if (tlog_sink_init(sink, fd, hostname, username, session_id, io_size) !=
-            TLOG_RC_OK) {
+    if (tlog_sink_init(sink, fd, hostname, username,
+                       session_id, io_size, timestamp) != TLOG_RC_OK) {
         free(sink);
         return TLOG_RC_FAILURE;
     }
@@ -191,17 +183,17 @@ tlog_sink_retried_write(int fd, uint8_t *buf, size_t len)
 
 tlog_rc
 tlog_sink_window_write(struct tlog_sink *sink,
+                       const struct timespec *timestamp,
                        unsigned short int width,
                        unsigned short int height)
 {
-    struct timespec timestamp;
     struct timespec pos;
     int len;
 
     assert(tlog_sink_is_valid(sink));
+    assert(timestamp != NULL);
 
-    clock_gettime(sink->clock_id, &timestamp);
-    tlog_timespec_sub(&timestamp, &sink->start, &pos);
+    tlog_timespec_sub(timestamp, &sink->start, &pos);
 
     tlog_sink_io_flush(sink);
 
@@ -237,18 +229,16 @@ tlog_sink_window_write(struct tlog_sink *sink,
 }
 
 tlog_rc
-tlog_sink_io_write(struct tlog_sink *sink, bool output,
-                   const uint8_t *buf, size_t len)
+tlog_sink_io_write(struct tlog_sink *sink,
+                   const struct timespec *timestamp,
+                   bool output, const uint8_t *buf, size_t len)
 {
-    struct timespec timestamp;
-
     assert(tlog_sink_is_valid(sink));
+    assert(timestamp != NULL);
     assert(buf != NULL || len == 0);
 
-    clock_gettime(sink->clock_id, &timestamp);
-
     while (true) {
-        tlog_io_write(&sink->io, &timestamp, output, &buf, &len);
+        tlog_io_write(&sink->io, timestamp, output, &buf, &len);
         if (len == 0) {
             break;
         } else {

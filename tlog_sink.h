@@ -40,7 +40,6 @@ struct tlog_sink {
     char               *username;       /**< Username */
     unsigned int        session_id;     /**< Session ID */
     size_t              message_id;     /**< Next message ID */
-    clockid_t           clock_id;       /**< ID of the clock to use */
     struct timespec     start;          /**< Sink creation timestamp */
     struct tlog_io      io;             /**< I/O buffer and state */
     uint8_t            *message_buf;    /**< Message buffer pointer */
@@ -64,6 +63,7 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
  * @param hostname          Hostname to use in log messages.
  * @param session_id        Session ID to use in log messages.
  * @param io_size           Maximum I/O message payload length.
+ * @param timestamp         Sink start timestamp.
  *
  * @return Status code.
  */
@@ -72,7 +72,8 @@ extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
                               const char *hostname,
                               const char *username,
                               unsigned int session_id,
-                              size_t io_size);
+                              size_t io_size,
+                              const struct timespec *timestamp);
 
 /**
  * Create (allocate and initialize) a log sink.
@@ -82,6 +83,7 @@ extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
  * @param hostname          Hostname to use in log messages.
  * @param session_id        Session ID to use in log messages.
  * @param io_size           Maximum I/O message payload length.
+ * @param timestamp         Sink start timestamp.
  *
  * @return Status code.
  */
@@ -90,18 +92,21 @@ extern tlog_rc tlog_sink_create(struct tlog_sink **psink,
                                 const char *hostname,
                                 const char *username,
                                 unsigned int session_id,
-                                size_t io_size);
+                                size_t io_size,
+                                const struct timespec *timestamp);
 
 /**
  * Write window size to a log sink.
  *
  * @param sink      Pointer to the sink to write window size to.
+ * @param timestamp Timestamp of the window change.
  * @param width     Window width in characters.
  * @param height    Window height in characters.
  *
  * @return Status code.
  */
 extern tlog_rc tlog_sink_window_write(struct tlog_sink *sink,
+                                      const struct timespec *timestamp,
                                       unsigned short int width,
                                       unsigned short int height);
 
@@ -109,19 +114,21 @@ extern tlog_rc tlog_sink_window_write(struct tlog_sink *sink,
  * Write terminal I/O to a log sink.
  *
  * @param sink      Pointer to the sink to write I/O to.
+ * @param timestamp Timestamp of the I/O arrival.
  * @param output    True if writing output, false if input.
  * @param ptr       Input buffer pointer.
  * @param len       Input buffer length.
  *
  * @return Status code.
  */
-extern tlog_rc tlog_sink_io_write(struct tlog_sink *sink, bool output,
-                                  const uint8_t *buf, size_t len);
+extern tlog_rc tlog_sink_io_write(struct tlog_sink *sink,
+                                  const struct timespec *timestamp,
+                                  bool output, const uint8_t *buf, size_t len);
 
 /**
  * Cut a sink I/O - write pending incomplete characters.
  *
- * @param sink  The sink to cut I/O for.
+ * @param sink      The sink to cut I/O for.
  *
  * @return Status code.
  */

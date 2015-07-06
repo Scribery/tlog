@@ -154,6 +154,8 @@ main(int argc, char **argv)
     int gai_error;
     char *fqdn;
     struct passwd *passwd;
+    clockid_t clock_id;
+    struct timespec timestamp;
     struct tlog_sink *sink;
     ssize_t rc;
     int master_fd;
@@ -215,9 +217,26 @@ main(int argc, char **argv)
         return 1;
     }
 
+    /*
+     * Choose the clock: try to use coarse monotonic clock (which is faster),
+     * if it provides resolution of at least one millisecond.
+     */
+    if (clock_getres(CLOCK_MONOTONIC_COARSE, &timestamp) == 0 &&
+        timestamp.tv_sec == 0 && timestamp.tv_nsec < 1000000) {
+        clock_id = CLOCK_MONOTONIC_COARSE;
+    } else if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
+        clock_id = CLOCK_MONOTONIC;
+    } else {
+        fprintf(stderr, "No clock to use\n");
+        return 1;
+    }
+
+    /* Get startup timestamp */
+    clock_gettime(clock_id, &timestamp);
+
     /* Create the log sink */
     if (tlog_sink_create(&sink, -1, fqdn, passwd->pw_name,
-                         session_id, BUF_SIZE) != TLOG_RC_OK) {
+                         session_id, BUF_SIZE, &timestamp) != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
                 strerror(errno));
         return 1;
@@ -256,7 +275,8 @@ main(int argc, char **argv)
      * Parent
      */
     /* Log initial window size */
-    if (tlog_sink_window_write(sink, winsize.ws_col, winsize.ws_row) !=
+    if (tlog_sink_window_write(sink, &timestamp,
+                               winsize.ws_col, winsize.ws_row) !=
             TLOG_RC_OK) {
         fprintf(stderr, "Failed logging window size: %s\n", strerror(errno));
         return 1;
@@ -333,8 +353,9 @@ main(int argc, char **argv)
             if (new_winsize.ws_row != winsize.ws_row ||
                 new_winsize.ws_col != winsize.ws_col) {
                 /* Log window size */
-                if (tlog_sink_window_write(sink, new_winsize.ws_col,
-                                                 new_winsize.ws_row) !=
+                clock_gettime(clock_id, &timestamp);
+                if (tlog_sink_window_write(sink, &timestamp,
+                                           new_winsize.ws_col, new_winsize.ws_row) !=
                         TLOG_RC_OK) {
                     fprintf(stderr, "Failed logging window size: %s\n",
                             strerror(errno));
@@ -359,13 +380,16 @@ main(int argc, char **argv)
         /*
          * Deliver I/O
          */
+        clock_gettime(clock_id, &timestamp);
+
         if (input_pos < input_len) {
             rc = write(master_fd, input_buf + input_pos,
                        input_len - input_pos);
             if (rc >= 0) {
                 if (rc > 0) {
                     /* Log delivered input */
-                    if (tlog_sink_io_write(sink, false, input_buf + input_pos,
+                    if (tlog_sink_io_write(sink, &timestamp,
+                                           false, input_buf + input_pos,
                                            (size_t)rc) != TLOG_RC_OK) {
                         fprintf(stderr, "Failed logging input: %s\n", strerror(errno));
                         break;
@@ -395,7 +419,8 @@ main(int argc, char **argv)
             if (rc >= 0) {
                 if (rc > 0) {
                     /* Log delivered output */
-                    if (tlog_sink_io_write(sink, true, output_buf + output_pos,
+                    if (tlog_sink_io_write(sink, &timestamp,
+                                           true, output_buf + output_pos,
                                            (size_t)rc) != TLOG_RC_OK) {
                         fprintf(stderr, "Failed logging output: %s\n", strerror(errno));
                         break;

@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "tlog_sink.h"
+#include "tlog_misc.h"
 #include "tlog_test.h"
 
 #define SIZE    TLOG_SINK_IO_SIZE_MIN
@@ -94,6 +95,7 @@ test(const char *n, const struct test t)
     bool passed = true;
     int fd = -1;
     char filename[] = "tlog_sink_test.XXXXXX";
+    struct timespec timestamp = {1, 0}; /* Must be non-zero */
     struct tlog_sink sink;
     const struct op *op;
     off_t end;
@@ -116,7 +118,7 @@ test(const char *n, const struct test t)
     }
 
     if (tlog_sink_init(&sink, fd, t.hostname, t.username,
-                       t.session_id, SIZE) != TLOG_RC_OK) {
+                       t.session_id, SIZE, &timestamp) != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the sink: %s\n",
                 strerror(errno));
         exit(1);
@@ -145,13 +147,13 @@ test(const char *n, const struct test t)
         switch (op->type) {
             case OP_TYPE_WINDOW_WRITE:
                 CHECK_OP(tlog_sink_window_write(
-                            &sink,
+                            &sink, &timestamp,
                             op->data.window_write.width,
                             op->data.window_write.height));
                 break;
             case OP_TYPE_IO_WRITE:
                 CHECK_OP(tlog_sink_io_write(
-                            &sink,
+                            &sink, &timestamp,
                             op->data.io_write.output,
                             op->data.io_write.buf,
                             op->data.io_write.len));
@@ -163,12 +165,7 @@ test(const char *n, const struct test t)
                 CHECK_OP(tlog_sink_io_cut(&sink));
                 break;
             case OP_TYPE_DELAY:
-                if (clock_nanosleep(CLOCK_MONOTONIC, 0,
-                                    &op->data.delay, NULL) < 0) {
-                    fprintf(stderr, "Failed to sleep: %s\n",
-                            strerror(errno));
-                    exit(1);
-                }
+                tlog_timespec_add(&timestamp, &op->data.delay, &timestamp);
                 break;
             default:
                 fprintf(stderr, "Unknown operation type: %d\n", op->type);
