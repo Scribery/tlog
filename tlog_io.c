@@ -162,9 +162,21 @@ tlog_io_flush(struct tlog_io *io)
 bool
 tlog_io_cut(struct tlog_io *io)
 {
+    tlog_trx trx = TLOG_TRX_INIT;
+    tlog_io_trx_store trx_store;
+
     assert(tlog_io_is_valid(io));
-    return tlog_stream_cut(&io->input, &io->timing_ptr, &io->rem) &&
-           tlog_stream_cut(&io->output, &io->timing_ptr, &io->rem);
+
+    TLOG_TRX_BEGIN(&trx, tlog_io, &trx_store, io);
+
+    if (tlog_stream_cut(&io->input, &io->timing_ptr, &io->rem) &&
+        tlog_stream_cut(&io->output, &io->timing_ptr, &io->rem)) {
+        TLOG_TRX_COMMIT(&trx);
+        return true;
+    }
+
+    TLOG_TRX_ABORT(&trx, tlog_io, &trx_store, io);
+    return false;
 }
 
 void
