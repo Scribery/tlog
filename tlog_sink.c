@@ -47,7 +47,7 @@ tlog_sink_cleanup(struct tlog_sink *sink)
 
 tlog_rc
 tlog_sink_init(struct tlog_sink *sink,
-               int fd,
+               struct tlog_writer *writer,
                const char *hostname,
                const char *username,
                unsigned int session_id,
@@ -57,13 +57,14 @@ tlog_sink_init(struct tlog_sink *sink,
     int orig_errno;
 
     assert(sink != NULL);
+    assert(tlog_writer_is_valid(writer));
     assert(hostname != NULL);
     assert(io_size >= TLOG_IO_SIZE_MIN);
     assert(timestamp != NULL);
 
     memset(sink, 0, sizeof(*sink));
 
-    sink->fd = fd;
+    sink->writer = writer;
 
     sink->hostname = strdup(hostname);
     if (sink->hostname == NULL)
@@ -99,7 +100,7 @@ error:
 
 tlog_rc
 tlog_sink_create(struct tlog_sink **psink,
-                 int fd,
+                 struct tlog_writer *writer,
                  const char *hostname,
                  const char *username,
                  unsigned int session_id,
@@ -108,6 +109,7 @@ tlog_sink_create(struct tlog_sink **psink,
 {
     struct tlog_sink *sink;
 
+    assert(tlog_writer_is_valid(writer));
     assert(hostname != NULL);
     assert(io_size >= TLOG_IO_SIZE_MIN);
     assert(timestamp != NULL);
@@ -116,7 +118,7 @@ tlog_sink_create(struct tlog_sink **psink,
     if (sink == NULL)
         return TLOG_RC_FAILURE;
 
-    if (tlog_sink_init(sink, fd, hostname, username,
+    if (tlog_sink_init(sink, writer, hostname, username,
                        session_id, io_size, timestamp) != TLOG_RC_OK) {
         free(sink);
         return TLOG_RC_FAILURE;
@@ -142,45 +144,11 @@ bool
 tlog_sink_is_valid(const struct tlog_sink *sink)
 {
     return sink != NULL &&
+           tlog_writer_is_valid(sink->writer) &&
            sink->hostname != NULL &&
            sink->username != NULL &&
            sink->message_buf != NULL &&
            tlog_io_is_valid(&sink->io);
-}
-
-/**
- * Write to a file descriptor or syslog, retrying on incomplete writes and EINTR.
- *
- * @param fd    File descriptor to write to, or -1 for writing to syslog.
- * @param buf   Pointer to the buffer to write.
- * @param len   Length of the buffer to write.
- *
- * @return Status code.
- */
-static tlog_rc
-tlog_sink_retried_write(int fd, uint8_t *buf, size_t len)
-{
-    ssize_t rc;
-    assert(buf != NULL || len == 0);
-
-    if (fd < 0) {
-        syslog(LOG_INFO, "%.*s", (int)len, (const char *)buf);
-        return TLOG_RC_OK;
-    } else {
-        while (true) {
-            rc = write(fd, buf, len);
-            if (rc < 0) {
-                if (errno == EINTR)
-                    continue;
-                else
-                    return TLOG_RC_FAILURE;
-            }
-            if ((size_t)rc == len)
-                return TLOG_RC_OK;
-            buf += rc;
-            len -= (size_t)rc;
-        }
-    }
 }
 
 tlog_rc
@@ -227,7 +195,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
 
     sink->message_id++;
 
-    return tlog_sink_retried_write(sink->fd, sink->message_buf, len);
+    return tlog_writer_write(sink->writer, sink->message_buf, len);
 }
 
 tlog_rc
@@ -309,7 +277,7 @@ tlog_sink_io_flush(struct tlog_sink *sink)
         return TLOG_RC_FAILURE;
     }
 
-    if (tlog_sink_retried_write(sink->fd, sink->message_buf, len) !=
+    if (tlog_writer_write(sink->writer, sink->message_buf, len) !=
             TLOG_RC_OK)
         return TLOG_RC_FAILURE;
 

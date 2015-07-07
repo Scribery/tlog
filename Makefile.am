@@ -21,19 +21,26 @@ dist_doc_DATA = README.md
 dist_noinst_DATA = tlog.spec
 bin_PROGRAMS = tlog
 tlog_SOURCES = \
-    tlog.c          \
-    tlog_io.c       \
-    tlog_io.h       \
-    tlog_misc.c     \
-    tlog_misc.h     \
-    tlog_rc.h       \
-    tlog_sink.c     \
-    tlog_sink.h     \
-    tlog_stream.c   \
-    tlog_stream.h   \
-    tlog_trx.h      \
-    tlog_utf8.c     \
-    tlog_utf8.h
+    tlog.c                  \
+    tlog_fd_writer.c        \
+    tlog_fd_writer.h        \
+    tlog_io.c               \
+    tlog_io.h               \
+    tlog_misc.c             \
+    tlog_misc.h             \
+    tlog_rc.h               \
+    tlog_sink.c             \
+    tlog_sink.h             \
+    tlog_stream.c           \
+    tlog_stream.h           \
+    tlog_syslog_writer.c    \
+    tlog_syslog_writer.h    \
+    tlog_trx.h              \
+    tlog_utf8.c             \
+    tlog_utf8.h             \
+    tlog_writer.c           \
+    tlog_writer.h           \
+    tlog_writer_type.h
 
 tlog_LDADD = -lutil
 
@@ -73,10 +80,12 @@ tlog_stream_test_SOURCES = \
     tlog_test.h             \
     tlog_utf8.c
 tlog_sink_test_SOURCES = \
+    tlog_fd_writer.c        \
     tlog_io.c               \
     tlog_sink.c             \
     tlog_sink_test.c        \
     tlog_stream.c           \
     tlog_test.c             \
     tlog_test.h             \
-    tlog_utf8.c
+    tlog_utf8.c             \
+    tlog_writer.c

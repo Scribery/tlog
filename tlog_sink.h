@@ -29,13 +29,14 @@
 #include <stdbool.h>
 #include "tlog_rc.h"
 #include "tlog_io.h"
+#include "tlog_writer.h"
 
 /** Minimum value of I/O buffer size */
 #define TLOG_SINK_IO_SIZE_MIN   TLOG_IO_SIZE_MIN
 
 /* Sink instance */
 struct tlog_sink {
-    int                 fd;             /**< Log output file descriptor */
+    struct tlog_writer *writer;         /**< Log message writer */
     char               *hostname;       /**< Hostname */
     char               *username;       /**< Username */
     unsigned int        session_id;     /**< Session ID */
@@ -59,7 +60,7 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
  * Initialize a log sink.
  *
  * @param sink              Pointer to the sink to initialize.
- * @param fd                File descriptor to write the log to.
+ * @param writer            Log message writer.
  * @param hostname          Hostname to use in log messages.
  * @param session_id        Session ID to use in log messages.
  * @param io_size           Maximum I/O message payload length.
@@ -68,7 +69,7 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
  * @return Status code.
  */
 extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
-                              int fd,
+                              struct tlog_writer *writer,
                               const char *hostname,
                               const char *username,
                               unsigned int session_id,
@@ -79,7 +80,7 @@ extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
  * Create (allocate and initialize) a log sink.
  *
  * @param psink             Location for created sink pointer.
- * @param fd                File descriptor to write the log to.
+ * @param writer            Log message writer.
  * @param hostname          Hostname to use in log messages.
  * @param session_id        Session ID to use in log messages.
  * @param io_size           Maximum I/O message payload length.
@@ -88,7 +89,7 @@ extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
  * @return Status code.
  */
 extern tlog_rc tlog_sink_create(struct tlog_sink **psink,
-                                int fd,
+                                struct tlog_writer *writer,
                                 const char *hostname,
                                 const char *username,
                                 unsigned int session_id,

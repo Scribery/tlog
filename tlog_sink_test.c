@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include "tlog_fd_writer.h"
 #include "tlog_sink.h"
 #include "tlog_misc.h"
 #include "tlog_test.h"
@@ -105,6 +106,7 @@ test(const char *n, const struct test t)
 {
     bool passed = true;
     int fd = -1;
+    struct tlog_writer *writer = NULL;
     char filename[] = "tlog_sink_test.XXXXXX";
     struct timespec timestamp = TLOG_TIMESPEC_ZERO;
     struct tlog_sink sink;
@@ -127,8 +129,14 @@ test(const char *n, const struct test t)
                 strerror(errno));
         exit(1);
     }
+    writer = tlog_fd_writer_create(fd);
+    if (writer == NULL) {
+        fprintf(stderr, "Failed creating syslog writer: %s\n",
+                strerror(errno));
+        exit(1);
+    }
 
-    if (tlog_sink_init(&sink, fd, t.hostname, t.username,
+    if (tlog_sink_init(&sink, writer, t.hostname, t.username,
                        t.session_id, SIZE, &timestamp) != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the sink: %s\n",
                 strerror(errno));
@@ -232,6 +240,7 @@ test(const char *n, const struct test t)
 cleanup:
     free(exp_output);
     free(res_output);
+    tlog_writer_destroy(writer);
     if (fd >= 0)
         close(fd);
     tlog_sink_cleanup(&sink);

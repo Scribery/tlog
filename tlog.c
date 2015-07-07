@@ -35,6 +35,7 @@
 #include <poll.h>
 #include <stdio.h>
 #include <syslog.h>
+#include "tlog_syslog_writer.h"
 #include "tlog_sink.h"
 
 #define IO_LATENCY  10
@@ -154,6 +155,7 @@ main(int argc, char **argv)
     int gai_error;
     char *fqdn;
     struct passwd *passwd;
+    struct tlog_writer *writer;
     clockid_t clock_id;
     struct timespec timestamp;
     struct tlog_sink *sink;
@@ -204,6 +206,13 @@ main(int argc, char **argv)
 
     /* Open syslog */
     openlog("tlog", LOG_NDELAY, LOG_LOCAL0);
+    /* Create the syslog writer */
+    writer = tlog_syslog_writer_create(LOG_INFO);
+    if (writer == NULL) {
+        fprintf(stderr, "Failed creating syslog writer: %s\n",
+                strerror(errno));
+        return 1;
+    }
 
     /* Get effective user entry */
     errno = 0;
@@ -235,7 +244,7 @@ main(int argc, char **argv)
     clock_gettime(clock_id, &timestamp);
 
     /* Create the log sink */
-    if (tlog_sink_create(&sink, -1, fqdn, passwd->pw_name,
+    if (tlog_sink_create(&sink, writer, fqdn, passwd->pw_name,
                          session_id, BUF_SIZE, &timestamp) != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
                 strerror(errno));
