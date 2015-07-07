@@ -143,6 +143,8 @@ tlog_sink_is_valid(const struct tlog_sink *sink)
 {
     return sink != NULL &&
            sink->hostname != NULL &&
+           sink->username != NULL &&
+           sink->message_buf != NULL &&
            tlog_io_is_valid(&sink->io);
 }
 
