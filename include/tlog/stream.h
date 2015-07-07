@@ -23,9 +23,9 @@
 #ifndef _TLOG_STREAM_H
 #define _TLOG_STREAM_H
 
-#include "tlog_rc.h"
-#include "tlog_utf8.h"
-#include "tlog_trx.h"
+#include "tlog/rc.h"
+#include "tlog/utf8.h"
+#include "tlog/trx.h"
 
 #define TLOG_STREAM_SIZE_MIN    32
 

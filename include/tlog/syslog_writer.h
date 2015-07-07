@@ -23,7 +23,7 @@
 #ifndef _TLOG_SYSLOG_WRITER_H
 #define _TLOG_SYSLOG_WRITER_H
 
-#include "tlog_writer.h"
+#include "tlog/writer.h"
 
 /**
  * Syslog message writer type

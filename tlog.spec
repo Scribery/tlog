@@ -16,15 +16,18 @@ Source:     %{name}-%{version}.tar.gz
 %setup -q
 
 %build
-%configure
+%configure --disable-rpath --disable-static
 make %{?_smp_mflags}
 
 %install
 make install DESTDIR=%{buildroot}
+rm ${RPM_BUILD_ROOT}/%{_libdir}/*.la
 
 %files
 %doc
 %{_defaultdocdir}/%{name}
 %{_bindir}/tlog
+%{_includedir}/tlog
+%{_libdir}/libtlog.so*
 
 %changelog

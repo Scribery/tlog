@@ -24,10 +24,15 @@ AC_INIT([tlog], [1])
 AM_INIT_AUTOMAKE([1.9 -Wall foreign])
 AM_MAINTAINER_MODE
 AC_CONFIG_HEADER([config.h])
+AC_CONFIG_MACRO_DIR([m4])
+ABS_SRCDIR=`cd ${srcdir}; pwd`
+CPPFLAGS="-I${ABS_SRCDIR}/include $CPPFLAGS"
 
 # Check for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+LT_INIT
 
 # Check for features
 AC_ARG_ENABLE(
@@ -42,5 +47,9 @@ if test "$enable_debug" = "yes"; then
 fi
 
 # Output
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+                 include/Makefile
+                 include/tlog/Makefile
+                 lib/Makefile
+                 src/Makefile])
 AC_OUTPUT

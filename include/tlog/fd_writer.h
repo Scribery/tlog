@@ -1,5 +1,5 @@
 /*
- * Tlog UTF-8 byte sequence validation state.
+ * Tlog file descriptor message writer.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -20,18 +20,33 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "tlog_utf8.h"
+#ifndef _TLOG_FD_WRITER_H
+#define _TLOG_FD_WRITER_H
 
-/** Source: Unicode 7.0.0 Chapter 3, Table 3-7 */
-const struct tlog_utf8_seq tlog_utf8_seq_list[] = {
-    {{{0x00, 0x7f}}},
-    {{{0xc2, 0xdf},     {0x80, 0xbf}}},
-    {{{0xe0, 0xe0},     {0xa0, 0xbf},   {0x80, 0xbf}}},
-    {{{0xe1, 0xec},     {0x80, 0xbf},   {0x80, 0xbf}}},
-    {{{0xed, 0xed},     {0x80, 0x9f},   {0x80, 0xbf}}},
-    {{{0xee, 0xef},     {0x80, 0xbf},   {0x80, 0xbf}}},
-    {{{0xf0, 0xf0},     {0x90, 0xbf},   {0x80, 0xbf},   {0x80, 0xbf}}},
-    {{{0xf1, 0xf3},     {0x80, 0xbf},   {0x80, 0xbf},   {0x80, 0xbf}}},
-    {{{0xf4, 0xf4},     {0x80, 0x8f},   {0x80, 0xbf},   {0x80, 0xbf}}},
-    {{}}
-};
+#include <assert.h>
+#include "tlog/writer.h"
+
+/**
+ * File descriptor message writer type
+ *
+ * Creation arguments:
+ *
+ * int  fd      File descriptor to write messages to.
+ */
+extern const struct tlog_writer_type tlog_fd_writer_type;
+
+/**
+ * Create an instance of file descriptor writer.
+ *
+ * @param fd    File descriptor to write messages to.
+ *
+ * @return The created writer, or NULL in case of error with errno set.
+ */
+static inline struct tlog_writer*
+tlog_fd_writer_create(int fd)
+{
+    assert(fd >= 0);
+    return tlog_writer_create(&tlog_fd_writer_type, fd);
+}
+
+#endif /* _TLOG_FD_WRITER_H */

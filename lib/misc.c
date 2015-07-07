@@ -1,5 +1,5 @@
 /*
- * Tlog file descriptor message writer.
+ * Miscellaneous functions.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -20,33 +20,4 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TLOG_FD_WRITER_H
-#define _TLOG_FD_WRITER_H
-
-#include <assert.h>
-#include "tlog_writer.h"
-
-/**
- * File descriptor message writer type
- *
- * Creation arguments:
- *
- * int  fd      File descriptor to write messages to.
- */
-extern const struct tlog_writer_type tlog_fd_writer_type;
-
-/**
- * Create an instance of file descriptor writer.
- *
- * @param fd    File descriptor to write messages to.
- *
- * @return The created writer, or NULL in case of error with errno set.
- */
-static inline struct tlog_writer*
-tlog_fd_writer_create(int fd)
-{
-    assert(fd >= 0);
-    return tlog_writer_create(&tlog_fd_writer_type, fd);
-}
-
-#endif /* _TLOG_FD_WRITER_H */
+#include "tlog/misc.h"

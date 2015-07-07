@@ -22,7 +22,7 @@
 
 #include <assert.h>
 #include <errno.h>
-#include "tlog_writer.h"
+#include "tlog/writer.h"
 
 struct tlog_writer*
 tlog_writer_create(const struct tlog_writer_type *type, ...)

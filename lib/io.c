@@ -22,7 +22,7 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include "tlog_io.h"
+#include "tlog/io.h"
 
 tlog_rc
 tlog_io_init(struct tlog_io *io, size_t size)

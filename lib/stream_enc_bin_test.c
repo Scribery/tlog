@@ -21,9 +21,9 @@
  */
 
 #include <stdio.h>
-#include "tlog_stream_enc_test.h"
+#include "stream_enc_test.h"
 
-#include "tlog_stream.c"
+#include "stream.c"
 
 int
 main(void)

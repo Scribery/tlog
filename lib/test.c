@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "tlog_test.h"
+#include "test.h"
 
 static void
 tlog_test_diff_side(FILE *stream, const char *name,

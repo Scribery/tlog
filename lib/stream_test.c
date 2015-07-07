@@ -23,8 +23,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include "tlog_stream.h"
-#include "tlog_test.h"
+#include "tlog/stream.h"
+#include "test.h"
 
 #define SIZE    TLOG_STREAM_SIZE_MIN
 

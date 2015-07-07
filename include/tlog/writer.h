@@ -23,7 +23,7 @@
 #ifndef _TLOG_WRITER_H
 #define _TLOG_WRITER_H
 
-#include "tlog_writer_type.h"
+#include "tlog/writer_type.h"
 
 /* Abstract writer */
 struct tlog_writer {

@@ -21,7 +21,7 @@
  */
 
 #include <stdio.h>
-#include "tlog_stream.c"
+#include "stream.c"
 
 int
 main(void)

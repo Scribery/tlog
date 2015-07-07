@@ -22,8 +22,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "tlog_test.h"
-#include "tlog_stream_enc_test.h"
+#include "test.h"
+#include "stream_enc_test.h"
 
 #define BOOL_STR(_b) ((_b) ? "true" : "false")
 

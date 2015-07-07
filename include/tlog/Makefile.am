@@ -17,7 +17,18 @@
 # along with tlog; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-ACLOCAL_AMFLAGS = -Im4
-SUBDIRS = include lib src
-dist_doc_DATA = README.md
-dist_noinst_DATA = tlog.spec
+tlogdir = $(includedir)/tlog
+
+tlog_HEADERS = \
+    fd_writer.h     \
+    io.h            \
+    misc.h          \
+    rc.h            \
+    sink.h          \
+    stream.h        \
+    syslog_writer.h \
+    trx.h           \
+    utf8.h          \
+    writer.h        \
+    writer_type.h
+

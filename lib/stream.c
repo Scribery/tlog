@@ -22,8 +22,8 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include "tlog_misc.h"
-#include "tlog_stream.h"
+#include "tlog/misc.h"
+#include "tlog/stream.h"
 
 void
 tlog_stream_cleanup(struct tlog_stream *stream)
