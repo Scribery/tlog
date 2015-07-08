@@ -1,5 +1,5 @@
 configuration
-    how to read? dinglibs?
+    read with libjson-c
     max I/O data size per message
     max message latency
     log sink
@@ -14,9 +14,6 @@ command line
 can tlog be used as sudo shell?
     we can allow commands starting with "tlog" only
     assign shell for target user?
-
-need monotonic clock for playback, but also need realtime clock for search,
-how to combine?
 
 publish design document on FreeIPA wiki
 focus on client side, wait for the server side
@@ -40,18 +37,6 @@ Refactor tlog.c
 
 Add throttling.
 
-Observe current timestamp in tlog_io_cut.
-
 Provide comprehensive object descriptions in header files.
-
-Implement and use buffer pointer and length accessors. E.g.:
-tlog_io_get_input_ptr
-tlog_io_get_input_len
-tlog_io_get_output_ptr
-tlog_io_get_output_len
-tlog_io_get_timing_ptr
-tlog_io_get_timing_len
-
-Implement a writer interface and two writers: syslog and file.
 
 Implement source. Implement reader interface and some readers.
