@@ -63,6 +63,8 @@ tlog_io_is_valid(const struct tlog_io *io)
            tlog_stream_is_valid(&io->input) &&
            tlog_stream_is_valid(&io->output) &&
            io->timing_buf != NULL &&
+           io->timing_ptr >= io->timing_buf &&
+           io->timing_ptr <= io->timing_buf + io->size &&
            io->rem <= io->size &&
            ((io->timing_ptr - io->timing_buf) +
             io->input.txt_len + io->input.bin_len +
