@@ -25,8 +25,9 @@ AM_INIT_AUTOMAKE([1.9 -Wall foreign])
 AM_MAINTAINER_MODE
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
+AC_GNU_SOURCE
 ABS_SRCDIR=`cd ${srcdir}; pwd`
-CPPFLAGS="-I${ABS_SRCDIR}/include $CPPFLAGS"
+CPPFLAGS="-I${ABS_SRCDIR} -I${ABS_SRCDIR}/include $CPPFLAGS"
 
 # Check for programs.
 AC_PROG_CC
@@ -45,6 +46,12 @@ if test "$enable_debug" = "yes"; then
     CPPFLAGS="$CPPFLAGS -UNDEBUG"
     CFLAGS="$CFLAGS -Wall -Wextra -Werror -g -O0"
 fi
+
+# Check for libraries
+JSON_LIBS=
+PKG_CHECK_MODULES(JSON, json-c,
+                  [AC_DEFINE([HAVE_JSON],[1],[Have JSON library])])
+AM_CONDITIONAL(HAVE_JSON, test -n "$JSON_LIBS")
 
 # Output
 AC_CONFIG_FILES([Makefile

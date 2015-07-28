@@ -20,10 +20,13 @@
 tlogdir = $(includedir)/tlog
 
 tlog_HEADERS = \
+    fd_reader.h     \
     fd_writer.h     \
     io.h            \
     misc.h          \
     rc.h            \
+    reader.h        \
+    reader_type.h   \
     sink.h          \
     stream.h        \
     syslog_writer.h \

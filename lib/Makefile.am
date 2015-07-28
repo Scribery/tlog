@@ -17,19 +17,27 @@
 # along with tlog; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+AM_CPPFLAGS = $(JSON_CFLAGS)
+
 lib_LTLIBRARIES = libtlog.la
 
 libtlog_la_SOURCES = \
+    fd_reader.c         \
     fd_writer.c         \
     io.c                \
     misc.c              \
+    reader.c            \
+    reader_type.c       \
     sink.c              \
     stream.c            \
     syslog_writer.c     \
     utf8.c              \
     writer.c
 
+libtlog_la_LIBADD = $(JSON_LIBS)
+
 TESTS = \
+    tlog_fd_reader_test         \
     tlog_sink_test              \
     tlog_stream_btoa_test       \
     tlog_stream_enc_bin_test    \
@@ -37,6 +45,7 @@ TESTS = \
     tlog_stream_test
 
 check_PROGRAMS = \
+    tlog_fd_reader_test         \
     tlog_sink_test              \
     tlog_stream_btoa_test       \
     tlog_stream_enc_bin_test    \
@@ -79,3 +88,10 @@ tlog_sink_test_SOURCES = \
     test.h
 
 tlog_sink_test_LDADD = libtlog.la
+
+tlog_fd_reader_test_SOURCES = \
+    fd_reader_test.c            \
+    test.c                      \
+    test.h
+
+tlog_fd_reader_test_LDADD = libtlog.la $(JSON_LIBS)
