@@ -131,7 +131,7 @@ test(const char *n, const struct test t)
     }
     writer = tlog_fd_writer_create(fd);
     if (writer == NULL) {
-        fprintf(stderr, "Failed creating syslog writer: %s\n",
+        fprintf(stderr, "Failed creating FD writer: %s\n",
                 strerror(errno));
         exit(1);
     }
