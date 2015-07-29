@@ -20,12 +20,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "tlog/misc.h"
 #include "test.h"
 
 static void
 tlog_test_diff_side(FILE *stream, const char *name,
-                    const uint8_t *out, const uint8_t *exp, size_t len)
+                    const uint8_t *out_buf, size_t out_len,
+                    const uint8_t *exp_buf, size_t exp_len)
 {
+    size_t min_len = TLOG_MIN(out_len, exp_len);
+    size_t max_len = TLOG_MAX(out_len, exp_len);
     size_t col;
     size_t i;
     const uint8_t *o;
@@ -33,17 +37,23 @@ tlog_test_diff_side(FILE *stream, const char *name,
     uint8_t c;
 
     fprintf(stream, "%s str:\n", name);
-    for (o = out, i = len; i > 0; o++, i--) {
+    for (o = out_buf, i = 0; i < out_len; o++, i++) {
         c = *o;
         fputc(((c >= 0x20 && c < 0x7f) ? c : ' '), stream);
     }
     fputc('\n', stream);
-    for (o = out, e = exp, i = len; i > 0; o++, e++, i--)
-        fprintf(stream, "%c", ((*o == *e) ? ' ' : '^'));
+    for (o = out_buf, e = exp_buf, i = 0; i < max_len; o++, e++, i++)
+        fprintf(stream, "%c",
+                ((i < min_len && *o == *e) ? ' ' : '^'));
 
     fprintf(stream, "\n%s hex:\n", name);
-    for (o = out, e = exp, i = len, col = 0; i > 0; o++, e++, i--) {
-        fprintf(stream, " %c%02x", ((*o == *e) ? ' ' : '!'), *o);
+    for (o = out_buf, e = exp_buf, i = 0, col = 0;
+         i < max_len;
+         o++, e++, i++) {
+        fprintf(stream, " %c%c%c",
+                ((i < min_len && *o == *e) ? ' ' : '!'),
+                (i < out_len ? tlog_nibble_digit(*o >> 4) : ' '),
+                (i < out_len ? tlog_nibble_digit(*o & 0xf) : ' '));
         col++;
         if (col > 0xf) {
             col = 0;
@@ -55,12 +65,12 @@ tlog_test_diff_side(FILE *stream, const char *name,
 }
 
 void
-tlog_test_diff(FILE *stream, const uint8_t *res,
-               const uint8_t *exp, size_t len)
+tlog_test_diff(FILE *stream,
+               const uint8_t *res_buf, size_t res_len,
+               const uint8_t *exp_buf, size_t exp_len)
 {
-    tlog_test_diff_side(stream, "expected", exp, res, len);
+    tlog_test_diff_side(stream, "expected", exp_buf, exp_len, res_buf, res_len);
     fprintf(stream, "\n");
-    tlog_test_diff_side(stream, "result", res, exp, len);
+    tlog_test_diff_side(stream, "result", res_buf, res_len, exp_buf, exp_len);
 }
-
 

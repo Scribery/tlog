@@ -212,7 +212,7 @@ test(const char *n, const struct test t)
     do {                                                        \
         if (memcmp(_r, _e, SIZE) != 0) {                        \
             fprintf(stderr, "%s: " #_n "_buf mismatch:\n", n);  \
-            tlog_test_diff(stderr, _r, _e, SIZE);               \
+            tlog_test_diff(stderr, _r, SIZE, _e, SIZE);         \
             passed = false;                                     \
         }                                                       \
     } while (0)

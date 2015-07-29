@@ -66,8 +66,9 @@ tlog_stream_enc_test(const char *n, const struct tlog_stream_enc_test t)
 
     if (memcmp(obuf, t.obuf_out, TLOG_STREAM_ENC_TEST_BUF_SIZE) != 0) {
         fprintf(stderr, "%s: obuf mismatch:\n", n);
-        tlog_test_diff(stderr, obuf, t.obuf_out,
-                       TLOG_STREAM_ENC_TEST_BUF_SIZE);
+        tlog_test_diff(stderr,
+                       obuf, TLOG_STREAM_ENC_TEST_BUF_SIZE,
+                       t.obuf_out, TLOG_STREAM_ENC_TEST_BUF_SIZE);
         passed = false;
     }
 

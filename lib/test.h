@@ -30,11 +30,13 @@
  * Output a description of differences between two buffers to an stdio stream.
  *
  * @param stream    The stdio stream to output to.
- * @param res       "Result" buffer.
- * @param exp       "Expected" buffer.
- * @param len       Length to compare.
+ * @param res_buf   "Result" buffer.
+ * @param res_len   "Result" length.
+ * @param exp_buf   "Expected" buffer.
+ * @param exp_len   "Expected" length.
  */
-extern void tlog_test_diff(FILE *stream, const uint8_t *res,
-                           const uint8_t *exp, size_t len);
+extern void tlog_test_diff(FILE *stream,
+                           const uint8_t *res_buf, size_t res_len,
+                           const uint8_t *exp_buf, size_t exp_len);
 
 #endif /* _TLOG_TEST_H */

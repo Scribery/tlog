@@ -114,9 +114,7 @@ test(const char *n, const struct test t)
     off_t end;
     size_t exp_output_len;
     size_t res_output_len;
-    size_t max_output_len;
     char *res_output = NULL;
-    char *exp_output = NULL;
 
     fd = mkstemp(filename);
     if (fd < 0) {
@@ -207,30 +205,25 @@ test(const char *n, const struct test t)
 
     res_output_len = (size_t)end;
     exp_output_len = strlen((const char *)t.output);
-    if (res_output_len != exp_output_len)
-        FAIL("len %zu != %zu", res_output_len, exp_output_len);
-    max_output_len = TLOG_MAX(res_output_len, exp_output_len);
 
-
-    res_output = calloc(max_output_len, 1);
-    exp_output = calloc(max_output_len, 1);
-    if (res_output == NULL || exp_output == NULL) {
-        fprintf(stderr, "Failed to allocate output buffers: %s\n", strerror(errno));
+    res_output = malloc(res_output_len);
+    if (res_output == NULL) {
+        fprintf(stderr, "Failed to allocate output buffer: %s\n",
+                strerror(errno));
         exit(1);
     }
 
-    if (read(fd, res_output, res_output_len) < 0) {
+    if (read(fd, res_output, res_output_len) != (ssize_t)res_output_len) {
         fprintf(stderr, "Failed to read the file: %s\n", strerror(errno));
         exit(1);
     }
-    memcpy(exp_output, t.output, exp_output_len);
 
-    if (memcmp(res_output, t.output, max_output_len) != 0) {
+    if (res_output_len != exp_output_len ||
+        memcmp(res_output, t.output, res_output_len) != 0) {
         fprintf(stderr, "%s: output mismatch:\n", n);
         tlog_test_diff(stderr,
-                       (const uint8_t *)res_output,
-                       (const uint8_t *)exp_output,
-                       max_output_len);
+                       (const uint8_t *)res_output, res_output_len,
+                       (const uint8_t *)t.output, exp_output_len);
         passed = false;
     }
 #undef FAIL
@@ -238,7 +231,6 @@ test(const char *n, const struct test t)
     fprintf(stderr, "%s: %s\n", n, (passed ? "PASS" : "FAIL"));
 
 cleanup:
-    free(exp_output);
     free(res_output);
     tlog_writer_destroy(writer);
     if (fd >= 0)
