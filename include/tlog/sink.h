@@ -62,6 +62,7 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
  * @param sink              Pointer to the sink to initialize.
  * @param writer            Log message writer.
  * @param hostname          Hostname to use in log messages.
+ * @param username          Username to use in log messages.
  * @param session_id        Session ID to use in log messages.
  * @param io_size           Maximum I/O message payload length.
  * @param timestamp         Sink start timestamp.
@@ -82,6 +83,7 @@ extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
  * @param psink             Location for created sink pointer.
  * @param writer            Log message writer.
  * @param hostname          Hostname to use in log messages.
+ * @param username          Username to use in log messages.
  * @param session_id        Session ID to use in log messages.
  * @param io_size           Maximum I/O message payload length.
  * @param timestamp         Sink start timestamp.
