@@ -38,10 +38,9 @@ struct tlog_reader;
  *
  * @param error     The error code to retrieve description for.
  *
- * @return Error code description as a dynamically-allocated string, or NULL
- *         on error (see errno).
+ * @return Error code description as a statically-allocated string.
  */
-typedef char * (*tlog_reader_type_strerror_fn)(int error);
+typedef const char * (*tlog_reader_type_strerror_fn)(int error);
 
 /**
  * Init function prototype.
@@ -137,11 +136,11 @@ extern bool tlog_reader_type_is_valid(const struct tlog_reader_type *type);
  *                      for.
  * @param error         The error code to retrieve description for.
  *
- * @return Error code description as a dynamically-allocated string, or NULL
- *         on error (see errno).
+ * @return Error code description as a statically-allocated string.
  */
-extern char *tlog_reader_type_strerror(const struct tlog_reader_type *type,
-                                       int error);
+extern const char *tlog_reader_type_strerror(
+                                    const struct tlog_reader_type *type,
+                                    int error);
 
 /**
  * Formatting a reader type location.

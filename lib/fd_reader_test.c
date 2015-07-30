@@ -132,16 +132,14 @@ test(const char *n, const struct test t)
             case OP_TYPE_READ:
                 rc = tlog_reader_read(reader, &object);
                 if (rc != op->data.read.exp_rc) {
-                    char *res_str;
-                    char *exp_str;
+                    const char *res_str;
+                    const char *exp_str;
                     res_str = tlog_reader_strerror(reader, rc);
                     exp_str = tlog_reader_strerror(reader,
                                                    op->data.read.exp_rc);
                     FAIL_OP("rc: %s (%d) != %s (%d)",
                             res_str, rc,
                             exp_str, op->data.read.exp_rc);
-                    free(res_str);
-                    free(exp_str);
                 }
                 if ((object == NULL) != (op->data.read.exp_string == NULL))
                     FAIL_OP("object: %s != %s",

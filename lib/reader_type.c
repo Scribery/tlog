@@ -36,21 +36,19 @@ tlog_reader_type_is_valid(const struct tlog_reader_type *type)
            type->read != NULL;
 }
 
-char *
+const char *
 tlog_reader_type_strerror(const struct tlog_reader_type *type, int error)
 {
     assert(tlog_reader_type_is_valid(type));
 
     if (error == 0) {
-        return strdup("Success");
+        return "Success";
     } if (error < 0) {
-        return strdup(strerror(-error));
+        return strerror(-error);
     } else if (type->strerror != NULL) {
         return type->strerror(error);
     } else {
-        char *str = NULL;
-        asprintf(&str, "Error code %d", error);
-        return str;
+        return "Unknown error";
     }
 }
 

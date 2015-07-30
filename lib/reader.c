@@ -69,7 +69,7 @@ tlog_reader_is_valid(const struct tlog_reader *reader)
            );
 }
 
-char *
+const char *
 tlog_reader_strerror(const struct tlog_reader *reader, int error)
 {
     assert(tlog_reader_is_valid(reader));

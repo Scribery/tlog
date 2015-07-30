@@ -40,21 +40,19 @@ struct tlog_fd_reader {
     char *end;
 };
 
-static char *
+static const char *
 tlog_fd_reader_strerror(int error)
 {
-    char *str = NULL;
     assert(error > 0);
 
     if (error < TLOG_FD_READER_ERROR_MIN) {
-        return strdup(json_tokener_error_desc(error));
+        return json_tokener_error_desc(error);
     } else {
         switch (error) {
             case TLOG_FD_READER_ERROR_INCOMPLETE_LINE:
-                return strdup("Incomplete message object line encountered");
+                return "Incomplete message object line encountered";
             default:
-                asprintf(&str, "Unknown error code %d", error);
-                return str;
+                return "Unknown error";
         }
     }
 }

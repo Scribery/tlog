@@ -65,8 +65,8 @@ extern bool tlog_reader_is_valid(const struct tlog_reader *reader);
  * @return Error code description as a dynamically-allocated string, or NULL
  *         on error (see errno).
  */
-extern char *tlog_reader_strerror(const struct tlog_reader *reader,
-                                  int error);
+extern const char *tlog_reader_strerror(const struct tlog_reader *reader,
+                                        int error);
 
 /**
  * Retrieve current opaque location of the reader.
