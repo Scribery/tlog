@@ -40,3 +40,19 @@ Add throttling.
 Provide comprehensive object descriptions in header files.
 
 Implement source. Implement reader interface and some readers.
+
+Align "case" with "switch" everywhere.
+
+Use include <...> instead of include "..." wherever possible.
+
+Make all if statements use braces, even single-line ones.
+
+Consider pluggable memory allocation when library grows bigger and there is a
+potential for outside users.
+
+Consider building release code with NDEBUG.
+
+Consider merging all possible error codes into single space and module,
+possibly with the addition of interface to register new ones.
+This will make handling inherited and tunneled error codes easier.
+Especially for the case of objects which failed to create.
