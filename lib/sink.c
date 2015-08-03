@@ -175,7 +175,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
             "\"user\":"     "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
-            "\"pos\":"      "%ld.%03ld,"
+            "\"pos\":"      "%lld.%03ld,"
             "\"width\":"    "%hu,"
             "\"height\":"   "%hu"
         "}\n",
@@ -183,7 +183,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
         sink->username,
         sink->session_id,
         sink->message_id,
-        pos.tv_sec, pos.tv_nsec / 1000000,
+        (long long int)pos.tv_sec, pos.tv_nsec / 1000000,
         width,
         height);
     if (len < 0)
@@ -253,7 +253,7 @@ tlog_sink_io_flush(struct tlog_sink *sink)
             "\"user\":"     "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
-            "\"pos\":"      "%ld.%03ld,"
+            "\"pos\":"      "%lld.%03ld,"
             "\"timing\":"   "\"%.*s\","
             "\"in_txt\":"   "\"%.*s\","
             "\"in_bin\":"   "[%.*s],"
@@ -264,7 +264,7 @@ tlog_sink_io_flush(struct tlog_sink *sink)
         sink->username,
         sink->session_id,
         sink->message_id,
-        pos.tv_sec, pos.tv_nsec / 1000000,
+        (long long int)pos.tv_sec, pos.tv_nsec / 1000000,
         (int)(sink->io.timing_ptr - sink->io.timing_buf), sink->io.timing_buf,
         (int)sink->io.input.txt_len, sink->io.input.txt_buf,
         (int)sink->io.input.bin_len, sink->io.input.bin_buf,
