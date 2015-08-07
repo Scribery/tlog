@@ -24,6 +24,7 @@ tlog_HEADERS = \
     fd_writer.h     \
     io.h            \
     misc.h          \
+    msg.h           \
     rc.h            \
     reader.h        \
     reader_type.h   \

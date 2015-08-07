@@ -26,6 +26,7 @@ libtlog_la_SOURCES = \
     fd_writer.c         \
     io.c                \
     misc.c              \
+    msg.c               \
     reader.c            \
     reader_type.c       \
     sink.c              \
