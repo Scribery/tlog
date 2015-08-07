@@ -1,5 +1,5 @@
 /*
- * Tlog JSON message parsing state.
+ * Tlog JSON message parser.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -24,6 +24,7 @@
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
+#include "tlog/misc.h"
 #include "tlog/msg.h"
 
 bool
@@ -170,6 +171,211 @@ tlog_msg_init(struct tlog_msg *msg, struct json_object *obj)
     msg->obj = obj;
     assert(tlog_msg_is_valid(msg));
     return true;
+}
+
+/**
+ * Retrieve length of a UTF-8 character.
+ *
+ * @param b     The first byte of the character to retrieve length of.
+ *
+ * @return The character length in bytes, or zero if character is invalid.
+ */
+static size_t
+tlog_msg_utf8_len(uint8_t b)
+{
+    if ((b & 0x80) == 0)
+        return 1;
+    else if ((b & 0xe0) == 0xc0)
+        return 2;
+    else if ((b & 0xf0) == 0xe0)
+        return 3;
+    else if ((b & 0xf8) == 0xf0)
+        return 4;
+    else
+        return 0;
+};
+
+/**
+ * Read an I/O packet from the message being parsed.
+ *
+ * @param msg       The message to read a packet from, must be I/O type.
+ * @param pkt       The packet to read into, must be void, will be void if
+ *                  there are no more packets in the message.
+ * @param io_buf    Pointer to buffer for writing I/O data to, which will be
+ *                  referred to from the I/O packets as "not owned".
+ * @param io_size   Size of the I/O buffer io_buf.
+ *
+ * @return True if the object schema was valid and it was parsed into the
+ *         packet, false otherwise.
+ */
+static bool
+tlog_msg_read_io(struct tlog_msg *msg, struct tlog_pkt *pkt,
+                 uint8_t *io_buf, size_t io_size)
+{
+    struct tlog_msg_data_io    *io;
+    size_t io_len = 0;
+
+    assert(tlog_msg_is_valid(msg));
+    assert(msg->type == TLOG_MSG_TYPE_IO);
+    assert(tlog_pkt_is_valid(pkt));
+    assert(tlog_pkt_is_void(pkt));
+
+    io = &msg->data.io;
+
+    while (true) {
+        /*
+         * Read next timing record if the current one is spent
+         */
+        if (io->rem == 0) {
+            char type[2];
+            int read;
+            size_t first_len;
+            size_t second_len;
+            struct timespec delay;
+
+            if (*io->timing_ptr == 0)
+                return true;
+
+            if (sscanf(io->timing_ptr, "%1[][><+]%zu%n",
+                       type, &first_len, &read) < 2)
+                return false;
+            io->timing_ptr += read;
+
+            if (*type == '[' || *type == ']') {
+                if (sscanf(io->timing_ptr, "/%zu%n", &second_len, &read) < 1)
+                    return false;
+                io->timing_ptr += read;
+            } else {
+                second_len = 0;
+            }
+            switch (*type) {
+                case '+':
+                    delay.tv_sec = first_len / 1000;
+                    delay.tv_nsec = first_len % 1000 * 1000000;
+                    tlog_timespec_add(&msg->pos, &delay, &msg->pos);
+                    continue;
+                case '<':
+                    io->output = false;
+                    io->binary = false;
+                    io->rem = first_len;
+                    io->ptxt_ptr = &io->in_txt_ptr;
+                    io->ptxt_len = &io->in_txt_len;
+                case '[':
+                    io->output = false;
+                    io->binary = true;
+                    io->rem = second_len;
+                    io->bin_obj = io->in_bin_obj;
+                    io->pbin_pos = &io->in_bin_pos;
+                case '>':
+                    io->output = true;
+                    io->binary = false;
+                    io->rem = first_len;
+                    io->ptxt_ptr = &io->out_txt_ptr;
+                    io->ptxt_len = &io->out_txt_len;
+                case ']':
+                    io->output = true;
+                    io->binary = true;
+                    io->rem = second_len;
+                    io->bin_obj = io->out_bin_obj;
+                    io->pbin_pos = &io->out_bin_pos;
+            }
+
+            if (io->binary) {
+                size_t l;
+                /* Skip replacement characters */
+                for (; first_len > 0; first_len--) {
+                    if (*io->ptxt_len == 0)
+                        return false;
+                    l = tlog_msg_utf8_len(*(uint8_t *)*io->ptxt_ptr);
+                    if (l == 0)
+                        return false;
+                    if (l > *io->ptxt_len)
+                        return false;
+                    *io->ptxt_len -= l;
+                    *io->ptxt_ptr += l;
+                }
+            }
+        }
+
+        /*
+         * Return (a piece of) I/O
+         */
+        if (io->binary) {
+            struct json_object *o;
+            int32_t n;
+
+            for (; io->rem > 0 && io_len < io_size;
+                 io->rem--, io_len++, *io->pbin_pos++) {
+                o = json_object_array_get_idx(io->bin_obj, *io->pbin_pos);
+                if (o == NULL)
+                    return false;
+                if (json_object_get_type(o) != json_type_int)
+                    return false;
+                n = json_object_get_int(o);
+                if (n < 0 || n > UINT8_MAX)
+                    return false;
+                io_buf[io_len] = (uint8_t)n;
+            }
+        } else {
+            uint8_t b;
+            size_t l;
+
+            while (io->rem > 0) {
+                b = *(uint8_t *)*io->ptxt_ptr;
+                l = tlog_msg_utf8_len(b);
+                if (l == 0)
+                    return false;
+                if (l > *io->ptxt_len)
+                    return false;
+                if (io_len + l > io_size)
+                    break;
+                while (true) {
+                    io_buf[io_len] = b;
+                    io_len++;
+                    (*io->ptxt_len)--;
+                    (*io->ptxt_ptr)++;
+                    l--;
+                    if (l == 0)
+                        break;
+                    b = *(uint8_t *)*io->ptxt_ptr;
+                }
+                io->rem--;
+            }
+        }
+        break;
+
+        /* TODO: concatenate similar timing records into a single packet */
+    }
+
+    tlog_pkt_init_io(pkt, &msg->pos, io->output,
+                     io_buf, false, io_len);
+    return true;
+}
+
+bool
+tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
+              uint8_t *io_buf, size_t io_size)
+{
+    assert(tlog_msg_is_valid(msg));
+    assert(!tlog_msg_is_void(msg));
+    assert(tlog_pkt_is_valid(pkt));
+    assert(tlog_pkt_is_void(pkt));
+
+    switch (msg->type) {
+    case TLOG_MSG_TYPE_WINDOW:
+        if (!msg->data.window.read) {
+            tlog_pkt_init_window(pkt, &msg->pos,
+                                 msg->data.window.width,
+                                 msg->data.window.height);
+            msg->data.window.read = true;
+        }
+        return true;
+    case TLOG_MSG_TYPE_IO:
+        return tlog_msg_read_io(msg, pkt, io_buf, io_size);
+    default:
+        assert(false);
+        return true;
+    }
 }
 
 void

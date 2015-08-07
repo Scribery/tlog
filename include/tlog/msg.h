@@ -1,5 +1,5 @@
 /*
- * Tlog JSON message parsing state.
+ * Tlog JSON message parser.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <json_object.h>
+#include "tlog/pkt.h"
 
 /** Message type */
 enum tlog_msg_type {
@@ -51,6 +52,7 @@ tlog_msg_type_is_valid(enum tlog_msg_type type)
 struct tlog_msg_data_window {
     unsigned short int  width;  /**< New window width */
     unsigned short int  height; /**< New window height */
+    bool                read;   /**< The message was read */
 };
 
 /** I/O data */
@@ -130,6 +132,22 @@ extern bool tlog_msg_is_valid(const struct tlog_msg *msg);
  * @return True if the message is void, false otherwise.
  */
 extern bool tlog_msg_is_void(const struct tlog_msg *msg);
+
+/**
+ * Read a packet from the message.
+ *
+ * @param msg       The message to read a packet from.
+ * @param pkt       The packet to read into, must be void, will be void if
+ *                  there are no more packets in the message.
+ * @param io_buf    Pointer to buffer for writing I/O data to, which will be
+ *                  referred to from the I/O packets as "not owned".
+ * @param io_size   Size of the I/O buffer io_buf.
+ *
+ * @return True if the object schema was valid and it was parsed into the
+ *         packet, false otherwise.
+ */
+extern bool tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
+                          uint8_t *io_buf, size_t io_size);
 
 /**
  * Cleanup a message, "putting" down the JSON object and voiding the message.
