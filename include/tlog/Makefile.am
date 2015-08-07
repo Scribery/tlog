@@ -30,6 +30,7 @@ tlog_HEADERS = \
     reader.h        \
     reader_type.h   \
     sink.h          \
+    source.h        \
     stream.h        \
     syslog_writer.h \
     trx.h           \

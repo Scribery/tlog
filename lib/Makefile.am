@@ -31,6 +31,7 @@ libtlog_la_SOURCES = \
     reader.c            \
     reader_type.c       \
     sink.c              \
+    source.c            \
     stream.c            \
     syslog_writer.c     \
     utf8.c              \
