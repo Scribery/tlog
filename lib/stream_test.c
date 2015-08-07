@@ -52,7 +52,7 @@ op_type_to_str(enum op_type t)
         case OP_TYPE_EMPTY:
             return "empty";
         default:
-            return "<unkown>";
+            return "<unknown>";
     }
 }
 

@@ -69,7 +69,7 @@ op_type_to_str(enum op_type t)
         case OP_TYPE_DELAY:
             return "delay";
         default:
-            return "<unkown>";
+            return "<unknown>";
     }
 }
 

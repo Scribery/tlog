@@ -46,7 +46,7 @@ op_type_to_str(enum op_type t)
         case OP_TYPE_LOC_GET:
             return "loc_get";
         default:
-            return "<unkown>";
+            return "<unknown>";
     }
 }
 
