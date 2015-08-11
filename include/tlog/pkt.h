@@ -74,6 +74,9 @@ struct tlog_pkt {
     } data;                             /**< Type-specific data */
 };
 
+/** Void packet initializer */
+#define TLOG_PKT_VOID   (struct tlog_pkt){.type = TLOG_PKT_TYPE_VOID}
+
 /**
  * Initialize a void packet.
  *
