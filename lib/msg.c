@@ -219,6 +219,8 @@ tlog_msg_read_io(struct tlog_msg *msg, struct tlog_pkt *pkt,
     assert(msg->type == TLOG_MSG_TYPE_IO);
     assert(tlog_pkt_is_valid(pkt));
     assert(tlog_pkt_is_void(pkt));
+    assert(io_buf != NULL);
+    assert(io_size >= TLOG_MSG_IO_SIZE_MIN);
 
     io = &msg->data.io;
 
@@ -360,6 +362,8 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
     assert(!tlog_msg_is_void(msg));
     assert(tlog_pkt_is_valid(pkt));
     assert(tlog_pkt_is_void(pkt));
+    assert(io_buf != NULL);
+    assert(io_size >= TLOG_MSG_IO_SIZE_MIN);
 
     switch (msg->type) {
     case TLOG_MSG_TYPE_WINDOW:
