@@ -27,7 +27,7 @@
 #include "tlog/msg.h"
 
 /** Minimum length of I/O data buffer used in packets */
-#define TLOG_SOURCE_IO_SIZE_MIN 32
+#define TLOG_SOURCE_IO_SIZE_MIN TLOG_MSG_IO_SIZE_MIN
 
 /** Minimum source error code value */
 #define TLOG_SOURCE_ERROR_MIN   0x20000000

@@ -28,6 +28,9 @@
 #include <json_object.h>
 #include "tlog/pkt.h"
 
+/** Minimum I/O buffer size (longest UTF-8 character) */
+#define TLOG_MSG_IO_SIZE_MIN    4
+
 /** Message type */
 enum tlog_msg_type {
     TLOG_MSG_TYPE_WINDOW,   /**< Window size change */
