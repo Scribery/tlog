@@ -123,6 +123,27 @@ extern int tlog_source_create(struct tlog_source **psource,
 extern const char *tlog_source_strerror(struct tlog_source *source, int rc);
 
 /**
+ * Retrieve current opaque location of the source.
+ *
+ * @param source    The source to retrieve current location from.
+ *
+ * @return Opaque location value.
+ */
+extern size_t tlog_source_loc_get(const struct tlog_source *source);
+
+/**
+ * Format opaque location as a string.
+ *
+ * @param source    The source to format location for.
+ * @param loc       Opaque location value to format.
+ *
+ * @return Dynamically-allocated string describing the location, or NULL in
+ *         case of error (see errno).
+ */
+extern char *tlog_source_loc_fmt(const struct tlog_source *source,
+                                 size_t loc);
+
+/**
  * Read a packet from the source.
  *
  * @param source    The source to read from.

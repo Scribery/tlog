@@ -142,6 +142,20 @@ tlog_source_strerror(struct tlog_source *source, int rc)
     }
 }
 
+size_t
+tlog_source_loc_get(const struct tlog_source *source)
+{
+    assert(tlog_source_is_valid(source));
+    return tlog_reader_loc_get(source->reader);
+}
+
+char *
+tlog_source_loc_fmt(const struct tlog_source *source, size_t loc)
+{
+    assert(tlog_source_is_valid(source));
+    return tlog_reader_loc_fmt(source->reader, loc);
+}
+
 /**
  * Read a matching JSON message from the source's reader.
  *
