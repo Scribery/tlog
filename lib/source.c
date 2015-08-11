@@ -63,12 +63,16 @@ tlog_source_init(struct tlog_source *source,
 
     memset(source, 0, sizeof(*source));
     source->reader = reader;
-    source->hostname = hostname ? strdup(hostname) : NULL;
-    if (source->hostname == NULL)
-        goto error;
-    source->username = username ? strdup(username) : NULL;
-    if (source->username == NULL)
-        goto error;
+    if (hostname != NULL) {
+        source->hostname = strdup(hostname);
+        if (source->hostname == NULL)
+            goto error;
+    }
+    if (username != NULL) {
+        source->username = strdup(username);
+        if (source->username == NULL)
+            goto error;
+    }
     source->session_id = session_id;
 
     tlog_msg_init(&source->msg, NULL);
