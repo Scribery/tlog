@@ -142,6 +142,17 @@ extern bool tlog_pkt_is_valid(const struct tlog_pkt *pkt);
 extern bool tlog_pkt_is_void(const struct tlog_pkt *pkt);
 
 /**
+ * Check if contents of one packet is equal to the contents of another one.
+ *
+ * @param a     First packet to compare.
+ * @param b     Second packet to compare.
+ *
+ * @return True if packets contents are equal, false otherwise.
+ */
+extern bool tlog_pkt_is_equal(const struct tlog_pkt *a,
+                              const struct tlog_pkt *b);
+
+/**
  * Cleanup a packet, freeing owned data if any.
  * Voids the packet. Can be called repeatedly.
  *

@@ -112,6 +112,36 @@ tlog_pkt_is_void(const struct tlog_pkt *pkt)
     return pkt->type == TLOG_PKT_TYPE_VOID;
 }
 
+bool
+tlog_pkt_is_equal(const struct tlog_pkt *a, const struct tlog_pkt *b)
+{
+    assert(tlog_pkt_is_valid(a));
+    assert(tlog_pkt_is_valid(b));
+
+    if (a->type != b->type ||
+        a->timestamp.tv_sec != b->timestamp.tv_sec ||
+        a->timestamp.tv_nsec != b->timestamp.tv_nsec)
+        return false;
+
+    switch (a->type) {
+    case TLOG_PKT_TYPE_WINDOW:
+        if (a->data.window.width != b->data.window.width ||
+            a->data.window.height != b->data.window.height)
+            return false;
+        break;
+    case TLOG_PKT_TYPE_IO:
+        if (a->data.io.output != b->data.io.output ||
+            a->data.io.len != b->data.io.len ||
+            memcmp(a->data.io.buf, b->data.io.buf, a->data.io.len) != 0)
+            return false;
+        break;
+    default:
+        break;
+    }
+
+    return true;
+}
+
 void
 tlog_pkt_cleanup(struct tlog_pkt *pkt)
 {
