@@ -82,6 +82,8 @@ tlog_source_init(struct tlog_source *source,
     if (source->io_buf == NULL)
         goto error;
 
+    assert(tlog_source_is_valid(source));
+
     return 0;
 error:
     orig_errno = errno;
