@@ -24,6 +24,22 @@
 #include <string.h>
 #include "tlog/pkt.h"
 
+const char *
+tlog_pkt_type_to_str(enum tlog_pkt_type type)
+{
+    assert(tlog_pkt_type_is_valid(type));
+    switch (type) {
+    case TLOG_PKT_TYPE_VOID:
+        return "void";
+    case TLOG_PKT_TYPE_WINDOW:
+        return "window";
+    case TLOG_PKT_TYPE_IO:
+        return "I/O";
+    default:
+        return "unknown";
+    }
+}
+
 void
 tlog_pkt_init(struct tlog_pkt *pkt)
 {

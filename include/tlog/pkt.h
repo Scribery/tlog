@@ -48,6 +48,15 @@ tlog_pkt_type_is_valid(enum tlog_pkt_type type)
     return type >= 0 && type < TLOG_PKT_TYPE_NUM;
 }
 
+/**
+ * Convert packet type to a constant string.
+ *
+ * @param type  The type to convert.
+ *
+ * @return Type string.
+ */
+extern const char *tlog_pkt_type_to_str(enum tlog_pkt_type type);
+
 /** Window change data */
 struct tlog_pkt_data_window {
     unsigned short int  width;  /**< New window width */
