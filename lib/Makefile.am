@@ -45,6 +45,7 @@ TESTS = \
     tlog_fd_reader_test         \
     tlog_grc_test               \
     tlog_sink_test              \
+    tlog_source_test            \
     tlog_stream_btoa_test       \
     tlog_stream_enc_bin_test    \
     tlog_stream_enc_txt_test    \
@@ -54,6 +55,7 @@ check_PROGRAMS = \
     tlog_fd_reader_test         \
     tlog_grc_test               \
     tlog_sink_test              \
+    tlog_source_test            \
     tlog_stream_btoa_test       \
     tlog_stream_enc_bin_test    \
     tlog_stream_enc_txt_test    \
@@ -109,3 +111,10 @@ tlog_grc_test_SOURCES = \
     test.h
 
 tlog_grc_test_LDADD = libtlog.la $(JSON_LIBS)
+
+tlog_source_test_SOURCES = \
+    source_test.c            \
+    test.c                      \
+    test.h
+
+tlog_source_test_LDADD = libtlog.la $(JSON_LIBS)
