@@ -27,6 +27,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/** Return number of elements in an array */
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
 /** Return maximum of two numbers */
 #define TLOG_MAX(_a, _b) ((_a) > (_b) ? (_a) : (_b))
 

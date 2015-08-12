@@ -22,6 +22,7 @@ tlogdir = $(includedir)/tlog
 tlog_HEADERS = \
     fd_reader.h     \
     fd_writer.h     \
+    grc.h           \
     io.h            \
     misc.h          \
     msg.h           \

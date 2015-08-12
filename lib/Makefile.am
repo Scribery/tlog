@@ -24,10 +24,12 @@ lib_LTLIBRARIES = libtlog.la
 libtlog_la_SOURCES = \
     fd_reader.c         \
     fd_writer.c         \
+    grc.c               \
     io.c                \
     misc.c              \
     msg.c               \
     pkt.c               \
+    rc.c                \
     reader.c            \
     reader_type.c       \
     sink.c              \
@@ -41,6 +43,7 @@ libtlog_la_LIBADD = $(JSON_LIBS)
 
 TESTS = \
     tlog_fd_reader_test         \
+    tlog_grc_test               \
     tlog_sink_test              \
     tlog_stream_btoa_test       \
     tlog_stream_enc_bin_test    \
@@ -49,6 +52,7 @@ TESTS = \
 
 check_PROGRAMS = \
     tlog_fd_reader_test         \
+    tlog_grc_test               \
     tlog_sink_test              \
     tlog_stream_btoa_test       \
     tlog_stream_enc_bin_test    \
@@ -98,3 +102,10 @@ tlog_fd_reader_test_SOURCES = \
     test.h
 
 tlog_fd_reader_test_LDADD = libtlog.la $(JSON_LIBS)
+
+tlog_grc_test_SOURCES = \
+    grc_test.c            \
+    test.c                      \
+    test.h
+
+tlog_grc_test_LDADD = libtlog.la $(JSON_LIBS)

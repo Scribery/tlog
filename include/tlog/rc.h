@@ -1,5 +1,5 @@
 /*
- * Tlog function return codes.
+ * Tlog-native function return codes (rc's).
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -23,10 +23,41 @@
 #ifndef _TLOG_RC_H
 #define _TLOG_RC_H
 
+#include <stdbool.h>
+
+/** Minimum function return code */
+#define TLOG_RC_MIN  0
+
 /** Function return codes */
 typedef enum tlog_rc {
-    TLOG_RC_OK,         /**< Success */
-    TLOG_RC_FAILURE,    /**< General failure, see errno for details */
+    TLOG_RC_OK = TLOG_RC_MIN,
+    TLOG_RC_FAILURE,
+    TLOG_RC_SOURCE_INVALID_OBJECT,
+    TLOG_RC_FD_READER_INCOMPLETE_LINE,
+    /* Return code upper boundary (not a valid return code) */
+    TLOG_RC_MAX_PLUS_ONE
 } tlog_rc;
+
+/**
+ * Check if an rc is valid.
+ *
+ * @param rc    The rc to check.
+ *
+ * @return True if the rc is valid, false otherwise.
+ */
+static inline bool
+tlog_rc_is_valid(tlog_rc rc)
+{
+    return (rc >= TLOG_RC_MIN && rc < TLOG_RC_MAX_PLUS_ONE);
+}
+
+/**
+ * Retrieve a global return code description.
+ *
+ * @param rc    The global return code to retrieve description for.
+ *
+ * @return Description as a static, constant string.
+ */
+extern const char *tlog_rc_strerror(tlog_rc rc);
 
 #endif /* _TLOG_RC_H */
