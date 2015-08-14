@@ -29,14 +29,6 @@
 /** Minimum length of I/O data buffer used in packets */
 #define TLOG_SOURCE_IO_SIZE_MIN TLOG_MSG_IO_SIZE_MIN
 
-/** Minimum source error code value */
-#define TLOG_SOURCE_ERROR_MIN   0x20000000
-
-enum tlog_source_error {
-    /* Object with invalid schema encountered in the stream */
-    TLOG_SOURCE_ERROR_INVALID_OBJECT = TLOG_SOURCE_ERROR_MIN,
-};
-
 /* Source instance */
 struct tlog_source {
     struct tlog_reader *reader;         /**< Log message reader */
@@ -79,20 +71,20 @@ extern bool tlog_source_is_valid(const struct tlog_source *source);
  *                          unfiltered.
  * @param io_size           Size of I/O data buffer used in packets.
  *
- * @return Zero on success, negated errno value, source or reader-specific
- *         error code on failure.
+ * @return Global return code.
  */
-extern int tlog_source_init(struct tlog_source *source,
-                            struct tlog_reader *reader,
-                            const char *hostname,
-                            const char *username,
-                            unsigned int session_id,
-                            size_t io_size);
+extern tlog_grc tlog_source_init(struct tlog_source *source,
+                                 struct tlog_reader *reader,
+                                 const char *hostname,
+                                 const char *username,
+                                 unsigned int session_id,
+                                 size_t io_size);
 
 /**
  * Create (allocate and initialize) a log source.
  *
- * @param psource           Location for created source pointer.
+ * @param psource           Location for created source pointer, set to NULL
+ *                          in case of error.
  * @param reader            Log message reader.
  * @param hostname          Hostname to filter log messages by, NULL for
  *                          unfiltered.
@@ -102,25 +94,14 @@ extern int tlog_source_init(struct tlog_source *source,
  *                          unfiltered.
  * @param io_size           Size of I/O data buffer used in packets.
  *
- * @return Zero on success, negated errno value, source or reader-specific
- *         error code on failure.
+ * @return Global return code.
  */
-extern int tlog_source_create(struct tlog_source **psource,
-                              struct tlog_reader *reader,
-                              const char *hostname,
-                              const char *username,
-                              unsigned int session_id,
-                              size_t io_size);
-
-/**
- * Retrieve a source error code description.
- *
- * @param source    The source to retrieve error code description for.
- * @param rc        Error code to retrieve description for.
- *
- * @return Statically-allocated error code description.
- */
-extern const char *tlog_source_strerror(struct tlog_source *source, int rc);
+extern tlog_grc tlog_source_create(struct tlog_source **psource,
+                                   struct tlog_reader *reader,
+                                   const char *hostname,
+                                   const char *username,
+                                   unsigned int session_id,
+                                   size_t io_size);
 
 /**
  * Retrieve current opaque location of the source.
@@ -150,11 +131,10 @@ extern char *tlog_source_loc_fmt(const struct tlog_source *source,
  * @param pkt       The packet to write the received data into, must be void,
  *                  will be set to void on end-of-stream.
  *
- * @return Zero on success, negated errno value, source or reader-specific
- *         error code on failure.
+ * @return Global return code.
  */
-extern int tlog_source_read(struct tlog_source *source,
-                            struct tlog_pkt *pkt);
+extern tlog_grc tlog_source_read(struct tlog_source *source,
+                                 struct tlog_pkt *pkt);
 
 /**
  * Cleanup a log source. Can be called more than once.

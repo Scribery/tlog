@@ -40,12 +40,11 @@ struct tlog_reader {
  * @param type      The type of reader to create.
  * @param ...       The type-specific reader creation arguments.
  *
- * @return Zero on success, negated errno value, or reader-specific code on
- *         failure.
+ * @return Global return code.
  */
-extern int tlog_reader_create(struct tlog_reader **preader,
-                              const struct tlog_reader_type *type,
-                              ...);
+extern tlog_grc tlog_reader_create(struct tlog_reader **preader,
+                                   const struct tlog_reader_type *type,
+                                   ...);
 
 /**
  * Check if a reader is valid.
@@ -55,18 +54,6 @@ extern int tlog_reader_create(struct tlog_reader **preader,
  * @return True if the reader is valid.
  */
 extern bool tlog_reader_is_valid(const struct tlog_reader *reader);
-
-/**
- * Retrieve an error code description for a reader.
- *
- * @param reader    The reader to retrieve error code description for.
- * @param error     The error code to retrieve description for.
- *
- * @return Error code description as a dynamically-allocated string, or NULL
- *         on error (see errno).
- */
-extern const char *tlog_reader_strerror(const struct tlog_reader *reader,
-                                        int error);
 
 /**
  * Retrieve current opaque location of the reader.
@@ -97,11 +84,10 @@ extern char *tlog_reader_loc_fmt(const struct tlog_reader *reader,
  *                  stream; call json_object_put after the returned object is
  *                  no longer needed.
  *
- * @return Zero on success, negated errno value, or reader-specific code on
- *         failure.
+ * @return Global return code.
  */
-extern int tlog_reader_read(struct tlog_reader *reader,
-                            struct json_object **pobject);
+extern tlog_grc tlog_reader_read(struct tlog_reader *reader,
+                                 struct json_object **pobject);
 
 /**
  * Cleanup and deallocate a reader.

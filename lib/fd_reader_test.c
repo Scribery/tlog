@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include "tlog/rc.h"
 #include "tlog/fd_reader.h"
 #include "tlog/misc.h"
 #include "test.h"
@@ -55,7 +56,7 @@ struct op_data_loc_get {
 };
 
 struct op_data_read {
-    int         exp_rc;
+    int         exp_grc;
     char       *exp_string;
 };
 
@@ -77,7 +78,7 @@ test(const char *n, const struct test t)
 {
     bool passed = true;
     int fd = -1;
-    int rc;
+    tlog_grc grc;
     const struct tlog_reader_type *reader_type = &tlog_fd_reader_type;
     struct tlog_reader *reader = NULL;
     char filename[] = "tlog_fd_reader_test.XXXXXX";
@@ -110,10 +111,10 @@ test(const char *n, const struct test t)
                 strerror(errno));
         exit(1);
     }
-    rc = tlog_reader_create(&reader, reader_type, fd);
-    if (rc != 0) {
+    grc = tlog_reader_create(&reader, reader_type, fd);
+    if (grc != 0) {
         fprintf(stderr, "Failed creating FD reader: %s\n",
-                tlog_reader_type_strerror(reader_type, rc));
+                tlog_grc_strerror(grc));
         exit(1);
     }
 
@@ -130,16 +131,15 @@ test(const char *n, const struct test t)
     for (op = t.op_list; op->type != OP_TYPE_NONE; op++) {
         switch (op->type) {
             case OP_TYPE_READ:
-                rc = tlog_reader_read(reader, &object);
-                if (rc != op->data.read.exp_rc) {
+                grc = tlog_reader_read(reader, &object);
+                if (grc != op->data.read.exp_grc) {
                     const char *res_str;
                     const char *exp_str;
-                    res_str = tlog_reader_strerror(reader, rc);
-                    exp_str = tlog_reader_strerror(reader,
-                                                   op->data.read.exp_rc);
-                    FAIL_OP("rc: %s (%d) != %s (%d)",
-                            res_str, rc,
-                            exp_str, op->data.read.exp_rc);
+                    res_str = tlog_grc_strerror(grc);
+                    exp_str = tlog_grc_strerror(op->data.read.exp_grc);
+                    FAIL_OP("grc: %s (%d) != %s (%d)",
+                            res_str, grc,
+                            exp_str, op->data.read.exp_grc);
                 }
                 if ((object == NULL) != (op->data.read.exp_string == NULL))
                     FAIL_OP("object: %s != %s",
@@ -201,9 +201,10 @@ main(void)
 
 #define OP_NONE {.type = OP_TYPE_NONE}
 
-#define OP_READ(_exp_rc, _exp_string) \
-    {.type = OP_TYPE_READ,                                              \
-     .data = {.read = {.exp_rc = _exp_rc, .exp_string = _exp_string}}}
+#define OP_READ(_exp_grc, _exp_string) \
+    {.type = OP_TYPE_READ,                          \
+     .data = {.read = {.exp_grc = _exp_grc,         \
+                       .exp_string = _exp_string}}}
 
 #define OP_LOC_GET(_exp_loc) \
     {.type = OP_TYPE_LOC_GET,                       \
@@ -365,13 +366,15 @@ main(void)
     TEST(two_deep_object,
          "[{\"x\": 1}]",
          OP_LOC_GET(1),
-         OP_READ(json_tokener_error_depth, NULL),
+         OP_READ(tlog_grc_from(&tlog_grc_json, json_tokener_error_depth),
+                 NULL),
          OP_LOC_GET(1));
 
     TEST(object_after_err,
          "[{\"x\": 1}]\n{}",
          OP_LOC_GET(1),
-         OP_READ(json_tokener_error_depth, NULL),
+         OP_READ(tlog_grc_from(&tlog_grc_json, json_tokener_error_depth),
+                 NULL),
          OP_LOC_GET(2),
          OP_READ(0, "{ }"),
          OP_LOC_GET(2));
@@ -379,7 +382,8 @@ main(void)
     TEST(eof_after_err,
          "[{\"x\": 1}]\n{}",
          OP_LOC_GET(1),
-         OP_READ(json_tokener_error_depth, NULL),
+         OP_READ(tlog_grc_from(&tlog_grc_json, json_tokener_error_depth),
+                 NULL),
          OP_LOC_GET(2),
          OP_READ(0, "{ }"),
          OP_LOC_GET(2),
@@ -389,13 +393,13 @@ main(void)
     TEST(premature_eof,
          "{\"x\": 1",
          OP_LOC_GET(1),
-         OP_READ(TLOG_FD_READER_ERROR_INCOMPLETE_LINE, NULL),
+         OP_READ(TLOG_RC_FD_READER_INCOMPLETE_LINE, NULL),
          OP_LOC_GET(1));
 
     TEST(premature_newline,
          "{\"x\": 1\n",
          OP_LOC_GET(1),
-         OP_READ(TLOG_FD_READER_ERROR_INCOMPLETE_LINE, NULL),
+         OP_READ(TLOG_RC_FD_READER_INCOMPLETE_LINE, NULL),
          OP_LOC_GET(2));
 
     TEST(multiproperty_object,

@@ -22,36 +22,42 @@
 
 #include <assert.h>
 #include <errno.h>
+#include "tlog/rc.h"
 #include "tlog/writer.h"
 
-struct tlog_writer*
-tlog_writer_create(const struct tlog_writer_type *type, ...)
+tlog_grc
+tlog_writer_create(struct tlog_writer **pwriter,
+                   const struct tlog_writer_type *type,
+                   ...)
 {
     va_list ap;
+    tlog_grc grc;
     struct tlog_writer *writer;
-    bool success;
-    int orig_errno;
 
+    assert(pwriter != NULL);
     assert(tlog_writer_type_is_valid(type));
     assert(type->size >= sizeof(*writer));
 
     writer = malloc(type->size);
-    if (writer == NULL)
-        return NULL;
-    writer->type = type;
+    if (writer == NULL) {
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
+    } else {
+        writer->type = type;
 
-    va_start(ap, type);
-    success = type->init(writer, ap);
-    orig_errno = errno;
-    va_end(ap);
+        va_start(ap, type);
+        grc = type->init(writer, ap);
+        va_end(ap);
 
-    if (!success) {
-        free(writer);
-        writer = NULL;
+        if (grc == TLOG_RC_OK) {
+            assert(tlog_writer_is_valid(writer));
+        } else {
+            free(writer);
+            writer = NULL;
+        }
     }
 
-    errno = orig_errno;
-    return writer;
+    *pwriter = writer;
+    return grc;
 }
 
 bool
@@ -64,7 +70,7 @@ tlog_writer_is_valid(const struct tlog_writer *writer)
            );
 }
 
-tlog_rc
+tlog_grc
 tlog_writer_write(struct tlog_writer *writer,
                   const uint8_t *buf, size_t len)
 {

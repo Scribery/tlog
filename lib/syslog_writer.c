@@ -21,6 +21,7 @@
  */
 
 #include <syslog.h>
+#include "tlog/rc.h"
 #include "tlog/syslog_writer.h"
 
 struct tlog_syslog_writer {
@@ -28,16 +29,16 @@ struct tlog_syslog_writer {
     int priority;
 };
 
-static bool
+static tlog_grc
 tlog_syslog_writer_init(struct tlog_writer *writer, va_list ap)
 {
     struct tlog_syslog_writer *syslog_writer =
                                 (struct tlog_syslog_writer*)writer;
     syslog_writer->priority = va_arg(ap, int);
-    return true;
+    return TLOG_RC_OK;
 }
 
-tlog_rc
+tlog_grc
 tlog_syslog_writer_write(struct tlog_writer *writer,
                          const uint8_t *buf,
                          size_t len)

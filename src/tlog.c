@@ -84,9 +84,9 @@ enum fd_idx {
  *
  * @param pid   Location for the retrieved session ID.
  *
- * @return Status code.
+ * @return Global return code.
  */
-static tlog_rc
+static tlog_grc
 get_session_id(unsigned int *pid)
 {
     FILE *file;
@@ -101,13 +101,12 @@ get_session_id(unsigned int *pid)
     rc = fscanf(file, "%u", pid);
     orig_errno = errno;
     fclose(file);
-    errno = orig_errno;
     if (rc == 1)
         return TLOG_RC_OK;
     if (rc == 0)
-        errno = EINVAL;
+        return tlog_grc_from(&tlog_grc_errno, EINVAL);
 
-    return TLOG_RC_FAILURE;
+    return tlog_grc_from(&tlog_grc_errno, orig_errno);
 }
 
 /**
@@ -117,33 +116,31 @@ get_session_id(unsigned int *pid)
  *
  * @return Status code.
  */
-static tlog_rc
-get_fqdn(char **pfqdn, int *pgai_error)
+static tlog_grc
+get_fqdn(char **pfqdn)
 {
     char hostname[HOST_NAME_MAX + 1];
     struct addrinfo hints = {.ai_family = AF_UNSPEC,
                              .ai_flags  = AI_CANONNAME};
     struct addrinfo *info;
+    int gai_error;
 
     assert(pfqdn != NULL);
-    assert(pgai_error != NULL);
-
-    *pgai_error = 0;
 
     /* Get hostname */
     if (gethostname(hostname, sizeof(hostname)) < 0)
-        return TLOG_RC_FAILURE;
+        return tlog_grc_from(&tlog_grc_errno, errno);
 
     /* Resolve hostname to FQDN */
-    *pgai_error = getaddrinfo(hostname, NULL, &hints, &info);
-    if (*pgai_error != 0)
-        return TLOG_RC_FAILURE;
+    gai_error = getaddrinfo(hostname, NULL, &hints, &info);
+    if (gai_error != 0)
+        return tlog_grc_from(&tlog_grc_gai, gai_error);
 
     /* Duplicate retrieved FQDN */
     *pfqdn = strdup(info->ai_canonname);
     freeaddrinfo(info);
     if (*pfqdn == NULL)
-        return TLOG_RC_FAILURE;
+        return tlog_grc_from(&tlog_grc_errno, errno);
 
     return TLOG_RC_OK;
 }
@@ -152,13 +149,13 @@ int
 main(int argc, char **argv)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
-    int gai_error;
     char *fqdn;
     struct passwd *passwd;
     struct tlog_writer *writer;
     clockid_t clock_id;
     struct timespec timestamp;
     struct tlog_sink *sink;
+    tlog_grc grc;
     ssize_t rc;
     int master_fd;
     pid_t child_pid;
@@ -191,26 +188,28 @@ main(int argc, char **argv)
     }
 
     /* Get host FQDN */
-    if (get_fqdn(&fqdn, &gai_error) != TLOG_RC_OK) {
+    grc = get_fqdn(&fqdn);
+    if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed retrieving host FQDN: %s\n",
-                gai_error == 0 ? strerror(errno) : gai_strerror(gai_error));
+                tlog_grc_strerror(grc));
         return 1;
     }
 
     /* Get session ID */
-    if (get_session_id(&session_id) != TLOG_RC_OK) {
+    grc = get_session_id(&session_id);
+    if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed retrieving session ID: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         return 1;
     }
 
     /* Open syslog */
     openlog("tlog", LOG_NDELAY, LOG_LOCAL0);
     /* Create the syslog writer */
-    writer = tlog_syslog_writer_create(LOG_INFO);
-    if (writer == NULL) {
+    grc = tlog_syslog_writer_create(&writer, LOG_INFO);
+    if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating syslog writer: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         return 1;
     }
 
@@ -244,10 +243,11 @@ main(int argc, char **argv)
     clock_gettime(clock_id, &timestamp);
 
     /* Create the log sink */
-    if (tlog_sink_create(&sink, writer, fqdn, passwd->pw_name,
-                         session_id, BUF_SIZE, &timestamp) != TLOG_RC_OK) {
+    grc = tlog_sink_create(&sink, writer, fqdn, passwd->pw_name,
+                           session_id, BUF_SIZE, &timestamp);
+    if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         return 1;
     }
 
@@ -284,10 +284,11 @@ main(int argc, char **argv)
      * Parent
      */
     /* Log initial window size */
-    if (tlog_sink_window_write(sink, &timestamp,
-                               winsize.ws_col, winsize.ws_row) !=
-            TLOG_RC_OK) {
-        fprintf(stderr, "Failed logging window size: %s\n", strerror(errno));
+    grc = tlog_sink_window_write(sink, &timestamp,
+                                 winsize.ws_col, winsize.ws_row);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Failed logging window size: %s\n",
+                tlog_grc_strerror(grc));
         return 1;
     }
 
@@ -363,11 +364,12 @@ main(int argc, char **argv)
                 new_winsize.ws_col != winsize.ws_col) {
                 /* Log window size */
                 clock_gettime(clock_id, &timestamp);
-                if (tlog_sink_window_write(sink, &timestamp,
-                                           new_winsize.ws_col, new_winsize.ws_row) !=
-                        TLOG_RC_OK) {
+                grc = tlog_sink_window_write(sink, &timestamp,
+                                             new_winsize.ws_col,
+                                             new_winsize.ws_row);
+                if (grc != TLOG_RC_OK) {
                     fprintf(stderr, "Failed logging window size: %s\n",
-                            strerror(errno));
+                            tlog_grc_strerror(grc));
                     break;
                 }
                 /* Propagate window size */
@@ -397,10 +399,12 @@ main(int argc, char **argv)
             if (rc >= 0) {
                 if (rc > 0) {
                     /* Log delivered input */
-                    if (tlog_sink_io_write(sink, &timestamp,
-                                           false, input_buf + input_pos,
-                                           (size_t)rc) != TLOG_RC_OK) {
-                        fprintf(stderr, "Failed logging input: %s\n", strerror(errno));
+                    grc = tlog_sink_io_write(sink, &timestamp,
+                                             false, input_buf + input_pos,
+                                             (size_t)rc);
+                    if (grc != TLOG_RC_OK) {
+                        fprintf(stderr, "Failed logging input: %s\n",
+                                tlog_grc_strerror(grc));
                         break;
                     }
                     io_pending = true;
@@ -428,10 +432,12 @@ main(int argc, char **argv)
             if (rc >= 0) {
                 if (rc > 0) {
                     /* Log delivered output */
-                    if (tlog_sink_io_write(sink, &timestamp,
-                                           true, output_buf + output_pos,
-                                           (size_t)rc) != TLOG_RC_OK) {
-                        fprintf(stderr, "Failed logging output: %s\n", strerror(errno));
+                    grc = tlog_sink_io_write(sink, &timestamp,
+                                             true, output_buf + output_pos,
+                                             (size_t)rc);
+                    if (grc != TLOG_RC_OK) {
+                        fprintf(stderr, "Failed logging output: %s\n",
+                                tlog_grc_strerror(grc));
                         break;
                     }
                     io_pending = true;
@@ -460,8 +466,10 @@ main(int argc, char **argv)
         new_alarm_caught = alarm_caught;
         if (new_alarm_caught != last_alarm_caught) {
             alarm_set = false;
-            if (tlog_sink_io_flush(sink) != TLOG_RC_OK) {
-                fprintf(stderr, "Failed flushing I/O log: %s\n", strerror(errno));
+            grc = tlog_sink_io_flush(sink);
+            if (grc != TLOG_RC_OK) {
+                fprintf(stderr, "Failed flushing I/O log: %s\n",
+                        tlog_grc_strerror(grc));
                 return 1;
             }
             last_alarm_caught = new_alarm_caught;
@@ -512,14 +520,18 @@ main(int argc, char **argv)
     }
 
     /* Cut I/O log (write incomplete characters as binary) */
-    if (tlog_sink_io_cut(sink) != TLOG_RC_OK) {
-        fprintf(stderr, "Failed cutting-off I/O log: %s\n", strerror(errno));
+    grc = tlog_sink_io_cut(sink);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Failed cutting-off I/O log: %s\n",
+                tlog_grc_strerror(grc));
         return 1;
     }
 
     /* Flush I/O log */
-    if (tlog_sink_io_flush(sink) != TLOG_RC_OK) {
-        fprintf(stderr, "Failed flushing I/O log: %s\n", strerror(errno));
+    grc = tlog_sink_io_flush(sink);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Failed flushing I/O log: %s\n",
+                tlog_grc_strerror(grc));
         return 1;
     }
 

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <json_tokener.h>
 #include "tlog/fd_reader.h"
+#include "tlog/rc.h"
 
 #define TLOG_FD_READER_BUF_SIZE 32
 
@@ -40,24 +41,7 @@ struct tlog_fd_reader {
     char *end;
 };
 
-static const char *
-tlog_fd_reader_strerror(int error)
-{
-    assert(error > 0);
-
-    if (error < TLOG_FD_READER_ERROR_MIN) {
-        return json_tokener_error_desc(error);
-    } else {
-        switch (error) {
-            case TLOG_FD_READER_ERROR_INCOMPLETE_LINE:
-                return "Incomplete message object line encountered";
-            default:
-                return "Unknown error";
-        }
-    }
-}
-
-static int
+static tlog_grc
 tlog_fd_reader_init(struct tlog_reader *reader, va_list ap)
 {
     struct tlog_fd_reader *fd_reader =
@@ -66,12 +50,12 @@ tlog_fd_reader_init(struct tlog_reader *reader, va_list ap)
     assert(fd >= 0);
     fd_reader->tok = json_tokener_new_ex(2);
     if (fd_reader->tok == NULL)
-        return -errno;
+        return tlog_grc_from(&tlog_grc_errno, errno);
     fd_reader->fd = fd;
     fd_reader->line = 1;
     fd_reader->pos = fd_reader->end = fd_reader->buf;
 
-    return 0;
+    return TLOG_RC_OK;
 }
 
 static bool
@@ -111,7 +95,7 @@ tlog_fd_reader_loc_fmt(size_t loc)
     return str;
 }
 
-int
+tlog_grc
 tlog_fd_reader_read(struct tlog_reader *reader, struct json_object **pobject)
 {
     struct tlog_fd_reader *fd_reader =
@@ -165,17 +149,17 @@ tlog_fd_reader_read(struct tlog_reader *reader, struct json_object **pobject)
                 /* If we finished parsing an object */
                 if (object != NULL) {
                     *pobject = object;
-                    return 0;
+                    return TLOG_RC_OK;
                 } else {
                     jerr = json_tokener_get_error(fd_reader->tok);
                     /* If object is not finished */
                     if (jerr == json_tokener_continue) {
                         /* If we encountered an object-terminating newline */
                         if (p < fd_reader->end) {
-                            return TLOG_FD_READER_ERROR_INCOMPLETE_LINE;
+                            return TLOG_RC_FD_READER_INCOMPLETE_LINE;
                         }
                     } else {
-                        return jerr;
+                        return tlog_grc_from(&tlog_grc_json, jerr);
                     }
                 }
             }
@@ -193,7 +177,7 @@ tlog_fd_reader_read(struct tlog_reader *reader, struct json_object **pobject)
                 if (errno == EINTR)
                     continue;
                 else
-                    return -errno;
+                    return tlog_grc_from(&tlog_grc_errno, errno);
             }
             fd_reader->end += rc;
         } while (rc != 0 &&
@@ -201,16 +185,15 @@ tlog_fd_reader_read(struct tlog_reader *reader, struct json_object **pobject)
     } while (fd_reader->end > fd_reader->buf);
 
     if (got_text) {
-        return TLOG_FD_READER_ERROR_INCOMPLETE_LINE;
+        return TLOG_RC_FD_READER_INCOMPLETE_LINE;
     } else {
         *pobject = NULL;
-        return 0;
+        return TLOG_RC_OK;
     }
 }
 
 const struct tlog_reader_type tlog_fd_reader_type = {
     .size       = sizeof(struct tlog_fd_reader),
-    .strerror   = tlog_fd_reader_strerror,
     .init       = tlog_fd_reader_init,
     .is_valid   = tlog_fd_reader_is_valid,
     .loc_get    = tlog_fd_reader_loc_get,

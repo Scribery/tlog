@@ -67,15 +67,15 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
  * @param io_size           Maximum I/O message payload length.
  * @param timestamp         Sink start timestamp.
  *
- * @return Status code.
+ * @return Global return code.
  */
-extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
-                              struct tlog_writer *writer,
-                              const char *hostname,
-                              const char *username,
-                              unsigned int session_id,
-                              size_t io_size,
-                              const struct timespec *timestamp);
+extern tlog_grc tlog_sink_init(struct tlog_sink *sink,
+                               struct tlog_writer *writer,
+                               const char *hostname,
+                               const char *username,
+                               unsigned int session_id,
+                               size_t io_size,
+                               const struct timespec *timestamp);
 
 /**
  * Create (allocate and initialize) a log sink.
@@ -88,15 +88,15 @@ extern tlog_rc tlog_sink_init(struct tlog_sink *sink,
  * @param io_size           Maximum I/O message payload length.
  * @param timestamp         Sink start timestamp.
  *
- * @return Status code.
+ * @return Global return code.
  */
-extern tlog_rc tlog_sink_create(struct tlog_sink **psink,
-                                struct tlog_writer *writer,
-                                const char *hostname,
-                                const char *username,
-                                unsigned int session_id,
-                                size_t io_size,
-                                const struct timespec *timestamp);
+extern tlog_grc tlog_sink_create(struct tlog_sink **psink,
+                                 struct tlog_writer *writer,
+                                 const char *hostname,
+                                 const char *username,
+                                 unsigned int session_id,
+                                 size_t io_size,
+                                 const struct timespec *timestamp);
 
 /**
  * Write window size to a log sink.
@@ -106,12 +106,12 @@ extern tlog_rc tlog_sink_create(struct tlog_sink **psink,
  * @param width     Window width in characters.
  * @param height    Window height in characters.
  *
- * @return Status code.
+ * @return Global return code.
  */
-extern tlog_rc tlog_sink_window_write(struct tlog_sink *sink,
-                                      const struct timespec *timestamp,
-                                      unsigned short int width,
-                                      unsigned short int height);
+extern tlog_grc tlog_sink_window_write(struct tlog_sink *sink,
+                                       const struct timespec *timestamp,
+                                       unsigned short int width,
+                                       unsigned short int height);
 
 /**
  * Write terminal I/O to a log sink.
@@ -122,29 +122,30 @@ extern tlog_rc tlog_sink_window_write(struct tlog_sink *sink,
  * @param ptr       Input buffer pointer.
  * @param len       Input buffer length.
  *
- * @return Status code.
+ * @return Global return code.
  */
-extern tlog_rc tlog_sink_io_write(struct tlog_sink *sink,
-                                  const struct timespec *timestamp,
-                                  bool output, const uint8_t *buf, size_t len);
+extern tlog_grc tlog_sink_io_write(struct tlog_sink *sink,
+                                   const struct timespec *timestamp,
+                                   bool output,
+                                   const uint8_t *buf, size_t len);
 
 /**
  * Cut a sink I/O - write pending incomplete characters.
  *
  * @param sink  The sink to cut I/O for.
  *
- * @return Status code.
+ * @return Global return code.
  */
-extern tlog_rc tlog_sink_io_cut(struct tlog_sink *sink);
+extern tlog_grc tlog_sink_io_cut(struct tlog_sink *sink);
 
 /**
  * Flush I/O pending in a log sink, on a character boundary.
  *
  * @param sink  The sink to flush.
  *
- * @return Status code.
+ * @return Global return code.
  */
-extern tlog_rc tlog_sink_io_flush(struct tlog_sink *sink);
+extern tlog_grc tlog_sink_io_flush(struct tlog_sink *sink);
 
 /**
  * Cleanup a log sink. Can be called more than once.

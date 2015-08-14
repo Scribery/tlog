@@ -45,7 +45,7 @@ tlog_sink_cleanup(struct tlog_sink *sink)
     sink->hostname = NULL;
 }
 
-tlog_rc
+tlog_grc
 tlog_sink_init(struct tlog_sink *sink,
                struct tlog_writer *writer,
                const char *hostname,
@@ -54,7 +54,7 @@ tlog_sink_init(struct tlog_sink *sink,
                size_t io_size,
                const struct timespec *timestamp)
 {
-    int orig_errno;
+    tlog_grc grc;
 
     assert(sink != NULL);
     assert(tlog_writer_is_valid(writer));
@@ -67,12 +67,16 @@ tlog_sink_init(struct tlog_sink *sink,
     sink->writer = writer;
 
     sink->hostname = strdup(hostname);
-    if (sink->hostname == NULL)
+    if (sink->hostname == NULL) {
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
         goto error;
+    }
 
     sink->username = strdup(username);
-    if (sink->username == NULL)
+    if (sink->username == NULL) {
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
         goto error;
+    }
 
     sink->session_id = session_id;
 
@@ -83,22 +87,23 @@ tlog_sink_init(struct tlog_sink *sink,
     /* NOTE: approximate size */
     sink->message_len = io_size + 1024;
     sink->message_buf = malloc(sink->message_len);
-    if (sink->message_buf == NULL)
+    if (sink->message_buf == NULL) {
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
         goto error;
+    }
 
-    if (tlog_io_init(&sink->io, io_size) != TLOG_RC_OK)
+    grc = tlog_io_init(&sink->io, io_size);
+    if (grc != TLOG_RC_OK)
         goto error;
 
     return TLOG_RC_OK;
 
 error:
-    orig_errno = errno;
     tlog_sink_cleanup(sink);
-    errno = orig_errno;
-    return TLOG_RC_FAILURE;
+    return grc;
 }
 
-tlog_rc
+tlog_grc
 tlog_sink_create(struct tlog_sink **psink,
                  struct tlog_writer *writer,
                  const char *hostname,
@@ -108,6 +113,7 @@ tlog_sink_create(struct tlog_sink **psink,
                  const struct timespec *timestamp)
 {
     struct tlog_sink *sink;
+    tlog_grc grc;
 
     assert(tlog_writer_is_valid(writer));
     assert(hostname != NULL);
@@ -116,12 +122,13 @@ tlog_sink_create(struct tlog_sink **psink,
 
     sink = malloc(sizeof(*sink));
     if (sink == NULL)
-        return TLOG_RC_FAILURE;
+        return tlog_grc_from(&tlog_grc_errno, errno);
 
-    if (tlog_sink_init(sink, writer, hostname, username,
-                       session_id, io_size, timestamp) != TLOG_RC_OK) {
+    grc = tlog_sink_init(sink, writer, hostname, username,
+                         session_id, io_size, timestamp);
+    if (grc != TLOG_RC_OK) {
         free(sink);
-        return TLOG_RC_FAILURE;
+        return grc;
     }
 
     if (psink == NULL)
@@ -151,7 +158,7 @@ tlog_sink_is_valid(const struct tlog_sink *sink)
            tlog_io_is_valid(&sink->io);
 }
 
-tlog_rc
+tlog_grc
 tlog_sink_window_write(struct tlog_sink *sink,
                        const struct timespec *timestamp,
                        unsigned short int width,
@@ -189,8 +196,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
     if (len < 0)
         return TLOG_RC_FAILURE;
     if ((size_t)len >= sink->message_len) {
-        errno = ENOMEM;
-        return TLOG_RC_FAILURE;
+        return tlog_grc_from(&tlog_grc_errno, ENOMEM);
     }
 
     sink->message_id++;
@@ -198,11 +204,12 @@ tlog_sink_window_write(struct tlog_sink *sink,
     return tlog_writer_write(sink->writer, sink->message_buf, len);
 }
 
-tlog_rc
+tlog_grc
 tlog_sink_io_write(struct tlog_sink *sink,
                    const struct timespec *timestamp,
                    bool output, const uint8_t *buf, size_t len)
 {
+    tlog_grc grc;
     assert(tlog_sink_is_valid(sink));
     assert(timestamp != NULL);
     assert(buf != NULL || len == 0);
@@ -212,27 +219,31 @@ tlog_sink_io_write(struct tlog_sink *sink,
         if (len == 0) {
             break;
         } else {
-            if (tlog_sink_io_flush(sink) != TLOG_RC_OK)
-                return TLOG_RC_FAILURE;
+            grc = tlog_sink_io_flush(sink);
+            if (grc != TLOG_RC_OK)
+                return grc;
         }
     }
     return TLOG_RC_OK;
 }
 
-tlog_rc
+tlog_grc
 tlog_sink_io_cut(struct tlog_sink *sink)
 {
+    tlog_grc grc;
     assert(tlog_sink_is_valid(sink));
     while (!tlog_io_cut(&sink->io)) {
-        if (tlog_sink_io_flush(sink) != TLOG_RC_OK)
-            return TLOG_RC_FAILURE;
+        grc = tlog_sink_io_flush(sink);
+        if (grc != TLOG_RC_OK)
+            return grc;
     }
     return TLOG_RC_OK;
 }
 
-tlog_rc
+tlog_grc
 tlog_sink_io_flush(struct tlog_sink *sink)
 {
+    tlog_grc grc;
     int len;
     struct timespec pos;
 
@@ -273,13 +284,12 @@ tlog_sink_io_flush(struct tlog_sink *sink)
     if (len < 0)
         return TLOG_RC_FAILURE;
     if ((size_t)len >= sink->message_len) {
-        errno = ENOMEM;
-        return TLOG_RC_FAILURE;
+        return tlog_grc_from(&tlog_grc_errno, ENOMEM);
     }
 
-    if (tlog_writer_write(sink->writer, sink->message_buf, len) !=
-            TLOG_RC_OK)
-        return TLOG_RC_FAILURE;
+    grc = tlog_writer_write(sink->writer, sink->message_buf, len);
+    if (grc != TLOG_RC_OK)
+        return grc;
 
     sink->message_id++;
     tlog_io_empty(&sink->io);

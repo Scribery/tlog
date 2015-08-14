@@ -23,15 +23,16 @@
 #include <assert.h>
 #include <errno.h>
 #include "tlog/reader.h"
+#include "tlog/rc.h"
 
-int
+tlog_grc
 tlog_reader_create(struct tlog_reader **preader,
                    const struct tlog_reader_type *type,
                    ...)
 {
     va_list ap;
     struct tlog_reader *reader;
-    int rc;
+    tlog_grc grc;
 
     assert(preader != NULL);
     assert(tlog_reader_type_is_valid(type));
@@ -39,15 +40,15 @@ tlog_reader_create(struct tlog_reader **preader,
 
     reader = malloc(type->size);
     if (reader == NULL) {
-        rc = -errno;
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
     } else {
         reader->type = type;
 
         va_start(ap, type);
-        rc = type->init(reader, ap);
+        grc = type->init(reader, ap);
         va_end(ap);
 
-        if (rc == 0) {
+        if (grc == TLOG_RC_OK) {
             assert(tlog_reader_is_valid(reader));
         } else {
             free(reader);
@@ -56,7 +57,7 @@ tlog_reader_create(struct tlog_reader **preader,
     }
 
     *preader = reader;
-    return rc;
+    return grc;
 }
 
 bool
@@ -67,13 +68,6 @@ tlog_reader_is_valid(const struct tlog_reader *reader)
                reader->type->is_valid == NULL ||
                reader->type->is_valid(reader)
            );
-}
-
-const char *
-tlog_reader_strerror(const struct tlog_reader *reader, int error)
-{
-    assert(tlog_reader_is_valid(reader));
-    return tlog_reader_type_strerror(reader->type, error);
 }
 
 size_t
@@ -92,18 +86,18 @@ tlog_reader_loc_fmt(const struct tlog_reader *reader, size_t loc)
     return tlog_reader_type_loc_fmt(reader->type, loc);
 }
 
-int
+tlog_grc
 tlog_reader_read(struct tlog_reader *reader,
                  struct json_object **pobject)
 {
-    int rc;
+    tlog_grc grc;
     assert(tlog_reader_is_valid(reader));
     assert(pobject != NULL);
-    rc = reader->type->read(reader, pobject);
-    if (rc != 0)
+    grc = reader->type->read(reader, pobject);
+    if (grc != TLOG_RC_OK)
         *pobject = NULL;
     assert(tlog_reader_is_valid(reader));
-    return rc;
+    return grc;
 }
 
 void

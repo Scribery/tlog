@@ -38,15 +38,17 @@ extern const struct tlog_writer_type tlog_fd_writer_type;
 /**
  * Create an instance of file descriptor writer.
  *
- * @param fd    File descriptor to write messages to.
+ * @param pwriter   Location for the created writer pointer, will be set to
+ *                  NULL in case of error.
+ * @param fd        File descriptor to write messages to.
  *
- * @return The created writer, or NULL in case of error with errno set.
+ * @return Global return code.
  */
-static inline struct tlog_writer*
-tlog_fd_writer_create(int fd)
+static inline tlog_grc
+tlog_fd_writer_create(struct tlog_writer **pwriter, int fd)
 {
     assert(fd >= 0);
-    return tlog_writer_create(&tlog_fd_writer_type, fd);
+    return tlog_writer_create(pwriter, &tlog_fd_writer_type, fd);
 }
 
 #endif /* _TLOG_FD_WRITER_H */

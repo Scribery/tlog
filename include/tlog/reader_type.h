@@ -28,19 +28,10 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <json.h>
-#include "tlog/rc.h"
+#include "tlog/grc.h"
 
 /* Forward declaration */
 struct tlog_reader;
-
-/**
- * Prototype for a function retrieving a error code description.
- *
- * @param error     The error code to retrieve description for.
- *
- * @return Error code description as a statically-allocated string.
- */
-typedef const char * (*tlog_reader_type_strerror_fn)(int error);
 
 /**
  * Init function prototype.
@@ -48,11 +39,10 @@ typedef const char * (*tlog_reader_type_strerror_fn)(int error);
  * @param reader    The reader to operate on.
  * @param ap        Argument list.
  *
- * @return Zero on success, negated errno value, or reader-specific code on
- *         failure.
+ * @return Global return code.
  */
-typedef int (*tlog_reader_type_init_fn)(struct tlog_reader *reader,
-                                        va_list ap);
+typedef tlog_grc (*tlog_reader_type_init_fn)(struct tlog_reader *reader,
+                                             va_list ap);
 
 /**
  * Validation function prototype.
@@ -92,11 +82,10 @@ typedef char * (*tlog_reader_type_loc_fmt_fn)(size_t loc);
  *                  call json_object_put after the returned object is no
  *                  longer needed.
  *
- * @return Zero on success, negated errno value, or reader-specific code on
- *         failure.
+ * @return Global return code.
  */
-typedef int (*tlog_reader_type_read_fn)(struct tlog_reader *reader,
-                                        struct json_object **pobject);
+typedef tlog_grc (*tlog_reader_type_read_fn)(struct tlog_reader *reader,
+                                             struct json_object **pobject);
 
 /**
  * Cleanup function prototype.
@@ -108,8 +97,6 @@ typedef void (*tlog_reader_type_cleanup_fn)(struct tlog_reader *reader);
 /* Writer type */
 struct tlog_reader_type {
     size_t                          size;       /**< Instance size */
-    tlog_reader_type_strerror_fn    strerror;   /**< Error description
-                                                     retrieval function */
     tlog_reader_type_init_fn        init;       /**< Init function */
     tlog_reader_type_is_valid_fn    is_valid;   /**< Validation function */
     tlog_reader_type_loc_get_fn     loc_get;    /**< Location retrieval
@@ -130,20 +117,7 @@ struct tlog_reader_type {
 extern bool tlog_reader_type_is_valid(const struct tlog_reader_type *type);
 
 /**
- * Retrieve an error code description for a reader type.
- *
- * @param reader_type   The reader type to retrieve error code description
- *                      for.
- * @param error         The error code to retrieve description for.
- *
- * @return Error code description as a statically-allocated string.
- */
-extern const char *tlog_reader_type_strerror(
-                                    const struct tlog_reader_type *type,
-                                    int error);
-
-/**
- * Formatting a reader type location.
+ * Format a reader type location.
  *
  * @param reader_type   The reader type to format location for.
  * @param loc           Opaque location value to format.

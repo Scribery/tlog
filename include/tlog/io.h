@@ -101,9 +101,9 @@ tlog_io_trx_restore(struct tlog_io_trx_store *store, struct tlog_io *object)
  * @param io    The I/O buffer to initialize.
  * @param size  Size of I/O buffer.
  *
- * @return Status code.
+ * @return Global return code.
  */
-extern tlog_rc tlog_io_init(struct tlog_io *io, size_t size);
+extern tlog_grc tlog_io_init(struct tlog_io *io, size_t size);
 
 /**
  * Check if an I/O buffer is valid.

@@ -22,6 +22,7 @@
 
 #include <unistd.h>
 #include <errno.h>
+#include "tlog/rc.h"
 #include "tlog/fd_writer.h"
 
 struct tlog_fd_writer {
@@ -29,16 +30,16 @@ struct tlog_fd_writer {
     int fd;
 };
 
-static bool
+static tlog_grc
 tlog_fd_writer_init(struct tlog_writer *writer, va_list ap)
 {
     struct tlog_fd_writer *fd_writer =
                                 (struct tlog_fd_writer*)writer;
     fd_writer->fd = va_arg(ap, int);
-    return true;
+    return TLOG_RC_OK;
 }
 
-tlog_rc
+tlog_grc
 tlog_fd_writer_write(struct tlog_writer *writer,
                          const uint8_t *buf,
                          size_t len)
@@ -53,7 +54,7 @@ tlog_fd_writer_write(struct tlog_writer *writer,
             if (errno == EINTR)
                 continue;
             else
-                return TLOG_RC_FAILURE;
+                return tlog_grc_from(&tlog_grc_errno, errno);
         }
         if ((size_t)rc == len)
             return TLOG_RC_OK;

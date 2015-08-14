@@ -106,6 +106,7 @@ test(const char *n, const struct test t)
 {
     bool passed = true;
     int fd = -1;
+    tlog_grc grc;
     struct tlog_writer *writer = NULL;
     char filename[] = "tlog_sink_test.XXXXXX";
     struct timespec timestamp = TLOG_TIMESPEC_ZERO;
@@ -127,17 +128,18 @@ test(const char *n, const struct test t)
                 strerror(errno));
         exit(1);
     }
-    writer = tlog_fd_writer_create(fd);
-    if (writer == NULL) {
+    grc = tlog_fd_writer_create(&writer, fd);
+    if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating FD writer: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         exit(1);
     }
 
-    if (tlog_sink_init(&sink, writer, t.hostname, t.username,
-                       t.session_id, SIZE, &timestamp) != TLOG_RC_OK) {
+    grc = tlog_sink_init(&sink, writer, t.hostname, t.username,
+                         t.session_id, SIZE, &timestamp);
+    if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the sink: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         exit(1);
     };
 

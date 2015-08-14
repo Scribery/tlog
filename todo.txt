@@ -52,7 +52,8 @@ potential for outside users.
 
 Consider building release code with NDEBUG.
 
-Consider merging all possible error codes into single space and module,
-possibly with the addition of interface to register new ones.
-This will make handling inherited and tunneled error codes easier.
-Especially for the case of objects which failed to create.
+Rename tlog_grc_(native|errno|gai|json) to tlog_grc_range_\1 and add
+TLOG_GRC_(|FROM|TO|IS)_\1 macros.
+
+Make tlog_msg functions return diverse global return codes to help with
+debugging parsing errors.

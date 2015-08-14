@@ -27,24 +27,6 @@
 #include "tlog/reader.h"
 
 /**
- * Minimum reader-specific error code value, must be above any
- * enum json_tokener_error value.
- */
-#define TLOG_FD_READER_ERROR_MIN    0x10000000
-
-/**
- * File descriptor message reader error codes.
- *
- * These list only reader-specific error codes. Actual codes returned by
- * functions also include negated errno values and enum json_tokener_error
- * values.
- */
-enum tlog_fd_reader_error {
-    /* Incomplete message object line encountered */
-    TLOG_FD_READER_ERROR_INCOMPLETE_LINE    = TLOG_FD_READER_ERROR_MIN,
-};
-
-/**
  * File descriptor message reader type
  *
  * Creation arguments:
@@ -60,10 +42,9 @@ extern const struct tlog_reader_type tlog_fd_reader_type;
  *                  NULL in case of error.
  * @param fd        File descriptor to read messages from.
  *
- * @return Zero on success, negated errno value, or reader-specific code on
- *         failure.
+ * @return Global return code.
  */
-static inline int
+static inline tlog_grc
 tlog_fd_reader_create(struct tlog_reader **preader, int fd)
 {
     assert(preader != NULL);

@@ -35,12 +35,16 @@ struct tlog_writer {
  * arguments. See the particular type description for specific arguments
  * required.
  *
- * @param type  The type of writer to create.
- * @param ...   The type-specific writer creation arguments.
+ * @param pwriter   Location for the created writer pointer, will be set to
+ *                  NULL in case of error.
+ * @param type      The type of writer to create.
+ * @param ...       The type-specific writer creation arguments.
  *
- * @return The created writer, or NULL in case of error with errno set.
+ * @return Global return code.
  */
-extern struct tlog_writer *tlog_writer_create(const struct tlog_writer_type *type, ...);
+extern tlog_grc tlog_writer_create(struct tlog_writer **pwriter,
+                                   const struct tlog_writer_type *type,
+                                   ...);
 
 /**
  * Check if a writer is valid.
@@ -58,10 +62,10 @@ extern bool tlog_writer_is_valid(const struct tlog_writer *writer);
  * @param buf       The pointer to the message buffer to write.
  * @param len       The length of the message buffer to write.
  *
- * @return Status code.
+ * @return Global return code.
  */
-extern tlog_rc tlog_writer_write(struct tlog_writer *writer,
-                                 const uint8_t *buf, size_t len);
+extern tlog_grc tlog_writer_write(struct tlog_writer *writer,
+                                  const uint8_t *buf, size_t len);
 
 /**
  * Cleanup and deallocate a writer.

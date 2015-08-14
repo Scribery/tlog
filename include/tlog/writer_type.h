@@ -27,7 +27,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "tlog/rc.h"
+#include "tlog/grc.h"
 
 /* Forward declaration */
 struct tlog_writer;
@@ -38,11 +38,10 @@ struct tlog_writer;
  * @param writer    The writer to operate on.
  * @param ap        Argument list.
  *
- * @return True if initialization succeeded,
- *         false if it failed and errno was set appropriately.
+ * @return Global return code.
  */
-typedef bool (*tlog_writer_type_init_fn)(struct tlog_writer *writer,
-                                         va_list ap);
+typedef tlog_grc (*tlog_writer_type_init_fn)(struct tlog_writer *writer,
+                                             va_list ap);
 
 /**
  * Validation function prototype.
@@ -61,11 +60,11 @@ typedef bool (*tlog_writer_type_is_valid_fn)(const struct tlog_writer
  * @param buf       The pointer to the message buffer to write.
  * @param len       The length of the message buffer to write.
  *
- * @return Status code.
+ * @return Global return code.
  */
-typedef tlog_rc (*tlog_writer_type_write_fn)(struct tlog_writer *writer,
-                                             const uint8_t *buf,
-                                             size_t len);
+typedef tlog_grc (*tlog_writer_type_write_fn)(struct tlog_writer *writer,
+                                              const uint8_t *buf,
+                                              size_t len);
 
 /**
  * Cleanup function prototype.

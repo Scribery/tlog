@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include "tlog/io.h"
 
-tlog_rc
+tlog_grc
 tlog_io_init(struct tlog_io *io, size_t size)
 {
-    int orig_errno;
+    tlog_grc grc;
 
     assert(io != NULL);
     assert(size >= TLOG_IO_SIZE_MIN);
@@ -37,22 +37,24 @@ tlog_io_init(struct tlog_io *io, size_t size)
     io->size = size;
     io->rem = size;
 
-    if (tlog_stream_init(&io->input, size, '<', '[') != TLOG_RC_OK)
+    grc = tlog_stream_init(&io->input, size, '<', '[');
+    if (grc != TLOG_RC_OK)
         goto error;
-    if (tlog_stream_init(&io->output, size, '>', ']') != TLOG_RC_OK)
+    grc = tlog_stream_init(&io->output, size, '>', ']');
+    if (grc != TLOG_RC_OK)
         goto error;
     io->timing_buf = malloc(size);
-    if (io->timing_buf == NULL)
+    if (io->timing_buf == NULL) {
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
         goto error;
+    }
     io->timing_ptr = io->timing_buf;
 
     return TLOG_RC_OK;
 
 error:
-    orig_errno = errno;
     tlog_io_cleanup(io);
-    errno = orig_errno;
-    return TLOG_RC_FAILURE;
+    return grc;
 }
 
 bool

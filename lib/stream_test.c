@@ -98,6 +98,7 @@ static bool
 test(const char *n, const struct test t)
 {
     bool passed = true;
+    tlog_grc grc;
     uint8_t meta_buf[SIZE] = {0,};
     struct tlog_stream stream;
     const uint8_t *buf;
@@ -112,10 +113,10 @@ test(const char *n, const struct test t)
 
     rem_next = rem_last = t.rem_in;
 
-    if (tlog_stream_init(&stream, SIZE, '<', '[') !=
-            TLOG_RC_OK) {
+    grc = tlog_stream_init(&stream, SIZE, '<', '[');
+    if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the stream: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         exit(1);
     }
 

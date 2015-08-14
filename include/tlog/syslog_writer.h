@@ -37,14 +37,16 @@ extern const struct tlog_writer_type tlog_syslog_writer_type;
 /**
  * Create an instance of syslog writer.
  *
+ * @param pwriter   Location for the created writer pointer, will be set to
+ *                  NULL in case of error.
  * @param priority  The "priority" argument to pass to syslog(3).
  *
- * @return The created writer, or NULL in case of error with errno set.
+ * @return Global return code.
  */
-static inline struct tlog_writer*
-tlog_syslog_writer_create(int priority)
+static inline tlog_grc
+tlog_syslog_writer_create(struct tlog_writer **pwriter, int priority)
 {
-    return tlog_writer_create(&tlog_syslog_writer_type, priority);
+    return tlog_writer_create(pwriter, &tlog_syslog_writer_type, priority);
 }
 
 #endif /* _TLOG_SYSLOG_WRITER_H */

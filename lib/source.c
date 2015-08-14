@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
+#include "tlog/rc.h"
 #include "tlog/source.h"
 
 bool
@@ -47,7 +48,7 @@ tlog_source_cleanup(struct tlog_source *source)
     source->io_buf = NULL;
 }
 
-int
+tlog_grc
 tlog_source_init(struct tlog_source *source,
                  struct tlog_reader *reader,
                  const char *hostname,
@@ -55,7 +56,7 @@ tlog_source_init(struct tlog_source *source,
                  unsigned int session_id,
                  size_t io_size)
 {
-    int orig_errno;
+    tlog_grc grc;
 
     assert(source != NULL);
     assert(tlog_reader_is_valid(reader));
@@ -65,13 +66,17 @@ tlog_source_init(struct tlog_source *source,
     source->reader = reader;
     if (hostname != NULL) {
         source->hostname = strdup(hostname);
-        if (source->hostname == NULL)
+        if (source->hostname == NULL) {
+            grc = tlog_grc_from(&tlog_grc_errno, errno);
             goto error;
+        }
     }
     if (username != NULL) {
         source->username = strdup(username);
-        if (source->username == NULL)
+        if (source->username == NULL) {
+            grc = tlog_grc_from(&tlog_grc_errno, errno);
             goto error;
+        }
     }
     source->session_id = session_id;
 
@@ -79,19 +84,20 @@ tlog_source_init(struct tlog_source *source,
 
     source->io_size = io_size;
     source->io_buf = malloc(io_size);
-    if (source->io_buf == NULL)
+    if (source->io_buf == NULL) {
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
         goto error;
+    }
 
     assert(tlog_source_is_valid(source));
 
-    return 0;
+    return TLOG_RC_OK;
 error:
-    orig_errno = errno;
     tlog_source_cleanup(source);
-    return -orig_errno;
+    return grc;
 }
 
-int
+tlog_grc
 tlog_source_create(struct tlog_source **psource,
                    struct tlog_reader *reader,
                    const char *hostname,
@@ -100,26 +106,26 @@ tlog_source_create(struct tlog_source **psource,
                    size_t io_size)
 {
     struct tlog_source *source;
-    int rc;
+    tlog_grc grc;
 
     assert(psource != NULL);
     assert(tlog_reader_is_valid(reader));
     assert(io_size >= TLOG_SOURCE_IO_SIZE_MIN);
 
     source = malloc(sizeof(*source));
-    if (source == NULL)
-        return -errno;
-
-    rc = tlog_source_init(source, reader,
-                          hostname, username, session_id, io_size);
-    if (rc != 0) {
-        free(source);
-        source = NULL;
+    if (source == NULL) {
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
+    } else {
+        grc = tlog_source_init(source, reader,
+                               hostname, username, session_id, io_size);
+        if (grc != TLOG_RC_OK) {
+            free(source);
+            source = NULL;
+        }
     }
 
     *psource = source;
-
-    return rc;
+    return grc;
 }
 
 void
@@ -129,23 +135,6 @@ tlog_source_destroy(struct tlog_source *source)
         return;
     tlog_source_cleanup(source);
     free(source);
-}
-
-const char *
-tlog_source_strerror(struct tlog_source *source, int rc)
-{
-    assert(tlog_source_is_valid(source));
-
-    if (rc >= TLOG_SOURCE_ERROR_MIN) {
-        switch (rc) {
-        case TLOG_SOURCE_ERROR_INVALID_OBJECT:
-            return "Object with invalid schema encountered";
-        default:
-            return "Unknown error";
-        }
-    } else {
-        return tlog_reader_strerror(source->reader, rc);
-    }
 }
 
 size_t
@@ -167,26 +156,26 @@ tlog_source_loc_fmt(const struct tlog_source *source, size_t loc)
  *
  * @param source    The source to read message for.
  *
- * @return Status code.
+ * @return Global return code.
  */
-static int
+static tlog_grc
 tlog_source_read_msg(struct tlog_source *source)
 {
-    int rc;
+    tlog_grc grc;
     struct json_object *obj;
 
     assert(tlog_source_is_valid(source));
     assert(tlog_msg_is_void(&source->msg));
 
     for (; ; tlog_msg_cleanup(&source->msg)) {
-        rc = tlog_reader_read(source->reader, &obj);
-        if (rc != 0)
-            return rc;
+        grc = tlog_reader_read(source->reader, &obj);
+        if (grc != TLOG_RC_OK)
+            return grc;
         if (obj == NULL)
-            return 0;
+            return TLOG_RC_OK;
 
         if (!tlog_msg_init(&source->msg, obj))
-            return TLOG_SOURCE_ERROR_INVALID_OBJECT;
+            return TLOG_RC_SOURCE_INVALID_OBJECT;
 
         if (source->hostname != NULL &&
             strcmp(source->msg.host, source->hostname) != 0)
@@ -198,14 +187,14 @@ tlog_source_read_msg(struct tlog_source *source)
             source->msg.session != source->session_id)
             continue;
 
-        return 0;
+        return TLOG_RC_OK;
     }
 }
 
-int
+tlog_grc
 tlog_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
 {
-    int rc;
+    tlog_grc grc;
 
     assert(tlog_source_is_valid(source));
     assert(tlog_pkt_is_valid(pkt));
@@ -213,23 +202,23 @@ tlog_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
 
     while (true) {
         if (tlog_msg_is_void(&source->msg)) {
-            rc = tlog_source_read_msg(source);
-            if (rc != 0)
-                return rc;
+            grc = tlog_source_read_msg(source);
+            if (grc != TLOG_RC_OK)
+                return grc;
             if (tlog_msg_is_void(&source->msg))
-                return 0;
+                return TLOG_RC_OK;
         }
 
         if (!tlog_msg_read(&source->msg, pkt,
                            source->io_buf, source->io_size)) {
             tlog_msg_cleanup(&source->msg);
-            return TLOG_SOURCE_ERROR_INVALID_OBJECT;
+            return TLOG_RC_SOURCE_INVALID_OBJECT;
         }
 
         if (tlog_pkt_is_void(pkt)) {
             tlog_msg_cleanup(&source->msg);
         } else {
-            return 0;
+            return TLOG_RC_OK;
         }
     }
 }

@@ -23,7 +23,7 @@
 #ifndef _TLOG_STREAM_H
 #define _TLOG_STREAM_H
 
-#include "tlog/rc.h"
+#include "tlog/grc.h"
 #include "tlog/utf8.h"
 #include "tlog/trx.h"
 
@@ -111,9 +111,11 @@ tlog_stream_trx_restore(struct tlog_stream_trx_store *store,
  * @param size          Text/binary buffer size.
  * @param valid_mark    Valid UTF-8 record marker character.
  * @param invalid_mark  Invalid UTF-8 record marker character.
+ *
+ * @return Global return code.
  */
-extern tlog_rc tlog_stream_init(struct tlog_stream *stream, size_t size,
-                                uint8_t valid_mark, uint8_t invalid_mark);
+extern tlog_grc tlog_stream_init(struct tlog_stream *stream, size_t size,
+                                 uint8_t valid_mark, uint8_t invalid_mark);
 
 /**
  * Check if a stream is valid.

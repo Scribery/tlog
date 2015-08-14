@@ -65,11 +65,11 @@ tlog_stream_is_empty(const struct tlog_stream *stream)
     return stream->txt_len == 0 && stream->bin_len == 0;
 }
 
-tlog_rc
+tlog_grc
 tlog_stream_init(struct tlog_stream *stream, size_t size,
                  uint8_t valid_mark, uint8_t invalid_mark)
 {
-    int orig_errno;
+    tlog_grc grc;
     assert(stream != NULL);
     assert(size >= TLOG_STREAM_SIZE_MIN);
     assert(valid_mark != invalid_mark);
@@ -82,19 +82,21 @@ tlog_stream_init(struct tlog_stream *stream, size_t size,
     stream->invalid_mark = invalid_mark;
 
     stream->txt_buf = malloc(size);
-    if (stream->txt_buf == NULL)
+    if (stream->txt_buf == NULL) {
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
         goto error;
+    }
 
     stream->bin_buf = malloc(size);
-    if (stream->bin_buf == NULL)
+    if (stream->bin_buf == NULL) {
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
         goto error;
+    }
 
     return TLOG_RC_OK;
 error:
-    orig_errno = errno;
     tlog_stream_cleanup(stream);
-    errno = orig_errno;
-    return TLOG_RC_FAILURE;
+    return grc;
 }
 
 /**

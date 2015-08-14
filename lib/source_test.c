@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include "tlog/rc.h"
 #include "tlog/fd_reader.h"
 #include "tlog/misc.h"
 #include "tlog/source.h"
@@ -56,7 +57,7 @@ struct op_data_loc_get {
 };
 
 struct op_data_read {
-    int             exp_rc;
+    int             exp_grc;
     struct tlog_pkt exp_pkt;
 };
 
@@ -142,8 +143,7 @@ test(const char *n, const struct test t)
 {
     bool passed = true;
     int fd = -1;
-    int rc;
-    const struct tlog_reader_type *reader_type = &tlog_fd_reader_type;
+    tlog_grc grc;
     struct tlog_reader *reader = NULL;
     struct tlog_source *source = NULL;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
@@ -173,19 +173,18 @@ test(const char *n, const struct test t)
                 strerror(errno));
         exit(1);
     }
-    rc = tlog_reader_create(&reader, reader_type, fd);
-    if (rc != 0) {
+    grc = tlog_reader_create(&reader, &tlog_fd_reader_type, fd);
+    if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating FD reader: %s\n",
-                tlog_reader_type_strerror(reader_type, rc));
+                tlog_grc_strerror(grc));
         exit(1);
     }
-
-    rc = tlog_source_create(&source, reader,
-                            t.hostname, t.username, t.session_id,
-                            t.io_size);
-    if (rc != 0) {
-        /* FIXME: use global error codes when implemented */
-        fprintf(stderr, "Failed creating source: %d\n", rc);
+    grc = tlog_source_create(&source, reader,
+                             t.hostname, t.username, t.session_id,
+                             t.io_size);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Failed creating source: %s\n",
+                tlog_grc_strerror(grc));
         exit(1);
     }
 
@@ -202,16 +201,15 @@ test(const char *n, const struct test t)
     for (op = t.op_list; op->type != OP_TYPE_NONE; op++) {
         switch (op->type) {
             case OP_TYPE_READ:
-                rc = tlog_source_read(source, &pkt);
-                if (rc != op->data.read.exp_rc) {
+                grc = tlog_source_read(source, &pkt);
+                if (grc != op->data.read.exp_grc) {
                     const char *res_str;
                     const char *exp_str;
-                    res_str = tlog_source_strerror(source, rc);
-                    exp_str = tlog_source_strerror(source,
-                                                   op->data.read.exp_rc);
-                    FAIL_OP("rc: %s (%d) != %s (%d)",
-                            res_str, rc,
-                            exp_str, op->data.read.exp_rc);
+                    res_str = tlog_grc_strerror(grc);
+                    exp_str = tlog_grc_strerror(op->data.read.exp_grc);
+                    FAIL_OP("grc: %s (%d) != %s (%d)",
+                            res_str, grc,
+                            exp_str, op->data.read.exp_grc);
                 }
                 if (!tlog_pkt_is_equal(&pkt, &op->data.read.exp_pkt)) {
                     FAIL_OP("packet mismatch:");
@@ -295,9 +293,9 @@ main(void)
 
 #define PKT_IO(_width, _height)
 
-#define OP_READ(_exp_rc, _exp_pkt) \
+#define OP_READ(_exp_grc, _exp_pkt) \
     {.type = OP_TYPE_READ,                                          \
-     .data = {.read = {.exp_rc = _exp_rc, .exp_pkt = _exp_pkt}}}
+     .data = {.read = {.exp_grc = _exp_grc, .exp_pkt = _exp_pkt}}}
 
 #define TEST_SPEC(_name_token, _input, _hostname, _username, _session_id, \
                   _io_size, _op_list_init_args...)                          \
