@@ -115,27 +115,28 @@ tlog_sink_create(struct tlog_sink **psink,
     struct tlog_sink *sink;
     tlog_grc grc;
 
+    assert(psink != NULL);
     assert(tlog_writer_is_valid(writer));
     assert(hostname != NULL);
     assert(io_size >= TLOG_IO_SIZE_MIN);
     assert(timestamp != NULL);
 
     sink = malloc(sizeof(*sink));
-    if (sink == NULL)
-        return tlog_grc_from(&tlog_grc_errno, errno);
-
-    grc = tlog_sink_init(sink, writer, hostname, username,
-                         session_id, io_size, timestamp);
-    if (grc != TLOG_RC_OK) {
-        free(sink);
-        return grc;
+    if (sink == NULL) {
+        grc = tlog_grc_from(&tlog_grc_errno, errno);
+    } else {
+        grc = tlog_sink_init(sink, writer, hostname, username,
+                             session_id, io_size, timestamp);
+        if (grc == TLOG_RC_OK) {
+            assert(tlog_sink_is_valid(sink));
+        } else {
+            free(sink);
+            sink = NULL;
+        }
     }
 
-    if (psink == NULL)
-        tlog_sink_destroy(sink);
-    else
-        *psink = sink;
-    return TLOG_RC_OK;
+    *psink = sink;
+    return grc;
 };
 
 void

@@ -80,7 +80,8 @@ extern tlog_grc tlog_sink_init(struct tlog_sink *sink,
 /**
  * Create (allocate and initialize) a log sink.
  *
- * @param psink             Location for created sink pointer.
+ * @param psink             Location for created sink pointer, set to NULL in
+ *                          case of error.
  * @param writer            Log message writer.
  * @param hostname          Hostname to use in log messages.
  * @param username          Username to use in log messages.
