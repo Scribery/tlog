@@ -112,7 +112,7 @@ test(const char *n, const struct test t)
         exit(1);
     }
     grc = tlog_reader_create(&reader, reader_type, fd);
-    if (grc != 0) {
+    if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating FD reader: %s\n",
                 tlog_grc_strerror(grc));
         exit(1);
