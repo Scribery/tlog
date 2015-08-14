@@ -331,7 +331,8 @@ main(int argc, char **argv)
     raw_termios.c_cc[VTIME] = 0;
     rc = tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw_termios);
     if (rc < 0) {
-        fprintf(stderr, "Failed setting tty attributes: %s\n", strerror(errno));
+        fprintf(stderr, "Failed setting tty attributes: %s\n",
+                strerror(errno));
         return 1;
     }
 
@@ -487,7 +488,8 @@ main(int argc, char **argv)
             if (errno == EINTR)
                 continue;
             else
-                fprintf(stderr, "Failed waiting for I/O: %s\n", strerror(errno));
+                fprintf(stderr, "Failed waiting for I/O: %s\n",
+                        strerror(errno));
             break;
         }
 
@@ -545,7 +547,8 @@ main(int argc, char **argv)
     /* Restore terminal attributes */
     rc = tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
     if (rc < 0 && errno != EBADF) {
-        fprintf(stderr, "Failed restoring tty attributes: %s\n", strerror(errno));
+        fprintf(stderr, "Failed restoring tty attributes: %s\n",
+                strerror(errno));
         return 1;
     }
 

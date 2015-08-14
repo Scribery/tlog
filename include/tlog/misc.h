@@ -96,7 +96,6 @@ tlog_timespec_is_zero(const struct timespec *t)
  * Set a timespec value to zero.
  *
  * @param t     Timespec to zero.
- *
  */
 static inline void
 tlog_timespec_zero(struct timespec *t)
