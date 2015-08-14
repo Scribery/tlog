@@ -277,7 +277,9 @@ main(int argc, char **argv)
          * Child
          */
         execl("/bin/bash", "/bin/bash", NULL);
-        return 0;
+        fprintf(stderr, "Failed to execute the shell: %s",
+                strerror(errno));
+        return 1;
     }
 
     /*
