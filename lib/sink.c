@@ -96,6 +96,7 @@ tlog_sink_init(struct tlog_sink *sink,
     if (grc != TLOG_RC_OK)
         goto error;
 
+    assert(tlog_sink_is_valid(sink));
     return TLOG_RC_OK;
 
 error:

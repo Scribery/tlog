@@ -93,6 +93,7 @@ tlog_stream_init(struct tlog_stream *stream, size_t size,
         goto error;
     }
 
+    assert(tlog_stream_is_valid(stream));
     return TLOG_RC_OK;
 error:
     tlog_stream_cleanup(stream);

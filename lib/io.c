@@ -50,6 +50,7 @@ tlog_io_init(struct tlog_io *io, size_t size)
     }
     io->timing_ptr = io->timing_buf;
 
+    assert(tlog_io_is_valid(io));
     return TLOG_RC_OK;
 
 error:
