@@ -261,7 +261,7 @@ main(void)
         "\"user\":"     "\"" #_user_token "\","                             \
         "\"session\":"  #_session_token ","                                 \
         "\"id\":"       #_id_token ","                                      \
-        "\"pos\":"      #_pos_token ","                                     \
+        "\"pos\":"      "\"" #_pos_token "\","                              \
         "\"width\":"    #_width_token ","                                   \
         "\"height\":"   #_height_token                                      \
     "}\n"
