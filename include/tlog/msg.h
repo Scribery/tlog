@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <json_object.h>
+#include "tlog/grc.h"
 #include "tlog/pkt.h"
 
 /** Minimum I/O buffer size (longest UTF-8 character) */
@@ -113,10 +114,10 @@ struct tlog_msg {
  * @param msg   The message to initialize.
  * @param obj   The object to parse, or NULL for void message.
  *
- * @return True if the object schema was valid and it was parsed into the
- *         message, false otherwise.
+ * @return Global return code.
  */
-extern bool tlog_msg_init(struct tlog_msg *msg, struct json_object *obj);
+extern tlog_grc tlog_msg_init(struct tlog_msg *msg,
+                              struct json_object *obj);
 
 /**
  * Check if a message is valid.
@@ -146,11 +147,10 @@ extern bool tlog_msg_is_void(const struct tlog_msg *msg);
  *                  referred to from the I/O packets as "not owned".
  * @param io_size   Size of the I/O buffer io_buf.
  *
- * @return True if the object schema was valid and it was parsed into the
- *         packet, false otherwise.
+ * @return Global return code.
  */
-extern bool tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
-                          uint8_t *io_buf, size_t io_size);
+extern tlog_grc tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
+                              uint8_t *io_buf, size_t io_size);
 
 /**
  * Cleanup a message, "putting" down the JSON object and voiding the message.

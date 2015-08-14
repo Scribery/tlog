@@ -174,8 +174,9 @@ tlog_source_read_msg(struct tlog_source *source)
         if (obj == NULL)
             return TLOG_RC_OK;
 
-        if (!tlog_msg_init(&source->msg, obj))
-            return TLOG_RC_SOURCE_INVALID_OBJECT;
+        grc = tlog_msg_init(&source->msg, obj);
+        if (grc != TLOG_RC_OK)
+            return grc;
 
         if (source->hostname != NULL &&
             strcmp(source->msg.host, source->hostname) != 0)
@@ -209,10 +210,11 @@ tlog_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
                 return TLOG_RC_OK;
         }
 
-        if (!tlog_msg_read(&source->msg, pkt,
-                           source->io_buf, source->io_size)) {
+        grc = tlog_msg_read(&source->msg, pkt,
+                            source->io_buf, source->io_size);
+        if (grc != TLOG_RC_OK) {
             tlog_msg_cleanup(&source->msg);
-            return TLOG_RC_SOURCE_INVALID_OBJECT;
+            return grc;
         }
 
         if (tlog_pkt_is_void(pkt)) {

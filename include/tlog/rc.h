@@ -32,7 +32,9 @@
 typedef enum tlog_rc {
     TLOG_RC_OK = TLOG_RC_MIN,
     TLOG_RC_FAILURE,
-    TLOG_RC_SOURCE_INVALID_OBJECT,
+    TLOG_RC_MSG_FIELD_MISSING,
+    TLOG_RC_MSG_FIELD_INVALID_TYPE,
+    TLOG_RC_MSG_FIELD_INVALID_VALUE,
     TLOG_RC_FD_READER_INCOMPLETE_LINE,
     /* Return code upper boundary (not a valid return code) */
     TLOG_RC_MAX_PLUS_ONE

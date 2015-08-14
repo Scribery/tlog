@@ -29,8 +29,12 @@ static const char *tlog_rc_desc_list[TLOG_RC_MAX_PLUS_ONE - TLOG_RC_MIN] = {
         "Success",
     [TLOG_RC_FAILURE] =
         "Failure",
-    [TLOG_RC_SOURCE_INVALID_OBJECT] =
-        "Object with invalid schema encountered",
+    [TLOG_RC_MSG_FIELD_MISSING] =
+        "A message field is missing",
+    [TLOG_RC_MSG_FIELD_INVALID_TYPE] =
+        "A message field has invalid type",
+    [TLOG_RC_MSG_FIELD_INVALID_VALUE] =
+        "A message field has invalid value",
     [TLOG_RC_FD_READER_INCOMPLETE_LINE] =
         "Incomplete message object line encountered",
 };
