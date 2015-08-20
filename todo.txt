@@ -57,3 +57,5 @@ TLOG_GRC_(|FROM|TO|IS)_\1 macros.
 
 Make tlog_msg functions return diverse global return codes to help with
 debugging parsing errors.
+
+Test the code with coverity.
