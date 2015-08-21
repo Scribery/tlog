@@ -317,14 +317,14 @@ main(void)
     TEST_ANY(null,
          "", 4,
          OP_LOC_GET(1),
-         OP_READ(0, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID),
          OP_LOC_GET(1));
 
     TEST_ANY(window,
          MSG_WINDOW_DUMMY(1, 0.000, 100, 200),
          4,
          OP_LOC_GET(1),
-         OP_READ(0, PKT_WINDOW(0, 0, 100, 200)),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(0, 0, 100, 200)),
          OP_LOC_GET(2));
 
     return !passed;

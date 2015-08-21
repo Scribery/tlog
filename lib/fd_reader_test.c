@@ -222,145 +222,145 @@ main(void)
     TEST(null,
          "",
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1));
 
     TEST(null_repeat_eof,
          "",
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1));
 
     TEST(single_space,
          " ",
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1));
 
     TEST(single_space_repeat_eof,
          " ",
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1));
 
     TEST(two_spaces,
          " ",
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1));
 
     TEST(empty_line,
          "\n",
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(2));
 
     TEST(single_space_line,
          " \n",
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(2));
 
     TEST(two_single_space_lines,
          " \n \n",
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(3));
 
     TEST(empty_object,
          "{}",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1));
 
     TEST(empty_object_repeat_eof,
          "{}",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1));
 
     TEST(empty_object_space_pad_before,
          " {}",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(1));
 
     TEST(empty_object_space_pad_after,
          "{} ",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(1));
 
     TEST(empty_object_space_pad_both,
          " {} ",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(1));
 
     TEST(empty_object_newline_pad_before,
          "\n{}",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(2));
 
     TEST(empty_object_newline_pad_after,
          "{}\n",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(2));
 
     TEST(empty_object_newline_pad_both,
          "\n{}\n",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(3));
 
     TEST(two_empty_objects_hanging,
          "{}\n{}",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(2),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(2),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(2));
 
     TEST(two_empty_objects_complete,
          "{}\n{}\n",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(2),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(3),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(3));
 
     TEST(two_empty_objects_apart,
          "{}\n  \n{}\n",
          OP_LOC_GET(1),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(2),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(4),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(4));
 
     TEST(one_deep_object,
          "{\"x\": 1}",
          OP_LOC_GET(1),
-         OP_READ(0, "{ \"x\": 1 }"),
+         OP_READ(TLOG_RC_OK, "{ \"x\": 1 }"),
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1));
 
     TEST(two_deep_object,
@@ -376,7 +376,7 @@ main(void)
          OP_READ(TLOG_GRC_FROM(json, json_tokener_error_depth),
                  NULL),
          OP_LOC_GET(2),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(2));
 
     TEST(eof_after_err,
@@ -385,9 +385,9 @@ main(void)
          OP_READ(TLOG_GRC_FROM(json, json_tokener_error_depth),
                  NULL),
          OP_LOC_GET(2),
-         OP_READ(0, "{ }"),
+         OP_READ(TLOG_RC_OK, "{ }"),
          OP_LOC_GET(2),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(2));
 
     TEST(premature_eof,
@@ -406,11 +406,11 @@ main(void)
          "{\"abc\": 123, \"def\": 456, \"ghi\": 789, "
          "\"bool\": true, \"string\": \"wool\"}",
          OP_LOC_GET(1),
-         OP_READ(0, 
+         OP_READ(TLOG_RC_OK,
                  "{ \"abc\": 123, \"def\": 456, \"ghi\": 789, "
                  "\"bool\": true, \"string\": \"wool\" }"),
          OP_LOC_GET(1),
-         OP_READ(0, NULL),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(1));
 
     return !passed;
