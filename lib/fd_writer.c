@@ -54,7 +54,7 @@ tlog_fd_writer_write(struct tlog_writer *writer,
             if (errno == EINTR)
                 continue;
             else
-                return TLOG_GRC_FROM(errno, errno);
+                return TLOG_GRC_ERRNO;
         }
         if ((size_t)rc == len)
             return TLOG_RC_OK;

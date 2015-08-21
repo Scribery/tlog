@@ -110,6 +110,9 @@ extern tlog_grc tlog_grc_from(const struct tlog_grc_range *range, int rc);
 #define TLOG_GRC_FROM(_range_name_token, _rc) \
     tlog_grc_from(&tlog_grc_range_##_range_name_token, _rc)
 
+/** Current value of errno as a grc (not an lvalue) */
+#define TLOG_GRC_ERRNO  TLOG_GRC_FROM(errno, errno)
+
 /**
  * Convert a grc to a range rc.
  *

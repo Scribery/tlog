@@ -45,7 +45,7 @@ tlog_io_init(struct tlog_io *io, size_t size)
         goto error;
     io->timing_buf = malloc(size);
     if (io->timing_buf == NULL) {
-        grc = TLOG_GRC_FROM(errno, errno);
+        grc = TLOG_GRC_ERRNO;
         goto error;
     }
     io->timing_ptr = io->timing_buf;

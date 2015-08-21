@@ -67,14 +67,14 @@ tlog_source_init(struct tlog_source *source,
     if (hostname != NULL) {
         source->hostname = strdup(hostname);
         if (source->hostname == NULL) {
-            grc = TLOG_GRC_FROM(errno, errno);
+            grc = TLOG_GRC_ERRNO;
             goto error;
         }
     }
     if (username != NULL) {
         source->username = strdup(username);
         if (source->username == NULL) {
-            grc = TLOG_GRC_FROM(errno, errno);
+            grc = TLOG_GRC_ERRNO;
             goto error;
         }
     }
@@ -85,7 +85,7 @@ tlog_source_init(struct tlog_source *source,
     source->io_size = io_size;
     source->io_buf = malloc(io_size);
     if (source->io_buf == NULL) {
-        grc = TLOG_GRC_FROM(errno, errno);
+        grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
@@ -114,7 +114,7 @@ tlog_source_create(struct tlog_source **psource,
 
     source = malloc(sizeof(*source));
     if (source == NULL) {
-        grc = TLOG_GRC_FROM(errno, errno);
+        grc = TLOG_GRC_ERRNO;
     } else {
         grc = tlog_source_init(source, reader,
                                hostname, username, session_id, io_size);

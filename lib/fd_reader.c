@@ -50,7 +50,7 @@ tlog_fd_reader_init(struct tlog_reader *reader, va_list ap)
     assert(fd >= 0);
     fd_reader->tok = json_tokener_new_ex(2);
     if (fd_reader->tok == NULL)
-        return TLOG_GRC_FROM(errno, errno);
+        return TLOG_GRC_ERRNO;
     fd_reader->fd = fd;
     fd_reader->line = 1;
     fd_reader->pos = fd_reader->end = fd_reader->buf;
@@ -177,7 +177,7 @@ tlog_fd_reader_read(struct tlog_reader *reader, struct json_object **pobject)
                 if (errno == EINTR)
                     continue;
                 else
-                    return TLOG_GRC_FROM(errno, errno);
+                    return TLOG_GRC_ERRNO;
             }
             fd_reader->end += rc;
         } while (rc != 0 &&

@@ -40,7 +40,7 @@ tlog_writer_create(struct tlog_writer **pwriter,
 
     writer = malloc(type->size);
     if (writer == NULL) {
-        grc = TLOG_GRC_FROM(errno, errno);
+        grc = TLOG_GRC_ERRNO;
     } else {
         writer->type = type;
 

@@ -129,7 +129,7 @@ get_fqdn(char **pfqdn)
 
     /* Get hostname */
     if (gethostname(hostname, sizeof(hostname)) < 0)
-        return TLOG_GRC_FROM(errno, errno);
+        return TLOG_GRC_ERRNO;
 
     /* Resolve hostname to FQDN */
     gai_error = getaddrinfo(hostname, NULL, &hints, &info);
@@ -140,7 +140,7 @@ get_fqdn(char **pfqdn)
     *pfqdn = strdup(info->ai_canonname);
     freeaddrinfo(info);
     if (*pfqdn == NULL)
-        return TLOG_GRC_FROM(errno, errno);
+        return TLOG_GRC_ERRNO;
 
     return TLOG_RC_OK;
 }

@@ -68,13 +68,13 @@ tlog_sink_init(struct tlog_sink *sink,
 
     sink->hostname = strdup(hostname);
     if (sink->hostname == NULL) {
-        grc = TLOG_GRC_FROM(errno, errno);
+        grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
     sink->username = strdup(username);
     if (sink->username == NULL) {
-        grc = TLOG_GRC_FROM(errno, errno);
+        grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
@@ -88,7 +88,7 @@ tlog_sink_init(struct tlog_sink *sink,
     sink->message_len = io_size + 1024;
     sink->message_buf = malloc(sink->message_len);
     if (sink->message_buf == NULL) {
-        grc = TLOG_GRC_FROM(errno, errno);
+        grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
@@ -124,7 +124,7 @@ tlog_sink_create(struct tlog_sink **psink,
 
     sink = malloc(sizeof(*sink));
     if (sink == NULL) {
-        grc = TLOG_GRC_FROM(errno, errno);
+        grc = TLOG_GRC_ERRNO;
     } else {
         grc = tlog_sink_init(sink, writer, hostname, username,
                              session_id, io_size, timestamp);
