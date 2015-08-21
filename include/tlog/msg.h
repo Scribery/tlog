@@ -113,6 +113,8 @@ struct tlog_msg {
  *
  * @param msg   The message to initialize.
  * @param obj   The object to parse, or NULL for void message.
+ *              The object's reference count will be increased in case of
+ *              success.
  *
  * @return Global return code.
  */
@@ -154,7 +156,8 @@ extern tlog_grc tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
 
 /**
  * Cleanup a message, "putting" down the JSON object and voiding the message.
- * Can be called repeatedly.
+ * The referenced object's reference count will be decreased.
+ * Can be called repeatedly with no additional effect.
  *
  * @param msg   The message to cleanup.
  */

@@ -40,6 +40,7 @@ void
 tlog_source_cleanup(struct tlog_source *source)
 {
     assert(source != NULL);
+    tlog_msg_cleanup(&source->msg);
     free(source->hostname);
     source->hostname = NULL;
     free(source->username);
@@ -175,6 +176,7 @@ tlog_source_read_msg(struct tlog_source *source)
             return TLOG_RC_OK;
 
         grc = tlog_msg_init(&source->msg, obj);
+        json_object_put(obj);
         if (grc != TLOG_RC_OK)
             return grc;
 

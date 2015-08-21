@@ -170,7 +170,7 @@ tlog_msg_init(struct tlog_msg *msg, struct json_object *obj)
     }
 #undef GET_FIELD
 
-    msg->obj = obj;
+    msg->obj = json_object_get(obj);
     assert(tlog_msg_is_valid(msg));
     return TLOG_RC_OK;
 }
