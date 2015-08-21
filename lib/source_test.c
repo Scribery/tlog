@@ -231,6 +231,8 @@ test(const char *n, const struct test t)
                     FAIL_OP("loc: %s (%zu) != %s (%zu)",
                             res_str, loc,
                             exp_str, op->data.loc_get.exp_loc);
+                    free(res_str);
+                    free(exp_str);
                 }
                 break;
             default:
