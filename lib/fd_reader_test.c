@@ -374,10 +374,19 @@ main(void)
                  NULL),
          OP_LOC_GET(1));
 
-    TEST(object_after_err,
+    TEST(object_after_depth_err,
          "[{\"x\": 1}]\n{}",
          OP_LOC_GET(1),
          OP_READ(TLOG_GRC_FROM(json, json_tokener_error_depth),
+                 NULL),
+         OP_LOC_GET(2),
+         OP_READ(TLOG_RC_OK, "{ }"),
+         OP_LOC_GET(2));
+
+    TEST(object_after_syntax_err,
+         "{\"x\": a, \"1\": 2}\n{}",
+         OP_LOC_GET(1),
+         OP_READ(TLOG_GRC_FROM(json, json_tokener_error_parse_unexpected),
                  NULL),
          OP_LOC_GET(2),
          OP_READ(TLOG_RC_OK, "{ }"),
@@ -404,6 +413,75 @@ main(void)
          "{\"x\": 1\n",
          OP_LOC_GET(1),
          OP_READ(TLOG_RC_FD_READER_INCOMPLETE_LINE, NULL),
+         OP_LOC_GET(2));
+
+    TEST(buf_one_under,
+         "{\"abcdefghijklmnopqrstuvwxy\":1}",
+         OP_READ(TLOG_RC_OK, "{ \"abcdefghijklmnopqrstuvwxy\": 1 }"),
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, NULL),
+         OP_LOC_GET(1));
+
+    TEST(buf_exact,
+         "{\"abcdefghijklmnopqrstuvwxyz\":1}",
+         OP_READ(TLOG_RC_OK, "{ \"abcdefghijklmnopqrstuvwxyz\": 1 }"),
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, NULL),
+         OP_LOC_GET(1));
+
+    TEST(buf_one_over,
+         "{\"abcdefghijklmnopqrstuvwxyz\": 1}",
+         OP_READ(TLOG_RC_OK, "{ \"abcdefghijklmnopqrstuvwxyz\": 1 }"),
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, NULL),
+         OP_LOC_GET(1));
+
+    TEST(buf_newline_over,
+         "{\"abcdefghijklmnopqrstuvwxyz\":1}\n",
+         OP_READ(TLOG_RC_OK, "{ \"abcdefghijklmnopqrstuvwxyz\": 1 }"),
+         OP_LOC_GET(2),
+         OP_READ(TLOG_RC_OK, NULL),
+         OP_LOC_GET(2));
+
+    TEST(buf_split_exact,
+         "{\"aaaaaaaaaaaaaaaaaaaaaaaaa\":1}\n"
+         "{\"bbbbbbbbbbbbbbbbbbbbbbbbb\":2}\n",
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, "{ \"aaaaaaaaaaaaaaaaaaaaaaaaa\": 1 }"),
+         OP_LOC_GET(2),
+         OP_READ(TLOG_RC_OK, "{ \"bbbbbbbbbbbbbbbbbbbbbbbbb\": 2 }"),
+         OP_LOC_GET(3),
+         OP_READ(TLOG_RC_OK, NULL),
+         OP_LOC_GET(3));
+
+    TEST(buf_split_one_under,
+         "{\"aaaaaaaaaaaaaaaaaaaaaaaa\":1}\n"
+         "{\"bbbbbbbbbbbbbbbbbbbbbbbbbb\":2}\n",
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, "{ \"aaaaaaaaaaaaaaaaaaaaaaaa\": 1 }"),
+         OP_LOC_GET(2),
+         OP_READ(TLOG_RC_OK, "{ \"bbbbbbbbbbbbbbbbbbbbbbbbbb\": 2 }"),
+         OP_LOC_GET(3),
+         OP_READ(TLOG_RC_OK, NULL),
+         OP_LOC_GET(3));
+
+    TEST(buf_split_one_over,
+         "{\"aaaaaaaaaaaaaaaaaaaaaaaaaa\":1}\n"
+         "{\"bbbbbbbbbbbbbbbbbbbbbbbb\":2}\n",
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, "{ \"aaaaaaaaaaaaaaaaaaaaaaaaaa\": 1 }"),
+         OP_LOC_GET(2),
+         OP_READ(TLOG_RC_OK, "{ \"bbbbbbbbbbbbbbbbbbbbbbbb\": 2 }"),
+         OP_LOC_GET(3),
+         OP_READ(TLOG_RC_OK, NULL),
+         OP_LOC_GET(3));
+
+    TEST(two_objects_one_line,
+         "{\"x\":1}{\"y\":2}\n",
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, "{ \"x\": 1 }"),
+         OP_LOC_GET(2),
+         OP_READ(TLOG_RC_OK, NULL),
          OP_LOC_GET(2));
 
     TEST(multiproperty_object,

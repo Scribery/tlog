@@ -30,14 +30,15 @@
 #include "tlog/rc.h"
 
 struct tlog_fd_reader {
-    struct tlog_reader reader;
-    struct json_tokener *tok;
-    int fd;
-    size_t line;
-    char *buf;
-    size_t size;
-    char *pos;
-    char *end;
+    struct tlog_reader      reader; /**< Base type */
+    struct json_tokener    *tok;    /**< JSON tokener object */
+    int                     fd;     /**< Filed descriptor to read from */
+    size_t                  line;   /**< Number of the line being read */
+    char                   *buf;    /**< Text buffer pointer */
+    size_t                  size;   /**< Text buffer size */
+    char                   *pos;    /**< Text buffer reading position */
+    char                   *end;    /**< End of valid text buffer data */
+    bool                    eof;    /**< True if EOF was encountered */
 };
 
 static void
@@ -119,93 +120,177 @@ tlog_fd_reader_loc_fmt(size_t loc)
     return str;
 }
 
-tlog_grc
-tlog_fd_reader_read(struct tlog_reader *reader, struct json_object **pobject)
+/**
+ * Refill the buffer of an fd_reader with data from the fd.
+ *
+ * @param fd_reader     The fd reader to refill the buffer for.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_fd_reader_refill_buf(struct tlog_fd_reader *fd_reader)
 {
-    struct tlog_fd_reader *fd_reader =
-                                (struct tlog_fd_reader*)reader;
+    ssize_t rc;
+
+    assert(tlog_fd_reader_is_valid((struct tlog_reader *)fd_reader));
+    assert(fd_reader->pos == fd_reader->end);
+
+    /* Reset buffer */
+    fd_reader->pos = fd_reader->end = fd_reader->buf;
+
+    /* Read some more */
+    while (!fd_reader->eof &&
+           fd_reader->end < (fd_reader->buf + fd_reader->size)) {
+        rc = read(fd_reader->fd, fd_reader->end,
+                  fd_reader->buf + fd_reader->size -
+                    fd_reader->end);
+        if (rc == 0) {
+            fd_reader->eof = true;
+        } else if (rc < 0) {
+            if (errno == EINTR)
+                continue;
+            else
+                return TLOG_GRC_ERRNO;
+        } else {
+            fd_reader->end += rc;
+        }
+    }
+
+    return TLOG_RC_OK;
+}
+
+/**
+ * Skip whitespace in the fd reader text.
+ *
+ * @param fd_reader     The fd reader to skip whitespace for.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_fd_reader_skip_whitespace(struct tlog_fd_reader *fd_reader)
+{
+    tlog_grc grc;
+
+    assert(tlog_fd_reader_is_valid((struct tlog_reader *)fd_reader));
+
+    /* Until EOF */
+    do {
+        for (; fd_reader->pos < fd_reader->end; fd_reader->pos++) {
+            switch (*fd_reader->pos) {
+                case '\n':
+                    fd_reader->line++;
+                case '\f':
+                case '\r':
+                case '\t':
+                case '\v':
+                case ' ':
+                    break;
+                default:
+                    return TLOG_RC_OK;
+            }
+        }
+
+        grc = tlog_fd_reader_refill_buf(fd_reader);
+        if (grc != TLOG_RC_OK)
+            return grc;
+    } while (fd_reader->end > fd_reader->buf);
+
+    return TLOG_RC_OK;
+}
+
+/**
+ * Skip the rest of the line in the fd reader text.
+ *
+ * @param fd_reader     The fd reader to skip the line for.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_fd_reader_skip_line(struct tlog_fd_reader *fd_reader)
+{
+    tlog_grc grc;
+
+    assert(tlog_fd_reader_is_valid((struct tlog_reader *)fd_reader));
+
+    /* Until EOF */
+    do {
+        for (; fd_reader->pos < fd_reader->end; fd_reader->pos++) {
+            if (*fd_reader->pos == '\n') {
+                fd_reader->pos++;
+                fd_reader->line++;
+                return TLOG_RC_OK;
+            }
+        }
+
+        grc = tlog_fd_reader_refill_buf(fd_reader);
+        if (grc != TLOG_RC_OK)
+            return grc;
+    } while (fd_reader->end > fd_reader->buf);
+
+    return TLOG_RC_OK;
+}
+
+/**
+ * Read the fd reader text as (a part of) a JSON object line, don't consume
+ * terminating newline.
+ *
+ * @param fd_reader     The fd reader to parse the object for.
+ * @param pobject       Location for the parsed object pointer.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_fd_reader_read_json(struct tlog_fd_reader *fd_reader,
+                         struct json_object **pobject)
+{
+    tlog_grc grc;
     char *p;
-    char c;
-    bool got_text = false;
     struct json_object *object;
     enum json_tokener_error jerr;
-    ssize_t rc;
+    bool got_text = false;
+
+    assert(tlog_fd_reader_is_valid((struct tlog_reader *)fd_reader));
+    assert(pobject != NULL);
 
     json_tokener_reset(fd_reader->tok);
 
+    /* Until EOF */
     do {
         /* If the buffer is not empty */
-        while (fd_reader->pos < fd_reader->end) {
-            /* Look for a terminating newline, noticing text presence */
-            for (p = fd_reader->pos; p < fd_reader->end; p++) {
-                c = *p;
-                if (c == '\n') {
-                    break;
-                } else switch (c) {
-                    case '\f':
-                    case '\r':
-                    case '\t':
-                    case '\v':
-                    case ' ':
-                        break;
-                    default:
-                        got_text = true;
-                        break;
-                }
-            }
+        if (fd_reader->pos < fd_reader->end) {
+            /* We got something to parse */
+            got_text = true;
 
-            /* Parse next piece if we got text */
-            if (got_text) {
-                object = json_tokener_parse_ex(fd_reader->tok,
-                                               fd_reader->pos,
-                                               p - fd_reader->pos);
-            }
+            /* Look for a terminating newline */
+            for (p = fd_reader->pos; p < fd_reader->end && *p != '\n'; p++);
 
+            /* Parse the next piece */
+            object = json_tokener_parse_ex(fd_reader->tok,
+                                           fd_reader->pos,
+                                           p - fd_reader->pos);
             fd_reader->pos = p;
-            /* If we hit a newline */
-            if (p < fd_reader->end) {
-                fd_reader->line++;
-                fd_reader->pos++;
-            }
 
-            /* If we started parsing */
-            if (got_text) {
-                /* If we finished parsing an object */
-                if (object != NULL) {
-                    *pobject = object;
-                    return TLOG_RC_OK;
-                } else {
-                    jerr = json_tokener_get_error(fd_reader->tok);
-                    /* If object is not finished */
-                    if (jerr == json_tokener_continue) {
-                        /* If we encountered an object-terminating newline */
-                        if (p < fd_reader->end) {
-                            return TLOG_RC_FD_READER_INCOMPLETE_LINE;
-                        }
-                    } else {
-                        return TLOG_GRC_FROM(json, jerr);
+            /* If we finished parsing an object */
+            if (object != NULL) {
+                *pobject = object;
+                return TLOG_RC_OK;
+            } else {
+                jerr = json_tokener_get_error(fd_reader->tok);
+                /* If object is not finished */
+                if (jerr == json_tokener_continue) {
+                    /* If we encountered an object-terminating newline */
+                    if (p < fd_reader->end) {
+                        return TLOG_RC_FD_READER_INCOMPLETE_LINE;
                     }
+                } else {
+                    return TLOG_GRC_FROM(json, jerr);
                 }
             }
         }
 
-        /* Reset buffer */
-        fd_reader->pos = fd_reader->end = fd_reader->buf;
-
-        /* Read some more */
-        do {
-            rc = read(fd_reader->fd, fd_reader->end,
-                      fd_reader->buf + fd_reader->size -
-                        fd_reader->end);
-            if (rc < 0) {
-                if (errno == EINTR)
-                    continue;
-                else
-                    return TLOG_GRC_ERRNO;
-            }
-            fd_reader->end += rc;
-        } while (rc != 0 &&
-                 fd_reader->end < (fd_reader->buf + fd_reader->size));
+        grc = tlog_fd_reader_refill_buf(fd_reader);
+        if (grc != TLOG_RC_OK)
+            return grc;
     } while (fd_reader->end > fd_reader->buf);
 
     if (got_text) {
@@ -214,6 +299,30 @@ tlog_fd_reader_read(struct tlog_reader *reader, struct json_object **pobject)
         *pobject = NULL;
         return TLOG_RC_OK;
     }
+}
+
+tlog_grc
+tlog_fd_reader_read(struct tlog_reader *reader, struct json_object **pobject)
+{
+    struct tlog_fd_reader *fd_reader =
+                                (struct tlog_fd_reader*)reader;
+    tlog_grc grc;
+    tlog_grc read_grc;
+
+    /* Skip leading whitespace */
+    grc = tlog_fd_reader_skip_whitespace(fd_reader);
+    if (grc != TLOG_RC_OK)
+        return grc;
+
+    /* (Try to) read the JSON object line */
+    read_grc = tlog_fd_reader_read_json(fd_reader, pobject);
+
+    /* Throw away the rest of the line */
+    grc = tlog_fd_reader_skip_line(fd_reader);
+    if (grc != TLOG_RC_OK)
+        return grc;
+
+    return read_grc;
 }
 
 const struct tlog_reader_type tlog_fd_reader_type = {
