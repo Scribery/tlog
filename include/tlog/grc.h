@@ -79,6 +79,17 @@ extern const struct tlog_grc_range tlog_grc_range_json;
 extern bool tlog_grc_is(const struct tlog_grc_range *range, tlog_grc grc);
 
 /**
+ * Check if a grc belongs to a range.
+ *
+ * @param _range_name_token     Range variable name without tlog_grc_ prefix.
+ * @param _grc                  The grc to check.
+ *
+ * @return True if the grc belongs to the range.
+ */
+#define TLOG_GRC_IS(_range_name_token, _grc) \
+    tlog_grc_is(&tlog_grc_range_##_range_name_token, _grc)
+
+/**
  * Convert a range rc to a grc.
  *
  * @param range The range to convert from.
@@ -89,6 +100,17 @@ extern bool tlog_grc_is(const struct tlog_grc_range *range, tlog_grc grc);
 extern tlog_grc tlog_grc_from(const struct tlog_grc_range *range, int rc);
 
 /**
+ * Convert a range rc to a grc.
+ *
+ * @param _range_name_token     Range variable name without tlog_grc_ prefix.
+ * @param _rc                   The range rc to convert.
+ *
+ * @return The grc.
+ */
+#define TLOG_GRC_FROM(_range_name_token, _rc) \
+    tlog_grc_from(&tlog_grc_range_##_range_name_token, _rc)
+
+/**
  * Convert a grc to a range rc.
  *
  * @param range The range to convert to.
@@ -97,6 +119,17 @@ extern tlog_grc tlog_grc_from(const struct tlog_grc_range *range, int rc);
  * @return The range rc.
  */
 extern int tlog_grc_to(const struct tlog_grc_range *range, tlog_grc grc);
+
+/**
+ * Convert a grc to a range rc.
+ *
+ * @param _range_name_token     Range variable name without tlog_grc_ prefix.
+ * @param _grc                  The grc to convert.
+ *
+ * @return The range rc.
+ */
+#define TLOG_GRC_TO(_range_name_token, _grc) \
+    tlog_grc_to(&tlog_grc_range_##_range_name_token, _grc)
 
 /**
  * Check if a global return code is valid.

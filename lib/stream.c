@@ -83,13 +83,13 @@ tlog_stream_init(struct tlog_stream *stream, size_t size,
 
     stream->txt_buf = malloc(size);
     if (stream->txt_buf == NULL) {
-        grc = tlog_grc_from(&tlog_grc_range_errno, errno);
+        grc = TLOG_GRC_FROM(errno, errno);
         goto error;
     }
 
     stream->bin_buf = malloc(size);
     if (stream->bin_buf == NULL) {
-        grc = tlog_grc_from(&tlog_grc_range_errno, errno);
+        grc = TLOG_GRC_FROM(errno, errno);
         goto error;
     }
 

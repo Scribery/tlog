@@ -104,9 +104,9 @@ get_session_id(unsigned int *pid)
     if (rc == 1)
         return TLOG_RC_OK;
     if (rc == 0)
-        return tlog_grc_from(&tlog_grc_range_errno, EINVAL);
+        return TLOG_GRC_FROM(errno, EINVAL);
 
-    return tlog_grc_from(&tlog_grc_range_errno, orig_errno);
+    return TLOG_GRC_FROM(errno, orig_errno);
 }
 
 /**
@@ -129,18 +129,18 @@ get_fqdn(char **pfqdn)
 
     /* Get hostname */
     if (gethostname(hostname, sizeof(hostname)) < 0)
-        return tlog_grc_from(&tlog_grc_range_errno, errno);
+        return TLOG_GRC_FROM(errno, errno);
 
     /* Resolve hostname to FQDN */
     gai_error = getaddrinfo(hostname, NULL, &hints, &info);
     if (gai_error != 0)
-        return tlog_grc_from(&tlog_grc_range_gai, gai_error);
+        return TLOG_GRC_FROM(gai, gai_error);
 
     /* Duplicate retrieved FQDN */
     *pfqdn = strdup(info->ai_canonname);
     freeaddrinfo(info);
     if (*pfqdn == NULL)
-        return tlog_grc_from(&tlog_grc_range_errno, errno);
+        return TLOG_GRC_FROM(errno, errno);
 
     return TLOG_RC_OK;
 }
