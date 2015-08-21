@@ -60,13 +60,13 @@ struct tlog_grc_range {
 extern bool tlog_grc_range_is_valid(const struct tlog_grc_range *range);
 
 /** Tlog-native return code range (no conversion) */
-extern const struct tlog_grc_range tlog_grc_native;
+extern const struct tlog_grc_range tlog_grc_range_native;
 /** Errno value range (negated) */
-extern const struct tlog_grc_range tlog_grc_errno;
+extern const struct tlog_grc_range tlog_grc_range_errno;
 /** getaddrinfo return code value range (negated and shifted) */
-extern const struct tlog_grc_range tlog_grc_gai;
+extern const struct tlog_grc_range tlog_grc_range_gai;
 /** JSON return code value range (shifted) */
-extern const struct tlog_grc_range tlog_grc_json;
+extern const struct tlog_grc_range tlog_grc_range_json;
 
 /**
  * Check if a grc belongs to a range.

@@ -54,18 +54,19 @@ main(void)
 #define TEST_CODE(_range_name_token, _rc_name_token, _value, _strerror) \
     do {                                                                    \
         int rc = _value;                                                    \
-        tlog_grc grc = tlog_grc_from(&tlog_grc_##_range_name_token, rc);    \
+        tlog_grc grc = tlog_grc_from(&tlog_grc_range_##_range_name_token,   \
+                                     rc);                                   \
                                                                             \
         TEST(_range_name_token##_##_rc_name_token##_from,                   \
              grc == _range_name_token##_from(rc));                          \
         TEST(_range_name_token##_##_rc_name_token##_is_valid,               \
              tlog_grc_is_valid(grc));                                       \
         TEST(_range_name_token##_##_rc_name_token##_is,                     \
-             tlog_grc_is(&tlog_grc_##_range_name_token, grc));              \
+             tlog_grc_is(&tlog_grc_range_##_range_name_token, grc));        \
         TEST(_range_name_token##_##_rc_name_token##_strerror_match,         \
              tlog_grc_strerror(grc) == _strerror(rc));                      \
         TEST(_range_name_token##_##_rc_name_token##_to,                     \
-             tlog_grc_to(&tlog_grc_##_range_name_token, grc) == rc);        \
+             tlog_grc_to(&tlog_grc_range_##_range_name_token, grc) == rc);  \
     } while (0)
 
     TEST_CODE(native, ok, TLOG_RC_OK, tlog_rc_strerror);

@@ -40,7 +40,7 @@ tlog_reader_create(struct tlog_reader **preader,
 
     reader = malloc(type->size);
     if (reader == NULL) {
-        grc = tlog_grc_from(&tlog_grc_errno, errno);
+        grc = tlog_grc_from(&tlog_grc_range_errno, errno);
     } else {
         reader->type = type;
 

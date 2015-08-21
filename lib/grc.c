@@ -30,66 +30,66 @@
 #include "tlog/grc.h"
 
 static const char *
-tlog_grc_native_strerror(int rc)
+tlog_grc_range_native_strerror(int rc)
 {
     return tlog_rc_strerror(rc);
 }
 
-const struct tlog_grc_range tlog_grc_native = {
+const struct tlog_grc_range tlog_grc_range_native = {
     .min        = TLOG_RC_MIN,
     .max        = TLOG_RC_MAX_PLUS_ONE - 1,
     .add        = 0,
     .mul        = 1,
-    .strerror   = tlog_grc_native_strerror
+    .strerror   = tlog_grc_range_native_strerror
 };
 
 static const char *
-tlog_grc_errno_strerror(int rc)
+tlog_grc_range_errno_strerror(int rc)
 {
     return strerror(rc);
 }
 
-const struct tlog_grc_range tlog_grc_errno = {
+const struct tlog_grc_range tlog_grc_range_errno = {
     .min        = INT_MIN,
     .max        = -1,
     .add        = 0,
     .mul        = -1,
-    .strerror   = tlog_grc_errno_strerror
+    .strerror   = tlog_grc_range_errno_strerror
 };
 
 static const char *
-tlog_grc_gai_strerror(int rc)
+tlog_grc_range_gai_strerror(int rc)
 {
     return gai_strerror(rc);
 }
 
-const struct tlog_grc_range tlog_grc_gai = {
+const struct tlog_grc_range tlog_grc_range_gai = {
     .min        = 0x1000,
     .max        = 0x1fff,
     .add        = -0x1000,
     .mul        = -1,
-    .strerror   = tlog_grc_gai_strerror
+    .strerror   = tlog_grc_range_gai_strerror
 };
 
 static const char *
-tlog_grc_json_strerror(int rc)
+tlog_grc_range_json_strerror(int rc)
 {
     return json_tokener_error_desc(rc);
 }
 
-const struct tlog_grc_range tlog_grc_json = {
+const struct tlog_grc_range tlog_grc_range_json = {
     .min        = 0x2000,
     .max        = 0x2fff,
     .add        = 0x2000,
     .mul        = 1,
-    .strerror   = tlog_grc_json_strerror
+    .strerror   = tlog_grc_range_json_strerror
 };
 
 const struct tlog_grc_range *tlog_grc_range_list[] = {
-    &tlog_grc_native,
-    &tlog_grc_errno,
-    &tlog_grc_gai,
-    &tlog_grc_json
+    &tlog_grc_range_native,
+    &tlog_grc_range_errno,
+    &tlog_grc_range_gai,
+    &tlog_grc_range_json
 };
 
 bool

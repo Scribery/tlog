@@ -68,13 +68,13 @@ tlog_sink_init(struct tlog_sink *sink,
 
     sink->hostname = strdup(hostname);
     if (sink->hostname == NULL) {
-        grc = tlog_grc_from(&tlog_grc_errno, errno);
+        grc = tlog_grc_from(&tlog_grc_range_errno, errno);
         goto error;
     }
 
     sink->username = strdup(username);
     if (sink->username == NULL) {
-        grc = tlog_grc_from(&tlog_grc_errno, errno);
+        grc = tlog_grc_from(&tlog_grc_range_errno, errno);
         goto error;
     }
 
@@ -88,7 +88,7 @@ tlog_sink_init(struct tlog_sink *sink,
     sink->message_len = io_size + 1024;
     sink->message_buf = malloc(sink->message_len);
     if (sink->message_buf == NULL) {
-        grc = tlog_grc_from(&tlog_grc_errno, errno);
+        grc = tlog_grc_from(&tlog_grc_range_errno, errno);
         goto error;
     }
 
@@ -124,7 +124,7 @@ tlog_sink_create(struct tlog_sink **psink,
 
     sink = malloc(sizeof(*sink));
     if (sink == NULL) {
-        grc = tlog_grc_from(&tlog_grc_errno, errno);
+        grc = tlog_grc_from(&tlog_grc_range_errno, errno);
     } else {
         grc = tlog_sink_init(sink, writer, hostname, username,
                              session_id, io_size, timestamp);
@@ -198,7 +198,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
     if (len < 0)
         return TLOG_RC_FAILURE;
     if ((size_t)len >= sink->message_len) {
-        return tlog_grc_from(&tlog_grc_errno, ENOMEM);
+        return tlog_grc_from(&tlog_grc_range_errno, ENOMEM);
     }
 
     sink->message_id++;
@@ -286,7 +286,7 @@ tlog_sink_io_flush(struct tlog_sink *sink)
     if (len < 0)
         return TLOG_RC_FAILURE;
     if ((size_t)len >= sink->message_len) {
-        return tlog_grc_from(&tlog_grc_errno, ENOMEM);
+        return tlog_grc_from(&tlog_grc_range_errno, ENOMEM);
     }
 
     grc = tlog_writer_write(sink->writer, sink->message_buf, len);
