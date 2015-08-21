@@ -31,7 +31,8 @@
  *
  * Creation arguments:
  *
- * int  fd      File descriptor to read messages from.
+ * int      fd      File descriptor to read messages from.
+ * size_t   size    Text buffer size (non-zero).
  */
 extern const struct tlog_reader_type tlog_fd_reader_type;
 
@@ -41,15 +42,17 @@ extern const struct tlog_reader_type tlog_fd_reader_type;
  * @param preader   Location for the created reader pointer, will be set to
  *                  NULL in case of error.
  * @param fd        File descriptor to read messages from.
+ * @param size      Text buffer size (non-zero).
  *
  * @return Global return code.
  */
 static inline tlog_grc
-tlog_fd_reader_create(struct tlog_reader **preader, int fd)
+tlog_fd_reader_create(struct tlog_reader **preader, int fd, size_t size)
 {
     assert(preader != NULL);
     assert(fd >= 0);
-    return tlog_reader_create(preader, &tlog_fd_reader_type, fd);
+    assert(size > 0);
+    return tlog_reader_create(preader, &tlog_fd_reader_type, fd, size);
 }
 
 #endif /* _TLOG_FD_READER_H */

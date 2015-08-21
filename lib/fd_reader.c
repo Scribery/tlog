@@ -29,17 +29,29 @@
 #include "tlog/fd_reader.h"
 #include "tlog/rc.h"
 
-#define TLOG_FD_READER_BUF_SIZE 32
-
 struct tlog_fd_reader {
     struct tlog_reader reader;
     struct json_tokener *tok;
     int fd;
     size_t line;
-    char buf[TLOG_FD_READER_BUF_SIZE];
+    char *buf;
+    size_t size;
     char *pos;
     char *end;
 };
+
+static void
+tlog_fd_reader_cleanup(struct tlog_reader *reader)
+{
+    struct tlog_fd_reader *fd_reader =
+                                (struct tlog_fd_reader*)reader;
+    if (fd_reader->tok != NULL) {
+        json_tokener_free(fd_reader->tok);
+        fd_reader->tok = NULL;
+    }
+    free(fd_reader->buf);
+    fd_reader->buf = NULL;
+}
 
 static tlog_grc
 tlog_fd_reader_init(struct tlog_reader *reader, va_list ap)
@@ -47,15 +59,35 @@ tlog_fd_reader_init(struct tlog_reader *reader, va_list ap)
     struct tlog_fd_reader *fd_reader =
                                 (struct tlog_fd_reader*)reader;
     int fd = va_arg(ap, int);
+    size_t size = va_arg(ap, size_t);
+    tlog_grc grc;
+
     assert(fd >= 0);
+    assert(size > 0);
+
+    fd_reader->size = size;
+
+    fd_reader->buf = malloc(size);
+    if (fd_reader->buf == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        goto error;
+    }
+
     fd_reader->tok = json_tokener_new_ex(2);
-    if (fd_reader->tok == NULL)
-        return TLOG_GRC_ERRNO;
+    if (fd_reader->tok == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        goto error;
+    }
+
     fd_reader->fd = fd;
     fd_reader->line = 1;
     fd_reader->pos = fd_reader->end = fd_reader->buf;
 
     return TLOG_RC_OK;
+
+error:
+    tlog_fd_reader_cleanup(reader);
+    return grc;
 }
 
 static bool
@@ -66,19 +98,11 @@ tlog_fd_reader_is_valid(const struct tlog_reader *reader)
     return fd_reader->tok != NULL &&
            fd_reader->fd >= 0 &&
            fd_reader->line > 0 &&
+           fd_reader->size > 0 &&
            fd_reader->end >= fd_reader->buf &&
            fd_reader->pos >= fd_reader->buf &&
-           fd_reader->end <= fd_reader->buf + sizeof(fd_reader->buf) &&
+           fd_reader->end <= fd_reader->buf + fd_reader->size &&
            fd_reader->pos <= fd_reader->end;
-}
-
-static void
-tlog_fd_reader_cleanup(struct tlog_reader *reader)
-{
-    struct tlog_fd_reader *fd_reader =
-                                (struct tlog_fd_reader*)reader;
-    json_tokener_free(fd_reader->tok);
-    fd_reader->tok = NULL;
 }
 
 static size_t
@@ -171,7 +195,7 @@ tlog_fd_reader_read(struct tlog_reader *reader, struct json_object **pobject)
         /* Read some more */
         do {
             rc = read(fd_reader->fd, fd_reader->end,
-                      fd_reader->buf + sizeof(fd_reader->buf) -
+                      fd_reader->buf + fd_reader->size -
                         fd_reader->end);
             if (rc < 0) {
                 if (errno == EINTR)
@@ -181,7 +205,7 @@ tlog_fd_reader_read(struct tlog_reader *reader, struct json_object **pobject)
             }
             fd_reader->end += rc;
         } while (rc != 0 &&
-                 fd_reader->end < (fd_reader->buf + sizeof(fd_reader->buf)));
+                 fd_reader->end < (fd_reader->buf + fd_reader->size));
     } while (fd_reader->end > fd_reader->buf);
 
     if (got_text) {

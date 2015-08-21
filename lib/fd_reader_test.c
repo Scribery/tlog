@@ -29,6 +29,9 @@
 #include "tlog/misc.h"
 #include "test.h"
 
+/** Fd reader text buffer size */
+#define BUF_SIZE 16
+
 enum op_type {
     OP_TYPE_NONE,
     OP_TYPE_READ,
@@ -79,7 +82,6 @@ test(const char *n, const struct test t)
     bool passed = true;
     int fd = -1;
     tlog_grc grc;
-    const struct tlog_reader_type *reader_type = &tlog_fd_reader_type;
     struct tlog_reader *reader = NULL;
     char filename[] = "tlog_fd_reader_test.XXXXXX";
     const struct op *op;
@@ -111,7 +113,7 @@ test(const char *n, const struct test t)
                 strerror(errno));
         exit(1);
     }
-    grc = tlog_reader_create(&reader, reader_type, fd);
+    grc = tlog_fd_reader_create(&reader, fd, BUF_SIZE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating FD reader: %s\n",
                 tlog_grc_strerror(grc));
