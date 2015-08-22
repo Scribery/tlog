@@ -35,7 +35,7 @@ struct tlog_writer;
 /**
  * Init function prototype.
  *
- * @param writer    The writer to operate on.
+ * @param writer    The writer to initialize, must be cleared to zero.
  * @param ap        Argument list.
  *
  * @return Global return code.

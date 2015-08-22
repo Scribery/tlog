@@ -36,7 +36,7 @@ struct tlog_reader;
 /**
  * Init function prototype.
  *
- * @param reader    The reader to operate on.
+ * @param reader    The reader to initialize, must be cleared to zero.
  * @param ap        Argument list.
  *
  * @return Global return code.

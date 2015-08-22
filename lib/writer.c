@@ -38,7 +38,7 @@ tlog_writer_create(struct tlog_writer **pwriter,
     assert(tlog_writer_type_is_valid(type));
     assert(type->size >= sizeof(*writer));
 
-    writer = malloc(type->size);
+    writer = calloc(type->size, 1);
     if (writer == NULL) {
         grc = TLOG_GRC_ERRNO;
     } else {

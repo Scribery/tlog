@@ -38,7 +38,7 @@ tlog_reader_create(struct tlog_reader **preader,
     assert(tlog_reader_type_is_valid(type));
     assert(type->size >= sizeof(*reader));
 
-    reader = malloc(type->size);
+    reader = calloc(type->size, 1);
     if (reader == NULL) {
         grc = TLOG_GRC_ERRNO;
     } else {
