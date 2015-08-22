@@ -325,11 +325,62 @@ main(void)
          OP_READ(TLOG_RC_OK, PKT_VOID),
          OP_LOC_GET(1));
 
+    TEST_ANY(null_repeat_eof,
+         "", 4,
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, PKT_VOID),
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, PKT_VOID),
+         OP_LOC_GET(1));
+
     TEST_ANY(window,
-         MSG_WINDOW_DUMMY(1, 0.000, 100, 200),
+         MSG_WINDOW_DUMMY(1, 1.000, 100, 200),
          4,
          OP_LOC_GET(1),
-         OP_READ(TLOG_RC_OK, PKT_WINDOW(0, 0, 100, 200)),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 100, 200)),
+         OP_LOC_GET(2));
+
+    TEST_ANY(two_windows,
+         MSG_WINDOW_DUMMY(1, 1.000, 110, 120)
+         MSG_WINDOW_DUMMY(1, 2.000, 210, 220),
+         4,
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_LOC_GET(2),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(2, 0, 210, 220)),
+         OP_LOC_GET(3));
+
+    TEST_ANY(syntax_error_recovery,
+         MSG_WINDOW_DUMMY(1, 1.000, 110, 120)
+         "{abcdef     ]\n"
+         MSG_WINDOW_DUMMY(1, 2.000, 210, 220),
+         4,
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_LOC_GET(2),
+         OP_READ(TLOG_GRC_FROM(json,
+                               json_tokener_error_parse_object_key_name),
+                 PKT_VOID),
+         OP_LOC_GET(3),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(2, 0, 210, 220)),
+         OP_LOC_GET(4));
+
+    TEST_ANY(window_repeat_eof,
+         MSG_WINDOW_DUMMY(1, 1.000, 100, 200),
+         4,
+         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 100, 200)),
+         OP_LOC_GET(2),
+         OP_READ(TLOG_RC_OK, PKT_VOID),
+         OP_LOC_GET(2),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(invalid_syntax,
+         MSG_WINDOW_DUMMY(1, 1.000, aaa, bbb),
+         4,
+         OP_LOC_GET(1),
+         OP_READ(TLOG_GRC_FROM(json, json_tokener_error_parse_unexpected),
+                 PKT_VOID),
          OP_LOC_GET(2));
 
     return !passed;
