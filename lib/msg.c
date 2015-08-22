@@ -123,7 +123,7 @@ tlog_msg_init(struct tlog_msg *msg, struct json_object *obj)
                &tv_sec, &tv_nsec) != 2)
         return TLOG_RC_MSG_FIELD_INVALID_VALUE;
     msg->pos.tv_sec = tv_sec;
-    msg->pos.tv_sec = tv_nsec;
+    msg->pos.tv_nsec = tv_nsec;
 
     GET_FIELD(type, string);
     type = json_object_get_string(o);
