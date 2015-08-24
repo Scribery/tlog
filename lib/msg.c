@@ -264,24 +264,28 @@ tlog_msg_read_io(struct tlog_msg *msg, struct tlog_pkt *pkt,
                     io->rem = first_len;
                     io->ptxt_ptr = &io->in_txt_ptr;
                     io->ptxt_len = &io->in_txt_len;
+                    break;
                 case '[':
                     io->output = false;
                     io->binary = true;
                     io->rem = second_len;
                     io->bin_obj = io->in_bin_obj;
                     io->pbin_pos = &io->in_bin_pos;
+                    break;
                 case '>':
                     io->output = true;
                     io->binary = false;
                     io->rem = first_len;
                     io->ptxt_ptr = &io->out_txt_ptr;
                     io->ptxt_len = &io->out_txt_len;
+                    break;
                 case ']':
                     io->output = true;
                     io->binary = true;
                     io->rem = second_len;
                     io->bin_obj = io->out_bin_obj;
                     io->pbin_pos = &io->out_bin_pos;
+                    break;
             }
 
             if (io->binary) {
