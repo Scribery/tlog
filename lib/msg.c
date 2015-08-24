@@ -74,8 +74,7 @@ tlog_msg_init(struct tlog_msg *msg, struct json_object *obj)
     struct json_object *o;
     int64_t session;
     int64_t id;
-    long long int tv_sec;
-    long int tv_nsec;
+    int64_t pos;
     const char *type;
 
     assert(msg != NULL);
@@ -118,12 +117,10 @@ tlog_msg_init(struct tlog_msg *msg, struct json_object *obj)
     }
     msg->id = (size_t)id;
 
-    GET_FIELD(pos, string);
-    if (sscanf(json_object_get_string(o), "%lld.%ld",
-               &tv_sec, &tv_nsec) != 2)
-        return TLOG_RC_MSG_FIELD_INVALID_VALUE;
-    msg->pos.tv_sec = tv_sec;
-    msg->pos.tv_nsec = tv_nsec;
+    GET_FIELD(pos, int);
+    pos = json_object_get_int64(o);
+    msg->pos.tv_sec = pos / 1000;
+    msg->pos.tv_nsec = pos % 1000;
 
     GET_FIELD(type, string);
     type = json_object_get_string(o);
