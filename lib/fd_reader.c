@@ -74,7 +74,7 @@ tlog_fd_reader_init(struct tlog_reader *reader, va_list ap)
         goto error;
     }
 
-    fd_reader->tok = json_tokener_new_ex(2);
+    fd_reader->tok = json_tokener_new();
     if (fd_reader->tok == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;

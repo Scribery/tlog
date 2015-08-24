@@ -368,20 +368,10 @@ main(void)
          OP_LOC_GET(1));
 
     TEST(two_deep_object,
-         "[{\"x\": 1}]",
+         "{\"x\": [1]}",
          OP_LOC_GET(1),
-         OP_READ(TLOG_GRC_FROM(json, json_tokener_error_depth),
-                 NULL),
+         OP_READ(TLOG_RC_OK, "{ \"x\": [ 1 ] }"),
          OP_LOC_GET(1));
-
-    TEST(object_after_depth_err,
-         "[{\"x\": 1}]\n{}",
-         OP_LOC_GET(1),
-         OP_READ(TLOG_GRC_FROM(json, json_tokener_error_depth),
-                 NULL),
-         OP_LOC_GET(2),
-         OP_READ(TLOG_RC_OK, "{ }"),
-         OP_LOC_GET(2));
 
     TEST(object_after_syntax_err,
          "{\"x\": a, \"1\": 2}\n{}",
@@ -393,9 +383,9 @@ main(void)
          OP_LOC_GET(2));
 
     TEST(eof_after_err,
-         "[{\"x\": 1}]\n{}",
+         "{\"x\": a, \"1\": 2}\n{}",
          OP_LOC_GET(1),
-         OP_READ(TLOG_GRC_FROM(json, json_tokener_error_depth),
+         OP_READ(TLOG_GRC_FROM(json, json_tokener_error_parse_unexpected),
                  NULL),
          OP_LOC_GET(2),
          OP_READ(TLOG_RC_OK, "{ }"),
