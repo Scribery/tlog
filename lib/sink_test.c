@@ -39,8 +39,7 @@
 #define TIME_T_MAX_STR "2147483647"
 #endif
 
-#define POS_MAX_STR TIME_T_MAX_STR ".999"
-#define OFF_MAX_STR TIME_T_MAX_STR "999"
+#define TIME_MAX_STR TIME_T_MAX_STR "999"
 
 enum op_type {
     OP_TYPE_NONE,
@@ -307,7 +306,7 @@ main(void)
 
     TEST(window,
          .op_list = {OP_WINDOW_WRITE(.width = 256, .height = 256)},
-         .output = MSG_WINDOW(0, "0.000", 256, 256)
+         .output = MSG_WINDOW(0, "0", 256, 256)
     );
 
     TEST(three_windows,
@@ -316,9 +315,9 @@ main(void)
             OP_WINDOW_WRITE(.width = 200, .height = 200),
             OP_WINDOW_WRITE(.width = 300, .height = 300),
          },
-         .output = MSG_WINDOW(0, "0.000", 100, 100) \
-                   MSG_WINDOW(1, "0.000", 200, 200) \
-                   MSG_WINDOW(2, "0.000", 300, 300)
+         .output = MSG_WINDOW(0, "0", 100, 100) \
+                   MSG_WINDOW(1, "0", 200, 200) \
+                   MSG_WINDOW(2, "0", 300, 300)
     );
 
     TEST(one_byte,
@@ -339,7 +338,7 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {'A'}, .len = 1),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", ">1", "", "", "A", "")
+         .output = MSG_IO(0, "0", ">1", "", "", "A", "")
     );
     TEST(one_byte_flushed_cut,
          .op_list = {
@@ -347,7 +346,7 @@ main(void)
             OP_IO_FLUSH,
             OP_IO_CUT
          },
-         .output = MSG_IO(0, "0.000", ">1", "", "", "A", "")
+         .output = MSG_IO(0, "0", ">1", "", "", "A", "")
     );
     TEST(one_byte_cut_flushed,
          .op_list = {
@@ -355,7 +354,7 @@ main(void)
             OP_IO_CUT,
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", ">1", "", "", "A", "")
+         .output = MSG_IO(0, "0", ">1", "", "", "A", "")
     );
 
     TEST(input_overflow_flush,
@@ -364,7 +363,7 @@ main(void)
                         .buf = "0123456789abcdef0123456789abcd",
                         .len = 30),
          },
-         .output = MSG_IO(0, "0.000", "<29", 
+         .output = MSG_IO(0, "0", "<29", 
                           "0123456789abcdef0123456789abc", "",
                           "", "")
     );
@@ -375,7 +374,7 @@ main(void)
                         .buf = "0123456789abcdef0123456789abcd",
                         .len = 30),
          },
-         .output = MSG_IO(0, "0.000", ">29", "", "",
+         .output = MSG_IO(0, "0", ">29", "", "",
                           "0123456789abcdef0123456789abc", "")
     );
 
@@ -388,7 +387,7 @@ main(void)
                         .buf = "0123456789a",
                         .len = 11),
          },
-         .output = MSG_IO(0, "0.000", "<16>10", 
+         .output = MSG_IO(0, "0", "<16>10", 
                           "0123456789abcdef", "",
                           "0123456789", "")
     );
@@ -430,7 +429,7 @@ main(void)
             OP_IO_CUT,
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "]1/3", "", "", "�", "240,157,132")
+         .output = MSG_IO(0, "0", "]1/3", "", "", "�", "240,157,132")
     );
 
     TEST(split_valid,
@@ -439,7 +438,7 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {0x84, 0x9e}, .len = 2),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", ">1", "", "", "\xf0\x9d\x84\x9e", "")
+         .output = MSG_IO(0, "0", ">1", "", "", "\xf0\x9d\x84\x9e", "")
     );
 
     TEST(split_before_invalid,
@@ -448,7 +447,7 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {0x84, 'X'}, .len = 2),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "]1/3>1", "", "", "�X", "240,157,132")
+         .output = MSG_IO(0, "0", "]1/3>1", "", "", "�X", "240,157,132")
     );
 
     TEST(split_on_invalid,
@@ -457,7 +456,7 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {'X'}, .len = 1),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "]1/3>1", "", "", "�X", "240,157,132")
+         .output = MSG_IO(0, "0", "]1/3>1", "", "", "�X", "240,157,132")
     );
 
     TEST(split_incomplete,
@@ -467,7 +466,7 @@ main(void)
             OP_IO_CUT,
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "]1/3", "", "", "�", "240,157,132")
+         .output = MSG_IO(0, "0", "]1/3", "", "", "�", "240,157,132")
     );
 
     TEST(delay_before,
@@ -478,7 +477,7 @@ main(void)
                         .len = 4),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.001", ">1", "", "", "\xf0\x9d\x84\x9e", "")
+         .output = MSG_IO(0, "1", ">1", "", "", "\xf0\x9d\x84\x9e", "")
     );
 
     TEST(delay_after,
@@ -489,7 +488,7 @@ main(void)
             OP_DELAY(.tv_nsec = 1100000),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", ">1", "", "", "\xf0\x9d\x84\x9e", "")
+         .output = MSG_IO(0, "0", ">1", "", "", "\xf0\x9d\x84\x9e", "")
     );
 
     TEST(delay_before_cut,
@@ -501,7 +500,7 @@ main(void)
             OP_IO_CUT,
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", ">1]1/1",
+         .output = MSG_IO(0, "0", ">1]1/1",
                           "", "", "\xf0\x9d\x84\x9e�", "240")
     );
 
@@ -512,7 +511,7 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {0x84, 0x9e}, .len = 2),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "+1>1", "", "", "\xf0\x9d\x84\x9e", "")
+         .output = MSG_IO(0, "0", "+1>1", "", "", "\xf0\x9d\x84\x9e", "")
     );
 
     TEST(delay_between_chars,
@@ -522,7 +521,7 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {'B'}, .len = 1),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "<1+1>1", "A", "", "B", "")
+         .output = MSG_IO(0, "0", "<1+1>1", "A", "", "B", "")
     );
 
     TEST(delay_between_messages,
@@ -533,8 +532,8 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {'B'}, .len = 1),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "<1", "A", "", "", "") \
-                   MSG_IO(1, "0.001", ">1", "", "", "B", "")
+         .output = MSG_IO(0, "0", "<1", "A", "", "", "") \
+                   MSG_IO(1, "1", ">1", "", "", "B", "")
     );
 
     TEST(max_delay_between_windows,
@@ -543,8 +542,8 @@ main(void)
             OP_DELAY_MAX,
             OP_WINDOW_WRITE(.width = 200, .height = 200)
          },
-         .output = MSG_WINDOW(0, "0.000", 100, 100) \
-                   MSG_WINDOW(1, POS_MAX_STR, 200, 200)
+         .output = MSG_WINDOW(0, "0", 100, 100) \
+                   MSG_WINDOW(1, TIME_MAX_STR, 200, 200)
     );
 
     TEST(max_delay_before,
@@ -555,7 +554,7 @@ main(void)
                         .len = 4),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, POS_MAX_STR, ">1",
+         .output = MSG_IO(0, TIME_MAX_STR, ">1",
                           "", "", "\xf0\x9d\x84\x9e", "")
     );
 
@@ -567,7 +566,7 @@ main(void)
             OP_DELAY_MAX,
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", ">1", "", "", "\xf0\x9d\x84\x9e", "")
+         .output = MSG_IO(0, "0", ">1", "", "", "\xf0\x9d\x84\x9e", "")
     );
 
     TEST(max_delay_before_cut,
@@ -579,7 +578,7 @@ main(void)
             OP_IO_CUT,
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", ">1]1/1",
+         .output = MSG_IO(0, "0", ">1]1/1",
                           "", "", "\xf0\x9d\x84\x9e�", "240")
     );
 
@@ -590,7 +589,7 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {0x84, 0x9e}, .len = 2),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "+" OFF_MAX_STR ">1",
+         .output = MSG_IO(0, "0", "+" TIME_MAX_STR ">1",
                           "", "", "\xf0\x9d\x84\x9e", "")
     );
 
@@ -601,7 +600,7 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {'B'}, .len = 1),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "<1+" OFF_MAX_STR ">1",
+         .output = MSG_IO(0, "0", "<1+" TIME_MAX_STR ">1",
                           "A", "", "B", "")
     );
 
@@ -613,8 +612,8 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {'B'}, .len = 1),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "<1", "A", "", "", "") \
-                   MSG_IO(1, POS_MAX_STR, ">1", "", "", "B", "")
+         .output = MSG_IO(0, "0", "<1", "A", "", "", "") \
+                   MSG_IO(1, TIME_MAX_STR, ">1", "", "", "B", "")
     );
 
     TEST(window_between_chars,
@@ -624,9 +623,9 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {'B'}, .len = 1),
             OP_IO_FLUSH
          },
-         .output = MSG_IO(0, "0.000", "<1", "A", "", "", "") \
-                   MSG_WINDOW(1, "0.000", 256, 256) \
-                   MSG_IO(2, "0.000", ">1", "", "", "B", "")
+         .output = MSG_IO(0, "0", "<1", "A", "", "", "") \
+                   MSG_WINDOW(1, "0", 256, 256) \
+                   MSG_IO(2, "0", ">1", "", "", "B", "")
     );
 
     TEST(window_inside_char,
@@ -636,8 +635,8 @@ main(void)
             OP_IO_WRITE(.output = true, .buf = {0x84, 0x9e}, .len = 2),
             OP_IO_FLUSH
          },
-         .output = MSG_WINDOW(0, "0.000", 256, 256) \
-                   MSG_IO(1, "0.000", ">1", "", "", "\xf0\x9d\x84\x9e", "")
+         .output = MSG_WINDOW(0, "0", 256, 256) \
+                   MSG_IO(1, "0", ">1", "", "", "\xf0\x9d\x84\x9e", "")
     );
 
     return !passed;

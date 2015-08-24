@@ -167,6 +167,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
                        unsigned short int height)
 {
     struct timespec pos;
+    char pos_buf[32];
     int len;
 
     assert(tlog_sink_is_valid(sink));
@@ -176,6 +177,18 @@ tlog_sink_window_write(struct tlog_sink *sink,
 
     tlog_sink_io_flush(sink);
 
+    if (pos.tv_sec == 0) {
+        len = snprintf(pos_buf, sizeof(pos_buf), "%ld",
+                       pos.tv_nsec / 1000000);
+    } else {
+        len = snprintf(pos_buf, sizeof(pos_buf), "%lld%03ld",
+                       (long long int)pos.tv_sec, pos.tv_nsec / 1000000);
+    }
+
+    if ((size_t)len >= sizeof(pos_buf)) {
+        return TLOG_GRC_FROM(errno, ENOMEM);
+    }
+
     len = snprintf(
         (char *)sink->message_buf, sink->message_len,
         "{"
@@ -184,7 +197,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
             "\"user\":"     "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
-            "\"pos\":"      "%lld.%03ld,"
+            "\"pos\":"      "%s,"
             "\"width\":"    "%hu,"
             "\"height\":"   "%hu"
         "}\n",
@@ -192,7 +205,7 @@ tlog_sink_window_write(struct tlog_sink *sink,
         sink->username,
         sink->session_id,
         sink->message_id,
-        (long long int)pos.tv_sec, pos.tv_nsec / 1000000,
+        pos_buf,
         width,
         height);
     if (len < 0)
@@ -246,6 +259,7 @@ tlog_grc
 tlog_sink_io_flush(struct tlog_sink *sink)
 {
     tlog_grc grc;
+    char pos_buf[32];
     int len;
     struct timespec pos;
 
@@ -258,6 +272,19 @@ tlog_sink_io_flush(struct tlog_sink *sink)
     tlog_io_flush(&sink->io);
 
     tlog_timespec_sub(&sink->io.first, &sink->start, &pos);
+
+    if (pos.tv_sec == 0) {
+        len = snprintf(pos_buf, sizeof(pos_buf), "%ld",
+                       pos.tv_nsec / 1000000);
+    } else {
+        len = snprintf(pos_buf, sizeof(pos_buf), "%lld%03ld",
+                       (long long int)pos.tv_sec, pos.tv_nsec / 1000000);
+    }
+
+    if ((size_t)len >= sizeof(pos_buf)) {
+        return TLOG_GRC_FROM(errno, ENOMEM);
+    }
+
     len = snprintf(
         (char *)sink->message_buf, sink->message_len,
         "{"
@@ -266,7 +293,7 @@ tlog_sink_io_flush(struct tlog_sink *sink)
             "\"user\":"     "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
-            "\"pos\":"      "%lld.%03ld,"
+            "\"pos\":"      "%s,"
             "\"timing\":"   "\"%.*s\","
             "\"in_txt\":"   "\"%.*s\","
             "\"in_bin\":"   "[%.*s],"
@@ -277,7 +304,7 @@ tlog_sink_io_flush(struct tlog_sink *sink)
         sink->username,
         sink->session_id,
         sink->message_id,
-        (long long int)pos.tv_sec, pos.tv_nsec / 1000000,
+        pos_buf,
         (int)(sink->io.timing_ptr - sink->io.timing_buf), sink->io.timing_buf,
         (int)sink->io.input.txt_len, sink->io.input.txt_buf,
         (int)sink->io.input.bin_len, sink->io.input.bin_buf,
