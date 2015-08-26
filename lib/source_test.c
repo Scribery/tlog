@@ -259,22 +259,46 @@ main(void)
     bool passed = true;
 
 #define MSG_WINDOW_SPEC(_host_token, _user_token, _session_token, \
-                        _id_token, _pos_token, _width_token, _height_token) \
-    "{"                                                                     \
-        "\"type\":"     "\"window\","                                       \
-        "\"host\":"     "\"" #_host_token "\","                             \
-        "\"user\":"     "\"" #_user_token "\","                             \
-        "\"session\":"  #_session_token ","                                 \
-        "\"id\":"       #_id_token ","                                      \
-        "\"pos\":"      "\"" #_pos_token "\","                              \
-        "\"width\":"    #_width_token ","                                   \
-        "\"height\":"   #_height_token                                      \
+                        _id_token, _pos_token,                      \
+                        _width_token, _height_token)                \
+    "{"                                                             \
+        "\"type\":"     "\"window\","                               \
+        "\"host\":"     "\"" #_host_token "\","                     \
+        "\"user\":"     "\"" #_user_token "\","                     \
+        "\"session\":"  #_session_token ","                         \
+        "\"id\":"       #_id_token ","                              \
+        "\"pos\":"      #_pos_token ","                             \
+        "\"width\":"    #_width_token ","                           \
+        "\"height\":"   #_height_token                              \
     "}\n"
 
 #define MSG_WINDOW_DUMMY(_id_token, _pos_token, \
                          _width_token, _height_token)       \
     MSG_WINDOW_SPEC(host, user, 1, _id_token, _pos_token,   \
                     _width_token, _height_token)
+
+#define MSG_IO_SPEC(_host_token, _user_token, _session_token, \
+                    _id_token, _pos_token,                          \
+                    _timing, _in_txt, _in_bin, _out_txt, _out_bin)  \
+    "{"                                                             \
+        "\"type\":"     "\"io\","                                   \
+        "\"host\":"     "\"" #_host_token "\","                     \
+        "\"user\":"     "\"" #_user_token "\","                     \
+        "\"session\":"  #_session_token ","                         \
+        "\"id\":"       #_id_token ","                              \
+        "\"pos\":"      #_pos_token ","                             \
+        "\"timing\":"   "\"" _timing "\","                          \
+        "\"in_txt\":"   "\"" _in_txt "\","                          \
+        "\"in_bin\":"   "[" _in_bin "],"                            \
+        "\"out_txt\":"  "\"" _out_txt "\","                         \
+        "\"out_bin\":"  "[" _out_bin "]"                            \
+    "}\n"
+
+#define MSG_IO_DUMMY(_id_token, _pos_token, \
+                     _timing, _in_txt, _in_bin, _out_txt, _out_bin) \
+    MSG_IO_SPEC(host, user, 1, _id_token, _pos_token,               \
+                    _timing, _in_txt, _in_bin, _out_txt, _out_bin)
+
 
 #define OP_NONE {.type = OP_TYPE_NONE}
 
@@ -296,7 +320,35 @@ main(void)
         }                                       \
     }
 
-#define PKT_IO(_width, _height)
+#define PKT_IO(_tv_sec, _tv_nsec, _output, _buf, _len) \
+    (struct tlog_pkt){                                  \
+        .timestamp  = {_tv_sec, _tv_nsec},              \
+        .type       = TLOG_PKT_TYPE_IO,                 \
+        .data       = {                                 \
+            .io = {                                     \
+                .output     = _output,                  \
+                .buf        = (uint8_t *)_buf,          \
+                .buf_owned  = false,                    \
+                .len        = _len                      \
+            }                                           \
+        }                                               \
+    }
+
+
+#define PKT_IO_STR(_tv_sec, _tv_nsec, _output, _buf) \
+    (struct tlog_pkt){                                  \
+        .timestamp  = {_tv_sec, _tv_nsec},              \
+        .type       = TLOG_PKT_TYPE_IO,                 \
+        .data       = {                                 \
+            .io = {                                     \
+                .output     = _output,                  \
+                .buf        = (uint8_t *)_buf,          \
+                .buf_owned  = false,                    \
+                .len        = strlen(_buf)              \
+            }                                           \
+        }                                               \
+    }
+
 
 #define OP_READ(_exp_grc, _exp_pkt) \
     {.type = OP_TYPE_READ,                                          \
@@ -321,67 +373,384 @@ main(void)
 
     TEST_ANY(null,
          "", 4,
-         OP_LOC_GET(1),
-         OP_READ(TLOG_RC_OK, PKT_VOID),
-         OP_LOC_GET(1));
+         OP_READ(TLOG_RC_OK, PKT_VOID));
 
     TEST_ANY(null_repeat_eof,
          "", 4,
-         OP_LOC_GET(1),
          OP_READ(TLOG_RC_OK, PKT_VOID),
-         OP_LOC_GET(1),
-         OP_READ(TLOG_RC_OK, PKT_VOID),
-         OP_LOC_GET(1));
-
-    TEST_ANY(window,
-         MSG_WINDOW_DUMMY(1, 1.000, 100, 200),
-         4,
-         OP_LOC_GET(1),
-         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 100, 200)),
-         OP_LOC_GET(2));
-
-    TEST_ANY(two_windows,
-         MSG_WINDOW_DUMMY(1, 1.000, 110, 120)
-         MSG_WINDOW_DUMMY(1, 2.000, 210, 220),
-         4,
-         OP_LOC_GET(1),
-         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
-         OP_LOC_GET(2),
-         OP_READ(TLOG_RC_OK, PKT_WINDOW(2, 0, 210, 220)),
-         OP_LOC_GET(3));
-
-    TEST_ANY(syntax_error_recovery,
-         MSG_WINDOW_DUMMY(1, 1.000, 110, 120)
-         "{abcdef     ]\n"
-         MSG_WINDOW_DUMMY(1, 2.000, 210, 220),
-         4,
-         OP_LOC_GET(1),
-         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
-         OP_LOC_GET(2),
-         OP_READ(TLOG_GRC_FROM(json,
-                               json_tokener_error_parse_object_key_name),
-                 PKT_VOID),
-         OP_LOC_GET(3),
-         OP_READ(TLOG_RC_OK, PKT_WINDOW(2, 0, 210, 220)),
-         OP_LOC_GET(4));
-
-    TEST_ANY(window_repeat_eof,
-         MSG_WINDOW_DUMMY(1, 1.000, 100, 200),
-         4,
-         OP_LOC_GET(1),
-         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 100, 200)),
-         OP_LOC_GET(2),
-         OP_READ(TLOG_RC_OK, PKT_VOID),
-         OP_LOC_GET(2),
          OP_READ(TLOG_RC_OK, PKT_VOID));
 
-    TEST_ANY(invalid_syntax,
-         MSG_WINDOW_DUMMY(1, 1.000, aaa, bbb),
+    TEST_ANY(window,
+         MSG_WINDOW_DUMMY(1, 1000, 100, 200),
          4,
-         OP_LOC_GET(1),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 100, 200)));
+
+    TEST_ANY(pos_0,
+         MSG_WINDOW_DUMMY(1, 0, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(0, 0, 100, 200)));
+
+    TEST_ANY(pos_1ms,
+         MSG_WINDOW_DUMMY(1, 1, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(0, 1000000, 100, 200)));
+
+    TEST_ANY(pos_999ms,
+         MSG_WINDOW_DUMMY(1, 999, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(0, 999000000, 100, 200)));
+
+    TEST_ANY(pos_1s,
+         MSG_WINDOW_DUMMY(1, 1000, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 100, 200)));
+
+    TEST_ANY(pos_max,
+         MSG_WINDOW_DUMMY(1, 9223372036854775807, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK,
+                 PKT_WINDOW(9223372036854775, 807000000, 100, 200)));
+
+    TEST_ANY(pos_overflow,
+         MSG_WINDOW_DUMMY(1, 9223372036854775808, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK,
+                 PKT_WINDOW(9223372036854775, 807000000, 100, 200)));
+
+    TEST_ANY(pos_negative_1ms,
+         MSG_WINDOW_DUMMY(1, -1, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK,
+                 PKT_WINDOW(0, -1000000, 100, 200)));
+
+    TEST_ANY(pos_negative_999ms,
+         MSG_WINDOW_DUMMY(1, -999, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK,
+                 PKT_WINDOW(0, -999000000, 100, 200)));
+
+    TEST_ANY(pos_negative_1s,
+         MSG_WINDOW_DUMMY(1, -1000, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK,
+                 PKT_WINDOW(-1, 0, 100, 200)));
+
+    TEST_ANY(pos_min,
+         MSG_WINDOW_DUMMY(1, -9223372036854775808, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK,
+                 PKT_WINDOW(-9223372036854775, -808000000, 100, 200)));
+
+    TEST_ANY(pos_underflow,
+         MSG_WINDOW_DUMMY(1, -9223372036854775809, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK,
+                 PKT_WINDOW(-9223372036854775, -808000000, 100, 200)));
+
+    TEST_ANY(two_windows,
+         MSG_WINDOW_DUMMY(1, 1000, 110, 120)
+         MSG_WINDOW_DUMMY(2, 2000, 210, 220),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(2, 0, 210, 220)));
+
+    TEST_ANY(syntax_error,
+         MSG_WINDOW_DUMMY(1, 1000, aaa, bbb),
+         4,
+         OP_READ(TLOG_GRC_FROM(json, json_tokener_error_parse_unexpected),
+                 PKT_VOID));
+
+    TEST_ANY(syntax_error_recovery,
+         MSG_WINDOW_DUMMY(1, 1000, 110, 120)
+         MSG_WINDOW_DUMMY(1, 1000, aaa, bbb)
+         MSG_WINDOW_DUMMY(2, 2000, 210, 220),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
          OP_READ(TLOG_GRC_FROM(json, json_tokener_error_parse_unexpected),
                  PKT_VOID),
-         OP_LOC_GET(2));
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(2, 0, 210, 220)));
+
+    TEST_ANY(schema_error_recovery,
+         MSG_WINDOW_DUMMY(1, 1000, 110, 120)
+         "{\"abc\": \"def\"}\n"
+         MSG_WINDOW_DUMMY(2, 2000, 210, 220),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_READ(TLOG_RC_MSG_FIELD_MISSING, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(2, 0, 210, 220)));
+
+    TEST_ANY(type_error_recovery,
+         MSG_WINDOW_DUMMY(1, 1000, 110, 120)
+         MSG_WINDOW_DUMMY("0", 0, 0, 0)
+         MSG_WINDOW_DUMMY(2, 2000, 210, 220),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_TYPE, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(2, 0, 210, 220)));
+
+    TEST_ANY(value_error_recovery,
+         MSG_WINDOW_DUMMY(1, 1000, 110, 120)
+         MSG_WINDOW_DUMMY(1, 0, 65536, 0)
+         MSG_WINDOW_DUMMY(1, 2000, 210, 220),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(2, 0, 210, 220)));
+
+    TEST_ANY(window_repeat_eof,
+         MSG_WINDOW_DUMMY(1, 1000, 100, 200),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 100, 200)),
+         OP_READ(TLOG_RC_OK, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_null,
+         MSG_IO_DUMMY(1, 1000, "", "", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_1_txt1,
+         MSG_IO_DUMMY(1, 1000, "<1", "X", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "X")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_out_1_txt1,
+         MSG_IO_DUMMY(1, 1000, ">1", "", "", "X", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, true, "X")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_mixed_txt,
+         MSG_IO_DUMMY(1, 1000, "<1>1<1>1", "AC", "", "BD", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "A")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, true, "B")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "C")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, true, "D")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_spaced_timing,
+         MSG_IO_DUMMY(1, 1, " <1 +1 >1 +1 <1 +1 >1 ", "AC", "", "BD", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(0, 1000000, false, "A")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(0, 2000000, true, "B")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(0, 3000000, false, "C")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(0, 4000000, true, "D")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_mixed_bin,
+         MSG_IO_DUMMY(1, 1000, "[0/1]0/1[0/1]0/1", "", "65,67", "", "66,68"),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "A")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, true, "B")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "C")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, true, "D")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_2_txt1,
+         MSG_IO_DUMMY(1, 1000, "<2", "XY", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "XY")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_out_2_txt1,
+         MSG_IO_DUMMY(1, 1000, ">2", "", "", "XY", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, true, "XY")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_1_txt2,
+         MSG_IO_DUMMY(1, 1000, "<1", "\xd0\x90", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "\xd0\x90")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_1_txt3,
+         MSG_IO_DUMMY(1, 1000, "<1", "\xe5\x96\x9c", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "\xe5\x96\x9c")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_1_txt4,
+         MSG_IO_DUMMY(1, 1000, "<1", "\xf0\x9d\x84\x9e", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "\xf0\x9d\x84\x9e")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_txt_split,
+         MSG_IO_DUMMY(1, 1000, "<3",
+                      "\xf0\x9d\x85\x9d"
+                      "\xf0\x9d\x85\x9e"
+                      "\xf0\x9d\x85\x9f",
+                      "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "\xf0\x9d\x85\x9d")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "\xf0\x9d\x85\x9e")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "\xf0\x9d\x85\x9f")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_txt_split_uneven,
+         MSG_IO_DUMMY(1, 1000, "<7",
+                      "12345"
+                      "\xf0\x9d\x85\x9d"
+                      "\xf0\x9d\x85\x9e",
+                      "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "1234")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "5")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "\xf0\x9d\x85\x9d")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "\xf0\x9d\x85\x9e")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_merge_txt,
+         MSG_IO_DUMMY(1, 1000, "<1<2<3", "ABCXYZ", "", "", ""),
+         6,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "ABCXYZ")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_merge_bin,
+         MSG_IO_DUMMY(1, 1000, "[0/1[0/2[0/3",
+                      "", "49,50,51,52,53,54", "", ""),
+         6,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "123456")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_merge_mixed,
+         MSG_IO_DUMMY(1, 1000, "<1[0/1<1[0/2<1",
+                      "136", "50,52,53", "", ""),
+         6,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "123456")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_merge_zero_delay,
+         MSG_IO_DUMMY(1, 1000, "<1+0<1", "AB", "", "", ""),
+         6,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "AB")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_merge_zero_out,
+         MSG_IO_DUMMY(1, 1000, "<1>0<1", "AB", "", "", ""),
+         6,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "AB")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_merge_break_out,
+         MSG_IO_DUMMY(1, 1000, "<1>1<1", "AC", "", "B", ""),
+         6,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "A")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, true, "B")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "C")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_merge_break_delay,
+         MSG_IO_DUMMY(1, 1000, "<1+1000<1", "AB", "", "", ""),
+         6,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "A")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(2, 0, false, "B")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_0_txt_1_bin,
+         MSG_IO_DUMMY(1, 1000, "[0/1<1", "Y", "88", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "XY")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_0_txt_2_bin,
+         MSG_IO_DUMMY(1, 1000, "[0/2<1", "Z", "88, 89", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "XYZ")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_1_txt1_1_bin,
+         MSG_IO_DUMMY(1, 1000, "[1/1", "X", "89", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "Y")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_1_txt1_1_bin,
+         MSG_IO_DUMMY(1, 1000, "[1/1", "X", "89", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "Y")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_2_txt1_1_bin,
+         MSG_IO_DUMMY(1, 1000, "[2/1", "XY", "90", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "Z")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_delay_on_boundary,
+         MSG_IO_DUMMY(1, 1000, "<4+1000<4", "12345678", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "1234")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(2, 0, false, "5678")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_delay_before_uneven_boundary,
+         MSG_IO_DUMMY(1, 1000, "<1+1000<2",
+                      "X\xf0\x9d\x85\x9dY", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "X")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(2, 0, false, "\xf0\x9d\x85\x9d")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(2, 0, false, "Y")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_delay_after_uneven_boundary,
+         MSG_IO_DUMMY(1, 1000, "<2+1000<1",
+                      "X\xf0\x9d\x85\x9dY", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "X")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "\xf0\x9d\x85\x9d")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(2, 0, false, "Y")),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_short_char,
+         MSG_IO_DUMMY(1, 1000, "<1", "\xf0\x9d\x85", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_short_bin,
+         MSG_IO_DUMMY(1, 1000, "[0/2", "", "48", "", ""),
+         4,
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_bin_not_int,
+         MSG_IO_DUMMY(1, 1000, "[0/1", "", "3.14", "", ""),
+         4,
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_bin_void,
+         MSG_IO_DUMMY(1, 1000, "[0/0", "", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_bin_min,
+         MSG_IO_DUMMY(1, 1000, "[0/1", "", "0", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO(1, 0, false, "\0", 1)),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_bin_max,
+         MSG_IO_DUMMY(1, 1000, "[0/1", "", "255", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO(1, 0, false, "\xff", 1)),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_bin_too_small,
+         MSG_IO_DUMMY(1, 1000, "[0/1", "", "-1", "", ""),
+         4,
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
+
+    TEST_ANY(io_in_bin_too_big,
+         MSG_IO_DUMMY(1, 1000, "[0/1", "", "256", "", ""),
+         4,
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID));
 
     return !passed;
 }
