@@ -41,8 +41,6 @@
 #define IO_LATENCY  10
 #define BUF_SIZE    4096
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-
 /**< Number of the signal causing exit */
 static volatile sig_atomic_t exit_signum  = 0;
 
