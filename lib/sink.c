@@ -80,7 +80,7 @@ tlog_sink_init(struct tlog_sink *sink,
 
     sink->session_id = session_id;
 
-    sink->message_id = 0;
+    sink->message_id = 1;
 
     sink->start = *timestamp;
 
