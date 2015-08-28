@@ -108,9 +108,9 @@ main(int argc, char **argv)
         }
     }
 
-    /* Switch the terminal to raw mode */
+    /* Switch the terminal to raw mode, but keep signal generation */
     raw_termios = orig_termios;
-    raw_termios.c_lflag &= ~(ICANON | ISIG | IEXTEN | ECHO);
+    raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO);
     raw_termios.c_iflag &= ~(BRKINT | ICRNL | IGNBRK | IGNCR | INLCR |
                              INPCK | ISTRIP | IXON | PARMRK);
     raw_termios.c_oflag &= ~OPOST;
