@@ -19,7 +19,9 @@
 
 AM_CPPFLAGS = $(JSON_CFLAGS)
 
-bin_PROGRAMS = tlog-rec
+bin_PROGRAMS = \
+    tlog-rec    \
+    tlog-play
 
 tlog_rec_SOURCES = \
     tlog-rec.c
@@ -27,3 +29,9 @@ tlog_rec_SOURCES = \
 tlog_rec_LDADD = \
     ../lib/libtlog.la   \
     -lutil
+
+tlog_play_SOURCES = \
+    tlog-play.c
+
+tlog_play_LDADD = \
+    ../lib/libtlog.la
