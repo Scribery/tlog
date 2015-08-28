@@ -250,7 +250,7 @@ main(int argc, char **argv)
     }
 
     /* Get terminal attributes */
-    rc = tcgetattr(STDIN_FILENO, &orig_termios);
+    rc = tcgetattr(STDOUT_FILENO, &orig_termios);
     if (rc < 0) {
         fprintf(stderr, "Failed retrieving tty attributes: %s\n",
                 strerror(errno));
@@ -258,7 +258,7 @@ main(int argc, char **argv)
     }
 
     /* Get terminal window size */
-    rc = ioctl(STDIN_FILENO, TIOCGWINSZ, &winsize);
+    rc = ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize);
     if (rc < 0) {
         fprintf(stderr, "Failed retrieving tty window size: %s\n",
                 strerror(errno));
@@ -329,7 +329,7 @@ main(int argc, char **argv)
     raw_termios.c_oflag &= ~OPOST;
     raw_termios.c_cc[VMIN] = 1;
     raw_termios.c_cc[VTIME] = 0;
-    rc = tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw_termios);
+    rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw_termios);
     if (rc < 0) {
         fprintf(stderr, "Failed setting tty attributes: %s\n",
                 strerror(errno));
@@ -351,7 +351,7 @@ main(int argc, char **argv)
         new_sigwinch_caught = sigwinch_caught;
         if (new_sigwinch_caught != last_sigwinch_caught) {
             /* Retrieve window size */
-            rc = ioctl(STDIN_FILENO, TIOCGWINSZ, &new_winsize);
+            rc = ioctl(STDOUT_FILENO, TIOCGWINSZ, &new_winsize);
             if (rc < 0) {
                 if (errno == EBADF)
                     status = 0;
@@ -545,7 +545,7 @@ main(int argc, char **argv)
     }
 
     /* Restore terminal attributes */
-    rc = tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+    rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
     if (rc < 0 && errno != EBADF) {
         fprintf(stderr, "Failed restoring tty attributes: %s\n",
                 strerror(errno));
