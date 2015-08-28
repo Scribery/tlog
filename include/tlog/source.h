@@ -39,9 +39,10 @@ struct tlog_source {
     unsigned int        session_id;     /**< Session ID to filter messages by,
                                              NULL for unfiltered */
 
-    /* FIXME: add validation */
-    size_t              last_id;        /**< Last message ID */
-    struct timespec     last_pos;       /**< Last message timestamp */
+    bool                got_msg;        /**< Read at least one message */
+    size_t              last_msg_id;    /**< Last message ID */
+    bool                got_pkt;        /**< Read at least one packet */
+    struct timespec     last_pkt_ts;    /**< Last packet timestamp */
 
     struct tlog_msg     msg;            /**< Message parsing state */
 

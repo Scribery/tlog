@@ -24,6 +24,7 @@
 #include <string.h>
 #include <errno.h>
 #include "tlog/rc.h"
+#include "tlog/misc.h"
 #include "tlog/source.h"
 
 bool
@@ -198,30 +199,52 @@ tlog_grc
 tlog_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
 {
     tlog_grc grc;
+    struct tlog_msg *msg;
 
     assert(tlog_source_is_valid(source));
     assert(tlog_pkt_is_valid(pkt));
     assert(tlog_pkt_is_void(pkt));
 
+    msg = &source->msg;
+
     while (true) {
-        if (tlog_msg_is_void(&source->msg)) {
+        if (tlog_msg_is_void(msg)) {
             grc = tlog_source_read_msg(source);
             if (grc != TLOG_RC_OK)
                 return grc;
-            if (tlog_msg_is_void(&source->msg))
+            if (tlog_msg_is_void(msg))
                 return TLOG_RC_OK;
+            if (source->got_msg) {
+                if (msg->id != (source->last_msg_id + 1)) {
+                    tlog_msg_cleanup(msg);
+                    return TLOG_RC_SOURCE_MSG_ID_OUT_OF_ORDER;
+                }
+            } else {
+                source->got_msg = true;
+            }
+            source->last_msg_id = msg->id;
         }
 
-        grc = tlog_msg_read(&source->msg, pkt,
-                            source->io_buf, source->io_size);
+        grc = tlog_msg_read(msg, pkt, source->io_buf, source->io_size);
         if (grc != TLOG_RC_OK) {
-            tlog_msg_cleanup(&source->msg);
+            tlog_msg_cleanup(msg);
             return grc;
         }
 
         if (tlog_pkt_is_void(pkt)) {
-            tlog_msg_cleanup(&source->msg);
+            tlog_msg_cleanup(msg);
         } else {
+            if (source->got_pkt) {
+                if (tlog_timespec_cmp(&pkt->timestamp,
+                                      &source->last_pkt_ts) < 0) {
+                    tlog_pkt_cleanup(pkt);
+                    tlog_msg_cleanup(msg);
+                    return TLOG_RC_SOURCE_PKT_TS_OUT_OF_ORDER;
+                }
+            } else {
+                source->got_pkt = true;
+            }
+            source->last_pkt_ts = pkt->timestamp;
             return TLOG_RC_OK;
         }
     }

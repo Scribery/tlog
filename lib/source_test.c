@@ -407,7 +407,7 @@ main(void)
 
     TEST_ANY(two_windows_eof,
          MSG_WINDOW_DUMMY(1, 1000, 100, 200)
-         MSG_WINDOW_DUMMY(1, 1000, 300, 400),
+         MSG_WINDOW_DUMMY(2, 1000, 300, 400),
          4,
          OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 100, 200)),
          OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 300, 400)),
@@ -436,7 +436,7 @@ main(void)
 
     TEST_ANY(loc_after_two_windows,
          MSG_WINDOW_DUMMY(1, 1000, 100, 200)
-         MSG_WINDOW_DUMMY(1, 1000, 300, 400),
+         MSG_WINDOW_DUMMY(2, 1000, 300, 400),
          4,
          OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 100, 200)),
          OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 300, 400)),
@@ -564,8 +564,8 @@ main(void)
 
     TEST_ANY(value_error_recovery,
          MSG_WINDOW_DUMMY(1, 1000, 110, 120)
-         MSG_WINDOW_DUMMY(1, 0, 65536, 0)
-         MSG_WINDOW_DUMMY(1, 2000, 210, 220),
+         MSG_WINDOW_DUMMY(0, 0, 65536, 0)
+         MSG_WINDOW_DUMMY(2, 2000, 210, 220),
          4,
          OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
          OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
@@ -893,6 +893,98 @@ main(void)
          4,
          OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "12")),
          OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 234000000, true, "34"))
+    );
+
+    TEST_ANY(id_repeat,
+         MSG_WINDOW_DUMMY(1, 1000, 110, 120)
+         MSG_WINDOW_DUMMY(1, 2000, 210, 220),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_READ(TLOG_RC_SOURCE_MSG_ID_OUT_OF_ORDER, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID)
+    );
+
+    TEST_ANY(id_backwards,
+         MSG_WINDOW_DUMMY(1, 1000, 110, 120)
+         MSG_WINDOW_DUMMY(0, 2000, 210, 220),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_READ(TLOG_RC_SOURCE_MSG_ID_OUT_OF_ORDER, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID)
+    );
+
+    TEST_ANY(id_gap,
+         MSG_WINDOW_DUMMY(1, 1000, 110, 120)
+         MSG_WINDOW_DUMMY(3, 2000, 210, 220),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_READ(TLOG_RC_SOURCE_MSG_ID_OUT_OF_ORDER, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID)
+    );
+
+    TEST_ANY(ts_repeat,
+         MSG_WINDOW_DUMMY(1, 1000, 110, 120)
+         MSG_WINDOW_DUMMY(2, 1000, 210, 220),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 210, 220)),
+         OP_READ(TLOG_RC_OK, PKT_VOID)
+    );
+
+    TEST_ANY(ts_backwards,
+         MSG_WINDOW_DUMMY(1, 1000, 110, 120)
+         MSG_WINDOW_DUMMY(2, 500, 210, 220),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(1, 0, 110, 120)),
+         OP_READ(TLOG_RC_SOURCE_PKT_TS_OUT_OF_ORDER, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID)
+    );
+
+    TEST_ANY(io_ts_null_no_overlap,
+         MSG_IO_DUMMY(1, 1000, "", "", "", "", "")
+         MSG_IO_DUMMY(2, 1000, "<1", "X", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "X")),
+         OP_READ(TLOG_RC_OK, PKT_VOID)
+    );
+
+    TEST_ANY(io_ts_hanging_no_overlap,
+         MSG_IO_DUMMY(1, 1000, "<1+1", "X", "", "", "")
+         MSG_IO_DUMMY(2, 1000, "<1", "Y", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "X")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "Y")),
+         OP_READ(TLOG_RC_OK, PKT_VOID)
+    );
+
+    TEST_ANY(io_ts_repeat,
+         MSG_IO_DUMMY(1, 1000, "<1+1<1", "XY", "", "", "")
+         MSG_IO_DUMMY(2, 1000, "<1", "Z", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "X")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 1000000, false, "Y")),
+         OP_READ(TLOG_RC_SOURCE_PKT_TS_OUT_OF_ORDER, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID)
+    );
+
+    TEST_ANY(io_ts_overlap,
+         MSG_IO_DUMMY(1, 1000, "<1+2<1", "XY", "", "", "")
+         MSG_IO_DUMMY(2, 1001, "<1", "Z", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "X")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 2000000, false, "Y")),
+         OP_READ(TLOG_RC_SOURCE_PKT_TS_OUT_OF_ORDER, PKT_VOID),
+         OP_READ(TLOG_RC_OK, PKT_VOID)
+    );
+
+    TEST_ANY(io_ts_no_gap,
+         MSG_IO_DUMMY(1, 1000, "<1+2<1", "XY", "", "", "")
+         MSG_IO_DUMMY(2, 1002, "<1", "Z", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 0, false, "X")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 2000000, false, "Y")),
+         OP_READ(TLOG_RC_OK, PKT_IO_STR(1, 2000000, false, "Z")),
+         OP_READ(TLOG_RC_OK, PKT_VOID)
     );
 
     return !passed;

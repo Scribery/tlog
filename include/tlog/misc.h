@@ -104,6 +104,31 @@ tlog_timespec_zero(struct timespec *t)
 }
 
 /**
+ * Compare two timespec's.
+ *
+ * @param a     First timespec to compare.
+ * @param b     Second timespec to compare.
+ *
+ * @return Comparison result:
+ *          -1  - a < b
+ *           0  - a == b
+ *           1  - a > b
+ */
+static inline int
+tlog_timespec_cmp(const struct timespec *a, const struct timespec *b)
+{
+    if (a->tv_sec < b->tv_sec)
+        return -1;
+    else if (a->tv_sec > b->tv_sec)
+        return 1;
+    if (a->tv_nsec < b->tv_nsec)
+        return -1;
+    else if (a->tv_nsec > b->tv_nsec)
+        return 1;
+    return 0;
+}
+
+/**
  * Convert a nibble (4-bit number) to a hexadecimal digit.
  *
  * @param n     Nibble to convert.

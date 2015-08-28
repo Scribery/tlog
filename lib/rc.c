@@ -37,6 +37,10 @@ static const char *tlog_rc_desc_list[TLOG_RC_MAX_PLUS_ONE - TLOG_RC_MIN] = {
         "A message field has invalid value",
     [TLOG_RC_FD_READER_INCOMPLETE_LINE] =
         "Incomplete message object line encountered",
+    [TLOG_RC_SOURCE_MSG_ID_OUT_OF_ORDER] =
+        "Message ID is out of order",
+    [TLOG_RC_SOURCE_PKT_TS_OUT_OF_ORDER] =
+        "Packet timestamp is out of order",
 };
 
 const char *
