@@ -95,25 +95,11 @@ tlog_es_reader_format_url_pfx(char **purl_pfx,
                               size_t size)
 {
     static const char *sort = "id:asc";
-    static const char *fields = "type,"
-                                "host,"
-                                "user,"
-                                "session,"
-                                "id,"
-                                "pos,"
-                                "width,"
-                                "height,"
-                                "timing,"
-                                "in_txt,"
-                                "in_bin,"
-                                "out_txt,"
-                                "out_bin";
 
     tlog_grc grc;
     char *url_pfx;
     char *esc_query = NULL;
     char *esc_sort = NULL;
-    char *esc_fields = NULL;
 
     assert(purl_pfx != NULL);
     assert(curl != NULL);
@@ -132,13 +118,12 @@ tlog_es_reader_format_url_pfx(char **purl_pfx,
 
     ESC(query);
     ESC(sort);
-    ESC(fields);
 
 #undef ESC
 
     if (asprintf(&url_pfx,
-                 "%s?q=%s&sort=%s&fields=%s&size=%zu&from=",
-                 base_url, esc_query, esc_sort, esc_fields, size) < 0) {
+                 "%s?q=%s&fields=&_source&sort=%s&size=%zu&from=",
+                 base_url, esc_query, esc_sort, size) < 0) {
         grc = TLOG_GRC_FROM(errno, ENOMEM);
         goto cleanup;
     }
@@ -149,9 +134,6 @@ tlog_es_reader_format_url_pfx(char **purl_pfx,
 
 cleanup:
 
-    if (esc_fields != NULL) {
-        curl_free(esc_fields);
-    }
     if (esc_sort != NULL) {
         curl_free(esc_sort);
     }
@@ -421,6 +403,7 @@ tlog_es_reader_read(struct tlog_reader *reader, struct json_object **pobject)
                                 (struct tlog_es_reader*)reader;
     tlog_grc grc;
     size_t array_idx = es_reader->idx % es_reader->size;
+    struct json_object *hit;
     struct json_object *object;
 
     /* If we're at the edge of the next window array */
@@ -433,9 +416,17 @@ tlog_es_reader_read(struct tlog_reader *reader, struct json_object **pobject)
     }
 
     /* Get next object from the array */
-    object = json_object_array_get_idx(es_reader->array, array_idx);
-    if (object != NULL) {
+    hit = json_object_array_get_idx(es_reader->array, array_idx);
+    if (hit == NULL) {
+        object = NULL;
+    } else {
         es_reader->idx++;
+        if (!json_object_object_get_ex(hit, "_source", &object)) {
+            json_object_put(hit);
+            return TLOG_RC_ES_READER_REPLY_INVALID;
+        }
+        json_object_get(object);
+        json_object_put(hit);
     }
 
     *pobject = object;
