@@ -151,7 +151,7 @@ main(int argc, char **argv)
         if (!got_pkt) {
             if (clock_gettime(CLOCK_MONOTONIC, &local_ts) != 0) {
                 fprintf(stderr, "Failed retrieving current time: %s\n",
-                        strerror(rc));
+                        strerror(errno));
                 status = 1;
                 break;
             }
@@ -177,7 +177,7 @@ main(int argc, char **argv)
             if (errno == EINTR) {
                 break;
             } else if (rc != 0) {
-                fprintf(stderr, "Failed writing output: %s\n", strerror(rc));
+                fprintf(stderr, "Failed writing output: %s\n", strerror(errno));
                 status = 1;
                 break;
             }
