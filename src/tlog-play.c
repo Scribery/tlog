@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "tlog/fd_reader.h"
+#include "tlog/es_reader.h"
 #include "tlog/source.h"
 #include "tlog/rc.h"
 #include "tlog/misc.h"
@@ -47,6 +47,8 @@ int
 main(int argc, char **argv)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
+    const char *base_url;
+    const char *query;
     struct timespec local_ts;
     struct timespec last_ts;
     struct timespec off_ts;
@@ -63,14 +65,17 @@ main(int argc, char **argv)
     bool got_pkt = false;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
 
-    (void)argv;
-    if (argc > 1) {
-        fprintf(stderr, "Arguments are not accepted\n");
+    /* Retrieve command-line arguments */
+    if (argc != 3) {
+        fprintf(stderr, "Invalid number of arguments\n");
+        fprintf(stderr, "Usage: tlog-play BASE_URL QUERY\n");
         return 1;
     }
+    base_url = argv[1];
+    query = argv[2];
 
     /* Create the reader */
-    grc = tlog_fd_reader_create(&reader, STDIN_FILENO, BUF_SIZE);
+    grc = tlog_es_reader_create(&reader, base_url, query, 10);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating the reader: %s\n",
                 tlog_grc_strerror(grc));
