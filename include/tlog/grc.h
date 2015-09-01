@@ -67,6 +67,8 @@ extern const struct tlog_grc_range tlog_grc_range_errno;
 extern const struct tlog_grc_range tlog_grc_range_gai;
 /** JSON return code value range (shifted) */
 extern const struct tlog_grc_range tlog_grc_range_json;
+/** libcurl return code value range (shifted) */
+extern const struct tlog_grc_range tlog_grc_range_curl;
 
 /**
  * Check if a grc belongs to a range.

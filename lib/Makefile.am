@@ -110,7 +110,7 @@ tlog_grc_test_SOURCES = \
     test.c                      \
     test.h
 
-tlog_grc_test_LDADD = libtlog.la $(JSON_LIBS)
+tlog_grc_test_LDADD = libtlog.la $(JSON_LIBS) $(LIBCURL)
 
 tlog_source_test_SOURCES = \
     source_test.c            \

@@ -26,6 +26,7 @@
 #include <limits.h>
 #include <json_tokener.h>
 #include <netdb.h>
+#include <curl/curl.h>
 #include "tlog/grc.h"
 #include "tlog/rc.h"
 
@@ -50,6 +51,7 @@ main(void)
 #define errno_from(x)   (-(x))
 #define gai_from(x)    (-(x) + 0x1000)
 #define json_from(x)    ((x) + 0x2000)
+#define curl_from(x)    ((x) + 0x3000)
 
 #define TEST_CODE(_range_name_token, _rc_name_token, _value, _strerror) \
     do {                                                                    \
@@ -77,6 +79,9 @@ main(void)
     TEST_CODE(gai, noname, EAI_NONAME, gai_strerror);
     TEST_CODE(json, success, json_tokener_success, json_tokener_error_desc);
     TEST_CODE(json, error_size, json_tokener_error_size, json_tokener_error_desc);
+    TEST_CODE(curl, failed_init, CURLE_FAILED_INIT, curl_easy_strerror);
+    TEST_CODE(curl, couldnt_resolve_host, CURLE_COULDNT_RESOLVE_HOST,
+              curl_easy_strerror);
 
     return !passed;
 }

@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <json_tokener.h>
 #include <netdb.h>
+#include <curl/curl.h>
 #include "tlog/misc.h"
 #include "tlog/rc.h"
 #include "tlog/grc.h"
@@ -85,11 +86,26 @@ const struct tlog_grc_range tlog_grc_range_json = {
     .strerror   = tlog_grc_range_json_strerror
 };
 
+static const char *
+tlog_grc_range_curl_strerror(int rc)
+{
+    return curl_easy_strerror(rc);
+}
+
+const struct tlog_grc_range tlog_grc_range_curl = {
+    .min        = 0x3000,
+    .max        = 0x3fff,
+    .add        = 0x3000,
+    .mul        = 1,
+    .strerror   = tlog_grc_range_curl_strerror
+};
+
 const struct tlog_grc_range *tlog_grc_range_list[] = {
     &tlog_grc_range_native,
     &tlog_grc_range_errno,
     &tlog_grc_range_gai,
-    &tlog_grc_range_json
+    &tlog_grc_range_json,
+    &tlog_grc_range_curl
 };
 
 bool
