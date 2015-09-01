@@ -62,3 +62,5 @@ Test the code with coverity.
 
 Consider supporting merging several messages into a single packet when
 reading.
+
+Consider making sink accept packets for input.
