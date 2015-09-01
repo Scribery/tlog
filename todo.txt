@@ -64,3 +64,5 @@ Consider supporting merging several messages into a single packet when
 reading.
 
 Consider making sink accept packets for input.
+
+Consider merging window and io messages for simplicity.
