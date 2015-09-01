@@ -78,7 +78,8 @@ tlog_es_reader_create(struct tlog_reader **preader,
     assert(preader != NULL);
     assert(tlog_es_reader_base_url_is_valid(base_url));
     assert(query != NULL);
-    return tlog_reader_create(preader, &tlog_es_reader_type, base_url, size);
+    return tlog_reader_create(preader, &tlog_es_reader_type,
+                              base_url, query, size);
 }
 
 #endif /* _TLOG_ES_READER_H */
