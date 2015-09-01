@@ -41,6 +41,10 @@ static const char *tlog_rc_desc_list[TLOG_RC_MAX_PLUS_ONE - TLOG_RC_MIN] = {
         "Message ID is out of order",
     [TLOG_RC_SOURCE_PKT_TS_OUT_OF_ORDER] =
         "Packet timestamp is out of order",
+    [TLOG_RC_ES_READER_CURL_INIT_FAILED] =
+        "Curl handle creation failed",
+    [TLOG_RC_ES_READER_REPLY_INVALID] =
+        "Invalid reply received from HTTP server",
 };
 
 const char *

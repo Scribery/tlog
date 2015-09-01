@@ -38,6 +38,8 @@ typedef enum tlog_rc {
     TLOG_RC_FD_READER_INCOMPLETE_LINE,
     TLOG_RC_SOURCE_MSG_ID_OUT_OF_ORDER,
     TLOG_RC_SOURCE_PKT_TS_OUT_OF_ORDER,
+    TLOG_RC_ES_READER_CURL_INIT_FAILED,
+    TLOG_RC_ES_READER_REPLY_INVALID,
     /* Return code upper boundary (not a valid return code) */
     TLOG_RC_MAX_PLUS_ONE
 } tlog_rc;

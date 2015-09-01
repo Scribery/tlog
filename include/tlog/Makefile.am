@@ -20,6 +20,7 @@
 tlogdir = $(includedir)/tlog
 
 tlog_HEADERS = \
+    es_reader.h     \
     fd_reader.h     \
     fd_writer.h     \
     grc.h           \
