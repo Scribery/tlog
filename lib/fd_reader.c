@@ -1,5 +1,5 @@
 /*
- * Tlog syslog message reader.
+ * Tlog file descriptor message reader.
  *
  * Copyright (C) 2015 Red Hat
  *
