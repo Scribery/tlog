@@ -17,7 +17,7 @@
 # along with tlog; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-AM_CPPFLAGS = $(JSON_CFLAGS)
+AM_CPPFLAGS = $(JSON_CFLAGS) $(LIBCURL_CPPFLAGS)
 
 lib_LTLIBRARIES = libtlog.la
 
@@ -39,7 +39,7 @@ libtlog_la_SOURCES = \
     utf8.c              \
     writer.c
 
-libtlog_la_LIBADD = $(JSON_LIBS)
+libtlog_la_LIBADD = $(JSON_LIBS) $(LIBCURL)
 
 TESTS = \
     tlog_fd_reader_test         \
