@@ -211,12 +211,12 @@ tlog_es_reader_init(struct tlog_reader *reader, va_list ap)
     assert(query != NULL);
     assert(size >= TLOG_ES_READER_SIZE_MIN);
 
+    /* Create and initialize CURL handle */
     es_reader->curl = curl_easy_init();
     if (es_reader->curl == NULL) {
         grc = TLOG_RC_ES_READER_CURL_INIT_FAILED;
         goto error;
     }
-
     rc = curl_easy_setopt(es_reader->curl, CURLOPT_WRITEFUNCTION,
                           tlog_es_reader_write_func);
     if (rc != CURLE_OK) {
@@ -224,6 +224,7 @@ tlog_es_reader_init(struct tlog_reader *reader, va_list ap)
         goto error;
     }
 
+    /* Format URL prefix */
     grc = tlog_es_reader_format_url_pfx(&es_reader->url_pfx,
                                         es_reader->curl,
                                         base_url, query, size);
@@ -231,8 +232,10 @@ tlog_es_reader_init(struct tlog_reader *reader, va_list ap)
         goto error;
     }
 
+    /* Set request size */
     es_reader->size = size;
 
+    /* Create JSON tokener */
     es_reader->tok = json_tokener_new();
     if (es_reader->tok == NULL) {
         grc = TLOG_GRC_ERRNO;
