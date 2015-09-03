@@ -40,6 +40,10 @@ struct tlog_es_reader {
     struct json_tokener        *tok;        /**< JSON tokener object */
     struct json_object         *array;      /**< JSON array of retrieved
                                                  messages */
+    size_t                      array_idx;  /**< Index of the first message in
+                                                 the array */
+    size_t                      array_len;  /**< Number of messages in the
+                                                 array */
     size_t                      idx;        /**< Index of the message to be
                                                  read next */
 };
@@ -258,8 +262,9 @@ tlog_es_reader_is_valid(const struct tlog_reader *reader)
            es_reader->url_pfx != NULL &&
            es_reader->size >= TLOG_ES_READER_SIZE_MIN &&
            es_reader->tok != NULL &&
-           (es_reader->array != NULL ||
-            es_reader->idx % es_reader->size == 0);
+           (es_reader->array != NULL || es_reader->array_len == 0) &&
+           es_reader->idx >= es_reader->array_idx &&
+           es_reader->idx <= es_reader->array_idx + es_reader->size;
 }
 
 static size_t
@@ -286,14 +291,11 @@ tlog_es_reader_loc_fmt(size_t loc)
  * @return Global return code.
  */
 static tlog_grc
-tlog_es_reader_format_url(struct tlog_reader *reader, char **purl)
+tlog_es_reader_format_url(struct tlog_es_reader *es_reader, char **purl)
 {
-    struct tlog_es_reader *es_reader =
-                                (struct tlog_es_reader*)reader;
     char *url;
 
-    assert(tlog_es_reader_is_valid(reader));
-    assert(es_reader->idx % es_reader->size == 0);
+    assert(tlog_es_reader_is_valid((struct tlog_reader*)es_reader));
 
     if (asprintf(&url, "%s%zu", es_reader->url_pfx, es_reader->idx) < 0) {
         return TLOG_GRC_FROM(errno, ENOMEM);
@@ -312,27 +314,24 @@ tlog_es_reader_format_url(struct tlog_reader *reader, char **purl)
  * @return Global return code.
  */
 static tlog_grc
-tlog_es_reader_refill_array(struct tlog_reader *reader)
+tlog_es_reader_refill_array(struct tlog_es_reader *es_reader)
 {
-    struct tlog_es_reader *es_reader =
-                                (struct tlog_es_reader*)reader;
     tlog_grc grc;
     char *url = NULL;
     struct tlog_es_reader_write_data data;
     CURLcode rc;
-    struct json_object *obj;
 
-    assert(tlog_es_reader_is_valid(reader));
-    assert(es_reader->idx % es_reader->size == 0);
+    assert(tlog_es_reader_is_valid((struct tlog_reader *)es_reader));
 
     /* Free the previous array, if any */
     if (es_reader->array != NULL) {
         json_object_put(es_reader->array);
         es_reader->array = NULL;
+        es_reader->array_len = 0;
     }
 
     /* Format request URL */
-    grc = tlog_es_reader_format_url(reader, &url);
+    grc = tlog_es_reader_format_url(es_reader, &url);
     if (grc != TLOG_RC_OK) {
         goto cleanup;
     }
@@ -367,13 +366,10 @@ tlog_es_reader_refill_array(struct tlog_reader *reader)
 
     /* If no data was read */
     if (data.obj == NULL) {
-        /* Create an empty array */
-        obj = json_object_new_array();
-        if (obj == NULL) {
-            grc = TLOG_GRC_FROM(errno, ENOMEM);
-            goto cleanup;
-        }
+        es_reader->array = NULL;
+        es_reader->array_len = 0;
     } else {
+        struct json_object *obj;
         /* Extract the array */
         if (!json_object_object_get_ex(data.obj, "hits", &obj) ||
             !json_object_object_get_ex(obj, "hits", &obj) ||
@@ -381,10 +377,11 @@ tlog_es_reader_refill_array(struct tlog_reader *reader)
             grc = TLOG_RC_ES_READER_REPLY_INVALID;
             goto cleanup;
         }
-        obj = json_object_get(obj);
+        es_reader->array = json_object_get(obj);
+        es_reader->array_len = json_object_array_length(obj);
     }
 
-    es_reader->array = obj;
+    es_reader->array_idx = es_reader->idx;
 
     grc = TLOG_RC_OK;
 
@@ -403,31 +400,32 @@ tlog_es_reader_read(struct tlog_reader *reader, struct json_object **pobject)
     struct tlog_es_reader *es_reader =
                                 (struct tlog_es_reader*)reader;
     tlog_grc grc;
-    size_t array_idx = es_reader->idx % es_reader->size;
     struct json_object *hit;
     struct json_object *object;
 
-    /* If we're at the edge of the next window array */
-    if (array_idx == 0) {
-        /* Refill the message array */
-        grc = tlog_es_reader_refill_array(reader);
+    /* If we're outside the array */
+    if (es_reader->idx >= es_reader->array_idx + es_reader->array_len) {
+        /* Try refilling it */
+        grc = tlog_es_reader_refill_array(es_reader);
         if (grc != TLOG_RC_OK) {
             return grc;
         }
     }
 
-    /* Get next object from the array */
-    hit = json_object_array_get_idx(es_reader->array, array_idx);
-    if (hit == NULL) {
+    /* If we're still outside the array */
+    if (es_reader->idx >= es_reader->array_idx + es_reader->array_len) {
         object = NULL;
     } else {
+        /* Get next object from the array */
+        hit = json_object_array_get_idx(es_reader->array,
+                                        es_reader->idx -
+                                            es_reader->array_idx);
+        assert(hit != NULL);
         es_reader->idx++;
         if (!json_object_object_get_ex(hit, "_source", &object)) {
-            json_object_put(hit);
             return TLOG_RC_ES_READER_REPLY_INVALID;
         }
         json_object_get(object);
-        json_object_put(hit);
     }
 
     *pobject = object;
