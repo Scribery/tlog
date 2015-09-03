@@ -242,8 +242,6 @@ tlog_es_reader_init(struct tlog_reader *reader, va_list ap)
         goto error;
     }
 
-    es_reader->idx = 0;
-
     return TLOG_RC_OK;
 
 error:
