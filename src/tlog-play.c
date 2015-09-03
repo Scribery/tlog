@@ -59,9 +59,9 @@ main(int argc, char **argv)
     struct termios orig_termios;
     struct termios raw_termios;
     struct sigaction sa;
-    int status = 0;
-    struct tlog_reader *reader;
-    struct tlog_source *source;
+    int status = 1;
+    struct tlog_reader *reader = NULL;
+    struct tlog_source *source = NULL;
     bool got_pkt = false;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
 
@@ -69,7 +69,7 @@ main(int argc, char **argv)
     if (argc != 3) {
         fprintf(stderr, "Invalid number of arguments\n");
         fprintf(stderr, "Usage: tlog-play BASE_URL QUERY\n");
-        return 1;
+        goto cleanup;
     }
     base_url = argv[1];
     query = argv[2];
@@ -79,7 +79,7 @@ main(int argc, char **argv)
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating the reader: %s\n",
                 tlog_grc_strerror(grc));
-        return 1;
+        goto cleanup;
     }
 
     /* Create the source */
@@ -87,7 +87,7 @@ main(int argc, char **argv)
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating the source: %s\n",
                 tlog_grc_strerror(grc));
-        return 1;
+        goto cleanup;
     }
 
     /* Get terminal attributes */
@@ -95,7 +95,7 @@ main(int argc, char **argv)
     if (rc < 0) {
         fprintf(stderr, "Failed retrieving tty attributes: %s\n",
                 strerror(errno));
-        return 1;
+        goto cleanup;
     }
 
     /* Setup signal handlers to terminate gracefully */
@@ -125,7 +125,7 @@ main(int argc, char **argv)
     if (rc < 0) {
         fprintf(stderr, "Failed setting tty attributes: %s\n",
                 strerror(errno));
-        return 1;
+        goto cleanup;
     }
 
     /*
@@ -139,8 +139,7 @@ main(int argc, char **argv)
         } else if (grc != TLOG_RC_OK) {
             fprintf(stderr, "Failed reading the source: %s\n",
                     tlog_grc_strerror(grc));
-            status = 1;
-            break;
+            goto cleanup;
         }
         /* If hit the end of stream */
         if (tlog_pkt_is_void(&pkt)) {
@@ -157,8 +156,7 @@ main(int argc, char **argv)
             if (clock_gettime(CLOCK_MONOTONIC, &local_ts) != 0) {
                 fprintf(stderr, "Failed retrieving current time: %s\n",
                         strerror(errno));
-                status = 1;
-                break;
+                goto cleanup;
             }
             got_pkt = true;
         /* Else, if we need a delay from the previous packet */
@@ -171,8 +169,7 @@ main(int argc, char **argv)
                 break;
             } else if (rc != 0) {
                 fprintf(stderr, "Failed sleeping: %s\n", strerror(rc));
-                status = 1;
-                break;
+                goto cleanup;
             }
         }
 
@@ -183,14 +180,21 @@ main(int argc, char **argv)
                 break;
             } else if (rc != 0) {
                 fprintf(stderr, "Failed writing output: %s\n", strerror(errno));
-                status = 1;
-                break;
+                goto cleanup;
             }
         }
 
         last_ts = pkt.timestamp;
         tlog_pkt_cleanup(&pkt);
     }
+
+    status = 0;
+
+cleanup:
+
+    tlog_pkt_cleanup(&pkt);
+    tlog_source_destroy(source);
+    tlog_reader_destroy(reader);
 
     /* Restore signal handlers */
     for (i = 0; i < ARRAY_SIZE(exit_sig); i++) {
