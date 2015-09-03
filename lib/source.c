@@ -133,6 +133,7 @@ tlog_source_create(struct tlog_source **psource,
 void
 tlog_source_destroy(struct tlog_source *source)
 {
+    assert(source == NULL || tlog_source_is_valid(source));
     if (source == NULL)
         return;
     tlog_source_cleanup(source);
