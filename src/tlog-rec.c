@@ -147,12 +147,12 @@ int
 main(int argc, char **argv)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
-    char *fqdn;
+    char *fqdn = NULL;
     struct passwd *passwd;
-    struct tlog_writer *writer;
+    struct tlog_writer *writer = NULL;
     clockid_t clock_id;
     struct timespec timestamp;
-    struct tlog_sink *sink;
+    struct tlog_sink *sink = NULL;
     tlog_grc grc;
     ssize_t rc;
     int master_fd;
@@ -182,7 +182,7 @@ main(int argc, char **argv)
     (void)argv;
     if (argc > 1) {
         fprintf(stderr, "Arguments are not accepted\n");
-        return 1;
+        goto cleanup;
     }
 
     /* Get host FQDN */
@@ -190,7 +190,7 @@ main(int argc, char **argv)
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed retrieving host FQDN: %s\n",
                 tlog_grc_strerror(grc));
-        return 1;
+        goto cleanup;
     }
 
     /* Get session ID */
@@ -198,7 +198,7 @@ main(int argc, char **argv)
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed retrieving session ID: %s\n",
                 tlog_grc_strerror(grc));
-        return 1;
+        goto cleanup;
     }
 
     /* Open syslog */
@@ -208,7 +208,7 @@ main(int argc, char **argv)
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating syslog writer: %s\n",
                 tlog_grc_strerror(grc));
-        return 1;
+        goto cleanup;
     }
 
     /* Get effective user entry */
@@ -220,7 +220,7 @@ main(int argc, char **argv)
         else
             fprintf(stderr, "Failed retrieving user entry: %s\n",
                     strerror(errno));
-        return 1;
+        goto cleanup;
     }
 
     /*
@@ -234,7 +234,7 @@ main(int argc, char **argv)
         clock_id = CLOCK_MONOTONIC;
     } else {
         fprintf(stderr, "No clock to use\n");
-        return 1;
+        goto cleanup;
     }
 
     /* Get startup timestamp */
@@ -246,7 +246,7 @@ main(int argc, char **argv)
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
                 tlog_grc_strerror(grc));
-        return 1;
+        goto cleanup;
     }
 
     /* Get terminal attributes */
@@ -254,7 +254,7 @@ main(int argc, char **argv)
     if (rc < 0) {
         fprintf(stderr, "Failed retrieving tty attributes: %s\n",
                 strerror(errno));
-        return 1;
+        goto cleanup;
     }
 
     /* Get terminal window size */
@@ -262,14 +262,14 @@ main(int argc, char **argv)
     if (rc < 0) {
         fprintf(stderr, "Failed retrieving tty window size: %s\n",
                 strerror(errno));
-        return 1;
+        goto cleanup;
     }
 
     /* Fork a child under a slave pty */
     child_pid = forkpty(&master_fd, NULL, &orig_termios, &winsize);
     if (child_pid < 0) {
         fprintf(stderr, "Failed forking a pty: %s\n", strerror(errno));
-        return 1;
+        goto cleanup;
     } else if (child_pid == 0) {
         /*
          * Child
@@ -277,7 +277,7 @@ main(int argc, char **argv)
         execl("/bin/bash", "/bin/bash", NULL);
         fprintf(stderr, "Failed to execute the shell: %s",
                 strerror(errno));
-        return 1;
+        goto cleanup;
     }
 
     /*
@@ -289,7 +289,7 @@ main(int argc, char **argv)
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed logging window size: %s\n",
                 tlog_grc_strerror(grc));
-        return 1;
+        goto cleanup;
     }
 
     /* Setup signal handlers to terminate gracefully */
@@ -333,7 +333,7 @@ main(int argc, char **argv)
     if (rc < 0) {
         fprintf(stderr, "Failed setting tty attributes: %s\n",
                 strerror(errno));
-        return 1;
+        goto cleanup;
     }
 
     /*
@@ -471,7 +471,7 @@ main(int argc, char **argv)
             if (grc != TLOG_RC_OK) {
                 fprintf(stderr, "Failed flushing I/O log: %s\n",
                         tlog_grc_strerror(grc));
-                return 1;
+                goto cleanup;
             }
             last_alarm_caught = new_alarm_caught;
             io_pending = false;
@@ -526,7 +526,7 @@ main(int argc, char **argv)
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed cutting-off I/O log: %s\n",
                 tlog_grc_strerror(grc));
-        return 1;
+        goto cleanup;
     }
 
     /* Flush I/O log */
@@ -534,8 +534,14 @@ main(int argc, char **argv)
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed flushing I/O log: %s\n",
                 tlog_grc_strerror(grc));
-        return 1;
+        goto cleanup;
     }
+
+cleanup:
+
+    tlog_sink_destroy(sink);
+    tlog_writer_destroy(writer);
+    free(fqdn);
 
     /* Restore signal handlers */
     for (i = 0; i < ARRAY_SIZE(exit_sig); i++) {
