@@ -66,3 +66,6 @@ reading.
 Consider making sink accept packets for input.
 
 Consider merging window and io messages for simplicity.
+
+Check if there is a way to unify init/cleanup and create/destroy function
+presence across object types.
