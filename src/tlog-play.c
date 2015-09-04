@@ -147,7 +147,9 @@ main(int argc, char **argv)
         }
         /* If hit the end of stream */
         if (tlog_pkt_is_void(&pkt)) {
-            sleep(POLL_PERIOD);
+            if (sleep(POLL_PERIOD) != 0) {
+                break;
+            }
             continue;
         }
         /* If it's not the output */
