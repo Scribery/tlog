@@ -32,6 +32,7 @@
 #include "tlog/misc.h"
 
 #define BUF_SIZE    4096
+#define POLL_PERIOD 1
 
 /**< Number of the signal causing exit */
 static volatile sig_atomic_t exit_signum  = 0;
@@ -135,6 +136,7 @@ main(int argc, char **argv)
      */
     while (true) {
         /* Read a packet */
+        tlog_pkt_cleanup(&pkt);
         grc = tlog_source_read(source, &pkt);
         if (grc == TLOG_GRC_FROM(errno, EINTR)) {
             break;
@@ -145,11 +147,11 @@ main(int argc, char **argv)
         }
         /* If hit the end of stream */
         if (tlog_pkt_is_void(&pkt)) {
-            break;
+            sleep(POLL_PERIOD);
+            continue;
         }
         /* If it's not the output */
         if (pkt.type != TLOG_PKT_TYPE_IO || !pkt.data.io.output) {
-            tlog_pkt_cleanup(&pkt);
             continue;
         }
 
@@ -198,7 +200,6 @@ main(int argc, char **argv)
         }
 
         pkt_last_ts = pkt.timestamp;
-        tlog_pkt_cleanup(&pkt);
     }
 
     status = 0;
