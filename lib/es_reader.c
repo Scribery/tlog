@@ -46,6 +46,7 @@ struct tlog_es_reader {
                                                  array */
     size_t                      idx;        /**< Index of the message to be
                                                  read next */
+    size_t                      last_id;    /**< Last received message ID */
 };
 
 bool
@@ -402,6 +403,8 @@ tlog_es_reader_read(struct tlog_reader *reader, struct json_object **pobject)
     tlog_grc grc;
     struct json_object *hit;
     struct json_object *object;
+    struct json_object *field;
+    int64_t id;
 
     /* If we're outside the array */
     if (es_reader->idx >= es_reader->array_idx + es_reader->array_len) {
@@ -421,11 +424,33 @@ tlog_es_reader_read(struct tlog_reader *reader, struct json_object **pobject)
                                         es_reader->idx -
                                             es_reader->array_idx);
         assert(hit != NULL);
-        es_reader->idx++;
         if (!json_object_object_get_ex(hit, "_source", &object)) {
+            es_reader->idx++;
             return TLOG_RC_ES_READER_REPLY_INVALID;
         }
-        json_object_get(object);
+
+        /* Get message ID */
+        if (!json_object_object_get_ex(object, "id", &field) ||
+            json_object_get_type(field) != json_type_int) {
+            es_reader->idx++;
+            return TLOG_RC_ES_READER_REPLY_INVALID;
+        }
+        id = json_object_get_int64(field);
+        if (id < 0) {
+            es_reader->idx++;
+            return TLOG_RC_ES_READER_REPLY_INVALID;
+        }
+
+        /* If this is the first message or ID is not ahead */
+        if (es_reader->idx == 0 || (size_t)id <= es_reader->last_id + 1) {
+            es_reader->idx++;
+            json_object_get(object);
+            es_reader->last_id = (size_t)id;
+        } else {
+            /* The message ID is ahead - produce EOF */
+            es_reader->array_len = (es_reader->idx - es_reader->array_idx);
+            object = NULL;
+        }
     }
 
     *pobject = object;
