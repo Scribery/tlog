@@ -26,7 +26,7 @@ rm ${RPM_BUILD_ROOT}/%{_libdir}/*.la
 %files
 %doc
 %{_defaultdocdir}/%{name}
-%{_bindir}/tlog
+%{_bindir}/tlog-*
 %{_includedir}/tlog
 %{_libdir}/libtlog.so*
 
