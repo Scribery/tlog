@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <curl/curl.h>
 #include "tlog/es_reader.h"
 #include "tlog/source.h"
 #include "tlog/rc.h"
@@ -76,6 +77,14 @@ main(int argc, char **argv)
     }
     base_url = argv[1];
     query = argv[2];
+
+    /* Initialize libcurl */
+    grc = TLOG_GRC_FROM(curl, curl_global_init(CURL_GLOBAL_NOTHING));
+    if (grc != TLOG_GRC_FROM(curl, CURLE_OK)) {
+        fprintf(stderr, "Failed initializing libcurl: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
 
     /* Create the reader */
     grc = tlog_es_reader_create(&reader, base_url, query, 10);
@@ -211,6 +220,7 @@ cleanup:
     tlog_pkt_cleanup(&pkt);
     tlog_source_destroy(source);
     tlog_reader_destroy(reader);
+    curl_global_cleanup();
 
     /* Restore signal handlers */
     for (i = 0; i < ARRAY_SIZE(exit_sig); i++) {

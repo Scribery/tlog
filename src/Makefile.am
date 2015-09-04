@@ -34,4 +34,5 @@ tlog_play_SOURCES = \
     tlog-play.c
 
 tlog_play_LDADD = \
-    ../lib/libtlog.la
+    ../lib/libtlog.la   \
+    $(LIBCURL)
