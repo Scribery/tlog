@@ -49,9 +49,11 @@ main(int argc, char **argv)
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     const char *base_url;
     const char *query;
-    struct timespec local_ts;
-    struct timespec last_ts;
-    struct timespec off_ts;
+    struct timespec local_last_ts;
+    struct timespec local_this_ts;
+    struct timespec local_next_ts;
+    struct timespec pkt_last_ts;
+    struct timespec pkt_delay_ts;
     tlog_grc grc;
     ssize_t rc;
     size_t i;
@@ -151,25 +153,35 @@ main(int argc, char **argv)
             continue;
         }
 
-        /* If it's the first packet */
+        /* Get current time */
+        if (clock_gettime(CLOCK_MONOTONIC, &local_this_ts) != 0) {
+            fprintf(stderr, "Failed retrieving current time: %s\n",
+                    strerror(errno));
+            goto cleanup;
+        }
+
+        /* If this is the first packet */
         if (!got_pkt) {
-            if (clock_gettime(CLOCK_MONOTONIC, &local_ts) != 0) {
-                fprintf(stderr, "Failed retrieving current time: %s\n",
-                        strerror(errno));
-                goto cleanup;
-            }
             got_pkt = true;
-        /* Else, if we need a delay from the previous packet */
-        } else if (tlog_timespec_cmp(&pkt.timestamp, &last_ts) > 0) {
-            tlog_timespec_sub(&pkt.timestamp, &last_ts, &off_ts);
-            tlog_timespec_add(&local_ts, &off_ts, &local_ts);
-            rc = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
-                                 &local_ts, NULL);
-            if (rc == EINTR) {
-                break;
-            } else if (rc != 0) {
-                fprintf(stderr, "Failed sleeping: %s\n", strerror(rc));
-                goto cleanup;
+            /* Start the time */
+            local_last_ts = local_this_ts;
+        } else {
+            tlog_timespec_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
+            tlog_timespec_add(&local_last_ts, &pkt_delay_ts, &local_next_ts);
+            /* If we don't need a delay for the next packet (it's overdue) */
+            if (tlog_timespec_cmp(&local_next_ts, &local_this_ts) <= 0) {
+                /* Stretch the time */
+                local_last_ts = local_this_ts;
+            } else {
+                rc = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
+                                     &local_next_ts, NULL);
+                if (rc == EINTR) {
+                    break;
+                } else if (rc != 0) {
+                    fprintf(stderr, "Failed sleeping: %s\n", strerror(rc));
+                    goto cleanup;
+                }
+                local_last_ts = local_next_ts;
             }
         }
 
@@ -179,12 +191,13 @@ main(int argc, char **argv)
             if (errno == EINTR) {
                 break;
             } else if (rc != 0) {
-                fprintf(stderr, "Failed writing output: %s\n", strerror(errno));
+                fprintf(stderr, "Failed writing output: %s\n",
+                        strerror(errno));
                 goto cleanup;
             }
         }
 
-        last_ts = pkt.timestamp;
+        pkt_last_ts = pkt.timestamp;
         tlog_pkt_cleanup(&pkt);
     }
 
