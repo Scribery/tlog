@@ -143,7 +143,7 @@ main(int argc, char **argv)
     /*
      * Reproduce the logged output
      */
-    while (true) {
+    while (exit_signum == 0) {
         /* Read a packet */
         tlog_pkt_cleanup(&pkt);
         grc = tlog_source_read(source, &pkt);
