@@ -22,7 +22,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "tlog/rc.h"
+#include <tlog/rc.h>
 
 static const char *tlog_rc_desc_list[TLOG_RC_MAX_PLUS_ONE - TLOG_RC_MIN] = {
     [TLOG_RC_OK] =

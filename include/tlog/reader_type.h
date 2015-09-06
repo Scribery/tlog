@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <json.h>
-#include "tlog/grc.h"
+#include <tlog/grc.h>
 
 /* Forward declaration */
 struct tlog_reader;

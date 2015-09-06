@@ -23,7 +23,7 @@
 #ifndef _TLOG_READER_H
 #define _TLOG_READER_H
 
-#include "tlog/reader_type.h"
+#include <tlog/reader_type.h>
 
 /* Abstract reader */
 struct tlog_reader {

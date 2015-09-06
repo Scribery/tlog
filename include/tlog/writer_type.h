@@ -27,7 +27,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include "tlog/grc.h"
+#include <tlog/grc.h>
 
 /* Forward declaration */
 struct tlog_writer;

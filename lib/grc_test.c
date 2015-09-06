@@ -27,8 +27,8 @@
 #include <json_tokener.h>
 #include <netdb.h>
 #include <curl/curl.h>
-#include "tlog/grc.h"
-#include "tlog/rc.h"
+#include <tlog/grc.h>
+#include <tlog/rc.h>
 
 bool
 test(const char *name, bool res)

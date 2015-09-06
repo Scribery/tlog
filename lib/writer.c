@@ -22,8 +22,8 @@
 
 #include <assert.h>
 #include <errno.h>
-#include "tlog/rc.h"
-#include "tlog/writer.h"
+#include <tlog/rc.h>
+#include <tlog/writer.h>
 
 tlog_grc
 tlog_writer_create(struct tlog_writer **pwriter,

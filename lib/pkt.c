@@ -22,7 +22,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "tlog/pkt.h"
+#include <tlog/pkt.h>
 
 const char *
 tlog_pkt_type_to_str(enum tlog_pkt_type type)

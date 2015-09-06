@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "tlog/rc.h"
-#include "tlog/fd_reader.h"
-#include "tlog/misc.h"
-#include "tlog/source.h"
+#include <tlog/rc.h>
+#include <tlog/fd_reader.h>
+#include <tlog/misc.h>
+#include <tlog/source.h>
 #include "test.h"
 
 /** Fd reader text buffer size */

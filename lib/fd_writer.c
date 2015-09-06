@@ -22,8 +22,8 @@
 
 #include <unistd.h>
 #include <errno.h>
-#include "tlog/rc.h"
-#include "tlog/fd_writer.h"
+#include <tlog/rc.h>
+#include <tlog/fd_writer.h>
 
 struct tlog_fd_writer {
     struct tlog_writer writer;

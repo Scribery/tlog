@@ -35,8 +35,8 @@
 #include <poll.h>
 #include <stdio.h>
 #include <syslog.h>
-#include "tlog/syslog_writer.h"
-#include "tlog/sink.h"
+#include <tlog/syslog_writer.h>
+#include <tlog/sink.h>
 
 #define IO_LATENCY  10
 #define BUF_SIZE    4096

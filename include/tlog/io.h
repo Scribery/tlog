@@ -26,10 +26,10 @@
 #include <stdint.h>
 #include <time.h>
 #include <stdbool.h>
-#include "tlog/rc.h"
-#include "tlog/trx.h"
-#include "tlog/misc.h"
-#include "tlog/stream.h"
+#include <tlog/rc.h>
+#include <tlog/trx.h>
+#include <tlog/misc.h>
+#include <tlog/stream.h>
 
 /** Minimum value of I/O buffer size */
 #define TLOG_IO_SIZE_MIN    TLOG_STREAM_SIZE_MIN

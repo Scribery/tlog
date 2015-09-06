@@ -24,9 +24,9 @@
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
-#include "tlog/rc.h"
-#include "tlog/misc.h"
-#include "tlog/msg.h"
+#include <tlog/rc.h>
+#include <tlog/misc.h>
+#include <tlog/msg.h>
 
 bool
 tlog_msg_is_valid(const struct tlog_msg *msg)

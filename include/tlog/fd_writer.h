@@ -24,7 +24,7 @@
 #define _TLOG_FD_WRITER_H
 
 #include <assert.h>
-#include "tlog/writer.h"
+#include <tlog/writer.h>
 
 /**
  * File descriptor message writer type

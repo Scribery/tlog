@@ -35,8 +35,6 @@ Add throttling.
 
 Provide comprehensive object descriptions in header files.
 
-Use include <...> instead of include "..." wherever possible.
-
 Make all if statements use braces, even single-line ones.
 
 Consider pluggable memory allocation when library grows bigger and there is a

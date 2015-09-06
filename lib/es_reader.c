@@ -27,8 +27,8 @@
 #include <string.h>
 #include <json_tokener.h>
 #include <curl/curl.h>
-#include "tlog/es_reader.h"
-#include "tlog/rc.h"
+#include <tlog/es_reader.h>
+#include <tlog/rc.h>
 
 struct tlog_es_reader {
     struct tlog_reader          reader;     /**< Base type */

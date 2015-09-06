@@ -22,8 +22,8 @@
 
 #include <assert.h>
 #include <errno.h>
-#include "tlog/reader.h"
-#include "tlog/rc.h"
+#include <tlog/reader.h>
+#include <tlog/rc.h>
 
 tlog_grc
 tlog_reader_create(struct tlog_reader **preader,

@@ -27,9 +27,9 @@
 #include <stdint.h>
 #include <time.h>
 #include <stdbool.h>
-#include "tlog/rc.h"
-#include "tlog/io.h"
-#include "tlog/writer.h"
+#include <tlog/rc.h>
+#include <tlog/io.h>
+#include <tlog/writer.h>
 
 /** Minimum value of I/O buffer size */
 #define TLOG_SINK_IO_SIZE_MIN   TLOG_IO_SIZE_MIN

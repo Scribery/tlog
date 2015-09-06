@@ -29,8 +29,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <syslog.h>
-#include "tlog/sink.h"
-#include "tlog/misc.h"
+#include <tlog/sink.h>
+#include <tlog/misc.h>
 
 void
 tlog_sink_cleanup(struct tlog_sink *sink)

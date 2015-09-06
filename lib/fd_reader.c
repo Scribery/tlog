@@ -26,8 +26,8 @@
 #include <errno.h>
 #include <string.h>
 #include <json_tokener.h>
-#include "tlog/fd_reader.h"
-#include "tlog/rc.h"
+#include <tlog/fd_reader.h>
+#include <tlog/rc.h>
 
 struct tlog_fd_reader {
     struct tlog_reader      reader; /**< Base type */

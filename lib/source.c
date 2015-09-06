@@ -23,9 +23,9 @@
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
-#include "tlog/rc.h"
-#include "tlog/misc.h"
-#include "tlog/source.h"
+#include <tlog/rc.h>
+#include <tlog/misc.h>
+#include <tlog/source.h>
 
 bool
 tlog_source_is_valid(const struct tlog_source *source)

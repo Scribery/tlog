@@ -27,10 +27,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <curl/curl.h>
-#include "tlog/es_reader.h"
-#include "tlog/source.h"
-#include "tlog/rc.h"
-#include "tlog/misc.h"
+#include <tlog/es_reader.h>
+#include <tlog/source.h>
+#include <tlog/rc.h>
+#include <tlog/misc.h>
 
 #define BUF_SIZE    4096
 #define POLL_PERIOD 1

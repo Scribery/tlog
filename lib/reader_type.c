@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-#include "tlog/reader_type.h"
+#include <tlog/reader_type.h>
 
 bool
 tlog_reader_type_is_valid(const struct tlog_reader_type *type)

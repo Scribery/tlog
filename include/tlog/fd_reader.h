@@ -24,7 +24,7 @@
 #define _TLOG_FD_READER_H
 
 #include <assert.h>
-#include "tlog/reader.h"
+#include <tlog/reader.h>
 
 /**
  * File descriptor message reader type

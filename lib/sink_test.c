@@ -24,9 +24,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "tlog/fd_writer.h"
-#include "tlog/sink.h"
-#include "tlog/misc.h"
+#include <tlog/fd_writer.h>
+#include <tlog/sink.h>
+#include <tlog/misc.h>
 #include "test.h"
 
 #define SIZE    TLOG_SINK_IO_SIZE_MIN

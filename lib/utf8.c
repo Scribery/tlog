@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "tlog/utf8.h"
+#include <tlog/utf8.h>
 
 /** Source: Unicode 7.0.0 Chapter 3, Table 3-7 */
 const struct tlog_utf8_seq tlog_utf8_seq_list[] = {

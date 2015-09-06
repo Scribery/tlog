@@ -24,7 +24,7 @@
 #define _TLOG_ES_READER_H
 
 #include <assert.h>
-#include "tlog/reader.h"
+#include <tlog/reader.h>
 
 /**
  * Minimum number of messages to request from ElasticSearch in one HTTP

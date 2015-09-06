@@ -21,8 +21,8 @@
  */
 
 #include <syslog.h>
-#include "tlog/rc.h"
-#include "tlog/syslog_writer.h"
+#include <tlog/rc.h>
+#include <tlog/syslog_writer.h>
 
 struct tlog_syslog_writer {
     struct tlog_writer writer;

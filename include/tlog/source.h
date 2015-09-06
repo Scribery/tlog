@@ -23,8 +23,8 @@
 #ifndef _TLOG_SOURCE_H
 #define _TLOG_SOURCE_H
 
-#include "tlog/reader.h"
-#include "tlog/msg.h"
+#include <tlog/reader.h>
+#include <tlog/msg.h>
 
 /** Minimum length of I/O data buffer used in packets */
 #define TLOG_SOURCE_IO_SIZE_MIN TLOG_MSG_IO_SIZE_MIN
