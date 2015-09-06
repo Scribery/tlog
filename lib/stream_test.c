@@ -41,18 +41,18 @@ static const char*
 op_type_to_str(enum op_type t)
 {
     switch (t) {
-        case OP_TYPE_NONE:
-            return "none";
-        case OP_TYPE_WRITE:
-            return "write";
-        case OP_TYPE_FLUSH:
-            return "flush";
-        case OP_TYPE_CUT:
-            return "cut";
-        case OP_TYPE_EMPTY:
-            return "empty";
-        default:
-            return "<unknown>";
+    case OP_TYPE_NONE:
+        return "none";
+    case OP_TYPE_WRITE:
+        return "write";
+    case OP_TYPE_FLUSH:
+        return "flush";
+    case OP_TYPE_CUT:
+        return "cut";
+    case OP_TYPE_EMPTY:
+        return "empty";
+    default:
+        return "<unknown>";
     }
 }
 
@@ -135,66 +135,66 @@ test(const char *n, const struct test t)
 
     for (op = t.op_list; op->type != OP_TYPE_NONE; op++) {
         switch (op->type) {
-            case OP_TYPE_WRITE:
-                assert(op->data.write.len_out <= op->data.write.len_in);
-                buf = op->data.write.buf;
-                len = op->data.write.len_in;
-                tlog_stream_write(&stream, &buf, &len, &meta_next, &rem_next);
-                if ((buf < op->data.write.buf) ||
-                    (buf - op->data.write.buf) !=
-                        (ssize_t)(op->data.write.len_in -
-                                  op->data.write.len_out))
-                    FAIL_OP("off %zd != %zu",
-                            (buf - op->data.write.buf),
-                            (op->data.write.len_in - op->data.write.len_out));
-                if (len != op->data.write.len_out)
-                    FAIL_OP("len %zu != %zu", len, op->data.write.len_out);
-                if ((meta_next - meta_last) != op->data.write.meta_off)
-                    FAIL_OP("meta_off %zd != %zd",
-                            (meta_next - meta_last), op->data.write.meta_off);
-                meta_last = meta_next;
-                if (((ssize_t)rem_last - (ssize_t)rem_next) !=
-                        op->data.write.rem_off)
-                    FAIL_OP("rem_off %zd != %zd",
-                            (rem_last - rem_next), op->data.write.rem_off);
-                rem_last = rem_next;
-                if (passed)
-                    break;
-                else
-                    goto cleanup;
-            case OP_TYPE_FLUSH:
-                tlog_stream_flush(&stream, &meta_next);
-                if ((meta_next - meta_last) != op->data.flush.meta_off)
-                    FAIL_OP("meta_off %zd != %zd",
-                            (meta_next - meta_last),
-                            op->data.flush.meta_off);
-                meta_last = meta_next;
-                if (passed)
-                    break;
-                else
-                    goto cleanup;
-            case OP_TYPE_CUT:
-                tlog_stream_cut(&stream, &meta_next, &rem_next);
-                if ((meta_next - meta_last) != op->data.cut.meta_off)
-                    FAIL_OP("meta_off %zd != %zd",
-                            (meta_next - meta_last), op->data.cut.meta_off);
-                meta_last = meta_next;
-                if (((ssize_t)rem_last - (ssize_t)rem_next) !=
-                        op->data.cut.rem_off)
-                    FAIL_OP("rem_off %zd != %zd",
-                            ((ssize_t)rem_last - (ssize_t)rem_next),
-                            op->data.cut.rem_off);
-                rem_last = rem_next;
-                if (passed)
-                    break;
-                else
-                    goto cleanup;
-            case OP_TYPE_EMPTY:
-                tlog_stream_empty(&stream);
+        case OP_TYPE_WRITE:
+            assert(op->data.write.len_out <= op->data.write.len_in);
+            buf = op->data.write.buf;
+            len = op->data.write.len_in;
+            tlog_stream_write(&stream, &buf, &len, &meta_next, &rem_next);
+            if ((buf < op->data.write.buf) ||
+                (buf - op->data.write.buf) !=
+                    (ssize_t)(op->data.write.len_in -
+                              op->data.write.len_out))
+                FAIL_OP("off %zd != %zu",
+                        (buf - op->data.write.buf),
+                        (op->data.write.len_in - op->data.write.len_out));
+            if (len != op->data.write.len_out)
+                FAIL_OP("len %zu != %zu", len, op->data.write.len_out);
+            if ((meta_next - meta_last) != op->data.write.meta_off)
+                FAIL_OP("meta_off %zd != %zd",
+                        (meta_next - meta_last), op->data.write.meta_off);
+            meta_last = meta_next;
+            if (((ssize_t)rem_last - (ssize_t)rem_next) !=
+                    op->data.write.rem_off)
+                FAIL_OP("rem_off %zd != %zd",
+                        (rem_last - rem_next), op->data.write.rem_off);
+            rem_last = rem_next;
+            if (passed)
                 break;
-            default:
-                fprintf(stderr, "Unknown operation type: %d\n", op->type);
-                exit(1);
+            else
+                goto cleanup;
+        case OP_TYPE_FLUSH:
+            tlog_stream_flush(&stream, &meta_next);
+            if ((meta_next - meta_last) != op->data.flush.meta_off)
+                FAIL_OP("meta_off %zd != %zd",
+                        (meta_next - meta_last),
+                        op->data.flush.meta_off);
+            meta_last = meta_next;
+            if (passed)
+                break;
+            else
+                goto cleanup;
+        case OP_TYPE_CUT:
+            tlog_stream_cut(&stream, &meta_next, &rem_next);
+            if ((meta_next - meta_last) != op->data.cut.meta_off)
+                FAIL_OP("meta_off %zd != %zd",
+                        (meta_next - meta_last), op->data.cut.meta_off);
+            meta_last = meta_next;
+            if (((ssize_t)rem_last - (ssize_t)rem_next) !=
+                    op->data.cut.rem_off)
+                FAIL_OP("rem_off %zd != %zd",
+                        ((ssize_t)rem_last - (ssize_t)rem_next),
+                        op->data.cut.rem_off);
+            rem_last = rem_next;
+            if (passed)
+                break;
+            else
+                goto cleanup;
+        case OP_TYPE_EMPTY:
+            tlog_stream_empty(&stream);
+            break;
+        default:
+            fprintf(stderr, "Unknown operation type: %d\n", op->type);
+            exit(1);
         }
     }
 

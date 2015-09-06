@@ -177,16 +177,16 @@ tlog_fd_reader_skip_whitespace(struct tlog_fd_reader *fd_reader)
     do {
         for (; fd_reader->pos < fd_reader->end; fd_reader->pos++) {
             switch (*fd_reader->pos) {
-                case '\n':
-                    fd_reader->line++;
-                case '\f':
-                case '\r':
-                case '\t':
-                case '\v':
-                case ' ':
-                    break;
-                default:
-                    return TLOG_RC_OK;
+            case '\n':
+                fd_reader->line++;
+            case '\f':
+            case '\r':
+            case '\t':
+            case '\v':
+            case ' ':
+                break;
+            default:
+                return TLOG_RC_OK;
             }
         }
 

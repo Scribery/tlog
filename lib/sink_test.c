@@ -55,20 +55,20 @@ static const char*
 op_type_to_str(enum op_type t)
 {
     switch (t) {
-        case OP_TYPE_NONE:
-            return "none";
-        case OP_TYPE_WINDOW_WRITE:
-            return "window_write";
-        case OP_TYPE_IO_WRITE:
-            return "io_write";
-        case OP_TYPE_IO_FLUSH:
-            return "io_flush";
-        case OP_TYPE_IO_CUT:
-            return "io_cut";
-        case OP_TYPE_DELAY:
-            return "delay";
-        default:
-            return "<unknown>";
+    case OP_TYPE_NONE:
+        return "none";
+    case OP_TYPE_WINDOW_WRITE:
+        return "window_write";
+    case OP_TYPE_IO_WRITE:
+        return "io_write";
+    case OP_TYPE_IO_FLUSH:
+        return "io_flush";
+    case OP_TYPE_IO_CUT:
+        return "io_cut";
+    case OP_TYPE_DELAY:
+        return "delay";
+    default:
+        return "<unknown>";
     }
 }
 
@@ -163,31 +163,31 @@ test(const char *n, const struct test t)
 
     for (op = t.op_list; op->type != OP_TYPE_NONE; op++) {
         switch (op->type) {
-            case OP_TYPE_WINDOW_WRITE:
-                CHECK_OP(tlog_sink_window_write(
-                            &sink, &timestamp,
-                            op->data.window_write.width,
-                            op->data.window_write.height));
-                break;
-            case OP_TYPE_IO_WRITE:
-                CHECK_OP(tlog_sink_io_write(
-                            &sink, &timestamp,
-                            op->data.io_write.output,
-                            op->data.io_write.buf,
-                            op->data.io_write.len));
-                break;
-            case OP_TYPE_IO_FLUSH:
-                CHECK_OP(tlog_sink_io_flush(&sink));
-                break;
-            case OP_TYPE_IO_CUT:
-                CHECK_OP(tlog_sink_io_cut(&sink));
-                break;
-            case OP_TYPE_DELAY:
-                tlog_timespec_add(&timestamp, &op->data.delay, &timestamp);
-                break;
-            default:
-                fprintf(stderr, "Unknown operation type: %d\n", op->type);
-                exit(1);
+        case OP_TYPE_WINDOW_WRITE:
+            CHECK_OP(tlog_sink_window_write(
+                        &sink, &timestamp,
+                        op->data.window_write.width,
+                        op->data.window_write.height));
+            break;
+        case OP_TYPE_IO_WRITE:
+            CHECK_OP(tlog_sink_io_write(
+                        &sink, &timestamp,
+                        op->data.io_write.output,
+                        op->data.io_write.buf,
+                        op->data.io_write.len));
+            break;
+        case OP_TYPE_IO_FLUSH:
+            CHECK_OP(tlog_sink_io_flush(&sink));
+            break;
+        case OP_TYPE_IO_CUT:
+            CHECK_OP(tlog_sink_io_cut(&sink));
+            break;
+        case OP_TYPE_DELAY:
+            tlog_timespec_add(&timestamp, &op->data.delay, &timestamp);
+            break;
+        default:
+            fprintf(stderr, "Unknown operation type: %d\n", op->type);
+            exit(1);
         }
     }
 

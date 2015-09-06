@@ -35,8 +35,6 @@ Add throttling.
 
 Provide comprehensive object descriptions in header files.
 
-Align "case" with "switch" everywhere.
-
 Use include <...> instead of include "..." wherever possible.
 
 Make all if statements use braces, even single-line ones.

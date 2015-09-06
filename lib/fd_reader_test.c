@@ -43,14 +43,14 @@ static const char*
 op_type_to_str(enum op_type t)
 {
     switch (t) {
-        case OP_TYPE_NONE:
-            return "none";
-        case OP_TYPE_READ:
-            return "read";
-        case OP_TYPE_LOC_GET:
-            return "loc_get";
-        default:
-            return "<unknown>";
+    case OP_TYPE_NONE:
+        return "none";
+    case OP_TYPE_READ:
+        return "read";
+    case OP_TYPE_LOC_GET:
+        return "loc_get";
+    default:
+        return "<unknown>";
     }
 }
 
@@ -132,58 +132,58 @@ test(const char *n, const struct test t)
 
     for (op = t.op_list; op->type != OP_TYPE_NONE; op++) {
         switch (op->type) {
-            case OP_TYPE_READ:
-                grc = tlog_reader_read(reader, &object);
-                if (grc != op->data.read.exp_grc) {
-                    const char *res_str;
-                    const char *exp_str;
-                    res_str = tlog_grc_strerror(grc);
-                    exp_str = tlog_grc_strerror(op->data.read.exp_grc);
-                    FAIL_OP("grc: %s (%d) != %s (%d)",
-                            res_str, grc,
-                            exp_str, op->data.read.exp_grc);
+        case OP_TYPE_READ:
+            grc = tlog_reader_read(reader, &object);
+            if (grc != op->data.read.exp_grc) {
+                const char *res_str;
+                const char *exp_str;
+                res_str = tlog_grc_strerror(grc);
+                exp_str = tlog_grc_strerror(op->data.read.exp_grc);
+                FAIL_OP("grc: %s (%d) != %s (%d)",
+                        res_str, grc,
+                        exp_str, op->data.read.exp_grc);
+            }
+            if ((object == NULL) != (op->data.read.exp_string == NULL))
+                FAIL_OP("object: %s != %s",
+                        (object ? "!NULL" : "NULL"),
+                        (op->data.read.exp_string ? "!NULL" : "NULL"));
+            else if (object != NULL) {
+                res_string = json_object_to_json_string(object);
+                res_string_len = strlen(res_string);
+                exp_string_len = strlen(op->data.read.exp_string);
+                if (res_string_len != exp_string_len ||
+                    memcmp(res_string, op->data.read.exp_string,
+                           res_string_len) != 0) {
+                    FAIL_OP("object mismatch:");
+                    tlog_test_diff(
+                            stderr,
+                            (const uint8_t *)res_string,
+                            res_string_len,
+                            (const uint8_t *)op->data.read.exp_string,
+                            exp_string_len);
                 }
-                if ((object == NULL) != (op->data.read.exp_string == NULL))
-                    FAIL_OP("object: %s != %s",
-                            (object ? "!NULL" : "NULL"),
-                            (op->data.read.exp_string ? "!NULL" : "NULL"));
-                else if (object != NULL) {
-                    res_string = json_object_to_json_string(object);
-                    res_string_len = strlen(res_string);
-                    exp_string_len = strlen(op->data.read.exp_string);
-                    if (res_string_len != exp_string_len ||
-                        memcmp(res_string, op->data.read.exp_string,
-                               res_string_len) != 0) {
-                        FAIL_OP("object mismatch:");
-                        tlog_test_diff(
-                                stderr,
-                                (const uint8_t *)res_string,
-                                res_string_len,
-                                (const uint8_t *)op->data.read.exp_string,
-                                exp_string_len);
-                    }
-                }
-                if (object != NULL)
-                    json_object_put(object);
-                break;
-            case OP_TYPE_LOC_GET:
-                loc = tlog_reader_loc_get(reader);
-                if (loc != op->data.loc_get.exp_loc) {
-                    char *res_str;
-                    char *exp_str;
-                    res_str = tlog_reader_loc_fmt(reader, loc);
-                    exp_str = tlog_reader_loc_fmt(reader,
-                                                  op->data.loc_get.exp_loc);
-                    FAIL_OP("loc: %s (%zu) != %s (%zu)",
-                            res_str, loc,
-                            exp_str, op->data.loc_get.exp_loc);
-                    free(res_str);
-                    free(exp_str);
-                }
-                break;
-            default:
-                fprintf(stderr, "Unknown operation type: %d\n", op->type);
-                exit(1);
+            }
+            if (object != NULL)
+                json_object_put(object);
+            break;
+        case OP_TYPE_LOC_GET:
+            loc = tlog_reader_loc_get(reader);
+            if (loc != op->data.loc_get.exp_loc) {
+                char *res_str;
+                char *exp_str;
+                res_str = tlog_reader_loc_fmt(reader, loc);
+                exp_str = tlog_reader_loc_fmt(reader,
+                                              op->data.loc_get.exp_loc);
+                FAIL_OP("loc: %s (%zu) != %s (%zu)",
+                        res_str, loc,
+                        exp_str, op->data.loc_get.exp_loc);
+                free(res_str);
+                free(exp_str);
+            }
+            break;
+        default:
+            fprintf(stderr, "Unknown operation type: %d\n", op->type);
+            exit(1);
         }
     }
 

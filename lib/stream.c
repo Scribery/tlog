@@ -284,39 +284,39 @@ tlog_stream_enc_txt(uint8_t *obuf, size_t *porem, size_t *polen,
     } else {
         c = *ibuf;
         switch (c) {
-            case '"':
-            case '\\':
-                ADV(2);
-                *obuf++ = '\\';
-                *obuf = c;
-                break;
+        case '"':
+        case '\\':
+            ADV(2);
+            *obuf++ = '\\';
+            *obuf = c;
+            break;
 #define ESC_CASE(_c, _e) \
-            case _c:            \
-                ADV(2);        \
-                *obuf++ = '\\'; \
-                *obuf = _e;   \
-                break;
-            ESC_CASE('\b', 'b');
-            ESC_CASE('\f', 'f');
-            ESC_CASE('\n', 'n');
-            ESC_CASE('\r', 'r');
-            ESC_CASE('\t', 't');
+        case _c:            \
+            ADV(2);        \
+            *obuf++ = '\\'; \
+            *obuf = _e;   \
+            break;
+        ESC_CASE('\b', 'b');
+        ESC_CASE('\f', 'f');
+        ESC_CASE('\n', 'n');
+        ESC_CASE('\r', 'r');
+        ESC_CASE('\t', 't');
 #undef ESC
-            default:
-                if (c < 0x20 || c == 0x7f) {
-                    ADV(6);
-                    *obuf++ = '\\';
-                    *obuf++ = 'u';
-                    *obuf++ = '0';
-                    *obuf++ = '0';
-                    *obuf++ = tlog_nibble_digit(c >> 4);
-                    *obuf = tlog_nibble_digit(c & 0xf);
-                    break;
-                } else {
-                    ADV(1);
-                    *obuf = c;
-                }
+        default:
+            if (c < 0x20 || c == 0x7f) {
+                ADV(6);
+                *obuf++ = '\\';
+                *obuf++ = 'u';
+                *obuf++ = '0';
+                *obuf++ = '0';
+                *obuf++ = tlog_nibble_digit(c >> 4);
+                *obuf = tlog_nibble_digit(c & 0xf);
                 break;
+            } else {
+                ADV(1);
+                *obuf = c;
+            }
+            break;
         }
     }
 

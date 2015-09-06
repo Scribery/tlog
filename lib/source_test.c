@@ -44,14 +44,14 @@ static const char*
 op_type_to_str(enum op_type t)
 {
     switch (t) {
-        case OP_TYPE_NONE:
-            return "none";
-        case OP_TYPE_READ:
-            return "read";
-        case OP_TYPE_LOC_GET:
-            return "loc_get";
-        default:
-            return "<unknown>";
+    case OP_TYPE_NONE:
+        return "none";
+    case OP_TYPE_READ:
+        return "read";
+    case OP_TYPE_LOC_GET:
+        return "loc_get";
+    default:
+        return "<unknown>";
     }
 }
 
@@ -203,41 +203,41 @@ test(const char *n, const struct test t)
 
     for (op = t.op_list; op->type != OP_TYPE_NONE; op++) {
         switch (op->type) {
-            case OP_TYPE_READ:
-                grc = tlog_source_read(source, &pkt);
-                if (grc != op->data.read.exp_grc) {
-                    const char *res_str;
-                    const char *exp_str;
-                    res_str = tlog_grc_strerror(grc);
-                    exp_str = tlog_grc_strerror(op->data.read.exp_grc);
-                    FAIL_OP("grc: %s (%d) != %s (%d)",
-                            res_str, grc,
-                            exp_str, op->data.read.exp_grc);
-                }
-                if (!tlog_pkt_is_equal(&pkt, &op->data.read.exp_pkt)) {
-                    FAIL_OP("packet mismatch:");
-                    pkt_diff(stderr, &pkt, &op->data.read.exp_pkt);
-                }
-                tlog_pkt_cleanup(&pkt);
-                break;
-            case OP_TYPE_LOC_GET:
-                loc = tlog_source_loc_get(source);
-                if (loc != op->data.loc_get.exp_loc) {
-                    char *res_str;
-                    char *exp_str;
-                    res_str = tlog_source_loc_fmt(source, loc);
-                    exp_str = tlog_source_loc_fmt(source,
-                                                  op->data.loc_get.exp_loc);
-                    FAIL_OP("loc: %s (%zu) != %s (%zu)",
-                            res_str, loc,
-                            exp_str, op->data.loc_get.exp_loc);
-                    free(res_str);
-                    free(exp_str);
-                }
-                break;
-            default:
-                fprintf(stderr, "Unknown operation type: %d\n", op->type);
-                exit(1);
+        case OP_TYPE_READ:
+            grc = tlog_source_read(source, &pkt);
+            if (grc != op->data.read.exp_grc) {
+                const char *res_str;
+                const char *exp_str;
+                res_str = tlog_grc_strerror(grc);
+                exp_str = tlog_grc_strerror(op->data.read.exp_grc);
+                FAIL_OP("grc: %s (%d) != %s (%d)",
+                        res_str, grc,
+                        exp_str, op->data.read.exp_grc);
+            }
+            if (!tlog_pkt_is_equal(&pkt, &op->data.read.exp_pkt)) {
+                FAIL_OP("packet mismatch:");
+                pkt_diff(stderr, &pkt, &op->data.read.exp_pkt);
+            }
+            tlog_pkt_cleanup(&pkt);
+            break;
+        case OP_TYPE_LOC_GET:
+            loc = tlog_source_loc_get(source);
+            if (loc != op->data.loc_get.exp_loc) {
+                char *res_str;
+                char *exp_str;
+                res_str = tlog_source_loc_fmt(source, loc);
+                exp_str = tlog_source_loc_fmt(source,
+                                              op->data.loc_get.exp_loc);
+                FAIL_OP("loc: %s (%zu) != %s (%zu)",
+                        res_str, loc,
+                        exp_str, op->data.loc_get.exp_loc);
+                free(res_str);
+                free(exp_str);
+            }
+            break;
+        default:
+            fprintf(stderr, "Unknown operation type: %d\n", op->type);
+            exit(1);
         }
     }
 
