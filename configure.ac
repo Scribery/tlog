@@ -27,7 +27,7 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_GNU_SOURCE
 ABS_SRCDIR=`cd ${srcdir}; pwd`
-CPPFLAGS="-I${ABS_SRCDIR} -I${ABS_SRCDIR}/include $CPPFLAGS"
+CPPFLAGS="-I${ABS_SRCDIR} -I${ABS_SRCDIR}/include -DNDEBUG $CPPFLAGS"
 
 # Check for programs.
 AC_PROG_CC

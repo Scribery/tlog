@@ -27,8 +27,6 @@ Add a start message with the terminal type.
 
 Add message versions
 
-Disable assertions in non-debug build.
-
 Refactor tlog.c
 
 Add throttling.
@@ -39,8 +37,6 @@ Make all if statements use braces, even single-line ones.
 
 Consider pluggable memory allocation when library grows bigger and there is a
 potential for outside users.
-
-Consider building release code with NDEBUG.
 
 Make tlog_msg functions return diverse global return codes to help with
 debugging parsing errors.
