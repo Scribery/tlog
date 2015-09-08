@@ -78,6 +78,12 @@ main(int argc, char **argv)
     base_url = argv[1];
     query = argv[2];
 
+    /* Check base URL validity */
+    if (!tlog_es_reader_base_url_is_valid(base_url)) {
+        fprintf(stderr, "Invalid base URL: %s\n", base_url);
+        goto cleanup;
+    }
+
     /* Initialize libcurl */
     grc = TLOG_GRC_FROM(curl, curl_global_init(CURL_GLOBAL_NOTHING));
     if (grc != TLOG_GRC_FROM(curl, CURLE_OK)) {
