@@ -38,7 +38,7 @@
 #include <tlog/syslog_writer.h>
 #include <tlog/sink.h>
 
-#define IO_LATENCY  10
+#define IO_LATENCY  3
 #define BUF_SIZE    4096
 
 /**< Number of the signal causing exit */
