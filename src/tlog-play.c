@@ -60,6 +60,7 @@ main(int argc, char **argv)
     ssize_t rc;
     size_t i;
     size_t j;
+    bool term_attrs_set = false;
     struct termios orig_termios;
     struct termios raw_termios;
     struct sigaction sa;
@@ -145,6 +146,7 @@ main(int argc, char **argv)
                 strerror(errno));
         goto cleanup;
     }
+    term_attrs_set = true;
 
     /*
      * Reproduce the logged output
@@ -236,11 +238,13 @@ cleanup:
     }
 
     /* Restore terminal attributes */
-    rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
-    if (rc < 0 && errno != EBADF) {
-        fprintf(stderr, "Failed restoring tty attributes: %s\n",
-                strerror(errno));
-        return 1;
+    if (term_attrs_set) {
+        rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
+        if (rc < 0 && errno != EBADF) {
+            fprintf(stderr, "Failed restoring tty attributes: %s\n",
+                    strerror(errno));
+            return 1;
+        }
     }
 
     /* Reproduce the exit signal to get proper exit status */

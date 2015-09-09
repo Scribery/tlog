@@ -164,6 +164,7 @@ main(int argc, char **argv)
     sig_atomic_t new_alarm_caught;
     bool alarm_set = false;
     bool io_pending = false;
+    bool term_attrs_set = false;
     struct termios orig_termios;
     struct termios raw_termios;
     struct winsize winsize;
@@ -335,6 +336,7 @@ main(int argc, char **argv)
                 strerror(errno));
         goto cleanup;
     }
+    term_attrs_set = true;
 
     /*
      * Transfer I/O and window changes
@@ -551,11 +553,13 @@ cleanup:
     }
 
     /* Restore terminal attributes */
-    rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
-    if (rc < 0 && errno != EBADF) {
-        fprintf(stderr, "Failed restoring tty attributes: %s\n",
-                strerror(errno));
-        return 1;
+    if (term_attrs_set) {
+        rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
+        if (rc < 0 && errno != EBADF) {
+            fprintf(stderr, "Failed restoring tty attributes: %s\n",
+                    strerror(errno));
+            return 1;
+        }
     }
 
     /* Reproduce the exit signal to get proper exit status */
