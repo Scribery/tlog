@@ -56,3 +56,10 @@ tlog_json_source/sink, and adding terminal source/sink named
 tlog_term_source/sink.
 
 Use "locale charmap" or equivalent to get terminal encoding.
+
+Consider using iconv for detecting invalid multibyte sequences - it seems to
+be able to stop on first invalid byte. Check how far back this functionality
+goes and whether e.g. RHEL6 supports it. Still need encoding knowledge to
+resync. Perhaps we can play two iconv descriptors: one normal and another
+discarding invalid characters (with "//IGNORE" encoding suffix) to somehow
+extract invalid bytes.
