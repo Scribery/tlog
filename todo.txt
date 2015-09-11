@@ -52,3 +52,7 @@ Consider merging window and io messages for simplicity.
 
 Check if there is a way to unify init/cleanup and create/destroy function
 presence across object types.
+
+Consider making source and sinks abstract, renaming existing ones to
+tlog_json_source/sink, and adding terminal source/sink named
+tlog_term_source/sink.
