@@ -54,3 +54,5 @@ presence across object types.
 Consider making source and sinks abstract, renaming existing ones to
 tlog_json_source/sink, and adding terminal source/sink named
 tlog_term_source/sink.
+
+Use "locale charmap" or equivalent to get terminal encoding.
