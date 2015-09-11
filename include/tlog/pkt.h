@@ -112,9 +112,9 @@ extern void tlog_pkt_init_window(struct tlog_pkt *pkt,
  * @param pkt       The packet to initialize.
  * @param timestamp Timestamp of the I/O arrival.
  * @param output    True if writing output, false if input.
- * @param buf       Input buffer pointer.
- * @param buf_owned True if input buffer should be freed on packet cleanup.
- * @param len       Input buffer length.
+ * @param buf       I/O buffer pointer.
+ * @param buf_owned True if the I/O buffer should be freed on packet cleanup.
+ * @param len       I/O buffer length.
  */
 extern void tlog_pkt_init_io(struct tlog_pkt *pkt,
                              const struct timespec *timestamp,
