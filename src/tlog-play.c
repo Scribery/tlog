@@ -69,6 +69,8 @@ main(int argc, char **argv)
     struct tlog_source *source = NULL;
     bool got_pkt = false;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
+    size_t loc_num;
+    char *loc_str = NULL;
 
     /* Retrieve command-line arguments */
     if (argc != 3) {
@@ -154,12 +156,14 @@ main(int argc, char **argv)
     while (exit_signum == 0) {
         /* Read a packet */
         tlog_pkt_cleanup(&pkt);
+        loc_num = tlog_source_loc_get(source);
         grc = tlog_source_read(source, &pkt);
         if (grc == TLOG_GRC_FROM(errno, EINTR)) {
             break;
         } else if (grc != TLOG_RC_OK) {
-            fprintf(stderr, "Failed reading the source: %s\n",
-                    tlog_grc_strerror(grc));
+            loc_str = tlog_source_loc_fmt(source, loc_num);
+            fprintf(stderr, "Failed reading the source at %s: %s\n",
+                    loc_str, tlog_grc_strerror(grc));
             goto cleanup;
         }
         /* If hit the end of stream */
@@ -225,6 +229,7 @@ main(int argc, char **argv)
 
 cleanup:
 
+    free(loc_str);
     tlog_pkt_cleanup(&pkt);
     tlog_source_destroy(source);
     tlog_reader_destroy(reader);
