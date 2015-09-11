@@ -160,22 +160,21 @@ tlog_sink_is_valid(const struct tlog_sink *sink)
            tlog_io_is_valid(&sink->io);
 }
 
-tlog_grc
-tlog_sink_window_write(struct tlog_sink *sink,
-                       const struct timespec *timestamp,
-                       unsigned short int width,
-                       unsigned short int height)
+static tlog_grc
+tlog_sink_write_window(struct tlog_sink *sink,
+                       const struct tlog_pkt *pkt)
 {
     struct timespec pos;
     char pos_buf[32];
     int len;
 
     assert(tlog_sink_is_valid(sink));
-    assert(timestamp != NULL);
+    assert(tlog_pkt_is_valid(pkt));
+    assert(pkt->type == TLOG_PKT_TYPE_WINDOW);
 
-    tlog_timespec_sub(timestamp, &sink->start, &pos);
+    tlog_timespec_sub(&pkt->timestamp, &sink->start, &pos);
 
-    tlog_sink_io_flush(sink);
+    tlog_sink_flush(sink);
 
     if (pos.tv_sec == 0) {
         len = snprintf(pos_buf, sizeof(pos_buf), "%ld",
@@ -206,8 +205,8 @@ tlog_sink_window_write(struct tlog_sink *sink,
         sink->session_id,
         sink->message_id,
         pos_buf,
-        width,
-        height);
+        pkt->data.window.width,
+        pkt->data.window.height);
     if (len < 0)
         return TLOG_RC_FAILURE;
     if ((size_t)len >= sink->message_len) {
@@ -219,22 +218,28 @@ tlog_sink_window_write(struct tlog_sink *sink,
     return tlog_writer_write(sink->writer, sink->message_buf, len);
 }
 
-tlog_grc
-tlog_sink_io_write(struct tlog_sink *sink,
-                   const struct timespec *timestamp,
-                   bool output, const uint8_t *buf, size_t len)
+static tlog_grc
+tlog_sink_write_io(struct tlog_sink *sink,
+                   const struct tlog_pkt *pkt)
 {
     tlog_grc grc;
+    const uint8_t *buf;
+    size_t len;
+
     assert(tlog_sink_is_valid(sink));
-    assert(timestamp != NULL);
-    assert(buf != NULL || len == 0);
+    assert(tlog_pkt_is_valid(pkt));
+    assert(pkt->type == TLOG_PKT_TYPE_IO);
+
+    buf = pkt->data.io.buf;
+    len = pkt->data.io.len;
 
     while (true) {
-        tlog_io_write(&sink->io, timestamp, output, &buf, &len);
+        tlog_io_write(&sink->io, &pkt->timestamp, pkt->data.io.output,
+                      &buf, &len);
         if (len == 0) {
             break;
         } else {
-            grc = tlog_sink_io_flush(sink);
+            grc = tlog_sink_flush(sink);
             if (grc != TLOG_RC_OK)
                 return grc;
         }
@@ -243,12 +248,25 @@ tlog_sink_io_write(struct tlog_sink *sink,
 }
 
 tlog_grc
-tlog_sink_io_cut(struct tlog_sink *sink)
+tlog_sink_write(struct tlog_sink *sink, const struct tlog_pkt *pkt)
+{
+    assert(tlog_sink_is_valid(sink));
+    assert(tlog_pkt_is_valid(pkt));
+    assert(!tlog_pkt_is_void(pkt));
+
+    if (pkt->type == TLOG_PKT_TYPE_WINDOW)
+        return tlog_sink_write_window(sink, pkt);
+    else
+        return tlog_sink_write_io(sink, pkt);
+}
+
+tlog_grc
+tlog_sink_cut(struct tlog_sink *sink)
 {
     tlog_grc grc;
     assert(tlog_sink_is_valid(sink));
     while (!tlog_io_cut(&sink->io)) {
-        grc = tlog_sink_io_flush(sink);
+        grc = tlog_sink_flush(sink);
         if (grc != TLOG_RC_OK)
             return grc;
     }
@@ -256,7 +274,7 @@ tlog_sink_io_cut(struct tlog_sink *sink)
 }
 
 tlog_grc
-tlog_sink_io_flush(struct tlog_sink *sink)
+tlog_sink_flush(struct tlog_sink *sink)
 {
     tlog_grc grc;
     char pos_buf[32];

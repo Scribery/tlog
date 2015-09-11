@@ -178,6 +178,7 @@ main(int argc, char **argv)
     uint8_t output_buf[BUF_SIZE];
     size_t output_pos = 0;
     size_t output_len = 0;
+    struct tlog_pkt pkt = TLOG_PKT_VOID;
     int status = 1;
 
     (void)argv;
@@ -285,8 +286,10 @@ main(int argc, char **argv)
      * Parent
      */
     /* Log initial window size */
-    grc = tlog_sink_window_write(sink, &timestamp,
-                                 winsize.ws_col, winsize.ws_row);
+    tlog_pkt_init_window(&pkt, &timestamp,
+                         winsize.ws_col, winsize.ws_row);
+    grc = tlog_sink_write(sink, &pkt);
+    tlog_pkt_cleanup(&pkt);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed logging window size: %s\n",
                 tlog_grc_strerror(grc));
@@ -367,9 +370,11 @@ main(int argc, char **argv)
                 new_winsize.ws_col != winsize.ws_col) {
                 /* Log window size */
                 clock_gettime(clock_id, &timestamp);
-                grc = tlog_sink_window_write(sink, &timestamp,
-                                             new_winsize.ws_col,
-                                             new_winsize.ws_row);
+                tlog_pkt_init_window(&pkt, &timestamp,
+                                     new_winsize.ws_col,
+                                     new_winsize.ws_row);
+                grc = tlog_sink_write(sink, &pkt);
+                tlog_pkt_cleanup(&pkt);
                 if (grc != TLOG_RC_OK) {
                     fprintf(stderr, "Failed logging window size: %s\n",
                             tlog_grc_strerror(grc));
@@ -402,9 +407,11 @@ main(int argc, char **argv)
             if (rc >= 0) {
                 if (rc > 0) {
                     /* Log delivered input */
-                    grc = tlog_sink_io_write(sink, &timestamp,
-                                             false, input_buf + input_pos,
-                                             (size_t)rc);
+                    tlog_pkt_init_io(&pkt, &timestamp,
+                                     false, input_buf + input_pos,
+                                     false, (size_t)rc);
+                    grc = tlog_sink_write(sink, &pkt);
+                    tlog_pkt_cleanup(&pkt);
                     if (grc != TLOG_RC_OK) {
                         fprintf(stderr, "Failed logging input: %s\n",
                                 tlog_grc_strerror(grc));
@@ -435,9 +442,11 @@ main(int argc, char **argv)
             if (rc >= 0) {
                 if (rc > 0) {
                     /* Log delivered output */
-                    grc = tlog_sink_io_write(sink, &timestamp,
-                                             true, output_buf + output_pos,
-                                             (size_t)rc);
+                    tlog_pkt_init_io(&pkt, &timestamp,
+                                     true, output_buf + output_pos,
+                                     false, (size_t)rc);
+                    grc = tlog_sink_write(sink, &pkt);
+                    tlog_pkt_cleanup(&pkt);
                     if (grc != TLOG_RC_OK) {
                         fprintf(stderr, "Failed logging output: %s\n",
                                 tlog_grc_strerror(grc));
@@ -469,7 +478,7 @@ main(int argc, char **argv)
         new_alarm_caught = alarm_caught;
         if (new_alarm_caught != last_alarm_caught) {
             alarm_set = false;
-            grc = tlog_sink_io_flush(sink);
+            grc = tlog_sink_flush(sink);
             if (grc != TLOG_RC_OK) {
                 fprintf(stderr, "Failed flushing I/O log: %s\n",
                         tlog_grc_strerror(grc));
@@ -524,7 +533,7 @@ main(int argc, char **argv)
     }
 
     /* Cut I/O log (write incomplete characters as binary) */
-    grc = tlog_sink_io_cut(sink);
+    grc = tlog_sink_cut(sink);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed cutting-off I/O log: %s\n",
                 tlog_grc_strerror(grc));
@@ -532,7 +541,7 @@ main(int argc, char **argv)
     }
 
     /* Flush I/O log */
-    grc = tlog_sink_io_flush(sink);
+    grc = tlog_sink_flush(sink);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed flushing I/O log: %s\n",
                 tlog_grc_strerror(grc));

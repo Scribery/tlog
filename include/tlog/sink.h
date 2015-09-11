@@ -28,6 +28,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include <tlog/rc.h>
+#include <tlog/pkt.h>
 #include <tlog/io.h>
 #include <tlog/writer.h>
 
@@ -100,22 +101,7 @@ extern tlog_grc tlog_sink_create(struct tlog_sink **psink,
                                  const struct timespec *timestamp);
 
 /**
- * Write window size to a log sink.
- *
- * @param sink      Pointer to the sink to write window size to.
- * @param timestamp Timestamp of the window change.
- * @param width     Window width in characters.
- * @param height    Window height in characters.
- *
- * @return Global return code.
- */
-extern tlog_grc tlog_sink_window_write(struct tlog_sink *sink,
-                                       const struct timespec *timestamp,
-                                       unsigned short int width,
-                                       unsigned short int height);
-
-/**
- * Write terminal I/O to a log sink.
+ * Write a packet to a log sink.
  *
  * @param sink      Pointer to the sink to write I/O to.
  * @param timestamp Timestamp of the I/O arrival.
@@ -125,28 +111,26 @@ extern tlog_grc tlog_sink_window_write(struct tlog_sink *sink,
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_sink_io_write(struct tlog_sink *sink,
-                                   const struct timespec *timestamp,
-                                   bool output,
-                                   const uint8_t *buf, size_t len);
+extern tlog_grc tlog_sink_write(struct tlog_sink *sink,
+                                const struct tlog_pkt *pkt);
 
 /**
- * Cut a sink I/O - write pending incomplete characters.
+ * Cut a sink I/O - encode pending incomplete characters.
  *
  * @param sink  The sink to cut I/O for.
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_sink_io_cut(struct tlog_sink *sink);
+extern tlog_grc tlog_sink_cut(struct tlog_sink *sink);
 
 /**
- * Flush I/O pending in a log sink, on a character boundary.
+ * Flush I/O pending in a log sink.
  *
  * @param sink  The sink to flush.
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_sink_io_flush(struct tlog_sink *sink);
+extern tlog_grc tlog_sink_flush(struct tlog_sink *sink);
 
 /**
  * Cleanup a log sink. Can be called more than once.

@@ -46,8 +46,6 @@ Test the code with coverity.
 Consider supporting merging several messages into a single packet when
 reading.
 
-Consider making sink accept packets for input.
-
 Consider merging window and io messages for simplicity.
 
 Check if there is a way to unify init/cleanup and create/destroy function
