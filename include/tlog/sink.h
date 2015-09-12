@@ -42,7 +42,8 @@ struct tlog_sink {
     char               *username;       /**< Username */
     unsigned int        session_id;     /**< Session ID */
     size_t              message_id;     /**< Next message ID */
-    struct timespec     start;          /**< Sink creation timestamp */
+    bool                started;        /**< True if a packet was written */
+    struct timespec     start;          /**< First packet timestamp */
     struct tlog_io      io;             /**< I/O buffer and state */
     uint8_t            *message_buf;    /**< Message buffer pointer */
     size_t              message_len;    /**< Message buffer length */
@@ -66,7 +67,6 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
  * @param username          Username to use in log messages.
  * @param session_id        Session ID to use in log messages.
  * @param io_size           Maximum I/O message payload length.
- * @param timestamp         Sink start timestamp.
  *
  * @return Global return code.
  */
@@ -75,8 +75,7 @@ extern tlog_grc tlog_sink_init(struct tlog_sink *sink,
                                const char *hostname,
                                const char *username,
                                unsigned int session_id,
-                               size_t io_size,
-                               const struct timespec *timestamp);
+                               size_t io_size);
 
 /**
  * Create (allocate and initialize) a log sink.
@@ -88,7 +87,6 @@ extern tlog_grc tlog_sink_init(struct tlog_sink *sink,
  * @param username          Username to use in log messages.
  * @param session_id        Session ID to use in log messages.
  * @param io_size           Maximum I/O message payload length.
- * @param timestamp         Sink start timestamp.
  *
  * @return Global return code.
  */
@@ -97,8 +95,7 @@ extern tlog_grc tlog_sink_create(struct tlog_sink **psink,
                                  const char *hostname,
                                  const char *username,
                                  unsigned int session_id,
-                                 size_t io_size,
-                                 const struct timespec *timestamp);
+                                 size_t io_size);
 
 /**
  * Write a packet to a log sink.

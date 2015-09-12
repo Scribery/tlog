@@ -51,8 +51,7 @@ tlog_sink_init(struct tlog_sink *sink,
                const char *hostname,
                const char *username,
                unsigned int session_id,
-               size_t io_size,
-               const struct timespec *timestamp)
+               size_t io_size)
 {
     tlog_grc grc;
 
@@ -60,7 +59,6 @@ tlog_sink_init(struct tlog_sink *sink,
     assert(tlog_writer_is_valid(writer));
     assert(hostname != NULL);
     assert(io_size >= TLOG_IO_SIZE_MIN);
-    assert(timestamp != NULL);
 
     memset(sink, 0, sizeof(*sink));
 
@@ -81,8 +79,6 @@ tlog_sink_init(struct tlog_sink *sink,
     sink->session_id = session_id;
 
     sink->message_id = 1;
-
-    sink->start = *timestamp;
 
     /* NOTE: approximate size */
     sink->message_len = io_size + 1024;
@@ -110,8 +106,7 @@ tlog_sink_create(struct tlog_sink **psink,
                  const char *hostname,
                  const char *username,
                  unsigned int session_id,
-                 size_t io_size,
-                 const struct timespec *timestamp)
+                 size_t io_size)
 {
     struct tlog_sink *sink;
     tlog_grc grc;
@@ -120,14 +115,13 @@ tlog_sink_create(struct tlog_sink **psink,
     assert(tlog_writer_is_valid(writer));
     assert(hostname != NULL);
     assert(io_size >= TLOG_IO_SIZE_MIN);
-    assert(timestamp != NULL);
 
     sink = malloc(sizeof(*sink));
     if (sink == NULL) {
         grc = TLOG_GRC_ERRNO;
     } else {
         grc = tlog_sink_init(sink, writer, hostname, username,
-                             session_id, io_size, timestamp);
+                             session_id, io_size);
         if (grc == TLOG_RC_OK) {
             assert(tlog_sink_is_valid(sink));
         } else {
@@ -253,6 +247,11 @@ tlog_sink_write(struct tlog_sink *sink, const struct tlog_pkt *pkt)
     assert(tlog_sink_is_valid(sink));
     assert(tlog_pkt_is_valid(pkt));
     assert(!tlog_pkt_is_void(pkt));
+
+    if (!sink->started) {
+        sink->started = true;
+        sink->start = pkt->timestamp;
+    }
 
     if (pkt->type == TLOG_PKT_TYPE_WINDOW)
         return tlog_sink_write_window(sink, pkt);

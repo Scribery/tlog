@@ -239,12 +239,9 @@ main(int argc, char **argv)
         goto cleanup;
     }
 
-    /* Get startup timestamp */
-    clock_gettime(clock_id, &timestamp);
-
     /* Create the log sink */
     grc = tlog_sink_create(&sink, writer, fqdn, passwd->pw_name,
-                           session_id, BUF_SIZE, &timestamp);
+                           session_id, BUF_SIZE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
                 tlog_grc_strerror(grc));
@@ -286,6 +283,7 @@ main(int argc, char **argv)
      * Parent
      */
     /* Log initial window size */
+    clock_gettime(clock_id, &timestamp);
     tlog_pkt_init_window(&pkt, &timestamp,
                          winsize.ws_col, winsize.ws_row);
     grc = tlog_sink_write(sink, &pkt);

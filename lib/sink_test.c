@@ -136,7 +136,7 @@ test(const char *n, const struct test t)
     }
 
     grc = tlog_sink_init(&sink, writer, t.hostname, t.username,
-                         t.session_id, SIZE, &timestamp);
+                         t.session_id, SIZE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the sink: %s\n",
                 tlog_grc_strerror(grc));
@@ -476,17 +476,6 @@ main(void)
          .output = MSG_IO(1, "0", "]1/3", "", "", "�", "240,157,132")
     );
 
-    TEST(delay_before,
-         .op_list = {
-            OP_DELAY(.tv_nsec = 1100000),
-            OP_WRITE_IO(.output = true,
-                        .buf = {0xf0, 0x9d, 0x84, 0x9e},
-                        .len = 4),
-            OP_FLUSH
-         },
-         .output = MSG_IO(1, "1", ">1", "", "", "\xf0\x9d\x84\x9e", "")
-    );
-
     TEST(delay_after,
          .op_list = {
             OP_WRITE_IO(.output = true,
@@ -551,18 +540,6 @@ main(void)
          },
          .output = MSG_WINDOW(1, "0", 100, 100) \
                    MSG_WINDOW(2, TIME_MAX_STR, 200, 200)
-    );
-
-    TEST(max_delay_before,
-         .op_list = {
-            OP_DELAY_MAX,
-            OP_WRITE_IO(.output = true,
-                        .buf = {0xf0, 0x9d, 0x84, 0x9e},
-                        .len = 4),
-            OP_FLUSH
-         },
-         .output = MSG_IO(1, TIME_MAX_STR, ">1",
-                          "", "", "\xf0\x9d\x84\x9e", "")
     );
 
     TEST(max_delay_after,
