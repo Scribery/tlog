@@ -103,11 +103,8 @@ extern tlog_grc tlog_sink_create(struct tlog_sink **psink,
 /**
  * Write a packet to a log sink.
  *
- * @param sink      Pointer to the sink to write I/O to.
- * @param timestamp Timestamp of the I/O arrival.
- * @param output    True if writing output, false if input.
- * @param ptr       Input buffer pointer.
- * @param len       Input buffer length.
+ * @param sink  Pointer to the sink to write the packet to.
+ * @param pkt   The packet to write.
  *
  * @return Global return code.
  */
