@@ -16,14 +16,10 @@ can tlog be used as sudo shell?
     assign shell for target user?
 
 publish design document on FreeIPA wiki
-focus on client side, wait for the server side
-have realtime playback as the first demo milestone
 
 Retrieve character encoding and convert to UTF-8 in JSON.
 For the time being check encoding and abort with a message saying only UTF-8
 is supported.
-
-Add a start message with the terminal type.
 
 Add message versions
 
