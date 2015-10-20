@@ -63,3 +63,7 @@ extract invalid bytes.
 Support running without a terminal.
 
 Support passing arguments to the user's shell.
+
+Print a (configurable) warning upon starting the recorded session. By default
+it should say the session is being recorded. Do it in the child process,
+before starting the shell.
