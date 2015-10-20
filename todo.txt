@@ -63,3 +63,7 @@ goes and whether e.g. RHEL6 supports it. Still need encoding knowledge to
 resync. Perhaps we can play two iconv descriptors: one normal and another
 discarding invalid characters (with "//IGNORE" encoding suffix) to somehow
 extract invalid bytes.
+
+Support running without a terminal.
+
+Support passing arguments to the user's shell.
