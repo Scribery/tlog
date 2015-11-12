@@ -414,3 +414,37 @@ should define backup/restore functions.
 On a closer examination and attempting to do it, we'd better not pass pmeta
 and prem to streams at creation time. This turns out to be more obscure and
 harder to reason about.
+
+If we remove separate window message, then we don't need separate packet type
+- just supply window size each time, make the sink code or source user compare
+  window sizes and detect changes. This can make the code much simpler.
+OTOH, I/O data and window changes *do* come separately and such scheme would
+require the user to cut the I/O themselves and take care of comparing window
+sizes all the time. So, for a stream of events, having separate packet types,
+as in "separate even types", makes sense. We can still have one message type
+for the JSON sink.
+
+We still need to preserve window size changes, likely. Can we put them inside
+timing, as events? What would happen with the player, if there is no window
+size at the start? How would the *partial* stream matches work?! Shall we
+simply produce messages with empty I/O and new window sizes? These would
+have timestamps. We shouldn't send such messages immediately, but only when
+told to flush, or when we run out of I/O size limit. If window change comes
+before I/O, the written message should have the window change time position,
+and timing would have a delay record coming first - this needs a tlog_io
+object change, so it starts when it's told it starts, not when first I/O comes
+in. I.e. we can say that window change happens always at message start.
+
+No, this is wrong. This means that we won't be able to merge messages across
+window changes. To satisfy both the need to merge messages and the need to
+process partial streams, window changes should be able to appear any place in
+the message (i.e. in "timing"), and each message should have a window size
+record at the start. Argh.
+
+BTW, how are we even going to merge particular stream chunks with audit
+messages for a specific session? Could Kibana plugin request audit data by
+itself? Not likely, and it wouldn't be right, anyway. We can tell users:
+search your messages and then add 'OR something that matches a bunch of
+relevant audit messages' to the query, and the playback visualisation would
+filter them out by sessionid and time ranges. That's ugly. Do we have
+alternatives? I think it is time to actually try making a visualisation.
