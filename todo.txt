@@ -69,3 +69,5 @@ it should say the session is being recorded. Do it in the child process,
 before starting the shell.
 
 Record terminal type as well.
+
+Consider the possibility of using tlog in a jump server.
