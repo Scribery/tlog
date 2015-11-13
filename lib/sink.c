@@ -58,7 +58,7 @@ tlog_sink_init(struct tlog_sink *sink,
     assert(sink != NULL);
     assert(tlog_writer_is_valid(writer));
     assert(hostname != NULL);
-    assert(io_size >= TLOG_IO_SIZE_MIN);
+    assert(io_size >= TLOG_SINK_IO_SIZE_MIN);
 
     memset(sink, 0, sizeof(*sink));
 
@@ -114,7 +114,7 @@ tlog_sink_create(struct tlog_sink **psink,
     assert(psink != NULL);
     assert(tlog_writer_is_valid(writer));
     assert(hostname != NULL);
-    assert(io_size >= TLOG_IO_SIZE_MIN);
+    assert(io_size >= TLOG_SINK_IO_SIZE_MIN);
 
     sink = malloc(sizeof(*sink));
     if (sink == NULL) {
