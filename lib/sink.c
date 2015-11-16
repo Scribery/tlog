@@ -154,87 +154,12 @@ tlog_sink_is_valid(const struct tlog_sink *sink)
            tlog_chunk_is_valid(&sink->chunk);
 }
 
-static tlog_grc
-tlog_sink_write_window(struct tlog_sink *sink,
-                       const struct tlog_pkt *pkt)
-{
-    struct timespec pos;
-    char pos_buf[32];
-    int len;
-
-    assert(tlog_sink_is_valid(sink));
-    assert(tlog_pkt_is_valid(pkt));
-    assert(pkt->type == TLOG_PKT_TYPE_WINDOW);
-
-    tlog_timespec_sub(&pkt->timestamp, &sink->start, &pos);
-
-    tlog_sink_flush(sink);
-
-    if (pos.tv_sec == 0) {
-        len = snprintf(pos_buf, sizeof(pos_buf), "%ld",
-                       pos.tv_nsec / 1000000);
-    } else {
-        len = snprintf(pos_buf, sizeof(pos_buf), "%lld%03ld",
-                       (long long int)pos.tv_sec, pos.tv_nsec / 1000000);
-    }
-
-    if ((size_t)len >= sizeof(pos_buf)) {
-        return TLOG_GRC_FROM(errno, ENOMEM);
-    }
-
-    len = snprintf(
-        (char *)sink->message_buf, sink->message_len,
-        "{"
-            "\"type\":"     "\"window\","
-            "\"host\":"     "\"%s\","
-            "\"user\":"     "\"%s\","
-            "\"session\":"  "%u,"
-            "\"id\":"       "%zu,"
-            "\"pos\":"      "%s,"
-            "\"width\":"    "%hu,"
-            "\"height\":"   "%hu"
-        "}\n",
-        sink->hostname,
-        sink->username,
-        sink->session_id,
-        sink->message_id,
-        pos_buf,
-        pkt->data.window.width,
-        pkt->data.window.height);
-    if (len < 0)
-        return TLOG_RC_FAILURE;
-    if ((size_t)len >= sink->message_len) {
-        return TLOG_GRC_FROM(errno, ENOMEM);
-    }
-
-    sink->message_id++;
-
-    return tlog_writer_write(sink->writer, sink->message_buf, len);
-}
-
-static tlog_grc
-tlog_sink_write_io(struct tlog_sink *sink,
-                   const struct tlog_pkt *pkt)
+tlog_grc
+tlog_sink_write(struct tlog_sink *sink, const struct tlog_pkt *pkt)
 {
     tlog_grc grc;
     size_t pos = 0;
 
-    assert(tlog_sink_is_valid(sink));
-    assert(tlog_pkt_is_valid(pkt));
-    assert(pkt->type == TLOG_PKT_TYPE_IO);
-
-    /* While the packet is not yet written completely */
-    while (!tlog_chunk_write(&sink->chunk, pkt, &pos)) {
-        grc = tlog_sink_flush(sink);
-        if (grc != TLOG_RC_OK)
-            return grc;
-    }
-    return TLOG_RC_OK;
-}
-
-tlog_grc
-tlog_sink_write(struct tlog_sink *sink, const struct tlog_pkt *pkt)
-{
     assert(tlog_sink_is_valid(sink));
     assert(tlog_pkt_is_valid(pkt));
     assert(!tlog_pkt_is_void(pkt));
@@ -244,10 +169,13 @@ tlog_sink_write(struct tlog_sink *sink, const struct tlog_pkt *pkt)
         sink->start = pkt->timestamp;
     }
 
-    if (pkt->type == TLOG_PKT_TYPE_WINDOW)
-        return tlog_sink_write_window(sink, pkt);
-    else
-        return tlog_sink_write_io(sink, pkt);
+    /* While the packet is not yet written completely */
+    while (!tlog_chunk_write(&sink->chunk, pkt, &pos)) {
+        grc = tlog_sink_flush(sink);
+        if (grc != TLOG_RC_OK)
+            return grc;
+    }
+    return TLOG_RC_OK;
 }
 
 tlog_grc
@@ -296,7 +224,6 @@ tlog_sink_flush(struct tlog_sink *sink)
     len = snprintf(
         (char *)sink->message_buf, sink->message_len,
         "{"
-            "\"type\":"     "\"io\","
             "\"host\":"     "\"%s\","
             "\"user\":"     "\"%s\","
             "\"session\":"  "%u,"

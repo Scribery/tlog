@@ -66,7 +66,7 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
  * @param hostname          Hostname to use in log messages.
  * @param username          Username to use in log messages.
  * @param session_id        Session ID to use in log messages.
- * @param chunk_size        Maximum I/O message payload length.
+ * @param chunk_size        Maximum data chunk length.
  *
  * @return Global return code.
  */
@@ -86,7 +86,7 @@ extern tlog_grc tlog_sink_init(struct tlog_sink *sink,
  * @param hostname          Hostname to use in log messages.
  * @param username          Username to use in log messages.
  * @param session_id        Session ID to use in log messages.
- * @param chunk_size        Maximum I/O message payload length.
+ * @param chunk_size        Maximum data chunk length.
  *
  * @return Global return code.
  */
@@ -118,7 +118,7 @@ extern tlog_grc tlog_sink_write(struct tlog_sink *sink,
 extern tlog_grc tlog_sink_cut(struct tlog_sink *sink);
 
 /**
- * Flush I/O pending in a log sink.
+ * Flush data pending in a log sink.
  *
  * @param sink  The sink to flush.
  *

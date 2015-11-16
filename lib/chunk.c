@@ -87,8 +87,7 @@ bool
 tlog_chunk_is_empty(const struct tlog_chunk *chunk)
 {
     assert(tlog_chunk_is_valid(chunk));
-    return tlog_stream_is_empty(&chunk->input) &&
-           tlog_stream_is_empty(&chunk->output);
+    return chunk->rem >= chunk->size;
 }
 
 /**
@@ -131,8 +130,10 @@ tlog_chunk_timestamp(struct tlog_chunk *chunk,
             delay_rc = 0;
         }
     }
-    assert(delay_rc >= 0);
-    assert((size_t)delay_rc < sizeof(delay_buf));
+    if (delay_rc < 0 || (size_t)delay_rc >= sizeof(delay_buf)) {
+        assert(false);
+        return false;
+    }
     chunk->last = *timestamp;
 
     /* If we need to add a delay record */
@@ -150,19 +151,84 @@ tlog_chunk_timestamp(struct tlog_chunk *chunk,
     return true;
 }
 
-bool
-tlog_chunk_write(struct tlog_chunk *chunk, const struct tlog_pkt *pkt,
-                 size_t *ppos)
+/**
+ * Write a window packet payload to a chunk.
+ *
+ * @param chunk     The chunk to write to.
+ * @param pkt       The packet to write the payload of.
+ * @param ppos      Location of position in the packet the write should start
+ *                  at (set to 0 on first write) / location for (opaque)
+ *                  position in the packet the write ended at.
+ *
+ * @return True if the whole of the (remaining) packet fit into the chunk.
+ */
+static bool
+tlog_chunk_write_window(struct tlog_chunk *chunk,
+                        const struct tlog_pkt *pkt,
+                        size_t *ppos)
 {
-    tlog_trx trx = TLOG_TRX_INIT;
-    TLOG_TRX_STORE_DECL(tlog_chunk);
-    const uint8_t *buf;
+    /* Window string buffer (max: "=65535x65535") */
+    char buf[16];
+    int rc;
     size_t len;
-    size_t written;
 
     assert(tlog_chunk_is_valid(chunk));
     assert(tlog_pkt_is_valid(pkt));
-    assert(!tlog_pkt_is_void(pkt));
+    assert(pkt->type == TLOG_PKT_TYPE_WINDOW);
+    assert(ppos != NULL);
+    assert(*ppos <= 1);
+
+    if (*ppos >= 1)
+        return true;
+
+    rc = snprintf(buf, sizeof(buf), "=%hux%hu",
+                  pkt->data.window.width, pkt->data.window.height);
+    if (rc < 0) {
+        assert(false);
+        return false;
+    }
+
+    len = (size_t)rc;
+    if (len >= sizeof(buf)) {
+        assert(false);
+        return false;
+    }
+
+    if (len > chunk->rem)
+        return false;
+
+    tlog_stream_flush(&chunk->input, &chunk->timing_ptr);
+    tlog_stream_flush(&chunk->output, &chunk->timing_ptr);
+
+    memcpy(chunk->timing_ptr, buf, len);
+    chunk->timing_ptr += len;
+    chunk->rem -= len;
+
+    *ppos = 1;
+    return true;
+}
+
+/**
+ * Write an I/O packet payload to a chunk.
+ *
+ * @param chunk     The chunk to write to.
+ * @param pkt       The packet to write the payload of.
+ * @param ppos      Location of position in the packet the write should start
+ *                  at (set to 0 on first write) / location for (opaque)
+ *                  position in the packet the write ended at.
+ *
+ * @return True if the whole of the (remaining) packet fit into the chunk.
+ */
+static bool
+tlog_chunk_write_io(struct tlog_chunk *chunk,
+                    const struct tlog_pkt *pkt,
+                    size_t *ppos)
+{
+    const uint8_t *buf;
+    size_t len;
+
+    assert(tlog_chunk_is_valid(chunk));
+    assert(tlog_pkt_is_valid(pkt));
     assert(pkt->type == TLOG_PKT_TYPE_IO);
     assert(ppos != NULL);
     assert(*ppos <= pkt->data.io.len);
@@ -170,32 +236,65 @@ tlog_chunk_write(struct tlog_chunk *chunk, const struct tlog_pkt *pkt,
     if (*ppos >= pkt->data.io.len)
         return true;
 
+    buf = pkt->data.io.buf + *ppos;
+    len = pkt->data.io.len - *ppos;
+    *ppos += tlog_stream_write(pkt->data.io.output
+                                    ? &chunk->output
+                                    : &chunk->input,
+                               &buf, &len,
+                               &chunk->timing_ptr, &chunk->rem);
+    return len == 0;
+}
+
+bool
+tlog_chunk_write(struct tlog_chunk *chunk,
+                 const struct tlog_pkt *pkt,
+                 size_t *ppos)
+{
+    tlog_trx trx = TLOG_TRX_INIT;
+    TLOG_TRX_STORE_DECL(tlog_chunk);
+    size_t pos;
+    bool complete;
+
+    assert(tlog_chunk_is_valid(chunk));
+    assert(tlog_pkt_is_valid(pkt));
+    assert(!tlog_pkt_is_void(pkt));
+    assert(ppos != NULL);
+
     TLOG_TRX_BEGIN(&trx, tlog_chunk, chunk);
 
-    /* Record new timestamp */
+    /* Record the timestamp (if it's new) */
     if (!tlog_chunk_timestamp(chunk, &pkt->timestamp)) {
         TLOG_TRX_ABORT(&trx, tlog_chunk, chunk);
         return false;
     }
 
-    /* Write as much I/O data as we can */
-    buf = pkt->data.io.buf + *ppos;
-    len = pkt->data.io.len - *ppos;
-    written = tlog_stream_write(pkt->data.io.output
-                                    ? &chunk->output
-                                    : &chunk->input,
-                                &buf, &len,
-                                &chunk->timing_ptr, &chunk->rem);
-    /* If no I/O data fits */
-    if (written == 0) {
+    /* Write (a part of) the packet */
+    pos = *ppos;
+    switch (pkt->type) {
+        case TLOG_PKT_TYPE_IO:
+            complete = tlog_chunk_write_io(chunk, pkt, &pos);
+            break;
+        case TLOG_PKT_TYPE_WINDOW:
+            complete = tlog_chunk_write_window(chunk, pkt, &pos);
+            break;
+        default:
+            assert(false);
+            complete = false;
+            break;
+    }
+    assert(pos >= *ppos);
+
+    /* If no part of the packet fits */
+    if (!complete && pos == *ppos) {
         /* Revert the possible timestamp writing */
         TLOG_TRX_ABORT(&trx, tlog_chunk, chunk);
         return false;
     }
 
     TLOG_TRX_COMMIT(&trx);
-    *ppos += written;
-    return len == 0;
+    *ppos = pos;
+    return complete;
 }
 
 void

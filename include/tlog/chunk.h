@@ -143,8 +143,8 @@ extern bool tlog_chunk_is_empty(const struct tlog_chunk *chunk);
  * @param chunk     The chunk to write to.
  * @param pkt       The packet to write.
  * @param ppos      Location of position in the packet the write should start
- *                  at (set to 0 on first write) / location for position in
- *                  the packet the write ended at.
+ *                  at (set to 0 on first write) / location for (opaque)
+ *                  position in the packet the write ended at.
  *
  * @return True if the whole of the (remaining) packet fit into the chunk.
  */
