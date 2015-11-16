@@ -150,42 +150,52 @@ tlog_chunk_timestamp(struct tlog_chunk *chunk,
     return true;
 }
 
-size_t
-tlog_chunk_write(struct tlog_chunk *chunk, const struct timespec *timestamp,
-                 bool output, const uint8_t **pbuf, size_t *plen)
+bool
+tlog_chunk_write(struct tlog_chunk *chunk, const struct tlog_pkt *pkt,
+                 size_t *ppos)
 {
     tlog_trx trx = TLOG_TRX_INIT;
     TLOG_TRX_STORE_DECL(tlog_chunk);
+    const uint8_t *buf;
+    size_t len;
     size_t written;
 
     assert(tlog_chunk_is_valid(chunk));
-    assert(timestamp != NULL);
-    assert(pbuf != NULL);
-    assert(plen != NULL);
-    assert(*pbuf != NULL || *plen == 0);
+    assert(tlog_pkt_is_valid(pkt));
+    assert(!tlog_pkt_is_void(pkt));
+    assert(pkt->type == TLOG_PKT_TYPE_IO);
+    assert(ppos != NULL);
+    assert(*ppos <= pkt->data.io.len);
 
-    if (*plen == 0)
-        return 0;
+    if (*ppos >= pkt->data.io.len)
+        return true;
 
     TLOG_TRX_BEGIN(&trx, tlog_chunk, chunk);
 
     /* Record new timestamp */
-    if (!tlog_chunk_timestamp(chunk, timestamp)) {
+    if (!tlog_chunk_timestamp(chunk, &pkt->timestamp)) {
         TLOG_TRX_ABORT(&trx, tlog_chunk, chunk);
-        return 0;
+        return false;
     }
 
     /* Write as much I/O data as we can */
-    written = tlog_stream_write(output ? &chunk->output : &chunk->input,
-                                pbuf, plen, &chunk->timing_ptr, &chunk->rem);
+    buf = pkt->data.io.buf + *ppos;
+    len = pkt->data.io.len - *ppos;
+    written = tlog_stream_write(pkt->data.io.output
+                                    ? &chunk->output
+                                    : &chunk->input,
+                                &buf, &len,
+                                &chunk->timing_ptr, &chunk->rem);
     /* If no I/O data fits */
     if (written == 0) {
+        /* Revert the possible timestamp writing */
         TLOG_TRX_ABORT(&trx, tlog_chunk, chunk);
-        return 0;
+        return false;
     }
 
     TLOG_TRX_COMMIT(&trx);
-    return written;
+    *ppos += written;
+    return len == 0;
 }
 
 void

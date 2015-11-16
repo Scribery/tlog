@@ -217,26 +217,17 @@ tlog_sink_write_io(struct tlog_sink *sink,
                    const struct tlog_pkt *pkt)
 {
     tlog_grc grc;
-    const uint8_t *buf;
-    size_t len;
+    size_t pos = 0;
 
     assert(tlog_sink_is_valid(sink));
     assert(tlog_pkt_is_valid(pkt));
     assert(pkt->type == TLOG_PKT_TYPE_IO);
 
-    buf = pkt->data.io.buf;
-    len = pkt->data.io.len;
-
-    while (true) {
-        tlog_chunk_write(&sink->chunk, &pkt->timestamp, pkt->data.io.output,
-                      &buf, &len);
-        if (len == 0) {
-            break;
-        } else {
-            grc = tlog_sink_flush(sink);
-            if (grc != TLOG_RC_OK)
-                return grc;
-        }
+    /* While the packet is not yet written completely */
+    while (!tlog_chunk_write(&sink->chunk, pkt, &pos)) {
+        grc = tlog_sink_flush(sink);
+        if (grc != TLOG_RC_OK)
+            return grc;
     }
     return TLOG_RC_OK;
 }

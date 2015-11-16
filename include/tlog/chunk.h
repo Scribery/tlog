@@ -29,6 +29,7 @@
 #include <tlog/rc.h>
 #include <tlog/trx.h>
 #include <tlog/misc.h>
+#include <tlog/pkt.h>
 #include <tlog/stream.h>
 
 /** Minimum value of chunk size */
@@ -137,21 +138,19 @@ extern bool tlog_chunk_is_pending(const struct tlog_chunk *chunk);
 extern bool tlog_chunk_is_empty(const struct tlog_chunk *chunk);
 
 /**
- * Write I/O to a chunk.
+ * Write a packet to a chunk.
  *
  * @param chunk     The chunk to write to.
- * @param timestamp Input arrival timestamp.
- * @param output    True if writing output, false if input.
- * @param pbuf      Location of/for input buffer pointer.
- * @param plen      Location of/for input buffer length.
+ * @param pkt       The packet to write.
+ * @param ppos      Location of position in the packet the write should start
+ *                  at (set to 0 on first write) / location for position in
+ *                  the packet the write ended at.
  *
- * @return Number of input bytes written.
+ * @return True if the whole of the (remaining) packet fit into the chunk.
  */
-extern size_t tlog_chunk_write(struct tlog_chunk *chunk,
-                               const struct timespec *timestamp,
-                               bool output,
-                               const uint8_t **pbuf,
-                               size_t *plen);
+extern bool tlog_chunk_write(struct tlog_chunk *chunk,
+                             const struct tlog_pkt *pkt,
+                             size_t *ppos);
 
 /**
  * Flush a chunk - write metadata records to reserved space and reset
