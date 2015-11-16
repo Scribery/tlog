@@ -536,7 +536,7 @@ tlog_stream_write(struct tlog_stream *stream,
 
     tlog_utf8_reset(utf8);
 exit:
-    written = (len - *plen);
+    written = (*plen - len);
     *pbuf = buf;
     *plen = len;
     return written;
