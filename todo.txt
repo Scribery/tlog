@@ -73,3 +73,5 @@ Record terminal type as well.
 Consider the possibility of using tlog in a jump server.
 
 Consider renaming "timing" to "meta".
+
+Implement a test for decoding what was encoded.
