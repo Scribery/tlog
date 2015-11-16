@@ -71,3 +71,5 @@ before starting the shell.
 Record terminal type as well.
 
 Consider the possibility of using tlog in a jump server.
+
+Consider renaming "timing" to "meta".
