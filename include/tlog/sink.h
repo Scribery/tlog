@@ -29,11 +29,11 @@
 #include <stdbool.h>
 #include <tlog/rc.h>
 #include <tlog/pkt.h>
-#include <tlog/io.h>
+#include <tlog/chunk.h>
 #include <tlog/writer.h>
 
-/** Minimum value of I/O buffer size */
-#define TLOG_SINK_IO_SIZE_MIN   TLOG_IO_SIZE_MIN
+/** Minimum value of data chunk size */
+#define TLOG_SINK_CHUNK_SIZE_MIN   TLOG_CHUNK_SIZE_MIN
 
 /* Sink instance */
 struct tlog_sink {
@@ -44,7 +44,7 @@ struct tlog_sink {
     size_t              message_id;     /**< Next message ID */
     bool                started;        /**< True if a packet was written */
     struct timespec     start;          /**< First packet timestamp */
-    struct tlog_io      io;             /**< I/O buffer and state */
+    struct tlog_chunk   chunk;          /**< Chunk buffer */
     uint8_t            *message_buf;    /**< Message buffer pointer */
     size_t              message_len;    /**< Message buffer length */
 };
@@ -66,7 +66,7 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
  * @param hostname          Hostname to use in log messages.
  * @param username          Username to use in log messages.
  * @param session_id        Session ID to use in log messages.
- * @param io_size           Maximum I/O message payload length.
+ * @param chunk_size        Maximum I/O message payload length.
  *
  * @return Global return code.
  */
@@ -75,7 +75,7 @@ extern tlog_grc tlog_sink_init(struct tlog_sink *sink,
                                const char *hostname,
                                const char *username,
                                unsigned int session_id,
-                               size_t io_size);
+                               size_t chunk_size);
 
 /**
  * Create (allocate and initialize) a log sink.
@@ -86,7 +86,7 @@ extern tlog_grc tlog_sink_init(struct tlog_sink *sink,
  * @param hostname          Hostname to use in log messages.
  * @param username          Username to use in log messages.
  * @param session_id        Session ID to use in log messages.
- * @param io_size           Maximum I/O message payload length.
+ * @param chunk_size        Maximum I/O message payload length.
  *
  * @return Global return code.
  */
@@ -95,7 +95,7 @@ extern tlog_grc tlog_sink_create(struct tlog_sink **psink,
                                  const char *hostname,
                                  const char *username,
                                  unsigned int session_id,
-                                 size_t io_size);
+                                 size_t chunk_size);
 
 /**
  * Write a packet to a log sink.

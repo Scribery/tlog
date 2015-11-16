@@ -29,7 +29,7 @@
 #include <tlog/misc.h>
 #include "test.h"
 
-#define SIZE    TLOG_SINK_IO_SIZE_MIN
+#define SIZE    TLOG_SINK_CHUNK_SIZE_MIN
 
 #if __WORDSIZE == 64
 #define TIME_T_MAX_NUM (time_t)9223372036854775807

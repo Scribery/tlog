@@ -22,11 +22,11 @@ AM_CPPFLAGS = $(JSON_CFLAGS) $(LIBCURL_CPPFLAGS)
 lib_LTLIBRARIES = libtlog.la
 
 libtlog_la_SOURCES = \
+    chunk.c             \
     es_reader.c         \
     fd_reader.c         \
     fd_writer.c         \
     grc.c               \
-    io.c                \
     misc.c              \
     msg.c               \
     pkt.c               \
