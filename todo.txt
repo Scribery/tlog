@@ -75,3 +75,5 @@ Consider the possibility of using tlog in a jump server.
 Consider renaming "timing" to "meta".
 
 Implement a test for decoding what was encoded.
+
+Make each message start with window size.
