@@ -32,35 +32,20 @@
 /** Minimum I/O buffer size (longest UTF-8 character) */
 #define TLOG_MSG_IO_SIZE_MIN    4
 
-/** Message type */
-enum tlog_msg_type {
-    TLOG_MSG_TYPE_WINDOW,   /**< Window size change */
-    TLOG_MSG_TYPE_IO,       /**< I/O data */
-    TLOG_MSG_TYPE_NUM,      /**< Number of types (not a type itself) */
-};
-
 /**
- * Check if a message type is valid.
- *
- * @param type  The message type to check.
- *
- * @return True if the message type is valid, false otherwise.
+ * Message.
+ * NOTE: Members are named after JSON properties, where possible.
  */
-static inline bool
-tlog_msg_type_is_valid(enum tlog_msg_type type)
-{
-    return type >= 0 && type < TLOG_MSG_TYPE_NUM;
-}
+struct tlog_msg {
+    struct json_object *obj;            /**< The JSON object behind the
+                                             message, NULL for a void
+                                             message */
+    const char         *host;           /**< Hostname */
+    const char         *user;           /**< Username */
+    unsigned int        session;        /**< Audit session ID */
+    size_t              id;             /**< Message ID */
+    struct timespec     pos;            /**< Position timestamp */
 
-/** Window change data */
-struct tlog_msg_data_window {
-    unsigned short int  width;  /**< New window width */
-    unsigned short int  height; /**< New window height */
-    bool                read;   /**< The message was read */
-};
-
-/** I/O data */
-struct tlog_msg_data_io {
     const char         *timing_ptr;     /**< Timing string position */
 
     const char         *in_txt_ptr;     /**< Input text string position */
@@ -87,25 +72,6 @@ struct tlog_msg_data_io {
 
     struct json_object     *bin_obj;    /**< Current binary array object */
     int                    *pbin_pos;   /**< Current binary array position */
-};
-
-/**
- * Message.
- * NOTE: Members are named after JSON properties, where possible.
- */
-struct tlog_msg {
-    struct json_object *obj;        /**< The JSON object behind the message,
-                                         NULL for a void message */
-    const char         *host;       /**< Hostname */
-    const char         *user;       /**< Username */
-    unsigned int        session;    /**< Audit session ID */
-    size_t              id;         /**< Message ID */
-    struct timespec     pos;        /**< Position timestamp */
-    enum tlog_msg_type  type;       /**< Message type */
-    union {
-        struct tlog_msg_data_window     window; /**< Window change data */
-        struct tlog_msg_data_io         io;     /**< I/O data */
-    } data;                             /**< Type-specific data */
 };
 
 /**
