@@ -45,6 +45,8 @@ static const char *tlog_rc_desc_list[TLOG_RC_MAX_PLUS_ONE - TLOG_RC_MIN] = {
         "Curl handle creation failed",
     [TLOG_RC_ES_READER_REPLY_INVALID] =
         "Invalid reply received from HTTP server",
+    [TLOG_RC_MEM_READER_INCOMPLETE_LINE] =
+        "Incomplete message object line encountered",
 };
 
 const char *

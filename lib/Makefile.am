@@ -27,6 +27,8 @@ libtlog_la_SOURCES = \
     fd_reader.c         \
     fd_writer.c         \
     grc.c               \
+    mem_reader.c        \
+    mem_writer.c        \
     misc.c              \
     msg.c               \
     pkt.c               \

@@ -25,6 +25,8 @@ tlog_HEADERS = \
     fd_reader.h     \
     fd_writer.h     \
     grc.h           \
+    mem_reader.h    \
+    mem_writer.h    \
     misc.h          \
     msg.h           \
     pkt.h           \
