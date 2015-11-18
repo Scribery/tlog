@@ -24,6 +24,7 @@
 #define _TLOG_GRC_H
 
 #include <stdbool.h>
+#include <errno.h>
 
 /** Global return code */
 typedef int tlog_grc;
