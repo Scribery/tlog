@@ -73,12 +73,12 @@ op_type_to_str(enum op_type t)
     }
 }
 
-struct op_data_window_write {
+struct op_data_write_window {
     unsigned short int width;
     unsigned short int height;
 };
 
-struct op_data_io_write {
+struct op_data_write_io {
     bool        output;
     uint8_t     buf[SIZE];
     size_t      len;
@@ -87,8 +87,8 @@ struct op_data_io_write {
 struct op {
     enum op_type type;
     union {
-        struct op_data_window_write window_write;
-        struct op_data_io_write     io_write;
+        struct op_data_write_window write_window;
+        struct op_data_write_io     write_io;
         struct timespec             delay;
     } data;
 };
@@ -154,18 +154,18 @@ test(const char *n, const struct test t)
         case OP_TYPE_WRITE_WINDOW:
             tlog_pkt_init_window(&pkt,
                                  &timestamp,
-                                 op->data.window_write.width,
-                                 op->data.window_write.height);
+                                 op->data.write_window.width,
+                                 op->data.write_window.height);
             CHECK_OP(tlog_sink_write(&sink, &pkt));
             tlog_pkt_cleanup(&pkt);
             break;
         case OP_TYPE_WRITE_IO:
             tlog_pkt_init_io(&pkt,
                              &timestamp,
-                             op->data.io_write.output,
-                             (uint8_t *)op->data.io_write.buf,
+                             op->data.write_io.output,
+                             (uint8_t *)op->data.write_io.buf,
                              false,
-                             op->data.io_write.len);
+                             op->data.write_io.len);
             CHECK_OP(tlog_sink_write(&sink, &pkt));
             tlog_pkt_cleanup(&pkt);
             break;
@@ -228,11 +228,11 @@ main(void)
 
 #define OP_WRITE_WINDOW(_data_init_args...) \
     {.type = OP_TYPE_WRITE_WINDOW,                  \
-     .data = {.window_write = {_data_init_args}}}
+     .data = {.write_window = {_data_init_args}}}
 
 #define OP_WRITE_IO(_data_init_args...) \
     {.type = OP_TYPE_WRITE_IO,                  \
-     .data = {.io_write = {_data_init_args}}}
+     .data = {.write_io = {_data_init_args}}}
 
 #define OP_FLUSH {.type = OP_TYPE_FLUSH}
 
