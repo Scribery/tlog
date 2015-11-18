@@ -1,5 +1,5 @@
 /*
- * Tlog syslog message writer.
+ * Tlog file descriptor message writer.
  *
  * Copyright (C) 2015 Red Hat
  *
