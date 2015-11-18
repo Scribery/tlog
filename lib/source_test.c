@@ -25,13 +25,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <tlog/rc.h>
-#include <tlog/fd_reader.h>
+#include <tlog/mem_reader.h>
 #include <tlog/misc.h>
 #include <tlog/source.h>
 #include "test.h"
-
-/** Fd reader text buffer size */
-#define BUF_SIZE 16
 
 enum op_type {
     OP_TYPE_NONE,
@@ -145,40 +142,16 @@ static bool
 test(const char *n, const struct test t)
 {
     bool passed = true;
-    int fd = -1;
     tlog_grc grc;
     struct tlog_reader *reader = NULL;
     struct tlog_source *source = NULL;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
-    char filename[] = "tlog_source_test.XXXXXX";
     const struct op *op;
-    size_t input_len = strlen(t.input);
     size_t loc;
 
-    fd = mkstemp(filename);
-    if (fd < 0) {
-        fprintf(stderr, "Failed opening a temporary file: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-    if (unlink(filename) < 0) {
-        fprintf(stderr, "Failed unlinking the temporary file: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-    if (write(fd, t.input, input_len) != (ssize_t)input_len) {
-        fprintf(stderr, "Failed writing the temporary file: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-    if (lseek(fd, 0, SEEK_SET) < 0) {
-        fprintf(stderr, "Failed rewinding the temporary file: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-    grc = tlog_fd_reader_create(&reader, fd, BUF_SIZE);
+    grc = tlog_mem_reader_create(&reader, t.input, strlen(t.input));
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating FD reader: %s\n",
+        fprintf(stderr, "Failed creating memory reader: %s\n",
                 tlog_grc_strerror(grc));
         exit(1);
     }
@@ -248,8 +221,6 @@ test(const char *n, const struct test t)
 
     tlog_source_destroy(source);
     tlog_reader_destroy(reader);
-    if (fd >= 0)
-        close(fd);
     return passed;
 }
 

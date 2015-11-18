@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <limits.h>
-#include <tlog/fd_writer.h>
+#include <tlog/mem_writer.h>
 #include <tlog/sink.h>
 #include <tlog/misc.h>
 #include "test.h"
@@ -105,33 +105,19 @@ static bool
 test(const char *n, const struct test t)
 {
     bool passed = true;
-    int fd = -1;
     tlog_grc grc;
     struct tlog_writer *writer = NULL;
-    char filename[] = "tlog_sink_test.XXXXXX";
     struct tlog_pkt pkt = TLOG_PKT_VOID;
     struct timespec timestamp = TLOG_TIMESPEC_ZERO;
     struct tlog_sink sink;
     const struct op *op;
-    off_t end;
     size_t exp_output_len;
     size_t res_output_len;
     char *res_output = NULL;
 
-    fd = mkstemp(filename);
-    if (fd < 0) {
-        fprintf(stderr, "Failed opening a temporary file: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-    if (unlink(filename) < 0) {
-        fprintf(stderr, "Failed unlinking the temporary file: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-    grc = tlog_fd_writer_create(&writer, fd);
+    grc = tlog_mem_writer_create(&writer, &res_output, &res_output_len);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating FD writer: %s\n",
+        fprintf(stderr, "Failed creating memory writer: %s\n",
                 tlog_grc_strerror(grc));
         exit(1);
     }
@@ -201,30 +187,7 @@ test(const char *n, const struct test t)
 #undef CHECK_OP
 #undef FAIL_OP
 
-    end = lseek(fd, 0, SEEK_END);
-    if (end < 0) {
-        fprintf(stderr, "Failed to seek the file: %s\n", strerror(errno));
-        exit(1);
-    }
-    if (lseek(fd, 0, SEEK_SET) < 0) {
-        fprintf(stderr, "Failed to seek the file: %s\n", strerror(errno));
-        exit(1);
-    }
-
-    res_output_len = (size_t)end;
     exp_output_len = strlen((const char *)t.output);
-
-    res_output = malloc(res_output_len);
-    if (res_output == NULL) {
-        fprintf(stderr, "Failed to allocate output buffer: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-
-    if (read(fd, res_output, res_output_len) != (ssize_t)res_output_len) {
-        fprintf(stderr, "Failed to read the file: %s\n", strerror(errno));
-        exit(1);
-    }
 
     if (res_output_len != exp_output_len ||
         memcmp(res_output, t.output, res_output_len) != 0) {
@@ -240,10 +203,8 @@ test(const char *n, const struct test t)
 
 cleanup:
     tlog_pkt_cleanup(&pkt);
-    free(res_output);
     tlog_writer_destroy(writer);
-    if (fd >= 0)
-        close(fd);
+    free(res_output);
     tlog_sink_cleanup(&sink);
     return passed;
 }
