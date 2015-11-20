@@ -25,12 +25,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <limits.h>
-#include <tlog/mem_writer.h>
-#include <tlog/sink.h>
-#include <tlog/misc.h>
-#include <tlog/test_misc.h>
-
-#define SIZE    TLOG_SINK_CHUNK_SIZE_MIN
+#include <tlog/test_sink.h>
 
 #if __WORDSIZE == 64
 #define TIME_T_MAX_NUM (time_t)9223372036854775807
@@ -44,153 +39,27 @@
 
 #define USEC_MAX_NUM    999999999
 
-enum op_type {
-    OP_TYPE_NONE,
-    OP_TYPE_WRITE,
-    OP_TYPE_FLUSH,
-    OP_TYPE_CUT,
-    OP_TYPE_NUM
-};
-
-static const char*
-op_type_to_str(enum op_type t)
-{
-    switch (t) {
-    case OP_TYPE_NONE:
-        return "none";
-    case OP_TYPE_WRITE:
-        return "write";
-    case OP_TYPE_FLUSH:
-        return "flush";
-    case OP_TYPE_CUT:
-        return "cut";
-    default:
-        return "<unknown>";
-    }
-}
-
-struct op {
-    enum op_type        type;
-    union {
-        struct tlog_pkt write;
-    } data;
-};
-
-struct test {
-    const char     *hostname;
-    const char     *username;
-    unsigned int    session_id;
-    struct op       op_list[16];
-    const char     *output;
-};
-
-static bool
-test(const char *n, const struct test t)
-{
-    bool passed = true;
-    tlog_grc grc;
-    struct tlog_writer *writer = NULL;
-    struct tlog_sink sink;
-    const struct op *op;
-    size_t exp_output_len;
-    size_t res_output_len;
-    char *res_output = NULL;
-
-    grc = tlog_mem_writer_create(&writer, &res_output, &res_output_len);
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating memory writer: %s\n",
-                tlog_grc_strerror(grc));
-        exit(1);
-    }
-
-    grc = tlog_sink_init(&sink, writer, t.hostname, t.username,
-                         t.session_id, SIZE);
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed initializing the sink: %s\n",
-                tlog_grc_strerror(grc));
-        exit(1);
-    };
-
-#define FAIL(_fmt, _args...) \
-    do {                                                \
-        fprintf(stderr, "%s: " _fmt "\n", n, ##_args);  \
-        passed = false;                                 \
-    } while (0)
-
-#define FAIL_OP \
-    do {                                                    \
-        FAIL("op #%zd (%s) failed",                         \
-             op - t.op_list + 1, op_type_to_str(op->type)); \
-        goto cleanup;                                       \
-    } while (0)
-
-#define CHECK_OP(_expr) \
-    do {                            \
-        if ((_expr) != TLOG_RC_OK)  \
-            FAIL_OP;                \
-    } while (0)
-
-    for (op = t.op_list; op->type != OP_TYPE_NONE; op++) {
-        switch (op->type) {
-        case OP_TYPE_WRITE:
-            CHECK_OP(tlog_sink_write(&sink, &op->data.write));
-            break;
-        case OP_TYPE_FLUSH:
-            CHECK_OP(tlog_sink_flush(&sink));
-            break;
-        case OP_TYPE_CUT:
-            CHECK_OP(tlog_sink_cut(&sink));
-            break;
-        default:
-            fprintf(stderr, "Unknown operation type: %d\n", op->type);
-            exit(1);
-        }
-    }
-
-#undef CHECK_OP
-#undef FAIL_OP
-
-    exp_output_len = strlen((const char *)t.output);
-
-    if (res_output_len != exp_output_len ||
-        memcmp(res_output, t.output, res_output_len) != 0) {
-        fprintf(stderr, "%s: output mismatch:\n", n);
-        tlog_test_diff(stderr,
-                       (const uint8_t *)res_output, res_output_len,
-                       (const uint8_t *)t.output, exp_output_len);
-        passed = false;
-    }
-#undef FAIL
-
-    fprintf(stderr, "%s: %s\n", n, (passed ? "PASS" : "FAIL"));
-
-cleanup:
-    tlog_writer_destroy(writer);
-    free(res_output);
-    tlog_sink_cleanup(&sink);
-    return passed;
-}
-
 int
 main(void)
 {
     bool passed = true;
 
 #define TEST(_name_token, _struct_init_args...) \
-    passed = test(#_name_token,                 \
-                  (struct test){                \
+    passed = tlog_test_sink(                    \
+                #_name_token,                   \
+                (struct tlog_test_sink){        \
                     .hostname = "localhost",    \
                     .username = "user",         \
                     .session_id = 0,            \
                     _struct_init_args           \
-                  }                             \
-                 ) && passed
+                }                               \
+    ) && passed
 
 #define OP_NONE {.type = OP_TYPE_NONE}
 
 #define OP_WRITE_WINDOW(_sec, _nsec, _width, _height) \
     {                                                   \
-        .type = OP_TYPE_WRITE,                          \
+        .type = TLOG_TEST_SINK_OP_TYPE_WRITE,           \
         .data.write = {                                 \
             .type = TLOG_PKT_TYPE_WINDOW,               \
             .timestamp = {                              \
@@ -206,7 +75,7 @@ main(void)
 
 #define OP_WRITE_IO(_sec, _nsec, _output, _buf, _len) \
     {                                                   \
-        .type = OP_TYPE_WRITE,                          \
+        .type = TLOG_TEST_SINK_OP_TYPE_WRITE,           \
         .data.write = {                                 \
             .type = TLOG_PKT_TYPE_IO,                   \
             .timestamp = {                              \
@@ -221,9 +90,9 @@ main(void)
         }                                               \
     }
 
-#define OP_FLUSH {.type = OP_TYPE_FLUSH}
+#define OP_FLUSH {.type = TLOG_TEST_SINK_OP_TYPE_FLUSH}
 
-#define OP_CUT {.type = OP_TYPE_CUT}
+#define OP_CUT {.type = TLOG_TEST_SINK_OP_TYPE_CUT}
 
 #define MSG(_id_tkn, _pos, _timing, \
             _in_txt, _in_bin, _out_txt, _out_bin)               \

@@ -43,5 +43,6 @@ tlog_HEADERS = \
     writer_type.h
 
 noinst_HEADERS = \
-    test_stream_enc.h   \
-    test_misc.h
+    test_misc.h         \
+    test_sink.h         \
+    test_stream_enc.h
