@@ -28,7 +28,7 @@
 #include <tlog/mem_writer.h>
 #include <tlog/sink.h>
 #include <tlog/misc.h>
-#include "test.h"
+#include <tlog/test_misc.h>
 
 #define SIZE    TLOG_SINK_CHUNK_SIZE_MIN
 

@@ -1,5 +1,5 @@
 /*
- * Tlog test functions.
+ * Tlog miscellaneous test functions.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -20,8 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TLOG_TEST_H
-#define _TLOG_TEST_H
+#ifndef _TLOG_TEST_MISC_H
+#define _TLOG_TEST_MISC_H
 
 #include <stdio.h>
 #include <stdint.h>
@@ -39,4 +39,4 @@ extern void tlog_test_diff(FILE *stream,
                            const uint8_t *res_buf, size_t res_len,
                            const uint8_t *exp_buf, size_t exp_len);
 
-#endif /* _TLOG_TEST_H */
+#endif /* _TLOG_TEST_MISC_H */

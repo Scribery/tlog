@@ -28,7 +28,7 @@
 #include <tlog/mem_reader.h>
 #include <tlog/misc.h>
 #include <tlog/source.h>
-#include "test.h"
+#include <tlog/test_misc.h>
 
 enum op_type {
     OP_TYPE_NONE,

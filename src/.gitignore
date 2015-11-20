@@ -1,2 +1,4 @@
 /tlog-rec
 /tlog-play
+tlog-test-*
+!tlog-test-*.c

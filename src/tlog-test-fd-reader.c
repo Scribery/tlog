@@ -27,7 +27,7 @@
 #include <tlog/rc.h>
 #include <tlog/fd_reader.h>
 #include <tlog/misc.h>
-#include "test.h"
+#include <tlog/test_misc.h>
 
 /** Fd reader text buffer size */
 #define BUF_SIZE 16
@@ -83,7 +83,7 @@ test(const char *n, const struct test t)
     int fd = -1;
     tlog_grc grc;
     struct tlog_reader *reader = NULL;
-    char filename[] = "tlog_fd_reader_test.XXXXXX";
+    char filename[] = "tlog-test-fd-reader.XXXXXX";
     const struct op *op;
     struct json_object *object = NULL;
     size_t input_len = strlen(t.input);

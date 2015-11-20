@@ -22,16 +22,16 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "test.h"
-#include "stream_enc_test.h"
+#include <tlog/test_misc.h>
+#include <tlog/test_stream_enc.h>
 
 #define BOOL_STR(_b) ((_b) ? "true" : "false")
 
 bool
-tlog_stream_enc_test(const char *n, const struct tlog_stream_enc_test t)
+tlog_test_stream_enc(const char *n, const struct tlog_test_stream_enc t)
 {
     bool passed = true;
-    uint8_t obuf[TLOG_STREAM_ENC_TEST_BUF_SIZE] = {0,};
+    uint8_t obuf[TLOG_TEST_STREAM_ENC_BUF_SIZE] = {0,};
     size_t orem = t.orem_in;
     size_t olen = t.olen_in;
     size_t irun = t.irun_in;
@@ -64,11 +64,11 @@ tlog_stream_enc_test(const char *n, const struct tlog_stream_enc_test t)
     CMP_SIZE(irun);
     CMP_SIZE(idig);
 
-    if (memcmp(obuf, t.obuf_out, TLOG_STREAM_ENC_TEST_BUF_SIZE) != 0) {
+    if (memcmp(obuf, t.obuf_out, TLOG_TEST_STREAM_ENC_BUF_SIZE) != 0) {
         fprintf(stderr, "%s: obuf mismatch:\n", n);
         tlog_test_diff(stderr,
-                       obuf, TLOG_STREAM_ENC_TEST_BUF_SIZE,
-                       t.obuf_out, TLOG_STREAM_ENC_TEST_BUF_SIZE);
+                       obuf, TLOG_TEST_STREAM_ENC_BUF_SIZE,
+                       t.obuf_out, TLOG_TEST_STREAM_ENC_BUF_SIZE);
         passed = false;
     }
 

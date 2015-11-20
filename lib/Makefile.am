@@ -21,6 +21,8 @@ AM_CPPFLAGS = $(JSON_CFLAGS) $(LIBCURL_CPPFLAGS)
 
 lib_LTLIBRARIES = libtlog.la
 
+noinst_LTLIBRARIES = libtlog_test.la
+
 libtlog_la_SOURCES = \
     chunk.c             \
     es_reader.c         \
@@ -44,80 +46,8 @@ libtlog_la_SOURCES = \
 
 libtlog_la_LIBADD = $(JSON_LIBS) $(LIBCURL)
 
-TESTS = \
-    tlog_fd_reader_test         \
-    tlog_grc_test               \
-    tlog_sink_test              \
-    tlog_source_test            \
-    tlog_stream_btoa_test       \
-    tlog_stream_enc_bin_test    \
-    tlog_stream_enc_txt_test    \
-    tlog_stream_test
+libtlog_test_la_SOURCES = \
+    test_misc.c             \
+    test_stream_enc.c
 
-check_PROGRAMS = \
-    tlog_fd_reader_test         \
-    tlog_grc_test               \
-    tlog_sink_test              \
-    tlog_source_test            \
-    tlog_stream_btoa_test       \
-    tlog_stream_enc_bin_test    \
-    tlog_stream_enc_txt_test    \
-    tlog_stream_test
-
-tlog_stream_btoa_test_SOURCES = \
-    stream_btoa_test.c
-
-tlog_stream_btoa_test_LDADD = libtlog.la
-
-tlog_stream_enc_bin_test_SOURCES = \
-    stream_enc_bin_test.c           \
-    stream_enc_test.c               \
-    stream_enc_test.h               \
-    test.c                          \
-    test.h
-
-tlog_stream_enc_bin_test_LDADD = libtlog.la
-
-tlog_stream_enc_txt_test_SOURCES = \
-    stream_enc_test.c               \
-    stream_enc_test.h               \
-    stream_enc_txt_test.c           \
-    test.c                          \
-    test.h
-
-tlog_stream_enc_txt_test_LDADD = libtlog.la
-
-tlog_stream_test_SOURCES = \
-    stream_test.c           \
-    test.c                  \
-    test.h
-
-tlog_stream_test_LDADD = libtlog.la
-
-tlog_sink_test_SOURCES = \
-    sink_test.c             \
-    test.c                  \
-    test.h
-
-tlog_sink_test_LDADD = libtlog.la
-
-tlog_fd_reader_test_SOURCES = \
-    fd_reader_test.c            \
-    test.c                      \
-    test.h
-
-tlog_fd_reader_test_LDADD = libtlog.la $(JSON_LIBS)
-
-tlog_grc_test_SOURCES = \
-    grc_test.c            \
-    test.c                      \
-    test.h
-
-tlog_grc_test_LDADD = libtlog.la $(JSON_LIBS) $(LIBCURL)
-
-tlog_source_test_SOURCES = \
-    source_test.c            \
-    test.c                      \
-    test.h
-
-tlog_source_test_LDADD = libtlog.la $(JSON_LIBS)
+libtlog_test_la_LIBADD = libtlog.la

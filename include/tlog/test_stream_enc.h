@@ -20,15 +20,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TLOG_STREAM_ENC_TEST_H
-#define _TLOG_STREAM_ENC_TEST_H
+#ifndef _TLOG_TEST_STREAM_ENC_H
+#define _TLOG_TEST_STREAM_ENC_H
 
 #include <stdbool.h>
 #include <stdint.h>
 
-#define TLOG_STREAM_ENC_TEST_BUF_SIZE    32
+#define TLOG_TEST_STREAM_ENC_BUF_SIZE    32
 
-typedef bool (*tlog_stream_enc_test_func)(uint8_t *obuf,
+typedef bool (*tlog_test_stream_enc_func)(uint8_t *obuf,
                                           size_t *porem,
                                           size_t *polen,
                                           size_t *pirun,
@@ -36,11 +36,11 @@ typedef bool (*tlog_stream_enc_test_func)(uint8_t *obuf,
                                           const uint8_t *ibuf,
                                           size_t ilen);
 
-struct tlog_stream_enc_test {
-    tlog_stream_enc_test_func   func;
-    const uint8_t               ibuf_in[TLOG_STREAM_ENC_TEST_BUF_SIZE];
+struct tlog_test_stream_enc {
+    tlog_test_stream_enc_func   func;
+    const uint8_t               ibuf_in[TLOG_TEST_STREAM_ENC_BUF_SIZE];
     size_t                      ilen_in;
-    const uint8_t               obuf_out[TLOG_STREAM_ENC_TEST_BUF_SIZE];
+    const uint8_t               obuf_out[TLOG_TEST_STREAM_ENC_BUF_SIZE];
     size_t                      orem_in;
     size_t                      orem_out;
     size_t                      olen_in;
@@ -60,7 +60,7 @@ struct tlog_stream_enc_test {
  *
  * @return True if test passed, false otherwise.
  */
-extern bool tlog_stream_enc_test(const char *n,
-                                 const struct tlog_stream_enc_test t);
+extern bool tlog_test_stream_enc(const char *n,
+                                 const struct tlog_test_stream_enc t);
 
-#endif /* _TLOG_STREAM_ENC_TEST_H */
+#endif /* _TLOG_TEST_STREAM_ENC_H */

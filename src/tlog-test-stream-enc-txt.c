@@ -21,9 +21,12 @@
  */
 
 #include <stdio.h>
-#include "stream_enc_test.h"
+#include <string.h>
+#include <tlog/test_stream_enc.h>
 
-#include "stream.c"
+extern bool tlog_stream_enc_txt(uint8_t *obuf, size_t *porem, size_t *polen,
+                                size_t *pirun, size_t *pidig,
+                                const uint8_t *ibuf, size_t ilen);
 
 int
 main(void)
@@ -31,8 +34,8 @@ main(void)
     bool passed = true;
 
 #define TEST(_name_token, _struct_init_args...) \
-    passed = tlog_stream_enc_test(#_name_token,                         \
-                                  (struct tlog_stream_enc_test)         \
+    passed = tlog_test_stream_enc(#_name_token,                         \
+                                  (struct tlog_test_stream_enc)         \
                                        {.func = tlog_stream_enc_txt,    \
                                         ##_struct_init_args}) &&        \
              passed

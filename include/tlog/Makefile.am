@@ -42,3 +42,6 @@ tlog_HEADERS = \
     writer.h        \
     writer_type.h
 
+noinst_HEADERS = \
+    test_stream_enc.h   \
+    test_misc.h

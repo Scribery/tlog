@@ -28,6 +28,5 @@
 *.trs
 *.lo
 *.la
-*_test
 Makefile
 Makefile.in

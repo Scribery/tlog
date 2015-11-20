@@ -109,7 +109,7 @@ error:
  *
  * @return Length of the (to be) printed number.
  */
-static size_t
+size_t
 tlog_stream_btoa(uint8_t *buf, size_t len, uint8_t b)
 {
     size_t l = 0;
@@ -169,7 +169,7 @@ tlog_stream_btoa(uint8_t *buf, size_t len, uint8_t b)
  * @return True if both the bytes and the new counter did fit into the
  *         remaining output space.
  */
-static bool
+bool
 tlog_stream_enc_bin(uint8_t *obuf, size_t *porem, size_t *polen,
                     size_t *pirun, size_t *pidig,
                     const uint8_t *ibuf, size_t ilen)
@@ -239,7 +239,7 @@ tlog_stream_enc_bin(uint8_t *obuf, size_t *porem, size_t *polen,
  * @return True if both the character and the new counter did fit into the
  *         remaining output space.
  */
-static bool
+bool
 tlog_stream_enc_txt(uint8_t *obuf, size_t *porem, size_t *polen,
                     size_t *pirun, size_t *pidig,
                     const uint8_t *ibuf, size_t ilen)

@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <tlog/stream.h>
-#include "test.h"
+#include <tlog/test_misc.h>
 
 #define SIZE    TLOG_STREAM_SIZE_MIN
 

@@ -1,5 +1,5 @@
 /*
- * Tlog test functions.
+ * Tlog miscellaneous test functions.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -21,7 +21,7 @@
  */
 
 #include <tlog/misc.h>
-#include "test.h"
+#include <tlog/test_misc.h>
 
 static void
 tlog_test_diff_side(FILE *stream, const char *name,
