@@ -45,4 +45,5 @@ tlog_HEADERS = \
 noinst_HEADERS = \
     test_misc.h         \
     test_sink.h         \
+    test_source.h       \
     test_stream_enc.h

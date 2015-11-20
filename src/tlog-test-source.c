@@ -20,209 +20,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+#include <tlog/test_source.h>
 #include <tlog/rc.h>
-#include <tlog/mem_reader.h>
-#include <tlog/misc.h>
-#include <tlog/source.h>
-#include <tlog/test_misc.h>
-
-enum op_type {
-    OP_TYPE_NONE,
-    OP_TYPE_READ,
-    OP_TYPE_LOC_GET,
-    OP_TYPE_NUM
-};
-
-static const char*
-op_type_to_str(enum op_type t)
-{
-    switch (t) {
-    case OP_TYPE_NONE:
-        return "none";
-    case OP_TYPE_READ:
-        return "read";
-    case OP_TYPE_LOC_GET:
-        return "loc_get";
-    default:
-        return "<unknown>";
-    }
-}
-
-struct op_data_loc_get {
-    size_t exp_loc;
-};
-
-struct op_data_read {
-    int             exp_grc;
-    struct tlog_pkt exp_pkt;
-};
-
-struct op {
-    enum op_type type;
-    union {
-        struct op_data_loc_get  loc_get;
-        struct op_data_read     read;
-    } data;
-};
-
-struct test {
-    const char     *input;
-    const char     *hostname;
-    const char     *username;
-    unsigned int    session_id;
-    size_t          io_size;
-    struct op       op_list[16];
-};
-
-static void
-pkt_diff(FILE *stream,
-         const struct tlog_pkt *res,
-         const struct tlog_pkt *exp)
-{
-    assert(tlog_pkt_is_valid(res));
-    assert(tlog_pkt_is_valid(exp));
-
-    if (res->timestamp.tv_sec != exp->timestamp.tv_sec ||
-        res->timestamp.tv_nsec != exp->timestamp.tv_nsec) {
-        fprintf(stream, "timestamp: %lld.%09ld != %lld.%09ld\n",
-                (long long int)res->timestamp.tv_sec,
-                (long int)res->timestamp.tv_nsec,
-                (long long int)exp->timestamp.tv_sec,
-                (long int)exp->timestamp.tv_nsec);
-    }
-
-    fprintf(stream, "type: %s %c= %s\n",
-            tlog_pkt_type_to_str(res->type),
-            (res->type == exp->type ? '=' : '!'),
-            tlog_pkt_type_to_str(exp->type));
-    if (res->type != exp->type) {
-        return;
-    }
-
-    switch (res->type) {
-    case TLOG_PKT_TYPE_WINDOW:
-        if (res->data.window.width != exp->data.window.width) {
-            fprintf(stream, "width: %hu != %hu\n",
-                    res->data.window.width, exp->data.window.width);
-        }
-        if (res->data.window.height != exp->data.window.height) {
-            fprintf(stream, "height: %hu != %hu\n",
-                    res->data.window.height, exp->data.window.height);
-        }
-        break;
-    case TLOG_PKT_TYPE_IO:
-        if (res->data.io.output != exp->data.io.output) {
-            fprintf(stream, "output: %s != %s\n",
-                    (res->data.io.output ? "true" : "false"),
-                    (exp->data.io.output ? "true" : "false"));
-        }
-        if (res->data.io.len != exp->data.io.len) {
-            fprintf(stream, "len: %zu != %zu\n",
-                    res->data.io.len, exp->data.io.len);
-        }
-        if (res->data.io.len != exp->data.io.len ||
-            memcmp(res->data.io.buf, exp->data.io.buf,
-                   res->data.io.len) != 0) {
-            fprintf(stream, "buf mismatch:");
-            tlog_test_diff(stream,
-                           res->data.io.buf, res->data.io.len,
-                           exp->data.io.buf, exp->data.io.len);
-        }
-        break;
-    default:
-        break;
-    }
-}
-
-static bool
-test(const char *n, const struct test t)
-{
-    bool passed = true;
-    tlog_grc grc;
-    struct tlog_reader *reader = NULL;
-    struct tlog_source *source = NULL;
-    struct tlog_pkt pkt = TLOG_PKT_VOID;
-    const struct op *op;
-    size_t loc;
-
-    grc = tlog_mem_reader_create(&reader, t.input, strlen(t.input));
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating memory reader: %s\n",
-                tlog_grc_strerror(grc));
-        exit(1);
-    }
-    grc = tlog_source_create(&source, reader,
-                             t.hostname, t.username, t.session_id,
-                             t.io_size);
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating source: %s\n",
-                tlog_grc_strerror(grc));
-        exit(1);
-    }
-
-#define FAIL(_fmt, _args...) \
-    do {                                                \
-        fprintf(stderr, "%s: " _fmt "\n", n, ##_args);  \
-        passed = false;                                 \
-    } while (0)
-
-#define FAIL_OP(_fmt, _args...) \
-    FAIL("op #%zd (%s): " _fmt,                                 \
-         op - t.op_list + 1, op_type_to_str(op->type), ##_args)
-
-    for (op = t.op_list; op->type != OP_TYPE_NONE; op++) {
-        switch (op->type) {
-        case OP_TYPE_READ:
-            grc = tlog_source_read(source, &pkt);
-            if (grc != op->data.read.exp_grc) {
-                const char *res_str;
-                const char *exp_str;
-                res_str = tlog_grc_strerror(grc);
-                exp_str = tlog_grc_strerror(op->data.read.exp_grc);
-                FAIL_OP("grc: %s (%d) != %s (%d)",
-                        res_str, grc,
-                        exp_str, op->data.read.exp_grc);
-            }
-            if (!tlog_pkt_is_equal(&pkt, &op->data.read.exp_pkt)) {
-                FAIL_OP("packet mismatch:");
-                pkt_diff(stderr, &pkt, &op->data.read.exp_pkt);
-            }
-            tlog_pkt_cleanup(&pkt);
-            break;
-        case OP_TYPE_LOC_GET:
-            loc = tlog_source_loc_get(source);
-            if (loc != op->data.loc_get.exp_loc) {
-                char *res_str;
-                char *exp_str;
-                res_str = tlog_source_loc_fmt(source, loc);
-                exp_str = tlog_source_loc_fmt(source,
-                                              op->data.loc_get.exp_loc);
-                FAIL_OP("loc: %s (%zu) != %s (%zu)",
-                        res_str, loc,
-                        exp_str, op->data.loc_get.exp_loc);
-                free(res_str);
-                free(exp_str);
-            }
-            break;
-        default:
-            fprintf(stderr, "Unknown operation type: %d\n", op->type);
-            exit(1);
-        }
-    }
-
-#undef FAIL_OP
-#undef FAIL
-
-    fprintf(stderr, "%s: %s\n", n, (passed ? "PASS" : "FAIL"));
-
-    tlog_source_destroy(source);
-    tlog_reader_destroy(reader);
-    return passed;
-}
+#include <tlog/grc.h>
+#include <json_tokener.h>
 
 int
 main(void)
@@ -251,10 +53,10 @@ main(void)
                  _timing, _in_txt, _in_bin, _out_txt, _out_bin)
 
 
-#define OP_NONE {.type = OP_TYPE_NONE}
+#define OP_NONE {.type = TLOG_TEST_SOURCE_OP_TYPE_NONE}
 
 #define OP_LOC_GET(_exp_loc) \
-    {.type = OP_TYPE_LOC_GET,                       \
+    {.type = TLOG_TEST_SOURCE_OP_TYPE_LOC_GET,      \
      .data = {.loc_get = {.exp_loc = _exp_loc}}}
 
 #define PKT_VOID TLOG_PKT_VOID
@@ -302,21 +104,22 @@ main(void)
 
 
 #define OP_READ(_exp_grc, _exp_pkt) \
-    {.type = OP_TYPE_READ,                                          \
+    {.type = TLOG_TEST_SOURCE_OP_TYPE_READ,                         \
      .data = {.read = {.exp_grc = _exp_grc, .exp_pkt = _exp_pkt}}}
 
 #define OP_READ_OK(_args...) OP_READ(TLOG_RC_OK, ##_args)
 
 #define TEST_SPEC(_name_token, _input, _hostname, _username, _session_id, \
                   _io_size, _op_list_init_args...)                          \
-    passed = test(#_name_token,                                             \
-                  (struct test){                                            \
+    passed = tlog_test_source(#_name_token,                                 \
+                  (struct tlog_test_source){                                \
                     .input      = _input,                                   \
                     .hostname   = _hostname,                                \
                     .username   = _username,                                \
                     .session_id = _session_id,                              \
                     .io_size    = _io_size,                                 \
-                    .op_list    = {_op_list_init_args, OP_NONE}             \
+                    .op_list    = {_op_list_init_args, OP_NONE              \
+                    }                                                       \
                   }                                                         \
                  ) && passed
 

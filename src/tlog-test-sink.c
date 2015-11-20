@@ -20,12 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <limits.h>
 #include <tlog/test_sink.h>
+#include <limits.h>
 
 #if __WORDSIZE == 64
 #define TIME_T_MAX_NUM (time_t)9223372036854775807
