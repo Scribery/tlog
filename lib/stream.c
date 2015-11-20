@@ -107,7 +107,7 @@ error:
  * @param len   The buffer length.
  * @param b     The byte to print.
  *
- * @return Length of the (to be) printed number.
+ * @return Length of the number (to be) printed.
  */
 size_t
 tlog_stream_btoa(uint8_t *buf, size_t len, uint8_t b)
@@ -158,13 +158,13 @@ tlog_stream_btoa(uint8_t *buf, size_t len, uint8_t b)
  * Encode an invalid UTF-8 byte sequence into a JSON array buffer atomically.
  * Reserve space for adding input length in decimal bytes.
  *
- * @param obuf  Pointer to the output buffer.
+ * @param obuf  Output buffer.
  * @param porem Location of/for the remaining output space, in bytes.
  * @param polen Location of/for output byte counter.
  * @param pirun Location of/for input character counter.
  * @param pidig Location of/for the next digit input counter limit.
- * @param ibuf  Pointer to the input buffer.
- * @param ilen  Pointer to the input length.
+ * @param ibuf  Input buffer.
+ * @param ilen  Input length.
  *
  * @return True if both the bytes and the new counter did fit into the
  *         remaining output space.
@@ -228,13 +228,13 @@ tlog_stream_enc_bin(uint8_t *obuf, size_t *porem, size_t *polen,
  * Encode a valid UTF-8 byte sequence into a JSON string buffer atomically.
  * Reserve space for adding input length in decimal characters.
  *
- * @param obuf  Pointer to the output buffer.
+ * @param obuf  Output buffer.
  * @param porem Location of/for the remaining output space, in bytes.
  * @param polen Location of/for output byte counter.
  * @param pirun Location of/for input character counter.
  * @param pidig Location of/for the next digit input counter limit.
- * @param ibuf  Pointer to the input buffer.
- * @param ilen  Pointer to the input length.
+ * @param ibuf  Input buffer.
+ * @param ilen  Input length.
  *
  * @return True if both the character and the new counter did fit into the
  *         remaining output space.
