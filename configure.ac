@@ -62,5 +62,6 @@ AC_CONFIG_FILES([Makefile
                  include/Makefile
                  include/tlog/Makefile
                  lib/Makefile
-                 src/Makefile])
+                 src/Makefile
+                 doc/Makefile])
 AC_OUTPUT

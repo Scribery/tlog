@@ -1,0 +1,75 @@
+{
+    "title":        "Tlog message",
+    "$schema":      "http://json-schema.org/draft-04/schema#",
+
+    "type":         "object",
+
+    "properties":   {
+        "host":     {
+            "description":  "Recording host name",
+            "type":         "string"
+        },
+        "user":     {
+            "description":  "Recorded user name",
+            "type":         "string"
+        },
+        "session":  {
+            "description":  "Recorded audit session ID",
+            "type":         "integer",
+            "minimum":      0
+        },
+
+        "id":       {
+            "description":  "ID of the message within session",
+            "type":         "integer",
+            "minimum":      0
+        },
+        "pos":      {
+            "description":  "Message position in session, milliseconds",
+            "type":         "integer",
+            "minimum":      0
+        },
+
+        "timing":   {
+            "description":  "Distribution of events in time",
+            "type":         "string"
+        },
+
+        "in_txt":   {
+            "description":  "Input text with invalid characters scrubbed",
+            "type":         "string"
+        },
+        "in_bin":   {
+            "description":  "Scrubbed invalid input characters as bytes",
+            "type":         "array",
+            "items":    {
+                "type":         "integer",
+                "minimum":      0,
+                "maximum":      255
+            }
+        },
+
+        "out_txt":  {
+            "description":  "Output text with invalid characters scrubbed",
+            "type":         "string"
+        },
+        "out_bin":  {
+            "description":  "Scrubbed invalid output characters as bytes",
+            "type":         "array",
+            "items":    {
+                "type":         "integer",
+                "minimum":      0,
+                "maximum":      255
+            }
+        }
+    },
+
+    "required":     [
+        "host",
+        "user",
+        "session",
+        "id",
+        "pos",
+        "timing"
+    ]
+}
