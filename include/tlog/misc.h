@@ -36,6 +36,23 @@
 /** Return minimum of two numbers */
 #define TLOG_MIN(_a, _b) ((_a) < (_b) ? (_a) : (_b))
 
+/** Return an offset of a type member */
+#define TLOG_OFFSET_OF(_type, _member) ((size_t) &((_type *)0)->_member)
+
+/**
+ * Cast a member of a structure out to the containing structure.
+ *
+ * @param _ptr      The pointer to the member.
+ * @param _type     The type of the container this is embedded in.
+ * @param _member   The name of the member within the type.
+ *
+ */
+#define TLOG_CONTAINER_OF(_ptr, _type, _member) \
+    ({                                                              \
+        const typeof(((_type *)0)->_member) *_mptr = (_ptr);        \
+        (_type *)((char *)_mptr - TLOG_OFFSET_OF(_type, _member));  \
+    })
+
 /**
  * Subtract timespec b from timespec a and put the result in res.
  *
