@@ -52,50 +52,25 @@ struct tlog_chunk {
 };
 
 /** Chunk transaction store */
-struct tlog_chunk_trx_store {
+TLOG_TRX_STORE_SIG(tlog_chunk) {
     size_t              rem;        /**< Remaining total buffer space */
     uint8_t            *timing_ptr; /**< Timing output pointer */
     struct timespec     first;      /**< First write timestamp */
     struct timespec     last;       /**< Last write timestamp */
 
-    struct tlog_stream_trx_store    input;  /**< Input store */
-    struct tlog_stream_trx_store    output; /**< Output store */
+    TLOG_TRX_STORE_SIG(tlog_stream) input;  /**< Input store */
+    TLOG_TRX_STORE_SIG(tlog_stream) output; /**< Output store */
 };
 
-/**
- * Make a transaction backup of a chunk.
- *
- * @param store     Transaction store to backup to.
- * @param object    Chunk object to backup.
- */
-static inline void
-tlog_chunk_trx_backup(struct tlog_chunk_trx_store *store,
-                      struct tlog_chunk *object)
+/** Transfer transaction data of a chunk */
+static inline TLOG_TRX_XFR_SIG(tlog_chunk)
 {
-    store->rem          = object->rem;
-    store->timing_ptr   = object->timing_ptr;
-    store->first        = object->first;
-    store->last         = object->last;
-    tlog_stream_trx_backup(&store->input, &object->input);
-    tlog_stream_trx_backup(&store->output, &object->output);
-}
-
-/**
- * Restore a chunk from a transaction backup.
- *
- * @param store     Transaction store to restore from.
- * @param object    Chunk object to restore.
- */
-static inline void
-tlog_chunk_trx_restore(struct tlog_chunk_trx_store *store,
-                       struct tlog_chunk *object)
-{
-    object->rem          = store->rem;
-    object->timing_ptr   = store->timing_ptr;
-    object->first        = store->first;
-    object->last         = store->last;
-    tlog_stream_trx_restore(&store->input, &object->input);
-    tlog_stream_trx_restore(&store->output, &object->output);
+    TLOG_TRX_XFR_VAR(rem);
+    TLOG_TRX_XFR_VAR(timing_ptr);
+    TLOG_TRX_XFR_VAR(first);
+    TLOG_TRX_XFR_VAR(last);
+    TLOG_TRX_XFR_OBJ(tlog_stream, input);
+    TLOG_TRX_XFR_OBJ(tlog_stream, output);
 }
 
 /**

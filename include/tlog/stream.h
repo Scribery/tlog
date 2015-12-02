@@ -50,7 +50,7 @@ struct tlog_stream {
 };
 
 /** Stream transaction store */
-struct tlog_stream_trx_store {
+TLOG_TRX_STORE_SIG(tlog_stream) {
     struct tlog_utf8    utf8;           /**< UTF-8 filter */
 
     size_t              txt_run;        /**< Text input run in characters */
@@ -62,46 +62,18 @@ struct tlog_stream_trx_store {
     size_t              bin_len;        /**< Binary output length in bytes */
 };
 
-/**
- * Make a transaction backup of a stream.
- *
- * @param store     Transaction store to backup to.
- * @param object    Stream object to backup.
- */
-static inline void
-tlog_stream_trx_backup(struct tlog_stream_trx_store *store,
-                       struct tlog_stream *object)
+/** Transfer transaction data of a stream */
+static inline TLOG_TRX_XFR_SIG(tlog_stream)
 {
-    store->utf8     = object->utf8;
+    TLOG_TRX_XFR_VAR(utf8);
 
-    store->txt_run  = object->txt_run;
-    store->txt_dig  = object->txt_dig;
-    store->txt_len  = object->txt_len;
+    TLOG_TRX_XFR_VAR(txt_run);
+    TLOG_TRX_XFR_VAR(txt_dig);
+    TLOG_TRX_XFR_VAR(txt_len);
 
-    store->bin_run  = object->bin_run;
-    store->bin_dig  = object->bin_dig;
-    store->bin_len  = object->bin_len;
-}
-
-/**
- * Restore a stream from a transaction backup.
- *
- * @param store     Transaction store to restore from.
- * @param object    Stream object to restore.
- */
-static inline void
-tlog_stream_trx_restore(struct tlog_stream_trx_store *store,
-                        struct tlog_stream *object)
-{
-    object->utf8    = store->utf8;
-
-    object->txt_run = store->txt_run;
-    object->txt_dig = store->txt_dig;
-    object->txt_len = store->txt_len;
-
-    object->bin_run = store->bin_run;
-    object->bin_dig = store->bin_dig;
-    object->bin_len = store->bin_len;
+    TLOG_TRX_XFR_VAR(bin_run);
+    TLOG_TRX_XFR_VAR(bin_dig);
+    TLOG_TRX_XFR_VAR(bin_len);
 }
 
 /**
