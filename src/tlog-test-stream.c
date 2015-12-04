@@ -25,6 +25,7 @@
 #include <string.h>
 #include <tlog/stream.h>
 #include <tlog/test_misc.h>
+#include <tlog/misc.h>
 
 #define SIZE    TLOG_STREAM_SIZE_MIN
 
@@ -94,34 +95,103 @@ struct test {
     size_t          meta_len;
 };
 
+struct test_meta {
+    struct tlog_dispatcher  dispatcher;
+    uint8_t                 buf[SIZE];
+    uint8_t                *ptr;
+    size_t                  rem;
+    struct tlog_stream      stream;
+    bool                    got_ts;
+    struct timespec         first_ts;
+    struct timespec         last_ts;
+};
+
 static bool
-test(const char *n, const struct test t)
+test_meta_dispatcher_reserve(struct tlog_dispatcher *dispatcher,
+                             size_t len)
 {
-    bool passed = true;
+    struct test_meta *meta = TLOG_CONTAINER_OF(dispatcher,
+                                               struct test_meta,
+                                               dispatcher);
+    assert(tlog_dispatcher_is_valid(dispatcher));
+    if (len > meta->rem)
+        return false;
+    meta->rem -= len;
+    return true;
+}
+
+static void
+test_meta_dispatcher_write(struct tlog_dispatcher *dispatcher,
+                           const uint8_t *ptr, size_t len)
+{
+    struct test_meta *meta = TLOG_CONTAINER_OF(dispatcher,
+                                               struct test_meta,
+                                               dispatcher);
+    assert(tlog_dispatcher_is_valid(dispatcher));
+    assert((meta->ptr - meta->buf + len) <= meta->rem);
+
+    memcpy(meta->ptr, ptr, len);
+    meta->ptr += len;
+}
+
+static bool
+test_meta_dispatcher_advance(struct tlog_dispatcher *dispatcher,
+                             const struct timespec *ts)
+{
+    assert(tlog_dispatcher_is_valid(dispatcher));
+    assert(ts != NULL);
+    (void)dispatcher;
+    (void)ts;
+    return true;
+}
+
+static void
+test_meta_init(struct test_meta *meta, size_t rem)
+{
     tlog_grc grc;
-    uint8_t meta_buf[SIZE] = {0,};
-    struct tlog_stream stream;
-    const uint8_t *buf;
-    size_t len;
-    uint8_t *meta_last = meta_buf;
-    uint8_t *meta_next = meta_buf;
-    size_t rem_last;
-    size_t rem_next;
-    const struct op *op;
+    assert(meta != NULL);
+    assert(rem <= sizeof(meta->buf));
 
-    assert(t.rem_in <= SIZE);
-
-    rem_next = rem_last = t.rem_in;
-
-    grc = tlog_stream_init(&stream, SIZE, '<', '[');
+    memset(meta, 0, sizeof(*meta));
+    tlog_dispatcher_init(&meta->dispatcher,
+                         test_meta_dispatcher_advance,
+                         test_meta_dispatcher_reserve,
+                         test_meta_dispatcher_write);
+    meta->ptr = meta->buf;
+    meta->rem = rem;
+    grc = tlog_stream_init(&meta->stream, &meta->dispatcher,
+                           SIZE, '<', '[');
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the stream: %s\n",
                 tlog_grc_strerror(grc));
         exit(1);
     }
+}
 
-    memset(stream.txt_buf, 0, stream.size);
-    memset(stream.bin_buf, 0, stream.size);
+static void
+test_meta_cleanup(struct test_meta *meta)
+{
+    assert(meta != NULL);
+    tlog_stream_cleanup(&meta->stream);
+}
+
+static bool
+test(const char *n, const struct test t)
+{
+    bool passed = true;
+    struct test_meta meta;
+    const uint8_t *buf;
+    size_t len;
+    uint8_t *last_ptr;
+    size_t last_rem;
+    const struct op *op;
+    struct timespec ts = {0, 0};
+
+    assert(t.rem_in <= SIZE);
+
+    test_meta_init(&meta, t.rem_in);
+    last_ptr = meta.ptr;
+    last_rem = meta.rem;
 
 #define FAIL(_fmt, _args...) \
     do {                                                \
@@ -139,7 +209,7 @@ test(const char *n, const struct test t)
             assert(op->data.write.len_out <= op->data.write.len_in);
             buf = op->data.write.buf;
             len = op->data.write.len_in;
-            tlog_stream_write(&stream, &buf, &len, &meta_next, &rem_next);
+            tlog_stream_write(&meta.stream, &ts, &buf, &len);
             if ((buf < op->data.write.buf) ||
                 (buf - op->data.write.buf) !=
                     (ssize_t)(op->data.write.len_in -
@@ -149,48 +219,48 @@ test(const char *n, const struct test t)
                         (op->data.write.len_in - op->data.write.len_out));
             if (len != op->data.write.len_out)
                 FAIL_OP("len %zu != %zu", len, op->data.write.len_out);
-            if ((meta_next - meta_last) != op->data.write.meta_off)
+            if ((meta.ptr - last_ptr) != op->data.write.meta_off)
                 FAIL_OP("meta_off %zd != %zd",
-                        (meta_next - meta_last), op->data.write.meta_off);
-            meta_last = meta_next;
-            if (((ssize_t)rem_last - (ssize_t)rem_next) !=
+                        (meta.ptr - last_ptr), op->data.write.meta_off);
+            last_ptr = meta.ptr;
+            if (((ssize_t)last_rem - (ssize_t)meta.rem) !=
                     op->data.write.rem_off)
                 FAIL_OP("rem_off %zd != %zd",
-                        (rem_last - rem_next), op->data.write.rem_off);
-            rem_last = rem_next;
+                        (last_rem - meta.rem), op->data.write.rem_off);
+            last_rem = meta.rem;
             if (passed)
                 break;
             else
                 goto cleanup;
         case OP_TYPE_FLUSH:
-            tlog_stream_flush(&stream, &meta_next);
-            if ((meta_next - meta_last) != op->data.flush.meta_off)
+            tlog_stream_flush(&meta.stream);
+            if ((meta.ptr - last_ptr) != op->data.flush.meta_off)
                 FAIL_OP("meta_off %zd != %zd",
-                        (meta_next - meta_last),
+                        (meta.ptr - last_ptr),
                         op->data.flush.meta_off);
-            meta_last = meta_next;
+            last_ptr = meta.ptr;
             if (passed)
                 break;
             else
                 goto cleanup;
         case OP_TYPE_CUT:
-            tlog_stream_cut(&stream, &meta_next, &rem_next);
-            if ((meta_next - meta_last) != op->data.cut.meta_off)
+            tlog_stream_cut(&meta.stream);
+            if ((meta.ptr - last_ptr) != op->data.cut.meta_off)
                 FAIL_OP("meta_off %zd != %zd",
-                        (meta_next - meta_last), op->data.cut.meta_off);
-            meta_last = meta_next;
-            if (((ssize_t)rem_last - (ssize_t)rem_next) !=
+                        (meta.ptr - last_ptr), op->data.cut.meta_off);
+            last_ptr = meta.ptr;
+            if (((ssize_t)last_rem - (ssize_t)meta.rem) !=
                     op->data.cut.rem_off)
                 FAIL_OP("rem_off %zd != %zd",
-                        ((ssize_t)rem_last - (ssize_t)rem_next),
+                        ((ssize_t)last_rem - (ssize_t)meta.rem),
                         op->data.cut.rem_off);
-            rem_last = rem_next;
+            last_rem = meta.rem;
             if (passed)
                 break;
             else
                 goto cleanup;
         case OP_TYPE_EMPTY:
-            tlog_stream_empty(&stream);
+            tlog_stream_empty(&meta.stream);
             break;
         default:
             fprintf(stderr, "Unknown operation type: %d\n", op->type);
@@ -200,33 +270,35 @@ test(const char *n, const struct test t)
 
 #undef FAIL_OP
 
-    if (rem_last != t.rem_out)
-        FAIL("rem %zu != %zu", rem_last, t.rem_out);
-    if (stream.txt_len != t.txt_len)
-        FAIL("txt_len %zu != %zu", stream.txt_len, t.txt_len);
-    if (stream.bin_len != t.bin_len)
-        FAIL("bin_len %zu != %zu", stream.bin_len, t.bin_len);
-    if ((meta_last - meta_buf) != (ssize_t)t.meta_len)
-        FAIL("meta_len %zd != %zu", (meta_last - meta_buf), t.meta_len);
+    if (last_rem != t.rem_out)
+        FAIL("rem %zu != %zu", last_rem, t.rem_out);
 
-#define BUF_CMP(_n, _r, _e) \
-    do {                                                        \
-        if (memcmp(_r, _e, SIZE) != 0) {                        \
-            fprintf(stderr, "%s: " #_n "_buf mismatch:\n", n);  \
-            tlog_test_diff(stderr, _r, SIZE, _e, SIZE);         \
-            passed = false;                                     \
-        }                                                       \
+#define BUF_CMP(_name, \
+                _result_ptr, _result_len, _expected_ptr, _expected_len) \
+    do {                                                                \
+        if ((_result_len) != (_expected_len) ||                         \
+            memcmp(_result_ptr, _expected_ptr, _expected_len) != 0) {   \
+            fprintf(stderr, "%s: " #_name "_buf mismatch:\n", n);       \
+            tlog_test_diff(stderr,                                      \
+                           _result_ptr, _result_len,                    \
+                           _expected_ptr, _expected_len);               \
+            passed = false;                                             \
+        }                                                               \
     } while (0)
-    BUF_CMP(txt, stream.txt_buf, t.txt_buf);
-    BUF_CMP(bin, stream.bin_buf, t.bin_buf);
-    BUF_CMP(meta, meta_buf, t.meta_buf);
+    BUF_CMP(txt, meta.stream.txt_buf, meta.stream.txt_len,
+            t.txt_buf, t.txt_len);
+    BUF_CMP(bin, meta.stream.bin_buf, meta.stream.bin_len,
+            t.bin_buf, t.bin_len);
+    BUF_CMP(meta,
+            meta.buf, (size_t)(meta.ptr - meta.buf),
+            t.meta_buf, t.meta_len);
 #undef BUF_CMP
 
 #undef FAIL
     fprintf(stderr, "%s: %s\n", n, (passed ? "PASS" : "FAIL"));
 
 cleanup:
-    tlog_stream_cleanup(&stream);
+    test_meta_cleanup(&meta);
     return passed;
 }
 

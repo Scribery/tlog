@@ -207,7 +207,7 @@ tlog_sink_flush(struct tlog_sink *sink)
     /* Write terminating metadata records to reserved space */
     tlog_chunk_flush(&sink->chunk);
 
-    tlog_timespec_sub(&sink->chunk.first, &sink->start, &pos);
+    tlog_timespec_sub(&sink->chunk.first_ts, &sink->start, &pos);
 
     if (pos.tv_sec == 0) {
         len = snprintf(pos_buf, sizeof(pos_buf), "%ld",

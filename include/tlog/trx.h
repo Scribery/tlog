@@ -45,6 +45,10 @@ enum tlog_trx_xfr_dir {
 #define TLOG_TRX_STORE_SIG(_type_token) \
     struct TLOG_TRX_STORE_NAME(_type_token)
 
+/** Transaction data store member declaration */
+#define TLOG_TRX_STORE_MEM(_type_token, _name_token) \
+    typeof(((struct _type_token *)NULL)->_name_token) _name_token
+
 /** Transaction data transfer function signature */
 #define TLOG_TRX_XFR_SIG(_type_token) \
     void _type_token##_trx_xfr(enum tlog_trx_xfr_dir dir,               \

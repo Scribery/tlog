@@ -21,6 +21,7 @@ tlogdir = $(includedir)/tlog
 
 tlog_HEADERS = \
     chunk.h         \
+    dispatcher.h    \
     es_reader.h     \
     fd_reader.h     \
     fd_writer.h     \

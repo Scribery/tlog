@@ -22,21 +22,81 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <tlog/misc.h>
 #include <tlog/test_misc.h>
 #include <tlog/test_stream_enc.h>
 
 #define BOOL_STR(_b) ((_b) ? "true" : "false")
+
+struct test_meta {
+    struct tlog_dispatcher dispatcher;
+    size_t rem;
+};
+
+
+static bool
+test_meta_dispatcher_reserve(struct tlog_dispatcher *dispatcher,
+                             size_t len)
+{
+    struct test_meta *meta = TLOG_CONTAINER_OF(dispatcher,
+                                               struct test_meta,
+                                               dispatcher);
+    assert(tlog_dispatcher_is_valid(dispatcher));
+    if (len > meta->rem)
+        return false;
+    meta->rem -= len;
+    return true;
+}
+
+static void
+test_meta_dispatcher_write(struct tlog_dispatcher *dispatcher,
+                           const uint8_t *ptr, size_t len)
+{
+    assert(tlog_dispatcher_is_valid(dispatcher));
+    assert(ptr != NULL || len == 0);
+    (void)dispatcher;
+    (void)ptr;
+    (void)len;
+}
+
+static bool
+test_meta_dispatcher_advance(struct tlog_dispatcher *dispatcher,
+                             const struct timespec *ts)
+{
+    assert(tlog_dispatcher_is_valid(dispatcher));
+    assert(ts != NULL);
+    (void)dispatcher;
+    (void)ts;
+    return true;
+}
+
+static void
+test_meta_init(struct test_meta *meta, size_t rem)
+{
+    assert(meta != NULL);
+
+    memset(meta, 0, sizeof(*meta));
+    tlog_dispatcher_init(&meta->dispatcher,
+                         test_meta_dispatcher_advance,
+                         test_meta_dispatcher_reserve,
+                         test_meta_dispatcher_write);
+    meta->rem = rem;
+}
+
 
 bool
 tlog_test_stream_enc(const char *n, const struct tlog_test_stream_enc t)
 {
     bool passed = true;
     uint8_t obuf[TLOG_TEST_STREAM_ENC_BUF_SIZE] = {0,};
-    size_t orem = t.orem_in;
+    struct test_meta meta;
     size_t olen = t.olen_in;
     size_t irun = t.irun_in;
     size_t idig = t.idig_in;
+    size_t orem;
     bool fit;
+
+    test_meta_init(&meta, t.orem_in);
 
 #define FAIL(_fmt, _args...) \
     do {                                                \
@@ -57,7 +117,9 @@ tlog_test_stream_enc(const char *n, const struct tlog_test_stream_enc t)
                  BOOL_STR(_name), BOOL_STR(t._name##_out));    \
     } while (0)
 
-    fit = t.func(obuf, &orem, &olen, &irun, &idig, t.ibuf_in, t.ilen_in);
+    fit = t.func(&meta.dispatcher,
+                 obuf, &olen, &irun, &idig, t.ibuf_in, t.ilen_in);
+    orem = meta.rem;
     CMP_BOOL(fit);
     CMP_SIZE(orem);
     CMP_SIZE(olen);

@@ -37,6 +37,8 @@
 
 /** Chunk buffer */
 struct tlog_chunk {
+    struct tlog_dispatcher  dispatcher; /**< Dispatcher interface */
+
     size_t              size;       /**< Maximum total data length and
                                          size of each buffer below */
     size_t              rem;        /**< Remaining total buffer space */
@@ -47,16 +49,18 @@ struct tlog_chunk {
     struct tlog_stream  input;      /**< Input stream state and buffer */
     struct tlog_stream  output;     /**< Output stream state and buffer */
 
-    struct timespec     first;      /**< First write timestamp */
-    struct timespec     last;       /**< Last write timestamp */
+    bool                got_ts;     /**< True if got a timestamp */
+    struct timespec     first_ts;   /**< First timestamp */
+    struct timespec     last_ts;    /**< Last timestamp */
 };
 
 /** Chunk transaction store */
 TLOG_TRX_STORE_SIG(tlog_chunk) {
     size_t              rem;        /**< Remaining total buffer space */
     uint8_t            *timing_ptr; /**< Timing output pointer */
-    struct timespec     first;      /**< First write timestamp */
-    struct timespec     last;       /**< Last write timestamp */
+    bool                got_ts;     /**< True if got a timestamp */
+    struct timespec     first_ts;   /**< First timestamp */
+    struct timespec     last_ts;    /**< Last timestamp */
 
     TLOG_TRX_STORE_SIG(tlog_stream) input;  /**< Input store */
     TLOG_TRX_STORE_SIG(tlog_stream) output; /**< Output store */
@@ -67,8 +71,9 @@ static inline TLOG_TRX_XFR_SIG(tlog_chunk)
 {
     TLOG_TRX_XFR_VAR(rem);
     TLOG_TRX_XFR_VAR(timing_ptr);
-    TLOG_TRX_XFR_VAR(first);
-    TLOG_TRX_XFR_VAR(last);
+    TLOG_TRX_XFR_VAR(got_ts);
+    TLOG_TRX_XFR_VAR(first_ts);
+    TLOG_TRX_XFR_VAR(last_ts);
     TLOG_TRX_XFR_OBJ(tlog_stream, input);
     TLOG_TRX_XFR_OBJ(tlog_stream, output);
 }

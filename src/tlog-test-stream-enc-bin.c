@@ -23,7 +23,8 @@
 #include <stdio.h>
 #include <tlog/test_stream_enc.h>
 
-extern bool tlog_stream_enc_bin(uint8_t *obuf, size_t *porem, size_t *polen,
+extern bool tlog_stream_enc_bin(struct tlog_dispatcher *dispatcher,
+                                uint8_t *obuf, size_t *polen,
                                 size_t *pirun, size_t *pidig,
                                 const uint8_t *ibuf, size_t ilen);
 

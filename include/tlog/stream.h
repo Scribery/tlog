@@ -26,14 +26,18 @@
 #include <tlog/grc.h>
 #include <tlog/utf8.h>
 #include <tlog/trx.h>
+#include <tlog/dispatcher.h>
 
 #define TLOG_STREAM_SIZE_MIN    32
 
 /** I/O stream */
 struct tlog_stream {
+    struct tlog_dispatcher *dispatcher; /**< Dispatcher to use */
+
     size_t              size;           /**< Text/binary encoded buffer size */
 
     struct tlog_utf8    utf8;           /**< UTF-8 filter */
+    struct timespec     ts;             /**< Character start timestamp */
 
     uint8_t             valid_mark;     /**< Valid text record marker */
     uint8_t             invalid_mark;   /**< Invalid text record marker */
@@ -52,6 +56,7 @@ struct tlog_stream {
 /** Stream transaction store */
 TLOG_TRX_STORE_SIG(tlog_stream) {
     struct tlog_utf8    utf8;           /**< UTF-8 filter */
+    struct timespec     ts;             /**< Character start timestamp */
 
     size_t              txt_run;        /**< Text input run in characters */
     size_t              txt_dig;        /**< Text output run digit limit */
@@ -66,6 +71,7 @@ TLOG_TRX_STORE_SIG(tlog_stream) {
 static inline TLOG_TRX_XFR_SIG(tlog_stream)
 {
     TLOG_TRX_XFR_VAR(utf8);
+    TLOG_TRX_XFR_VAR(ts);
 
     TLOG_TRX_XFR_VAR(txt_run);
     TLOG_TRX_XFR_VAR(txt_dig);
@@ -80,14 +86,18 @@ static inline TLOG_TRX_XFR_SIG(tlog_stream)
  * Initialize a stream.
  *
  * @param stream        The stream to initialize.
+ * @param dispatcher    The dispatcher to use.
  * @param size          Text/binary buffer size.
  * @param valid_mark    Valid UTF-8 record marker character.
  * @param invalid_mark  Invalid UTF-8 record marker character.
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_stream_init(struct tlog_stream *stream, size_t size,
-                                 uint8_t valid_mark, uint8_t invalid_mark);
+extern tlog_grc tlog_stream_init(struct tlog_stream *stream,
+                                 struct tlog_dispatcher *dispatcher,
+                                 size_t size,
+                                 uint8_t valid_mark,
+                                 uint8_t invalid_mark);
 
 /**
  * Check if a stream is valid.
@@ -123,17 +133,15 @@ extern bool tlog_stream_is_empty(const struct tlog_stream *stream);
  * space.
  *
  * @param stream    The stream to write to.
+ * @param ts        The write timestamp.
  * @param pbuf      Location of/for the pointer to the data to write.
  * @param plen      Location of/for the length of the data to write.
- * @param pmeta     Location of/for the meta data output pointer.
- * @param prem      Location of/for the total remaining output space.
  *
  * @return Number of input bytes written.
  */
 extern size_t tlog_stream_write(struct tlog_stream *stream,
-                                const uint8_t **pbuf, size_t *plen,
-                                uint8_t **pmeta,
-                                size_t *prem);
+                                const struct timespec *ts,
+                                const uint8_t **pbuf, size_t *plen);
 
 /**
  * Flush a stream - write metadata record to reserved space and reset runs.
@@ -141,22 +149,17 @@ extern size_t tlog_stream_write(struct tlog_stream *stream,
  * @param stream    The stream to flush.
  * @param pmeta     Location of/for the metadata output pointer.
  */
-extern void tlog_stream_flush(struct tlog_stream *stream,
-                              uint8_t **pmeta);
+extern void tlog_stream_flush(struct tlog_stream *stream);
 
 /**
  * Cut a stream - write pending incomplete character to the buffers.
  *
  * @param stream    The stream to cut.
- * @param pmeta     Location of/for the meta data output pointer.
- * @param prem      Location of/for the total remaining output space.
  *
  * @return True if incomplete character fit into the remaining space, false
  *         otherwise.
  */
-extern bool tlog_stream_cut(struct tlog_stream *stream,
-                            uint8_t **pmeta,
-                            size_t *prem);
+extern bool tlog_stream_cut(struct tlog_stream *stream);
 
 /**
  * Empty buffers of a stream, but not pending incomplete characters.

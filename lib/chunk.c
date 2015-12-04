@@ -24,6 +24,151 @@
 #include <stdio.h>
 #include <tlog/chunk.h>
 
+static bool
+tlog_chunk_reserve(struct tlog_chunk *chunk, size_t len)
+{
+    assert(tlog_chunk_is_valid(chunk));
+    if (len > chunk->rem)
+        return false;
+    chunk->rem -= len;
+    return true;
+}
+
+static void
+tlog_chunk_write_timing(struct tlog_chunk *chunk,
+                        const uint8_t *ptr, size_t len)
+{
+    assert(tlog_chunk_is_valid(chunk));
+    assert(ptr != NULL || len == 0);
+    assert((chunk->timing_ptr - chunk->timing_buf + len) <= chunk->rem);
+
+    memcpy(chunk->timing_ptr, ptr, len);
+    chunk->timing_ptr += len;
+}
+
+/**
+ * Record a new timestamp into an I/O, flush streams and add a delay record,
+ * if necessary.
+ *
+ * @param chunk     The I/O to record timestamp into.
+ * @param timestmp  The timestamp to record.
+ *
+ * @return True if timestamp fit, false otherwise.
+ */
+static bool
+tlog_chunk_advance(struct tlog_chunk *chunk, const struct timespec *ts)
+{
+    struct timespec delay;
+    long sec;
+    long msec;
+    char delay_buf[32];
+    int delay_rc;
+
+    assert(tlog_chunk_is_valid(chunk));
+    assert(ts != NULL);
+
+    /* If this is the first write */
+    if (!chunk->got_ts) {
+        chunk->first_ts = *ts;
+        delay_rc = 0;
+    } else {
+        assert(tlog_timespec_cmp(ts, &chunk->last_ts) >= 0);
+        tlog_timespec_sub(ts, &chunk->last_ts, &delay);
+        sec = (long)delay.tv_sec;
+        msec = delay.tv_nsec / 1000000;
+        if (sec != 0) {
+            delay_rc = snprintf(delay_buf, sizeof(delay_buf),
+                                "+%ld%03ld", sec, msec);
+        } else if (msec != 0) {
+            delay_rc = snprintf(delay_buf, sizeof(delay_buf),
+                                "+%ld", msec);
+        } else {
+            delay_rc = 0;
+        }
+    }
+    if (delay_rc < 0 || (size_t)delay_rc >= sizeof(delay_buf)) {
+        assert(false);
+        return false;
+    }
+    chunk->last_ts = *ts;
+
+    /* If we need to add a delay record */
+    if (delay_rc > 0) {
+        tlog_stream_flush(&chunk->input);
+        tlog_stream_flush(&chunk->output);
+        /* If it doesn't fit */
+        if (!tlog_chunk_reserve(chunk, (size_t)delay_rc))
+            return false;
+        tlog_chunk_write_timing(chunk,
+                                (uint8_t *)delay_buf, (size_t)delay_rc);
+    }
+
+    return true;
+}
+
+/**
+ * Reserve space from the dispatcher.
+ *
+ * @param dispatcher    The dispatcher to reserve the space from.
+ * @param len           The amount of space to reserve.
+ *
+ * @return True if there was enough space, false otherwise.
+ */
+static bool
+tlog_chunk_dispatcher_reserve(struct tlog_dispatcher *dispatcher,
+                              size_t len)
+{
+    struct tlog_chunk *chunk = TLOG_CONTAINER_OF(dispatcher,
+                                                 struct tlog_chunk,
+                                                 dispatcher);
+    assert(tlog_dispatcher_is_valid(dispatcher));
+    assert(tlog_chunk_is_valid(chunk));
+    return tlog_chunk_reserve(chunk, len);
+}
+
+/**
+ * Write into the metadata space reserved from the dispatcher.
+ *
+ * @param dispatcher    The dispatcher to print to.
+ * @param ptr           Pointer to the data to write.
+ * @param len           Length of the data to write.
+ */
+static void
+tlog_chunk_dispatcher_write(struct tlog_dispatcher *dispatcher,
+                            const uint8_t *ptr, size_t len)
+{
+    struct tlog_chunk *chunk = TLOG_CONTAINER_OF(dispatcher,
+                                                 struct tlog_chunk,
+                                                 dispatcher);
+    assert(tlog_dispatcher_is_valid(dispatcher));
+    assert(tlog_chunk_is_valid(chunk));
+    assert(ptr != NULL || len == 0);
+    tlog_chunk_write_timing(chunk, ptr, len);
+}
+
+/**
+ * Advance dispatcher time.
+ *
+ * @param dispatcher    The dispatcher to advance time for.
+ * @param ts            The time to advance to, must be equal or greater than
+ *                      the previously advanced to.
+ *
+ * @return True if there was space to record the advanced time, false
+ *         otherwise.
+ */
+static bool
+tlog_chunk_dispatcher_advance(struct tlog_dispatcher *dispatcher,
+                              const struct timespec *ts)
+{
+    struct tlog_chunk *chunk = TLOG_CONTAINER_OF(dispatcher,
+                                                 struct tlog_chunk,
+                                                 dispatcher);
+    assert(tlog_dispatcher_is_valid(dispatcher));
+    assert(tlog_chunk_is_valid(chunk));
+    assert(ts != NULL);
+    return tlog_chunk_advance(chunk, ts);
+}
+
 tlog_grc
 tlog_chunk_init(struct tlog_chunk *chunk, size_t size)
 {
@@ -34,13 +179,18 @@ tlog_chunk_init(struct tlog_chunk *chunk, size_t size)
 
     memset(chunk, 0, sizeof(*chunk));
 
+    chunk->dispatcher.advance = tlog_chunk_dispatcher_advance;
+    chunk->dispatcher.reserve = tlog_chunk_dispatcher_reserve;
+    chunk->dispatcher.write = tlog_chunk_dispatcher_write;
     chunk->size = size;
     chunk->rem = size;
 
-    grc = tlog_stream_init(&chunk->input, size, '<', '[');
+    grc = tlog_stream_init(&chunk->input, &chunk->dispatcher,
+                           size, '<', '[');
     if (grc != TLOG_RC_OK)
         goto error;
-    grc = tlog_stream_init(&chunk->output, size, '>', ']');
+    grc = tlog_stream_init(&chunk->output, &chunk->dispatcher,
+                           size, '>', ']');
     if (grc != TLOG_RC_OK)
         goto error;
     chunk->timing_buf = malloc(size);
@@ -62,6 +212,7 @@ bool
 tlog_chunk_is_valid(const struct tlog_chunk *chunk)
 {
     return chunk != NULL &&
+           tlog_dispatcher_is_valid(&chunk->dispatcher) &&
            chunk->size >= TLOG_CHUNK_SIZE_MIN &&
            tlog_stream_is_valid(&chunk->input) &&
            tlog_stream_is_valid(&chunk->output) &&
@@ -88,67 +239,6 @@ tlog_chunk_is_empty(const struct tlog_chunk *chunk)
 {
     assert(tlog_chunk_is_valid(chunk));
     return chunk->rem >= chunk->size;
-}
-
-/**
- * Record a new timestamp into an I/O, flush streams and add a delay record,
- * if necessary.
- *
- * @param chunk        The I/O to record timestamp into.
- * @param timestmp  The timestamp to record.
- *
- * @return True if timestamp fit, false otherwise.
- */
-static bool
-tlog_chunk_timestamp(struct tlog_chunk *chunk,
-                     const struct timespec *timestamp)
-{
-    struct timespec delay;
-    long sec;
-    long msec;
-    char delay_buf[32];
-    int delay_rc;
-
-    assert(tlog_chunk_is_valid(chunk));
-    assert(timestamp != NULL);
-
-    /* If this is the first write */
-    if (tlog_chunk_is_empty(chunk) && !tlog_chunk_is_pending(chunk)) {
-        chunk->first = *timestamp;
-        delay_rc = 0;
-    } else {
-        tlog_timespec_sub(timestamp, &chunk->last, &delay);
-        sec = (long)delay.tv_sec;
-        msec = delay.tv_nsec / 1000000;
-        if (sec != 0) {
-            delay_rc = snprintf(delay_buf, sizeof(delay_buf),
-                                "+%ld%03ld", sec, msec);
-        } else if (msec != 0) {
-            delay_rc = snprintf(delay_buf, sizeof(delay_buf),
-                                "+%ld", msec);
-        } else {
-            delay_rc = 0;
-        }
-    }
-    if (delay_rc < 0 || (size_t)delay_rc >= sizeof(delay_buf)) {
-        assert(false);
-        return false;
-    }
-    chunk->last = *timestamp;
-
-    /* If we need to add a delay record */
-    if (delay_rc > 0) {
-        /* If it doesn't fit */
-        if ((size_t)delay_rc > chunk->rem)
-            return false;
-        tlog_stream_flush(&chunk->input, &chunk->timing_ptr);
-        tlog_stream_flush(&chunk->output, &chunk->timing_ptr);
-        memcpy(chunk->timing_ptr, delay_buf, (size_t)delay_rc);
-        chunk->timing_ptr += delay_rc;
-        chunk->rem -= delay_rc;
-    }
-
-    return true;
 }
 
 /**
@@ -197,12 +287,16 @@ tlog_chunk_write_window(struct tlog_chunk *chunk,
     if (len > chunk->rem)
         return false;
 
-    tlog_stream_flush(&chunk->input, &chunk->timing_ptr);
-    tlog_stream_flush(&chunk->output, &chunk->timing_ptr);
+    tlog_stream_flush(&chunk->input);
+    tlog_stream_flush(&chunk->output);
 
-    memcpy(chunk->timing_ptr, buf, len);
-    chunk->timing_ptr += len;
-    chunk->rem -= len;
+    if (!tlog_chunk_advance(chunk, &pkt->timestamp))
+        return false;
+
+    if (!tlog_chunk_reserve(chunk, len))
+        return false;
+
+    tlog_chunk_write_timing(chunk, (uint8_t *)buf, len);
 
     *ppos = 1;
     return true;
@@ -241,8 +335,8 @@ tlog_chunk_write_io(struct tlog_chunk *chunk,
     *ppos += tlog_stream_write(pkt->data.io.output
                                     ? &chunk->output
                                     : &chunk->input,
-                               &buf, &len,
-                               &chunk->timing_ptr, &chunk->rem);
+                               &pkt->timestamp,
+                               &buf, &len);
     return len == 0;
 }
 
@@ -262,12 +356,6 @@ tlog_chunk_write(struct tlog_chunk *chunk,
     assert(ppos != NULL);
 
     TLOG_TRX_BEGIN(&trx, tlog_chunk, chunk);
-
-    /* Record the timestamp (if it's new) */
-    if (!tlog_chunk_timestamp(chunk, &pkt->timestamp)) {
-        TLOG_TRX_ABORT(&trx, tlog_chunk, chunk);
-        return false;
-    }
 
     /* Write (a part of) the packet */
     pos = *ppos;
@@ -301,8 +389,8 @@ void
 tlog_chunk_flush(struct tlog_chunk *chunk)
 {
     assert(tlog_chunk_is_valid(chunk));
-    tlog_stream_flush(&chunk->input, &chunk->timing_ptr);
-    tlog_stream_flush(&chunk->output, &chunk->timing_ptr);
+    tlog_stream_flush(&chunk->input);
+    tlog_stream_flush(&chunk->output);
 }
 
 bool
@@ -316,8 +404,8 @@ tlog_chunk_cut(struct tlog_chunk *chunk)
     TLOG_TRX_BEGIN(&trx, tlog_chunk, chunk);
 
     /* Cut the streams */
-    if (!tlog_stream_cut(&chunk->input, &chunk->timing_ptr, &chunk->rem) ||
-        !tlog_stream_cut(&chunk->output, &chunk->timing_ptr, &chunk->rem)) {
+    if (!tlog_stream_cut(&chunk->input) ||
+        !tlog_stream_cut(&chunk->output)) {
         TLOG_TRX_ABORT(&trx, tlog_chunk, chunk);
         return false;
     }
@@ -334,8 +422,9 @@ tlog_chunk_empty(struct tlog_chunk *chunk)
     chunk->timing_ptr = chunk->timing_buf;
     tlog_stream_empty(&chunk->input);
     tlog_stream_empty(&chunk->output);
-    tlog_timespec_zero(&chunk->first);
-    tlog_timespec_zero(&chunk->last);
+    chunk->got_ts = false;
+    tlog_timespec_zero(&chunk->first_ts);
+    tlog_timespec_zero(&chunk->last_ts);
     assert(tlog_chunk_is_valid(chunk));
 }
 
