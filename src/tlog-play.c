@@ -120,13 +120,13 @@ main(int argc, char **argv)
     }
 
     /* Setup signal handlers to terminate gracefully */
-    for (i = 0; i < ARRAY_SIZE(exit_sig); i++) {
+    for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
         sigaction(exit_sig[i], NULL, &sa);
         if (sa.sa_handler != SIG_IGN)
         {
             sa.sa_handler = exit_sighandler;
             sigemptyset(&sa.sa_mask);
-            for (j = 0; j < ARRAY_SIZE(exit_sig); j++)
+            for (j = 0; j < TLOG_ARRAY_SIZE(exit_sig); j++)
                 sigaddset(&sa.sa_mask, exit_sig[j]);
             /* NOTE: no SA_RESTART on purpose */
             sa.sa_flags = 0;
@@ -236,7 +236,7 @@ cleanup:
     curl_global_cleanup();
 
     /* Restore signal handlers */
-    for (i = 0; i < ARRAY_SIZE(exit_sig); i++) {
+    for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
         sigaction(exit_sig[i], NULL, &sa);
         if (sa.sa_handler != SIG_IGN)
             signal(exit_sig[i], SIG_DFL);

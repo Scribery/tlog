@@ -148,7 +148,7 @@ tlog_grc_is_valid(tlog_grc grc)
     size_t i;
     const struct tlog_grc_range *range;
 
-    for (i = 0; i < ARRAY_SIZE(tlog_grc_range_list); i++) {
+    for (i = 0; i < TLOG_ARRAY_SIZE(tlog_grc_range_list); i++) {
         range = tlog_grc_range_list[i];
         if (tlog_grc_is(range, grc)) {
             return true;
@@ -165,7 +165,7 @@ tlog_grc_strerror(tlog_grc grc)
 
     assert(tlog_grc_is_valid(grc));
 
-    for (i = 0; i < ARRAY_SIZE(tlog_grc_range_list); i++) {
+    for (i = 0; i < TLOG_ARRAY_SIZE(tlog_grc_range_list); i++) {
         range = tlog_grc_range_list[i];
         if (tlog_grc_is(range, grc)) {
             return range->strerror(tlog_grc_to(range, grc));
