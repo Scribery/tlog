@@ -27,6 +27,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <tlog/trx.h>
 
 /** Forward declaration of dispatcher */
 struct tlog_dispatcher;
@@ -71,6 +72,7 @@ struct tlog_dispatcher {
     tlog_dispatcher_advance_fn  advance;    /**< Time-advancing function */
     tlog_dispatcher_reserve_fn  reserve;    /**< Space-reservation function */
     tlog_dispatcher_write_fn    write;      /**< Metadata writing function */
+    tlog_trx_xfr_if             xfr_if;     /**< Transaction interface */
 };
 
 /**

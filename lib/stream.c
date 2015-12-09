@@ -477,10 +477,6 @@ tlog_stream_write(struct tlog_stream *stream,
     utf8 = &stream->utf8;
     assert(!tlog_utf8_is_ended(utf8));
 
-    /* Remember character start timestamp */
-    if (!tlog_utf8_is_started(utf8))
-        stream->ts = *ts;
-
     while (true) {
         do {
             /* If input is exhausted */
@@ -492,6 +488,8 @@ tlog_stream_write(struct tlog_stream *stream,
             if (tlog_utf8_add(utf8, *buf)) {
                 buf++;
                 len--;
+                /* Record last added byte timestamp */
+                stream->ts = *ts;
             }
         } while (!tlog_utf8_is_ended(utf8));
 
@@ -514,8 +512,6 @@ tlog_stream_write(struct tlog_stream *stream,
             }
         }
         tlog_utf8_reset(utf8);
-        /* Set next character timestamp */
-        stream->ts = *ts;
     }
 
     tlog_utf8_reset(utf8);
@@ -554,3 +550,40 @@ tlog_stream_empty(struct tlog_stream *stream)
     stream->bin_run = 0;
     stream->bin_len = 0;
 }
+
+/** Stream transaction store */
+TLOG_TRX_STORE_SIG(tlog_stream) {
+    TLOG_TRX_STORE_PROXY(dispatcher);
+    TLOG_TRX_STORE_VAR(tlog_stream, utf8);
+    TLOG_TRX_STORE_VAR(tlog_stream, ts);
+    TLOG_TRX_STORE_VAR(tlog_stream, txt_run);
+    TLOG_TRX_STORE_VAR(tlog_stream, txt_dig);
+    TLOG_TRX_STORE_VAR(tlog_stream, txt_len);
+    TLOG_TRX_STORE_VAR(tlog_stream, bin_run);
+    TLOG_TRX_STORE_VAR(tlog_stream, bin_dig);
+    TLOG_TRX_STORE_VAR(tlog_stream, bin_len);
+};
+
+/** Transfer transaction data of a stream */
+static TLOG_TRX_XFR_SIG(tlog_stream)
+{
+    TLOG_TRX_XFR_PROLOGUE(tlog_stream);
+
+    TLOG_TRX_XFR_PROXY(dispatcher);
+    TLOG_TRX_XFR_VAR(utf8);
+    TLOG_TRX_XFR_VAR(ts);
+    TLOG_TRX_XFR_VAR(txt_run);
+    TLOG_TRX_XFR_VAR(txt_dig);
+    TLOG_TRX_XFR_VAR(txt_len);
+    TLOG_TRX_XFR_VAR(bin_run);
+    TLOG_TRX_XFR_VAR(bin_dig);
+    TLOG_TRX_XFR_VAR(bin_len);
+
+    TLOG_TRX_XFR_EPILOGUE;
+}
+
+struct tlog_trx_iface TLOG_TRX_IFACE_NAME(tlog_stream) = {
+    .store_size = sizeof(TLOG_TRX_STORE_SIG(tlog_stream)),
+    .mask_off = TLOG_OFFSET_OF(struct tlog_stream, trx_mask),
+    .xfr = TLOG_TRX_XFR_NAME(tlog_stream)
+};

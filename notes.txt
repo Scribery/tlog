@@ -448,3 +448,99 @@ search your messages and then add 'OR something that matches a bunch of
 relevant audit messages' to the query, and the playback visualisation would
 filter them out by sessionid and time ranges. That's ugly. Do we have
 alternatives? I think it is time to actually try making a visualisation.
+
+All the objects manipulated by a function are saved on the entrance to the
+stack frame with depth zero, and restored on return.
+
+We need backup/restore so we don't present intermediate state, but rather
+completely changed or completely unchanged
+
+- What do you need sub-transactions for?
+- For moving in discrete states within another transaction
+
+- Why do you need tracking which objects are saved and which are not?
+- So cyclical ownerships can be saved. So that we can start a transaction at
+  either of these levels:
+
+     => A -.           A -.
+        |  |           |  |
+        B  |    AND    B  |
+        |  |           |  |
+        C -'        => C -'
+
+Each function down the stack needs to store the objects explicitly, in case it
+is called at the root of the transaction. However, if the function doesn't
+leave any state inconsistent it doesn't need to accept the transaction
+argument.
+
+So we have object saving for root transaction, then stack increment, then
+processing, then stack decrement, then object restoration for root
+transaction.
+
+---
+
+We write pieces of input or output with time attached. We write window sizes
+with time attached
+
+We go over each byte sequence of submitted I/O and decide if it's a valid
+character or not.
+
+If it's a valid character, we encode it into text. Otherwise we encode it into
+binary.
+
+We can attach timestamp to each piece of data. Each piece of data has its
+timestamp.
+
+We can't encode data until we know it's a valid character or not.
+
+The decision to write the data happens only then, so the decision to terminate
+a meta record happens only then and the decision to insert a delay record can
+only happen after that.
+
+So how about we have forks again?
+
+Can we remove the need for transactions?
+
+We would need to be able to back out of writing a delay and subsequent records
+on flush. To be precise, we would need to be able to play these forward and
+decide if we want them to do or not. That would mean doing everything twice
+for all operations, whereas we only need to back out once in a while.
+
+What is more complicated? Transactions or backing out? Transactions are easier
+to think about. Otherwise we would need to pass our temporary copies to all
+the arbitrary function depths and care about copying/applying them properly in
+each stack frame. That's what transactions could do for us anyway.
+
+---
+
+So if we want to support multiple object roots per transaction we need to
+separate transaction beginning/ending from transaction object
+saving/restoring. Also, to be reliable we'll need to remove the need to
+specify objects to restore for transaction abortion.
+
+We can specify objects to backup/restore via initialization of an array
+variable in a macro. We can then backup these objects in transaction begin and
+restore them in transaction abort.
+
+Can we use the stack for indirect transaction store? First we need to describe
+object's transaction interface.
+
+    store_size  The size of the object's transaction store
+    pmask       Location of the object's transaction mask
+    xfr         Transaction data transfer function
+
+So each function frame would contain an array describing which objects should
+be backed up/restored, which would be built from both static, direct
+object information and dynamic, indirect object information. Or perhaps we
+should simply resort to dynamic information always. Even with dynamic
+information, first level can be allocated on the stack and lower levels can do
+heap allocation for indirect objects, if necessary.
+
+We can then remove transaction objects and functions from headers and put it
+into object files, making them tidier.
+
+---
+
+What if we allocate transaction storage within the objects themselves
+according to the maximum transaction depth? This way we won't have to mess
+with allocation/deallocation at transaction backup/restore/cleanup time!

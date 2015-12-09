@@ -347,6 +347,12 @@ tlog_chunk_write(struct tlog_chunk *chunk,
 {
     tlog_trx trx = TLOG_TRX_INIT;
     TLOG_TRX_STORE_DECL(tlog_chunk);
+
+    TLOG_TRX_FRAME_DEF(
+        TLOG_TRX_FRAME_OBJ(tlog_chunk, chunk),
+        TLOG_TRX_FRAME_PROXY(dispatcher)
+    );
+
     size_t pos;
     bool complete;
 

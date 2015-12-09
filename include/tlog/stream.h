@@ -53,35 +53,6 @@ struct tlog_stream {
     size_t              bin_len;        /**< Binary output length in bytes */
 };
 
-/** Stream transaction store */
-TLOG_TRX_STORE_SIG(tlog_stream) {
-    struct tlog_utf8    utf8;           /**< UTF-8 filter */
-    struct timespec     ts;             /**< Character start timestamp */
-
-    size_t              txt_run;        /**< Text input run in characters */
-    size_t              txt_dig;        /**< Text output run digit limit */
-    size_t              txt_len;        /**< Text output length in bytes */
-
-    size_t              bin_run;        /**< Binary input run in bytes */
-    size_t              bin_dig;        /**< Binary output run digit limit */
-    size_t              bin_len;        /**< Binary output length in bytes */
-};
-
-/** Transfer transaction data of a stream */
-static inline TLOG_TRX_XFR_SIG(tlog_stream)
-{
-    TLOG_TRX_XFR_VAR(utf8);
-    TLOG_TRX_XFR_VAR(ts);
-
-    TLOG_TRX_XFR_VAR(txt_run);
-    TLOG_TRX_XFR_VAR(txt_dig);
-    TLOG_TRX_XFR_VAR(txt_len);
-
-    TLOG_TRX_XFR_VAR(bin_run);
-    TLOG_TRX_XFR_VAR(bin_dig);
-    TLOG_TRX_XFR_VAR(bin_len);
-}
-
 /**
  * Initialize a stream.
  *
@@ -174,5 +145,8 @@ extern void tlog_stream_empty(struct tlog_stream *stream);
  * @param stream    The stream to cleanup.
  */
 extern void tlog_stream_cleanup(struct tlog_stream *stream);
+
+/** Stream transaction management interface */
+extern struct tlog_trx_iface tlog_stream_trx_iface;
 
 #endif /* _TLOG_STREAM_H */
