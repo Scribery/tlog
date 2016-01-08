@@ -1,5 +1,5 @@
 /*
- * Tlog transaction.
+ * Tlog object's transaction management interface.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -20,12 +20,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TLOG_TRX_H
-#define _TLOG_TRX_H
+#ifndef _TLOG_TRX_IFACE_H
+#define _TLOG_TRX_IFACE_H
 
-#include <tlog/trx_iface.h>
-#include <tlog/trx_state.h>
-#include <tlog/trx_frame.h>
-#include <tlog/trx_basic.h>
+#include <tlog/trx_act.h>
 
-#endif /* _TLOG_TRX_H */
+/** An object's transaction management interface */
+struct tlog_trx_iface {
+    tlog_trx_act_fn     act;    /**< Transaction data transfer function */
+};
+
+#endif /* _TLOG_TRX_IFACE_H */

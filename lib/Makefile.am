@@ -25,6 +25,7 @@ noinst_LTLIBRARIES = libtlog_test.la
 
 libtlog_la_SOURCES = \
     chunk.c             \
+    dispatcher.c        \
     es_reader.c         \
     fd_reader.c         \
     fd_writer.c         \

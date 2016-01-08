@@ -1,5 +1,5 @@
 /*
- * Tlog transaction.
+ * Tlog transaction data actions.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -20,12 +20,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TLOG_TRX_H
-#define _TLOG_TRX_H
+#ifndef _TLOG_TRX_ACT_H
+#define _TLOG_TRX_ACT_H
 
-#include <tlog/trx_iface.h>
-#include <tlog/trx_state.h>
-#include <tlog/trx_frame.h>
-#include <tlog/trx_basic.h>
+#include <tlog/trx_level.h>
 
-#endif /* _TLOG_TRX_H */
+/** Transaction data action type */
+enum tlog_trx_act_type {
+    TLOG_TRX_ACT_TYPE_BACKUP,
+    TLOG_TRX_ACT_TYPE_RESTORE,
+    TLOG_TRX_ACT_TYPE_DISCARD
+};
+
+/**
+ * Transaction data action function prototype.
+ *
+ * @param level             Transaction nesting level.
+ * @param act_type          Action type.
+ * @param abstract_object   The abstract object to act on.
+ */
+typedef void (*tlog_trx_act_fn)(tlog_trx_level level,
+                                enum tlog_trx_act_type act_type,
+                                void *abstract_object);
+
+#endif /* _TLOG_TRX_ACT_H */

@@ -47,6 +47,7 @@ tlog_stream_is_valid(const struct tlog_stream *stream)
            (stream->txt_len + stream->bin_len) <= stream->size &&
            stream->txt_run <= stream->txt_len &&
            stream->bin_run <= stream->bin_len &&
+           /* Text buffer cannot be empty if binary is not */
            (stream->bin_run == 0 || stream->txt_run != 0);
 }
 
@@ -63,6 +64,21 @@ tlog_stream_is_empty(const struct tlog_stream *stream)
 {
     assert(tlog_stream_is_valid(stream));
     return stream->txt_len == 0 && stream->bin_len == 0;
+}
+
+static
+TLOG_TRX_BASIC_ACT_SIG(tlog_stream)
+{
+    TLOG_TRX_BASIC_ACT_PROLOGUE(tlog_stream);
+    TLOG_TRX_BASIC_ACT_ON_VAR(utf8);
+    TLOG_TRX_BASIC_ACT_ON_VAR(ts);
+    TLOG_TRX_BASIC_ACT_ON_VAR(txt_run);
+    TLOG_TRX_BASIC_ACT_ON_VAR(txt_dig);
+    TLOG_TRX_BASIC_ACT_ON_VAR(txt_len);
+    TLOG_TRX_BASIC_ACT_ON_VAR(bin_run);
+    TLOG_TRX_BASIC_ACT_ON_VAR(bin_dig);
+    TLOG_TRX_BASIC_ACT_ON_VAR(bin_len);
+    TLOG_TRX_BASIC_ACT_ON_PTR(dispatcher);
 }
 
 tlog_grc
@@ -82,6 +98,7 @@ tlog_stream_init(struct tlog_stream *stream,
     stream->size = size;
     stream->valid_mark = valid_mark;
     stream->invalid_mark = invalid_mark;
+    stream->trx_iface = TLOG_TRX_BASIC_IFACE(tlog_stream);
 
     stream->txt_buf = malloc(size);
     if (stream->txt_buf == NULL) {
@@ -102,15 +119,6 @@ error:
     return grc;
 }
 
-/**
- * Print a byte to a buffer in decimal, as much as it fits.
- *
- * @param buf   The buffer pointer.
- * @param len   The buffer length.
- * @param b     The byte to print.
- *
- * @return Length of the number (to be) printed.
- */
 size_t
 tlog_stream_btoa(uint8_t *buf, size_t len, uint8_t b)
 {
@@ -143,35 +151,21 @@ tlog_stream_btoa(uint8_t *buf, size_t len, uint8_t b)
     return l;
 }
 
-#define REQ(_l) \
+#define REQ(_dispatcher, _l) \
     do {                                                \
-        if (!tlog_dispatcher_reserve(dispatcher, _l))   \
-            return false;                               \
+        if (!tlog_dispatcher_reserve(_dispatcher, _l))  \
+            goto failure;                               \
     } while (0)
 
-#define ADV(_l) \
-    do {                \
-        REQ(_l);        \
-        olen += (_l); \
+#define ADV(_dispatcher, _l) \
+    do {                        \
+        REQ(_dispatcher, _l);   \
+        olen += (_l);           \
     } while (0)
 
-/**
- * Encode an invalid UTF-8 byte sequence into a JSON array buffer atomically.
- * Reserve space for adding input length in decimal bytes.
- *
- * @param dispatcher    The dispatcher to use.
- * @param obuf          Output buffer.
- * @param polen         Location of/for output byte counter.
- * @param pirun         Location of/for input character counter.
- * @param pidig         Location of/for the next digit input counter limit.
- * @param ibuf          Input buffer.
- * @param ilen          Input length.
- *
- * @return True if both the bytes and the new counter did fit into the
- *         remaining output space.
- */
 bool
-tlog_stream_enc_bin(struct tlog_dispatcher *dispatcher,
+tlog_stream_enc_bin(tlog_trx_state trx,
+                    struct tlog_dispatcher *dispatcher,
                     uint8_t *obuf, size_t *polen,
                     size_t *pirun, size_t *pidig,
                     const uint8_t *ibuf, size_t ilen)
@@ -180,6 +174,7 @@ tlog_stream_enc_bin(struct tlog_dispatcher *dispatcher,
     size_t irun;
     size_t idig;
     size_t l;
+    TLOG_TRX_FRAME_DEF_SINGLE(dispatcher);
 
     assert(obuf != NULL);
     assert(polen != NULL);
@@ -190,6 +185,7 @@ tlog_stream_enc_bin(struct tlog_dispatcher *dispatcher,
     if (ilen == 0)
         return true;
 
+    TLOG_TRX_FRAME_BEGIN(trx);
     olen = *polen;
     irun = *pirun;
     idig = *pidig;
@@ -198,21 +194,21 @@ tlog_stream_enc_bin(struct tlog_dispatcher *dispatcher,
     if (irun == 0) {
         idig = 10;
         /* Reserve space for the marker and single digit run */
-        REQ(2);
+        REQ(dispatcher, 2);
     }
 
     for (; ilen > 0; ilen--) {
         irun++;
         if (irun >= idig) {
-            REQ(1);
+            REQ(dispatcher, 1);
             idig *= 10;
         }
         if (olen > 0) {
-            ADV(1);
+            ADV(dispatcher, 1);
             *obuf++ = ',';
         }
         l = tlog_stream_btoa(NULL, 0, *ibuf);
-        ADV(l);
+        ADV(dispatcher, l);
         tlog_stream_btoa(obuf, l, *ibuf);
         ibuf++;
         obuf += l;
@@ -221,26 +217,16 @@ tlog_stream_enc_bin(struct tlog_dispatcher *dispatcher,
     *polen = olen;
     *pirun = irun;
     *pidig = idig;
+    TLOG_TRX_FRAME_COMMIT(trx);
     return true;
+failure:
+    TLOG_TRX_FRAME_ABORT(trx);
+    return false;
 }
 
-/**
- * Encode a valid UTF-8 byte sequence into a JSON string buffer atomically.
- * Reserve space for adding input length in decimal characters.
- *
- * @param dispatcher    The dispatcher to use.
- * @param obuf          Output buffer.
- * @param polen         Location of/for output byte counter.
- * @param pirun         Location of/for input character counter.
- * @param pidig         Location of/for the next digit input counter limit.
- * @param ibuf          Input buffer.
- * @param ilen          Input length.
- *
- * @return True if both the character and the new counter did fit into the
- *         remaining output space.
- */
 bool
-tlog_stream_enc_txt(struct tlog_dispatcher *dispatcher,
+tlog_stream_enc_txt(tlog_trx_state trx,
+                    struct tlog_dispatcher *dispatcher,
                     uint8_t *obuf, size_t *polen,
                     size_t *pirun, size_t *pidig,
                     const uint8_t *ibuf, size_t ilen)
@@ -249,6 +235,7 @@ tlog_stream_enc_txt(struct tlog_dispatcher *dispatcher,
     size_t olen;
     size_t irun;
     size_t idig;
+    TLOG_TRX_FRAME_DEF_SINGLE(dispatcher);
 
     assert(obuf != NULL);
     assert(polen != NULL);
@@ -259,6 +246,7 @@ tlog_stream_enc_txt(struct tlog_dispatcher *dispatcher,
     if (ilen == 0)
         return true;
 
+    TLOG_TRX_FRAME_BEGIN(trx);
     olen = *polen;
     irun = *pirun;
     idig = *pidig;
@@ -267,32 +255,32 @@ tlog_stream_enc_txt(struct tlog_dispatcher *dispatcher,
     if (irun == 0) {
         idig = 10;
         /* Reserve space for the marker and single digit run */
-        REQ(2);
+        REQ(dispatcher, 2);
     }
 
     irun++;
     if (irun >= idig) {
-        REQ(1);
+        REQ(dispatcher, 1);
         idig *= 10;
     }
 
     if (ilen > 1) {
-        ADV(ilen);
+        ADV(dispatcher, ilen);
         memcpy(obuf, ibuf, ilen);
     } else {
         c = *ibuf;
         switch (c) {
         case '"':
         case '\\':
-            ADV(2);
+            ADV(dispatcher, 2);
             *obuf++ = '\\';
             *obuf = c;
             break;
 #define ESC_CASE(_c, _e) \
-        case _c:            \
-            ADV(2);        \
-            *obuf++ = '\\'; \
-            *obuf = _e;   \
+        case _c:                \
+            ADV(dispatcher, 2); \
+            *obuf++ = '\\';     \
+            *obuf = _e;         \
             break;
         ESC_CASE('\b', 'b');
         ESC_CASE('\f', 'f');
@@ -302,7 +290,7 @@ tlog_stream_enc_txt(struct tlog_dispatcher *dispatcher,
 #undef ESC
         default:
             if (c < 0x20 || c == 0x7f) {
-                ADV(6);
+                ADV(dispatcher, 6);
                 *obuf++ = '\\';
                 *obuf++ = 'u';
                 *obuf++ = '0';
@@ -311,7 +299,7 @@ tlog_stream_enc_txt(struct tlog_dispatcher *dispatcher,
                 *obuf = tlog_nibble_digit(c & 0xf);
                 break;
             } else {
-                ADV(1);
+                ADV(dispatcher, 1);
                 *obuf = c;
             }
             break;
@@ -321,7 +309,11 @@ tlog_stream_enc_txt(struct tlog_dispatcher *dispatcher,
     *polen = olen;
     *pirun = irun;
     *pidig = idig;
+    TLOG_TRX_FRAME_COMMIT(trx);
     return true;
+failure:
+    TLOG_TRX_FRAME_ABORT(trx);
+    return false;
 }
 
 #undef ADV
@@ -330,6 +322,7 @@ tlog_stream_enc_txt(struct tlog_dispatcher *dispatcher,
 /**
  * Write a meta record for text and binary runs, resetting them.
  *
+ * @param dispatcher    The dispatcher to write through.
  * @param valid_mark    Valid UTF-8 record marker character.
  * @param invalid_mark  Invalid UTF-8 record marker character.
  * @param ptxt_run      Location of/for text run.
@@ -356,15 +349,15 @@ tlog_stream_write_meta(struct tlog_dispatcher *dispatcher,
         assert(rc >= 0);
         assert(rc < (int)sizeof(buf));
         tlog_dispatcher_write(dispatcher, (uint8_t *)buf, rc);
-        *ptxt_run = 0;
     }
     if (*pbin_run != 0) {
         rc = snprintf(buf, sizeof(buf), "/%zu", *pbin_run);
         assert(rc >= 0);
         assert(rc < (int)sizeof(buf));
         tlog_dispatcher_write(dispatcher, (uint8_t *)buf, rc);
-        *pbin_run = 0;
     }
+    *ptxt_run = 0;
+    *pbin_run = 0;
 }
 
 void
@@ -381,6 +374,7 @@ tlog_stream_flush(struct tlog_stream *stream)
  * valid or an invalid UTF-8 character. Account for any (potentially) used
  * total remaining space.
  *
+ * @param trx       Transaction to act within.
  * @param stream    The stream to write to.    
  * @param ts        The byte sequence timestamp.
  * @param valid     True if sequence is a valid character, false otherwise.
@@ -390,75 +384,73 @@ tlog_stream_flush(struct tlog_stream *stream)
  * @return True if the sequence was written, false otherwise.
  */
 static bool
-tlog_stream_write_seq(struct tlog_stream *stream, const struct timespec *ts,
+tlog_stream_write_seq(tlog_trx_state trx,
+                      struct tlog_stream *stream, const struct timespec *ts,
                       bool valid, const uint8_t *buf, size_t len)
 {
     /* Unicode replacement character (u+fffd) */
     static const uint8_t repl_buf[] = {0xef, 0xbf, 0xbd};
-    size_t txt_run;
-    size_t txt_dig;
-    size_t txt_len;
-    size_t bin_run;
-    size_t bin_dig;
-    size_t bin_len;
+    TLOG_TRX_FRAME_DEF_SINGLE(stream);
 
     assert(tlog_stream_is_valid(stream));
     assert(buf != NULL || len == 0);
 
     if (len == 0)
         return true;
-    
-    txt_run = stream->txt_run;
-    txt_dig = stream->txt_dig;
-    txt_len = stream->txt_len;
-    bin_run = stream->bin_run;
-    bin_dig = stream->bin_dig;
-    bin_len = stream->bin_len;
+
+    TLOG_TRX_FRAME_BEGIN(trx);
 
     /* Cut the run, if changing type */
     if ((!valid) != (stream->bin_run != 0))
         tlog_stream_write_meta(stream->dispatcher,
                                stream->valid_mark, stream->invalid_mark,
-                               &txt_run, &bin_run);
+                               &stream->txt_run, &stream->bin_run);
 
     /* Advance the time */
-    tlog_dispatcher_advance(stream->dispatcher, ts);
+    if (!tlog_dispatcher_advance(trx, stream->dispatcher, ts))
+        goto failure;
 
     if (valid) {
         /* Write the character to the text buffer */
-        if (!tlog_stream_enc_txt(stream->dispatcher,
-                                 stream->txt_buf + txt_len, &txt_len,
-                                 &txt_run, &txt_dig,
+        if (!tlog_stream_enc_txt(trx,
+                                 stream->dispatcher,
+                                 stream->txt_buf + stream->txt_len,
+                                 &stream->txt_len,
+                                 &stream->txt_run, &stream->txt_dig,
                                  buf, len))
-            return false;
+            goto failure;
     } else {
         /* Write the replacement character to the text buffer */
-        if (!tlog_stream_enc_txt(stream->dispatcher,
-                                 stream->txt_buf + txt_len,  &txt_len,
-                                 &txt_run, &txt_dig,
+        if (!tlog_stream_enc_txt(trx,
+                                 stream->dispatcher,
+                                 stream->txt_buf + stream->txt_len,
+                                 &stream->txt_len,
+                                 &stream->txt_run, &stream->txt_dig,
                                  repl_buf, sizeof(repl_buf)))
-            return false;
+            goto failure;
 
         /* Write bytes to the binary buffer */
-        if (!tlog_stream_enc_bin(stream->dispatcher,
-                                 stream->bin_buf + bin_len, &bin_len,
-                                 &bin_run, &bin_dig,
+        if (!tlog_stream_enc_bin(trx,
+                                 stream->dispatcher,
+                                 stream->bin_buf + stream->bin_len,
+                                 &stream->bin_len,
+                                 &stream->bin_run, &stream->bin_dig,
                                  buf, len))
-            return false;
+            goto failure;
     }
 
-    stream->txt_run = txt_run;
-    stream->txt_dig = txt_dig;
-    stream->txt_len = txt_len;
-    stream->bin_run = bin_run;
-    stream->bin_dig = bin_dig;
-    stream->bin_len = bin_len;
+    TLOG_TRX_FRAME_COMMIT(trx);
     return true;
+
+failure:
+    TLOG_TRX_FRAME_ABORT(trx);
+    return false;
 }
 
 
 size_t
-tlog_stream_write(struct tlog_stream *stream,
+tlog_stream_write(tlog_trx_state trx,
+                  struct tlog_stream *stream,
                   const struct timespec *ts,
                   const uint8_t **pbuf, size_t *plen)
 {
@@ -466,6 +458,7 @@ tlog_stream_write(struct tlog_stream *stream,
     size_t len;
     struct tlog_utf8 *utf8;
     size_t written;
+    TLOG_TRX_FRAME_DEF_SINGLE(stream);
 
     assert(tlog_stream_is_valid(stream));
     assert(pbuf != NULL);
@@ -476,6 +469,8 @@ tlog_stream_write(struct tlog_stream *stream,
     len = *plen;
     utf8 = &stream->utf8;
     assert(!tlog_utf8_is_ended(utf8));
+
+    TLOG_TRX_FRAME_BEGIN(trx);
 
     while (true) {
         do {
@@ -496,13 +491,15 @@ tlog_stream_write(struct tlog_stream *stream,
         /* If the first byte we encountered was invalid */
         if (tlog_utf8_is_empty(utf8)) {
             /* Write single input byte as invalid sequence and skip it */
-            if (!tlog_stream_write_seq(stream, &stream->ts, false, buf, 1))
+            if (!tlog_stream_write_seq(TLOG_TRX_STATE_SUB(trx),
+                                       stream, &stream->ts, false, buf, 1))
                 break;
             buf++;
             len--;
         } else {
             /* If the (in)complete character doesn't fit into output */
-            if (!tlog_stream_write_seq(stream, &stream->ts,
+            if (!tlog_stream_write_seq(TLOG_TRX_STATE_SUB(trx),
+                                       stream, &stream->ts,
                                        tlog_utf8_is_complete(utf8),
                                        utf8->buf, utf8->len)) {
                 /* Back up unwritten data */
@@ -519,24 +516,32 @@ exit:
     written = (*plen - len);
     *pbuf = buf;
     *plen = len;
+
+    TLOG_TRX_FRAME_COMMIT(trx);
+
     return written;
 }
 
 bool
-tlog_stream_cut(struct tlog_stream *stream)
+tlog_stream_cut(tlog_trx_state trx,
+                struct tlog_stream *stream)
 {
     struct tlog_utf8 *utf8;
+    TLOG_TRX_FRAME_DEF_SINGLE(stream);
 
     assert(tlog_stream_is_valid(stream));
 
     utf8 = &stream->utf8;
     assert(!tlog_utf8_is_ended(utf8));
 
-    if (tlog_stream_write_seq(stream, &stream->ts,
+    TLOG_TRX_FRAME_BEGIN(trx);
+    if (tlog_stream_write_seq(trx, stream, &stream->ts,
                               false, utf8->buf, utf8->len)) {
         tlog_utf8_reset(utf8);
+        TLOG_TRX_FRAME_COMMIT(trx);
         return true;
     } else {
+        TLOG_TRX_FRAME_ABORT(trx);
         return false;
     }
 }
@@ -550,40 +555,3 @@ tlog_stream_empty(struct tlog_stream *stream)
     stream->bin_run = 0;
     stream->bin_len = 0;
 }
-
-/** Stream transaction store */
-TLOG_TRX_STORE_SIG(tlog_stream) {
-    TLOG_TRX_STORE_PROXY(dispatcher);
-    TLOG_TRX_STORE_VAR(tlog_stream, utf8);
-    TLOG_TRX_STORE_VAR(tlog_stream, ts);
-    TLOG_TRX_STORE_VAR(tlog_stream, txt_run);
-    TLOG_TRX_STORE_VAR(tlog_stream, txt_dig);
-    TLOG_TRX_STORE_VAR(tlog_stream, txt_len);
-    TLOG_TRX_STORE_VAR(tlog_stream, bin_run);
-    TLOG_TRX_STORE_VAR(tlog_stream, bin_dig);
-    TLOG_TRX_STORE_VAR(tlog_stream, bin_len);
-};
-
-/** Transfer transaction data of a stream */
-static TLOG_TRX_XFR_SIG(tlog_stream)
-{
-    TLOG_TRX_XFR_PROLOGUE(tlog_stream);
-
-    TLOG_TRX_XFR_PROXY(dispatcher);
-    TLOG_TRX_XFR_VAR(utf8);
-    TLOG_TRX_XFR_VAR(ts);
-    TLOG_TRX_XFR_VAR(txt_run);
-    TLOG_TRX_XFR_VAR(txt_dig);
-    TLOG_TRX_XFR_VAR(txt_len);
-    TLOG_TRX_XFR_VAR(bin_run);
-    TLOG_TRX_XFR_VAR(bin_dig);
-    TLOG_TRX_XFR_VAR(bin_len);
-
-    TLOG_TRX_XFR_EPILOGUE;
-}
-
-struct tlog_trx_iface TLOG_TRX_IFACE_NAME(tlog_stream) = {
-    .store_size = sizeof(TLOG_TRX_STORE_SIG(tlog_stream)),
-    .mask_off = TLOG_OFFSET_OF(struct tlog_stream, trx_mask),
-    .xfr = TLOG_TRX_XFR_NAME(tlog_stream)
-};

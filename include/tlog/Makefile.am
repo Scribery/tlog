@@ -39,6 +39,12 @@ tlog_HEADERS = \
     stream.h        \
     syslog_writer.h \
     trx.h           \
+    trx_act.h       \
+    trx_basic.h     \
+    trx_frame.h     \
+    trx_iface.h     \
+    trx_level.h     \
+    trx_state.h     \
     utf8.h          \
     writer.h        \
     writer_type.h

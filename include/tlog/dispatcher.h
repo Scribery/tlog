@@ -35,6 +35,7 @@ struct tlog_dispatcher;
 /**
  * Time-advancing function prototype.
  *
+ * @param trx           The transaction to act within.
  * @param dispatcher    The dispatcher to advance time for.
  * @param ts            The time to advance to, must be equal or greater than
  *                      the previously advanced to.
@@ -42,7 +43,8 @@ struct tlog_dispatcher;
  * @return True if there was space to record the advanced time, false
  *         otherwise.
  */
-typedef bool (*tlog_dispatcher_advance_fn)(struct tlog_dispatcher *dispatcher,
+typedef bool (*tlog_dispatcher_advance_fn)(tlog_trx_state trx,
+                                           struct tlog_dispatcher *dispatcher,
                                            const struct timespec *ts);
 
 /**
@@ -67,12 +69,16 @@ typedef void (*tlog_dispatcher_write_fn)(struct tlog_dispatcher    *dispatcher,
                                          const uint8_t             *ptr,
                                          size_t                     len);
 
-/** Fork */
+/** Dispatcher */
 struct tlog_dispatcher {
-    tlog_dispatcher_advance_fn  advance;    /**< Time-advancing function */
-    tlog_dispatcher_reserve_fn  reserve;    /**< Space-reservation function */
-    tlog_dispatcher_write_fn    write;      /**< Metadata writing function */
-    tlog_trx_xfr_if             xfr_if;     /**< Transaction interface */
+    tlog_dispatcher_advance_fn      advance;        /**< Time-advancing function */
+    tlog_dispatcher_reserve_fn      reserve;        /**< Space-reservation function */
+    tlog_dispatcher_write_fn        write;          /**< Metadata writing function */
+    struct tlog_trx_iface           trx_iface;      /**< Transaction interface */
+    void                           *container;              /**< Container */
+    const struct tlog_trx_iface    *container_trx_iface;    /**< Container's
+                                                                 transaction
+                                                                 interface */
 };
 
 /**
@@ -88,35 +94,32 @@ tlog_dispatcher_is_valid(const struct tlog_dispatcher *dispatcher)
     return dispatcher != NULL &&
            dispatcher->advance != NULL &&
            dispatcher->reserve != NULL &&
-           dispatcher->write != NULL;
+           dispatcher->write != NULL &&
+           dispatcher->container != NULL &&
+           dispatcher->container_trx_iface != NULL;
 }
 
 /**
  * Initialize a dispatcher.
  *
- * @param advance   The time-advancing function.
- * @param reserve   The space-reservation function.
- * @param write     The metadata writing function.
+ * @param advance               The time-advancing function.
+ * @param reserve               The space-reservation function.
+ * @param write                 The metadata writing function.
+ * @param container             Container pointer.
+ * @param container_trx_iface   The container's transaction interface to use.
  */
-static inline void
-tlog_dispatcher_init(struct tlog_dispatcher *dispatcher,
-                     tlog_dispatcher_advance_fn advance,
-                     tlog_dispatcher_reserve_fn reserve,
-                     tlog_dispatcher_write_fn write)
-{
-    assert(dispatcher != NULL);
-    assert(advance != NULL);
-    assert(reserve != NULL);
-    assert(write != NULL);
-    dispatcher->advance = advance;
-    dispatcher->reserve = reserve;
-    dispatcher->write = write;
-    assert(tlog_dispatcher_is_valid(dispatcher));
-}
+extern void tlog_dispatcher_init(struct tlog_dispatcher *dispatcher,
+                                 tlog_dispatcher_advance_fn advance,
+                                 tlog_dispatcher_reserve_fn reserve,
+                                 tlog_dispatcher_write_fn write,
+                                 void *container,
+                                 const struct tlog_trx_iface
+                                                *container_trx_iface);
 
 /**
  * Advance dispatcher time.
  *
+ * @param trx           The transaction to act within.
  * @param dispatcher    The dispatcher to advance time for.
  * @param ts            The time to advance to, must be equal or greater than
  *                      the previously advanced to.
@@ -125,12 +128,13 @@ tlog_dispatcher_init(struct tlog_dispatcher *dispatcher,
  *         otherwise.
  */
 static inline bool
-tlog_dispatcher_advance(struct tlog_dispatcher *dispatcher,
+tlog_dispatcher_advance(tlog_trx_state trx,
+                        struct tlog_dispatcher *dispatcher,
                         const struct timespec *ts)
 {
     assert(tlog_dispatcher_is_valid(dispatcher));
     assert(ts != NULL);
-    return dispatcher->advance(dispatcher, ts);
+    return dispatcher->advance(trx, dispatcher, ts);
 }
 
 /**

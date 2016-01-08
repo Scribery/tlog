@@ -79,3 +79,7 @@ Implement a test for decoding what was encoded.
 Make each message start with window size.
 
 Assert object validity after initialization.
+
+Add transaction interface validation.
+
+Add object validation to function exits.

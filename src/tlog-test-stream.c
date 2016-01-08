@@ -95,16 +95,29 @@ struct test {
     size_t          meta_len;
 };
 
+TLOG_TRX_BASIC_STORE_SIG(test_meta) {
+    uint8_t                *ptr;
+    size_t                  rem;
+};
+
 struct test_meta {
     struct tlog_dispatcher  dispatcher;
     uint8_t                 buf[SIZE];
     uint8_t                *ptr;
     size_t                  rem;
     struct tlog_stream      stream;
-    bool                    got_ts;
-    struct timespec         first_ts;
-    struct timespec         last_ts;
+    struct tlog_trx_iface   trx_iface;
+    TLOG_TRX_BASIC_MEMBERS(test_meta);
 };
+
+static
+TLOG_TRX_BASIC_ACT_SIG(test_meta)
+{
+    TLOG_TRX_BASIC_ACT_PROLOGUE(test_meta);
+    TLOG_TRX_BASIC_ACT_ON_VAR(ptr);
+    TLOG_TRX_BASIC_ACT_ON_VAR(rem);
+    TLOG_TRX_BASIC_ACT_ON_OBJ(stream);
+}
 
 static bool
 test_meta_dispatcher_reserve(struct tlog_dispatcher *dispatcher,
@@ -128,18 +141,20 @@ test_meta_dispatcher_write(struct tlog_dispatcher *dispatcher,
                                                struct test_meta,
                                                dispatcher);
     assert(tlog_dispatcher_is_valid(dispatcher));
-    assert((meta->ptr - meta->buf + len) <= meta->rem);
+    assert((meta->ptr - meta->buf + len) <= sizeof(meta->buf) - meta->rem);
 
     memcpy(meta->ptr, ptr, len);
     meta->ptr += len;
 }
 
 static bool
-test_meta_dispatcher_advance(struct tlog_dispatcher *dispatcher,
+test_meta_dispatcher_advance(tlog_trx_state trx,
+                             struct tlog_dispatcher *dispatcher,
                              const struct timespec *ts)
 {
     assert(tlog_dispatcher_is_valid(dispatcher));
     assert(ts != NULL);
+    (void)trx;
     (void)dispatcher;
     (void)ts;
     return true;
@@ -153,10 +168,12 @@ test_meta_init(struct test_meta *meta, size_t rem)
     assert(rem <= sizeof(meta->buf));
 
     memset(meta, 0, sizeof(*meta));
+    meta->trx_iface = TLOG_TRX_BASIC_IFACE(test_meta);
     tlog_dispatcher_init(&meta->dispatcher,
                          test_meta_dispatcher_advance,
                          test_meta_dispatcher_reserve,
-                         test_meta_dispatcher_write);
+                         test_meta_dispatcher_write,
+                         meta, &meta->trx_iface);
     meta->ptr = meta->buf;
     meta->rem = rem;
     grc = tlog_stream_init(&meta->stream, &meta->dispatcher,
@@ -209,7 +226,7 @@ test(const char *n, const struct test t)
             assert(op->data.write.len_out <= op->data.write.len_in);
             buf = op->data.write.buf;
             len = op->data.write.len_in;
-            tlog_stream_write(&meta.stream, &ts, &buf, &len);
+            tlog_stream_write(TLOG_TRX_STATE_ROOT, &meta.stream, &ts, &buf, &len);
             if ((buf < op->data.write.buf) ||
                 (buf - op->data.write.buf) !=
                     (ssize_t)(op->data.write.len_in -
@@ -244,7 +261,7 @@ test(const char *n, const struct test t)
             else
                 goto cleanup;
         case OP_TYPE_CUT:
-            tlog_stream_cut(&meta.stream);
+            tlog_stream_cut(TLOG_TRX_STATE_ROOT, &meta.stream);
             if ((meta.ptr - last_ptr) != op->data.cut.meta_off)
                 FAIL_OP("meta_off %zd != %zd",
                         (meta.ptr - last_ptr), op->data.cut.meta_off);

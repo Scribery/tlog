@@ -28,11 +28,23 @@
 
 #define BOOL_STR(_b) ((_b) ? "true" : "false")
 
-struct test_meta {
-    struct tlog_dispatcher dispatcher;
+TLOG_TRX_BASIC_STORE_SIG(test_meta) {
     size_t rem;
 };
 
+struct test_meta {
+    struct tlog_dispatcher  dispatcher;
+    size_t                  rem;
+    struct tlog_trx_iface   trx_iface;
+    TLOG_TRX_BASIC_MEMBERS(test_meta);
+};
+
+static
+TLOG_TRX_BASIC_ACT_SIG(test_meta)
+{
+    TLOG_TRX_BASIC_ACT_PROLOGUE(test_meta);
+    TLOG_TRX_BASIC_ACT_ON_VAR(rem);
+}
 
 static bool
 test_meta_dispatcher_reserve(struct tlog_dispatcher *dispatcher,
@@ -60,11 +72,13 @@ test_meta_dispatcher_write(struct tlog_dispatcher *dispatcher,
 }
 
 static bool
-test_meta_dispatcher_advance(struct tlog_dispatcher *dispatcher,
+test_meta_dispatcher_advance(tlog_trx_state trx,
+                             struct tlog_dispatcher *dispatcher,
                              const struct timespec *ts)
 {
     assert(tlog_dispatcher_is_valid(dispatcher));
     assert(ts != NULL);
+    (void)trx;
     (void)dispatcher;
     (void)ts;
     return true;
@@ -76,13 +90,15 @@ test_meta_init(struct test_meta *meta, size_t rem)
     assert(meta != NULL);
 
     memset(meta, 0, sizeof(*meta));
+    meta->trx_iface = TLOG_TRX_BASIC_IFACE(test_meta);
     tlog_dispatcher_init(&meta->dispatcher,
                          test_meta_dispatcher_advance,
                          test_meta_dispatcher_reserve,
-                         test_meta_dispatcher_write);
+                         test_meta_dispatcher_write,
+                         meta,
+                         &meta->trx_iface);
     meta->rem = rem;
 }
-
 
 bool
 tlog_test_stream_enc(const char *n, const struct tlog_test_stream_enc t)
@@ -117,7 +133,7 @@ tlog_test_stream_enc(const char *n, const struct tlog_test_stream_enc t)
                  BOOL_STR(_name), BOOL_STR(t._name##_out));    \
     } while (0)
 
-    fit = t.func(&meta.dispatcher,
+    fit = t.func(TLOG_TRX_STATE_ROOT, &meta.dispatcher,
                  obuf, &olen, &irun, &idig, t.ibuf_in, t.ilen_in);
     orem = meta.rem;
     CMP_BOOL(fit);

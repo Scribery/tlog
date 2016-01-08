@@ -322,7 +322,7 @@ main(void)
             OP_WRITE_IO(0, 1100000, true, "\x84\x9e", 2),
             OP_FLUSH
          },
-         .output = MSG(1, "0", "+1>1", "", "", "\xf0\x9d\x84\x9e", "")
+         .output = MSG(1, "1", ">1", "", "", "\xf0\x9d\x84\x9e", "")
     );
 
     TEST(delay_between_chars,
@@ -361,7 +361,7 @@ main(void)
             OP_WRITE_IO(TIME_T_MAX_NUM, USEC_MAX_NUM, true, "\x84\x9e", 2),
             OP_FLUSH
          },
-         .output = MSG(1, "0", "+" TIME_MAX_STR ">1",
+         .output = MSG(1, TIME_MAX_STR, ">1",
                        "", "", "\xf0\x9d\x84\x9e", "")
     );
 

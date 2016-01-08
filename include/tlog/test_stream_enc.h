@@ -25,11 +25,12 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <tlog/dispatcher.h>
+#include <tlog/stream.h>
 
 #define TLOG_TEST_STREAM_ENC_BUF_SIZE    32
 
-typedef bool (*tlog_test_stream_enc_func)(struct tlog_dispatcher *dispatcher,
+typedef bool (*tlog_test_stream_enc_func)(tlog_trx_state trx,
+                                          struct tlog_dispatcher *dispatcher,
                                           uint8_t *obuf, size_t *polen,
                                           size_t *pirun, size_t *pidig,
                                           const uint8_t *ibuf, size_t ilen);
@@ -47,7 +48,7 @@ struct tlog_test_stream_enc {
     size_t                      irun_out;
     size_t                      idig_in;
     size_t                      idig_out;
-    bool                        fit_out;
+    bool                        fit_out;    /**< Expected func return value */
 };
 
 /**

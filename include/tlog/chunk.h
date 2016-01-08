@@ -35,6 +35,15 @@
 /** Minimum value of chunk size */
 #define TLOG_CHUNK_SIZE_MIN    TLOG_STREAM_SIZE_MIN
 
+/** Chunk transaction store */
+TLOG_TRX_BASIC_STORE_SIG(tlog_chunk) {
+    size_t              rem;        /**< Remaining total buffer space */
+    uint8_t            *timing_ptr; /**< Timing output pointer */
+    bool                got_ts;     /**< True if got a timestamp */
+    struct timespec     first_ts;   /**< First timestamp */
+    struct timespec     last_ts;    /**< Last timestamp */
+};
+
 /** Chunk buffer */
 struct tlog_chunk {
     struct tlog_dispatcher  dispatcher; /**< Dispatcher interface */
@@ -52,31 +61,10 @@ struct tlog_chunk {
     bool                got_ts;     /**< True if got a timestamp */
     struct timespec     first_ts;   /**< First timestamp */
     struct timespec     last_ts;    /**< Last timestamp */
+
+    struct tlog_trx_iface   trx_iface;  /**< Transaction interface */
+    TLOG_TRX_BASIC_MEMBERS(tlog_chunk); /**< Transaction data */
 };
-
-/** Chunk transaction store */
-TLOG_TRX_STORE_SIG(tlog_chunk) {
-    size_t              rem;        /**< Remaining total buffer space */
-    uint8_t            *timing_ptr; /**< Timing output pointer */
-    bool                got_ts;     /**< True if got a timestamp */
-    struct timespec     first_ts;   /**< First timestamp */
-    struct timespec     last_ts;    /**< Last timestamp */
-
-    TLOG_TRX_STORE_SIG(tlog_stream) input;  /**< Input store */
-    TLOG_TRX_STORE_SIG(tlog_stream) output; /**< Output store */
-};
-
-/** Transfer transaction data of a chunk */
-static inline TLOG_TRX_XFR_SIG(tlog_chunk)
-{
-    TLOG_TRX_XFR_VAR(rem);
-    TLOG_TRX_XFR_VAR(timing_ptr);
-    TLOG_TRX_XFR_VAR(got_ts);
-    TLOG_TRX_XFR_VAR(first_ts);
-    TLOG_TRX_XFR_VAR(last_ts);
-    TLOG_TRX_XFR_OBJ(tlog_stream, input);
-    TLOG_TRX_XFR_OBJ(tlog_stream, output);
-}
 
 /**
  * Initialize a chunk.

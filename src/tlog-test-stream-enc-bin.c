@@ -23,11 +23,6 @@
 #include <stdio.h>
 #include <tlog/test_stream_enc.h>
 
-extern bool tlog_stream_enc_bin(struct tlog_dispatcher *dispatcher,
-                                uint8_t *obuf, size_t *polen,
-                                size_t *pirun, size_t *pidig,
-                                const uint8_t *ibuf, size_t ilen);
-
 int
 main(void)
 {
@@ -56,14 +51,14 @@ main(void)
     /* One byte input, output short of one byte */
     TEST(one_out_one,   .ibuf_in    = {0xff},
                         .ilen_in    = 1,
-                        .obuf_out   = "25",
+                        .obuf_out   = "",
                         .orem_in    = 4,
                         .orem_out   = 4);
 
     /* One byte input, output short of two bytes */
     TEST(one_out_two,   .ibuf_in    = {0xff},
                         .ilen_in    = 1,
-                        .obuf_out   = "2",
+                        .obuf_out   = "",
                         .orem_in    = 3,
                         .orem_out   = 3);
 
@@ -84,14 +79,14 @@ main(void)
     /* Two byte input, output short of one byte */
     TEST(two_out_one,   .ibuf_in    = {0xfe, 0xff},
                         .ilen_in    = 2,
-                        .obuf_out   = "254,25",
+                        .obuf_out   = "254,",
                         .orem_in    = 8,
                         .orem_out   = 8);
 
     /* Two byte input, output short of two bytes */
     TEST(two_out_two,   .ibuf_in    = {0xfe, 0xff},
                         .ilen_in    = 2,
-                        .obuf_out   = "254,2",
+                        .obuf_out   = "254,",
                         .orem_in    = 7,
                         .orem_out   = 7);
 
@@ -121,7 +116,7 @@ main(void)
      */
     TEST(two_out_five,  .ibuf_in    = {0xfe, 0xff},
                         .ilen_in    = 2,
-                        .obuf_out   = "25",
+                        .obuf_out   = "",
                         .orem_in    = 4,
                         .orem_out   = 4);
 
@@ -173,7 +168,7 @@ main(void)
     /* Not rolling over to second digit */
     TEST(second_digit_abort,    .ibuf_in    = {0xff},
                                 .ilen_in    = 1,
-                                .obuf_out   = "25",
+                                .obuf_out   = "",
                                 .orem_in    = 3,
                                 .orem_out   = 3,
                                 .irun_in    = 9,

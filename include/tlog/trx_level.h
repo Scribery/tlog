@@ -1,5 +1,5 @@
 /*
- * Tlog transaction.
+ * Tlog transaction nesting level.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -20,12 +20,24 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TLOG_TRX_H
-#define _TLOG_TRX_H
+#ifndef _TLOG_TRX_LEVEL_H
+#define _TLOG_TRX_LEVEL_H
 
-#include <tlog/trx_iface.h>
-#include <tlog/trx_state.h>
-#include <tlog/trx_frame.h>
-#include <tlog/trx_basic.h>
+#include <stdint.h>
 
-#endif /* _TLOG_TRX_H */
+/** Transaction nesting level */
+typedef unsigned int tlog_trx_level;
+
+/** Minimum transaction nesting level */
+#define TLOG_TRX_LEVEL_MIN  0
+
+/** Maximum transaction nesting level */
+#define TLOG_TRX_LEVEL_MAX  3
+
+/** Number of available transaction nesting levels */
+#define TLOG_TRX_LEVEL_NUM  (TLOG_TRX_LEVEL_MAX + 1)
+
+/** Number of bits required to store a transaction nesting level */
+#define TLOG_TRX_LEVEL_BITS 2
+
+#endif /* _TLOG_TRX_LEVEL_H */

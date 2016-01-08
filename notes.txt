@@ -544,3 +544,36 @@ into object files, making them tidier.
 What if we allocate transaction storage within the objects themselves
 according to the maximum transaction depth? This way we won't have to mess
 with allocation/deallocation at transaction backup/restore/cleanup time!
+
+Then the transaction interface becomes:
+    xfr         Transaction data transfer function
+
+If we manage to separate them, then it becomes:
+    backup      Transaction backup function
+    restore     Transaction restore function
+
+----
+
+iface
+    act
+        mask
+        store
+
+root header
+    trx - transaction management function
+        TRX_BEGIN
+        TRX_ABORT
+        TRX_COMMIT
+    trx_misc - miscellaneous transaction functions and macros
+    trx_state - transaction state passed between functions
+        trx_state_get_depth
+    trx_iface - object's interface definition
+    trx_basic - macros for basic interface implementation
+        trx_basic_iface - define interface
+            trx_basic_act - define acting function
+        trx_basic_store - basic store definition macros
+            trx_basic_store_sig
+        trx_basic_members - define fields for object structure
+            trx_iface - interface
+            trx_mask - mask
+            trx_store - store list

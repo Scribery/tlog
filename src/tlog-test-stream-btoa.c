@@ -23,8 +23,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-
-extern size_t tlog_stream_btoa(uint8_t *buf, size_t len, uint8_t b);
+#include <tlog/stream.h>
 
 int
 main(void)
