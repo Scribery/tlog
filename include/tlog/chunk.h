@@ -42,6 +42,9 @@ TLOG_TRX_BASIC_STORE_SIG(tlog_chunk) {
     bool                got_ts;     /**< True if got a timestamp */
     struct timespec     first_ts;   /**< First timestamp */
     struct timespec     last_ts;    /**< Last timestamp */
+    bool                got_window;     /**< True if got a window packet */
+    unsigned short int  last_width;     /**< Last window width */
+    unsigned short int  last_height;    /**< Last window height */
 };
 
 /** Chunk buffer */
@@ -61,6 +64,10 @@ struct tlog_chunk {
     bool                got_ts;     /**< True if got a timestamp */
     struct timespec     first_ts;   /**< First timestamp */
     struct timespec     last_ts;    /**< Last timestamp */
+
+    bool                got_window;     /**< True if got a window packet */
+    unsigned short int  last_width;     /**< Last window width */
+    unsigned short int  last_height;    /**< Last window height */
 
     struct tlog_trx_iface   trx_iface;  /**< Transaction interface */
     TLOG_TRX_BASIC_MEMBERS(tlog_chunk); /**< Transaction data */

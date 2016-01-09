@@ -33,6 +33,9 @@ TLOG_TRX_BASIC_ACT_SIG(tlog_chunk)
     TLOG_TRX_BASIC_ACT_ON_VAR(got_ts);
     TLOG_TRX_BASIC_ACT_ON_VAR(first_ts);
     TLOG_TRX_BASIC_ACT_ON_VAR(last_ts);
+    TLOG_TRX_BASIC_ACT_ON_VAR(got_window);
+    TLOG_TRX_BASIC_ACT_ON_VAR(last_width);
+    TLOG_TRX_BASIC_ACT_ON_VAR(last_height);
     TLOG_TRX_BASIC_ACT_ON_OBJ(input);
     TLOG_TRX_BASIC_ACT_ON_OBJ(output);
 }
@@ -307,6 +310,14 @@ tlog_chunk_write_window(tlog_trx_state trx,
 
     TLOG_TRX_FRAME_BEGIN(trx);
 
+    if (chunk->got_window) {
+        if (pkt->data.window.width == chunk->last_width &&
+            pkt->data.window.height == chunk->last_height)
+            goto success;
+    } else {
+        chunk->got_window = true;
+    }
+
     rc = snprintf(buf, sizeof(buf), "=%hux%hu",
                   pkt->data.window.width, pkt->data.window.height);
     if (rc < 0) {
@@ -334,6 +345,10 @@ tlog_chunk_write_window(tlog_trx_state trx,
 
     tlog_chunk_write_timing(chunk, (uint8_t *)buf, len);
 
+    chunk->last_width = pkt->data.window.width;
+    chunk->last_height = pkt->data.window.height;
+
+success:
     *ppos = 1;
     TLOG_TRX_FRAME_COMMIT(trx);
     return true;
