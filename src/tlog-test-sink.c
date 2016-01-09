@@ -183,6 +183,65 @@ main(void)
                    MSG(2, "0", "=33333x33333=44444x44444", "", "", "", "")
     );
 
+    TEST(window_merging,
+         .op_list = {
+            OP_WRITE_WINDOW(0, 0, 100, 100),
+            OP_WRITE_WINDOW(0, 1000000, 100, 100),
+            OP_WRITE_WINDOW(0, 2000000, 200, 200),
+            OP_WRITE_WINDOW(0, 3000000, 200, 200),
+            OP_FLUSH,
+         },
+         .output = MSG(1, "0", "=100x100+2=200x200", "", "", "", "")
+    );
+
+    TEST(window_not_merging,
+         .op_list = {
+            OP_WRITE_WINDOW(0, 0, 100, 100),
+            OP_WRITE_WINDOW(0, 1000000, 200, 200),
+            OP_WRITE_WINDOW(0, 2000000, 100, 100),
+            OP_FLUSH,
+         },
+         .output = MSG(1, "0", "=100x100+1=200x200+1=100x100", "", "", "", "")
+    );
+
+    TEST(window_merging_over_chars,
+         .op_list = {
+            OP_WRITE_IO(0, 0, true, "A", 1),
+            OP_WRITE_WINDOW(0, 0, 10, 10),
+            OP_WRITE_IO(0, 0, true, "B", 1),
+            OP_WRITE_WINDOW(0, 0, 10, 10),
+            OP_WRITE_IO(0, 0, true, "C", 1),
+            OP_WRITE_WINDOW(0, 0, 20, 20),
+            OP_WRITE_IO(0, 0, true, "D", 1),
+            OP_WRITE_WINDOW(0, 0, 20, 20),
+            OP_WRITE_IO(0, 0, true, "E", 1),
+            OP_FLUSH,
+         },
+         .output = MSG(1, "0", ">1=10x10>2=20x20>2", "", "", "ABCDE", "")
+    );
+
+    TEST(window_merging_in_chars,
+         .op_list = {
+            OP_WRITE_WINDOW(0, 0, 10, 10),
+            OP_WRITE_IO(0, 1000000, true, "\xf0\x9d", 2),
+            OP_WRITE_WINDOW(0, 2000000, 10, 10),
+            OP_WRITE_IO(0, 3000000, true, "\x84\x9e", 2),
+            OP_FLUSH,
+         },
+         .output = MSG(1, "0", "=10x10+3>1", "", "", "\xf0\x9d\x84\x9e", "")
+    );
+
+    TEST(char_io_merging,
+         .op_list = {
+            OP_WRITE_IO(0, 1000000, true, "\xf0", 1),
+            OP_WRITE_IO(0, 2000000, true, "\x9d", 1),
+            OP_WRITE_IO(0, 3000000, true, "\x84", 1),
+            OP_WRITE_IO(0, 4000000, true, "\x9e", 1),
+            OP_FLUSH,
+         },
+         .output = MSG(1, "3", ">1", "", "", "\xf0\x9d\x84\x9e", "")
+    );
+
     TEST(one_byte,
          .op_list = {
             OP_WRITE_IO(0, 0, true, "A", 1)
