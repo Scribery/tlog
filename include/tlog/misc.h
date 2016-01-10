@@ -1,6 +1,11 @@
-/*
- * Miscellaneous functions.
+/**
+ * @file
+ * @brief Miscellaneous functions.
  *
+ * A collection of miscellaneous function, macros and data types not worthy of
+ * their own module.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -42,9 +47,9 @@
 /**
  * Cast a member of a structure out to the containing structure.
  *
- * @param _ptr      The pointer to the member.
- * @param _type     The type of the container this is embedded in.
- * @param _member   The name of the member within the type.
+ * @param \_ptr     The pointer to the member.
+ * @param \_type    The type of the container this is embedded in.
+ * @param \_member  The name of the member within the type.
  *
  */
 #define TLOG_CONTAINER_OF(_ptr, _type, _member) \

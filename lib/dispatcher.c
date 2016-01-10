@@ -1,5 +1,5 @@
 /*
- * Tlog JSON encoder dispatcher interface.
+ * JSON encoder dispatcher interface.
  *
  * Copyright (C) 2015 Red Hat
  *

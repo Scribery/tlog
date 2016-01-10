@@ -1,6 +1,13 @@
-/*
- * Tlog transaction nesting level.
+/**
+ * @file
+ * @brief Transaction nesting level.
  *
+ * Levels are used to distinguish nested transactions and let each have its
+ * own commit/abort boundaries and storage. The top transaction level is
+ * TLOG_TRX_LEVEL_MIN and the deepest possible nesting level is
+ * TLOG_TRX_LEVEL_MAX.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

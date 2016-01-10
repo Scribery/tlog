@@ -1,6 +1,11 @@
-/*
- * Tlog JSON message parser.
+/**
+ * @file
+ * @brief JSON message parser.
  *
+ * An object representing a single log message being parsed. Gets a struct
+ * json_object on creation and provides an interface to read packets from.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

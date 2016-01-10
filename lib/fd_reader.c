@@ -1,5 +1,5 @@
 /*
- * Tlog file descriptor message reader.
+ * File descriptor message reader.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -29,6 +29,7 @@
 #include <tlog/fd_reader.h>
 #include <tlog/rc.h>
 
+/** FD reader data */
 struct tlog_fd_reader {
     struct tlog_reader      reader; /**< Base type */
     struct json_tokener    *tok;    /**< JSON tokener object */

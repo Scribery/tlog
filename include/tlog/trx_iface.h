@@ -1,6 +1,10 @@
-/*
- * Tlog object's transaction management interface.
+/**
+ * @file
+ * @brief Object's transaction management interface.
  *
+ * This structure defines the object's transaction management interface.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

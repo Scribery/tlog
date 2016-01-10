@@ -1,6 +1,11 @@
-/*
- * Tlog JSON encoder data chunk buffer.
+/**
+ * @file
+ * @brief JSON encoder data chunk buffer.
  *
+ * Chunk is used to accumulate I/O and window size data for a single log
+ * message.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

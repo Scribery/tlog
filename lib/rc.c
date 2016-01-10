@@ -1,5 +1,5 @@
 /*
- * Tlog function return codes.
+ * Function return codes.
  *
  * Copyright (C) 2015 Red Hat
  *

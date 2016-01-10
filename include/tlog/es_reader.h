@@ -1,6 +1,11 @@
-/*
- * Tlog ElasticSearch message reader.
+/**
+ * @file
+ * @brief ElasticSearch message reader.
  *
+ * An implementation of a reader retrieving log messages from ElasticSearch,
+ * provided base URL and a query.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

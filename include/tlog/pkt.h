@@ -1,6 +1,12 @@
-/*
- * Tlog packet.
+/**
+ * @file
+ * @brief Packet.
  *
+ * A packet stores any possible terminal data: window size changes or I/O.
+ * A "void" packet is a packet not containing any data. Such packet can be
+ * initialized to contain any data.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

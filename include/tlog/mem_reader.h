@@ -1,6 +1,11 @@
-/*
- * Tlog memory buffer message reader.
+/**
+ * @file
+ * @brief Memory buffer message reader.
  *
+ * An implementation of a reader reading log messages from a memory buffer,
+ * mostly for use in tests.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

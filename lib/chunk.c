@@ -1,5 +1,5 @@
 /*
- * Tlog I/O buffer.
+ * I/O buffer.
  *
  * Copyright (C) 2015 Red Hat
  *

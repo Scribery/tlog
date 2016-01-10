@@ -1,5 +1,5 @@
 /*
- * Tlog miscellaneous test functions.
+ * Miscellaneous test functions.
  *
  * Copyright (C) 2015 Red Hat
  *

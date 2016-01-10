@@ -1,6 +1,27 @@
-/*
- * Tlog transaction.
+/**
+ * @file
+ * @brief Transaction support.
  *
+ * Transactions are used to keep objects consistent on failures in the middle
+ * of operations. So e.g. if a function fails in the middle, the object
+ * returns to the previous state.
+ *
+ * The rule of thumb is: if your function can abort in the middle of
+ * processing and doesn't roll back (e.g. it's difficult to implement), then
+ * it needs to use transactions.
+ *
+ * Each such function needs to accept a transaction state argument
+ * (tlog_trx_state), define a transaction frame, which is a list of
+ * participating objects, begin transaction before processing, commit it on
+ * success, or abort on failure. Any transaction-aware functions called from
+ * such function need to be passed the transaction state.
+ *
+ * Transaction state holds the transaction nesting level and transaction stack
+ * depth. When transaction is started transaction state stack depth is
+ * increased. The transaction data is backed up/restored/discarded only on
+ * stack depth zero.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

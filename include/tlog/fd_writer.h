@@ -1,6 +1,10 @@
-/*
- * Tlog file descriptor message writer.
+/**
+ * @file
+ * @brief File descriptor message writer.
  *
+ * An implementation of a writer writing log messages into a file descriptor.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

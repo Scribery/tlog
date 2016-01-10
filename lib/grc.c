@@ -1,5 +1,5 @@
 /*
- * Tlog global (function) return codes.
+ * Global (function) return codes.
  *
  * Copyright (C) 2015 Red Hat
  *

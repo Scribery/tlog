@@ -1,5 +1,5 @@
 /*
- * Tlog memory buffer message reader.
+ * Memory buffer message reader.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -26,6 +26,7 @@
 #include <tlog/mem_reader.h>
 #include <tlog/rc.h>
 
+/** Memory buffer reader data */
 struct tlog_mem_reader {
     struct tlog_reader      reader; /**< Base type */
     struct json_tokener    *tok;    /**< JSON tokener object */

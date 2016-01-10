@@ -1,6 +1,15 @@
-/*
- * Tlog basic transaction support implementation.
+/**
+ * @file
+ * @brief Basic transaction support implementation.
  *
+ * An implementation of basic transaction storage and interface.
+ * The transaction storage for all possible transaction levels is supposed to
+ * be located within the object itself as an array of specially defined types,
+ * along with a mask describing which level's backup is valid. This is
+ * accompanied by macros simplifying definition of a transaction data acting
+ * function.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

@@ -1,6 +1,11 @@
-/*
- * Tlog sink.
+/**
+ * @file
+ * @brief Terminal data sink.
  *
+ * Terminal data sink accepts packets, formats log messages and sends them to
+ * the writer specified upon creation.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -35,7 +40,7 @@
 /** Minimum value of data chunk size */
 #define TLOG_SINK_CHUNK_SIZE_MIN   TLOG_CHUNK_SIZE_MIN
 
-/* Sink instance */
+/** Sink instance */
 struct tlog_sink {
     struct tlog_writer *writer;         /**< Log message writer */
     char               *hostname;       /**< Hostname */

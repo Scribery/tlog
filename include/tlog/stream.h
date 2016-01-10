@@ -1,5 +1,14 @@
+/**
+ * @file
+ * @brief Terminal I/O stream.
+ *
+ * A stream encodes one terminal I/O stream (input or output) into two forks:
+ * text and binary JSON representation, which can then be used to format a
+ * message. It takes a generic dispatcher upon creation which is used to
+ * update the chunk's last timestamp, request space from the common budget and
+ * write to timing metadata.
+ */
 /*
- * Tlog I/O stream.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -28,6 +37,7 @@
 #include <tlog/trx.h>
 #include <tlog/dispatcher.h>
 
+/** Minimum stream's text/binary buffer size */
 #define TLOG_STREAM_SIZE_MIN    32
 
 /** Stream transaction store */
@@ -135,7 +145,6 @@ extern size_t tlog_stream_write(tlog_trx_state trx,
  * Flush a stream - write metadata record to reserved space and reset runs.
  *
  * @param stream    The stream to flush.
- * @param pmeta     Location of/for the metadata output pointer.
  */
 extern void tlog_stream_flush(struct tlog_stream *stream);
 

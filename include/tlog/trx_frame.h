@@ -1,6 +1,13 @@
-/*
- * Tlog transaction frame.
+/**
+ * @file
+ * @brief Transaction frame.
  *
+ * Transaction frame keeps a list of objects participating in the transaction
+ * along with their transaction interfaces. This list is used to
+ * backup/restore/discard transaction data on transaction
+ * beginning/abort/commit.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -56,8 +63,8 @@ struct tlog_trx_frame_slot {
  * Execute an action on transaction frame within scope, if transaction depth
  * is zero.
  *
- * @param _trx      Transaction state lvalue.
- * @param _act_type Action type.
+ * @param \_trx         Transaction state lvalue.
+ * @param \_act_type    Action type.
  */
 #define TLOG_TRX_FRAME_ACT(_trx, _act_type) \
     do {                                                        \
@@ -75,7 +82,7 @@ struct tlog_trx_frame_slot {
  * Begin or continue a transaction for transaction frame within scope, backing
  * the objects up, if the transaction is beginning.
  *
- * @param _trx  Transaction state lvalue.
+ * @param \_trx     Transaction state lvalue.
  */
 #define TLOG_TRX_FRAME_BEGIN(_trx) \
     do {                                                                    \
@@ -89,7 +96,7 @@ struct tlog_trx_frame_slot {
  * Abort a transaction for transaction frame within scope, restoring the
  * objects from backups, if the transaction is ending.
  *
- * @param _trx  Transaction state lvalue.
+ * @param \_trx     Transaction state lvalue.
  */
 #define TLOG_TRX_FRAME_ABORT(_trx) \
     do {                                                            \
@@ -103,7 +110,7 @@ struct tlog_trx_frame_slot {
  * Commit a transaction for transaction frame within scope, discarding the
  * object backups, if the transaction is ending.
  *
- * @param _trx          Transaction lvalue.
+ * @param \_trx     Transaction lvalue.
  */
 #define TLOG_TRX_FRAME_COMMIT(_trx) \
     do {                                                            \

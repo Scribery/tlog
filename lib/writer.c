@@ -1,5 +1,5 @@
 /*
- * Tlog abstract message writer.
+ * Abstract message writer.
  *
  * Copyright (C) 2015 Red Hat
  *

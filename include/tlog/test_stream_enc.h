@@ -1,6 +1,10 @@
-/*
- * Tlog tlog_stream_enc_* function test module.
+/**
+ * @file
+ * @brief tlog_stream_enc_* function test module.
  *
+ * A module for testing tlog_stream_enc_txt/bin functions.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

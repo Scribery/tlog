@@ -1,6 +1,10 @@
-/*
- * Tlog transaction state.
+/**
+ * @file
+ * @brief Transaction state.
  *
+ * Transaction state keeps track of transaction level and stack depth.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

@@ -1,6 +1,11 @@
-/*
- * Tlog file descriptor message reader.
+/**
+ * @file
+ * @brief File descriptor message reader.
  *
+ * An implementation of a reader retrieving log messages from a file
+ * descriptor.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

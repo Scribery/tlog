@@ -1,6 +1,10 @@
-/*
- * Tlog syslog message writer.
+/**
+ * @file
+ * @brief Syslog message writer
  *
+ * An implementation of a log message writer which sends messages to syslog.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

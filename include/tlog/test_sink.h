@@ -1,6 +1,10 @@
-/*
- * Tlog sink test functions.
+/**
+ * @file
+ * @brief Sink test functions.
  *
+ * Functions and types specific to sink testing.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

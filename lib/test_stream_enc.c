@@ -1,5 +1,5 @@
 /*
- * Tlog tlog_stream_enc_* function test module.
+ * Tlog_stream_enc_* function test module.
  *
  * Copyright (C) 2015 Red Hat
  *

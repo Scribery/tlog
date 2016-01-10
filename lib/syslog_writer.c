@@ -1,5 +1,5 @@
 /*
- * Tlog syslog message writer.
+ * Syslog message writer.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -24,9 +24,10 @@
 #include <tlog/rc.h>
 #include <tlog/syslog_writer.h>
 
+/** Syslog writer data */
 struct tlog_syslog_writer {
-    struct tlog_writer writer;
-    int priority;
+    struct tlog_writer  writer;     /**< Abstract writer instance */
+    int                 priority;   /**< Logging priority */
 };
 
 static tlog_grc
@@ -38,7 +39,7 @@ tlog_syslog_writer_init(struct tlog_writer *writer, va_list ap)
     return TLOG_RC_OK;
 }
 
-tlog_grc
+static tlog_grc
 tlog_syslog_writer_write(struct tlog_writer *writer,
                          const uint8_t *buf,
                          size_t len)

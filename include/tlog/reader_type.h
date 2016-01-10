@@ -1,6 +1,10 @@
-/*
- * Tlog message reader type.
+/**
+ * @file
+ * @brief Message reader type.
  *
+ * A structure describing a reader implementation.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -94,7 +98,7 @@ typedef tlog_grc (*tlog_reader_type_read_fn)(struct tlog_reader *reader,
  */
 typedef void (*tlog_reader_type_cleanup_fn)(struct tlog_reader *reader);
 
-/* Writer type */
+/** Writer type */
 struct tlog_reader_type {
     size_t                          size;       /**< Instance size */
     tlog_reader_type_init_fn        init;       /**< Init function */
@@ -119,8 +123,8 @@ extern bool tlog_reader_type_is_valid(const struct tlog_reader_type *type);
 /**
  * Format a reader type location.
  *
- * @param reader_type   The reader type to format location for.
- * @param loc           Opaque location value to format.
+ * @param type  The reader type to format location for.
+ * @param loc   Opaque location value to format.
  *
  * @return Dynamically-allocated string describing the location, or NULL in
  *         case of error (see errno).

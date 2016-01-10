@@ -1,5 +1,5 @@
 /*
- * Tlog abstract message reader.
+ * Abstract message reader.
  *
  * Copyright (C) 2015 Red Hat
  *

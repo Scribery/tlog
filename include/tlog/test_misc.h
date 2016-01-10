@@ -1,6 +1,10 @@
-/*
- * Tlog miscellaneous test functions.
+/**
+ * @file
+ * @brief Miscellaneous test functions.
  *
+ * Miscellaneous test-related functions, which don't deserve their own module.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

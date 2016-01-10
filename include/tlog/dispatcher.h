@@ -1,6 +1,12 @@
-/*
- * Tlog JSON encoder dispatcher interface.
+/**
+ * @file
+ * @brief JSON encoder dispatcher interface.
  *
+ * Dispatcher is a proxy object - a narrow interface used to decouple chunks
+ * and streams, so that streams don't require a full chunk implementation and
+ * could be tested separately.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -102,6 +108,7 @@ tlog_dispatcher_is_valid(const struct tlog_dispatcher *dispatcher)
 /**
  * Initialize a dispatcher.
  *
+ * @param dispatcher            The dispatcher to initialize.
  * @param advance               The time-advancing function.
  * @param reserve               The space-reservation function.
  * @param write                 The metadata writing function.

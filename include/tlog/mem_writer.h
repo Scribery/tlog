@@ -1,6 +1,11 @@
-/*
- * Tlog memory buffer message writer.
+/**
+ * @file
+ * @brief Memory buffer message writer.
  *
+ * An implementation of a writer writing log messages to a memory buffer,
+ * mostly for use in tests.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -40,9 +45,10 @@ extern const struct tlog_writer_type tlog_mem_writer_type;
 /**
  * Create an instance of memory buffer writer.
  *
- * @param pbuf  Location for the allocated buffer pointer.
- * @param plen  Location for the length of the buffer contents. The memory
- *              allocated for the buffer can be larger.
+ * @param pwriter   The writer to initialize.
+ * @param pbuf      Location for the allocated buffer pointer.
+ * @param plen      Location for the length of the buffer contents. The memory
+ *                  allocated for the buffer can be larger.
  *
  * @return Global return code.
  */

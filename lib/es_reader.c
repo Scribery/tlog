@@ -1,5 +1,5 @@
 /*
- * Tlog ElasticSearch message reader.
+ * ElasticSearch message reader.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -30,6 +30,7 @@
 #include <tlog/es_reader.h>
 #include <tlog/rc.h>
 
+/** ElasticSearch reader data */
 struct tlog_es_reader {
     struct tlog_reader          reader;     /**< Base type */
     CURL                       *curl;       /**< libcurl handle */

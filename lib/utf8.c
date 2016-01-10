@@ -1,5 +1,5 @@
 /*
- * Tlog UTF-8 byte sequence validation state.
+ * UTF-8 byte sequence validation state.
  *
  * Copyright (C) 2015 Red Hat
  *

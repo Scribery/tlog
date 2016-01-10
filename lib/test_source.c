@@ -1,5 +1,5 @@
 /*
- * Tlog tlog_source test functions.
+ * Tlog_source test functions.
  *
  * Copyright (C) 2015 Red Hat
  *

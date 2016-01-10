@@ -1,5 +1,5 @@
 /*
- * Tlog message reader type.
+ * Message reader type.
  *
  * Copyright (C) 2015 Red Hat
  *

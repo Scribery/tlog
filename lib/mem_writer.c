@@ -1,5 +1,5 @@
 /*
- * Tlog memory buffer message writer.
+ * Memory buffer message writer.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -26,11 +26,12 @@
 #include <tlog/rc.h>
 #include <tlog/mem_writer.h>
 
+/** Memory buffer writer data */
 struct tlog_mem_writer {
-    struct tlog_writer writer;
-    char      **pbuf;
-    size_t     *plen;
-    size_t      size;
+    struct tlog_writer      writer; /**< Abstract writer instance */
+    char                  **pbuf;   /**< Location for the buffer pointer */
+    size_t                 *plen;   /**< Location for the buffer length */
+    size_t                  size;   /**< Allocated size of the buffer */
 };
 
 static tlog_grc
@@ -50,10 +51,10 @@ tlog_mem_writer_init(struct tlog_writer *writer, va_list ap)
     return TLOG_RC_OK;
 }
 
-tlog_grc
+static tlog_grc
 tlog_mem_writer_write(struct tlog_writer *writer,
-                         const uint8_t *buf,
-                         size_t len)
+                      const uint8_t *buf,
+                      size_t len)
 {
     struct tlog_mem_writer *mem_writer =
                                 (struct tlog_mem_writer*)writer;

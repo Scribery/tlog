@@ -1,5 +1,5 @@
 /*
- * Tlog tlog_sink test functions.
+ * Tlog_sink test functions.
  *
  * Copyright (C) 2015 Red Hat
  *

@@ -1,6 +1,10 @@
-/*
- * Tlog abstract message writer.
+/**
+ * @file
+ * @brief Abstract message writer.
  *
+ * An abstract interface for a log message writer.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -25,7 +29,7 @@
 
 #include <tlog/writer_type.h>
 
-/* Abstract writer */
+/** Abstract writer */
 struct tlog_writer {
     const struct tlog_writer_type  *type;   /**< Type */
 };

@@ -1,6 +1,11 @@
-/*
- * Tlog-native function return codes (rc's).
+/**
+ * @file
+ * @brief Native function return codes (rc's).
  *
+ * These are tlog-specific function return codes, which are usually
+ * incorporated into global return codes upon use.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.

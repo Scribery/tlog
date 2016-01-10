@@ -1,6 +1,12 @@
-/*
- * Tlog source.
+/**
+ * @file
+ * @brief Terminal data source.
  *
+ * Terminal data source provides an interface to read terminal data packets,
+ * which are parsed from log messages retrieved from the log message reader
+ * specified upon creation.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -29,7 +35,7 @@
 /** Minimum length of I/O data buffer used in packets */
 #define TLOG_SOURCE_IO_SIZE_MIN TLOG_MSG_IO_SIZE_MIN
 
-/* Source instance */
+/** Source instance */
 struct tlog_source {
     struct tlog_reader *reader;         /**< Log message reader */
     char               *hostname;       /**< Hostname to filter messages by,

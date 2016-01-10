@@ -1,5 +1,14 @@
+/**
+ * @file
+ * @brief Global function return codes (grc's).
+ *
+ * This module implements encoding a variety of return and error code types
+ * into a single integer space by shifting and possibly negating them. This is
+ * needed to propagate the error codes in a uniform way up an arbitrary stack
+ * depth until it could be handled or the corresponding error message could be
+ * printed.
+ */
 /*
- * Tlog global (function) return codes (grc's).
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -84,8 +93,8 @@ extern bool tlog_grc_is(const struct tlog_grc_range *range, tlog_grc grc);
 /**
  * Check if a grc belongs to a range.
  *
- * @param _range_name_token     Range variable name without tlog_grc_ prefix.
- * @param _grc                  The grc to check.
+ * @param \_range_name_token    Range variable name without tlog_grc_ prefix.
+ * @param \_grc                 The grc to check.
  *
  * @return True if the grc belongs to the range.
  */
@@ -105,8 +114,8 @@ extern tlog_grc tlog_grc_from(const struct tlog_grc_range *range, int rc);
 /**
  * Convert a range rc to a grc.
  *
- * @param _range_name_token     Range variable name without tlog_grc_ prefix.
- * @param _rc                   The range rc to convert.
+ * @param \_range_name_token     Range variable name without tlog_grc_ prefix.
+ * @param \_rc                   The range rc to convert.
  *
  * @return The grc.
  */
@@ -129,8 +138,8 @@ extern int tlog_grc_to(const struct tlog_grc_range *range, tlog_grc grc);
 /**
  * Convert a grc to a range rc.
  *
- * @param _range_name_token     Range variable name without tlog_grc_ prefix.
- * @param _grc                  The grc to convert.
+ * @param \_range_name_token    Range variable name without tlog_grc_ prefix.
+ * @param \_grc                 The grc to convert.
  *
  * @return The range rc.
  */

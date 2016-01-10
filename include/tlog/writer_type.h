@@ -1,6 +1,10 @@
-/*
- * Tlog message writer type.
+/**
+ * @file
+ * @brief Message writer type.
  *
+ * A structure describing a writer implementation.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -73,7 +77,7 @@ typedef tlog_grc (*tlog_writer_type_write_fn)(struct tlog_writer *writer,
  */
 typedef void (*tlog_writer_type_cleanup_fn)(struct tlog_writer *writer);
 
-/* Writer type */
+/** Writer type */
 struct tlog_writer_type {
     size_t                          size;       /**< Instance size */
     tlog_writer_type_init_fn        init;       /**< Init function */
@@ -85,9 +89,9 @@ struct tlog_writer_type {
 /**
  * Check if a writer type is valid.
  *
- * @param writer    The writer to check.
+ * @param type  The writer type to check.
  *
- * @return True if the writer is valid.
+ * @return True if the writer type is valid.
  */
 static inline bool
 tlog_writer_type_is_valid(const struct tlog_writer_type *type)

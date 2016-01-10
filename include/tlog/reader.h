@@ -1,6 +1,10 @@
-/*
- * Tlog abstract message reader.
+/**
+ * @file
+ * @brief Abstract message reader.
  *
+ * An abstract interface for a log message reader.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -25,7 +29,7 @@
 
 #include <tlog/reader_type.h>
 
-/* Abstract reader */
+/** Abstract reader */
 struct tlog_reader {
     const struct tlog_reader_type  *type;   /**< Type */
 };

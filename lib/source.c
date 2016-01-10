@@ -1,5 +1,5 @@
 /*
- * Tlog source.
+ * Source.
  *
  * Copyright (C) 2015 Red Hat
  *

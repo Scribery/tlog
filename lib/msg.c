@@ -1,5 +1,5 @@
 /*
- * Tlog JSON message parser.
+ * JSON message parser.
  *
  * Copyright (C) 2015 Red Hat
  *

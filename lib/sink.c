@@ -1,5 +1,5 @@
 /*
- * Tlog sink.
+ * Sink.
  *
  * Copyright (C) 2015 Red Hat
  *

@@ -1,5 +1,5 @@
 /*
- * Tlog I/O stream.
+ * I/O stream.
  *
  * Copyright (C) 2015 Red Hat
  *

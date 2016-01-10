@@ -1,6 +1,11 @@
-/*
- * Tlog UTF-8 filter.
+/**
+ * @file
+ * @brief UTF-8 filter.
  *
+ * UTF-8 filter structure and module are used to separate valid and invalid
+ * character byte sequences.
+ */
+/*
  * Copyright (C) 2015 Red Hat
  *
  * This file is part of tlog.
@@ -33,8 +38,8 @@
 
 /** Valid byte value range */
 struct tlog_utf8_range {
-    uint8_t min;
-    uint8_t max;
+    uint8_t min;    /**< Lower boundary of the range */
+    uint8_t max;    /**< Higher boundary of the range */
 };
 
 /** A valid byte sequence */
