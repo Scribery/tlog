@@ -21,6 +21,7 @@
 /test-driver
 *~
 .*
+!.git*
 *.tar.gz
 *.o
 *.deps
