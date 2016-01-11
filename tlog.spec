@@ -6,6 +6,9 @@ Summary:    Terminal I/O recording shell wrapper
 License:    GPLv2+
 Source:     %{name}-%{version}.tar.gz
 
+BuildRequires:  json-c-devel
+BuildRequires:  libcurl-devel
+
 %description
  Tlog is a terminal I/O recording program similar to "script", but used in
  place of a user's shell, starting the recording and executing the real user's
