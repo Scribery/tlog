@@ -22,6 +22,9 @@ BuildRequires:  libcurl-devel
 %configure --disable-rpath --disable-static
 make %{?_smp_mflags}
 
+%check
+make %{?_smp_mflags} check
+
 %install
 make install DESTDIR=%{buildroot}
 rm ${RPM_BUILD_ROOT}/%{_libdir}/*.la
