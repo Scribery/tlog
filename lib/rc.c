@@ -33,8 +33,18 @@ static const char *tlog_rc_desc_list[TLOG_RC_MAX_PLUS_ONE - TLOG_RC_MIN] = {
         "A message field is missing",
     [TLOG_RC_MSG_FIELD_INVALID_TYPE] =
         "A message field has invalid type",
-    [TLOG_RC_MSG_FIELD_INVALID_VALUE] =
-        "A message field has invalid value",
+    [TLOG_RC_MSG_FIELD_INVALID_VALUE_SESSION] =
+        "Message has invalid \"session\" field value",
+    [TLOG_RC_MSG_FIELD_INVALID_VALUE_ID] =
+        "Message has invalid \"id\" field value",
+    [TLOG_RC_MSG_FIELD_INVALID_VALUE_POS] =
+        "Message has invalid \"pos\" field value",
+    [TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING] =
+        "Message has invalid \"timing\" field value",
+    [TLOG_RC_MSG_FIELD_INVALID_VALUE_TXT] =
+        "Message has invalid \"in_txt\" or \"out_txt\" field value",
+    [TLOG_RC_MSG_FIELD_INVALID_VALUE_BIN] =
+        "Message has invalid \"in_bin\" or \"out_bin\" field value",
     [TLOG_RC_FD_READER_INCOMPLETE_LINE] =
         "Incomplete message object line encountered",
     [TLOG_RC_SOURCE_MSG_ID_OUT_OF_ORDER] =

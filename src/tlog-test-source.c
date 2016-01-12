@@ -321,7 +321,7 @@ main(void)
          MSG_DUMMY(3, 3000, "=210x220", "", "", "", ""),
          4,
          OP_READ_OK(PKT_WINDOW(1, 0, 110, 120)),
-         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING, PKT_VOID),
          OP_READ_OK(PKT_WINDOW(3, 0, 210, 220))
     );
 
@@ -565,21 +565,21 @@ main(void)
     TEST_ANY(io_in_short_char,
          MSG_DUMMY(1, 1000, "<1", "\xf0\x9d\x85", "", "", ""),
          4,
-         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE_TXT, PKT_VOID),
          OP_READ_OK(PKT_VOID)
     );
 
     TEST_ANY(io_in_short_bin,
          MSG_DUMMY(1, 1000, "[0/2", "", "48", "", ""),
          4,
-         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE_BIN, PKT_VOID),
          OP_READ_OK(PKT_VOID)
     );
 
     TEST_ANY(io_in_bin_not_int,
          MSG_DUMMY(1, 1000, "[0/1", "", "3.14", "", ""),
          4,
-         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE_BIN, PKT_VOID),
          OP_READ_OK(PKT_VOID)
     );
 
@@ -592,7 +592,7 @@ main(void)
     TEST_ANY(io_in_txt_too_short,
          MSG_DUMMY(1, 1000, "<1", "", "", "", ""),
          4,
-         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID)
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE_TXT, PKT_VOID)
     );
 
     TEST_ANY(io_in_txt_too_long_0,
@@ -624,14 +624,14 @@ main(void)
     TEST_ANY(io_in_bin_too_small,
          MSG_DUMMY(1, 1000, "[0/1", "", "-1", "", ""),
          4,
-         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE_BIN, PKT_VOID),
          OP_READ_OK(PKT_VOID)
     );
 
     TEST_ANY(io_in_bin_too_big,
          MSG_DUMMY(1, 1000, "[0/1", "", "256", "", ""),
          4,
-         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE, PKT_VOID),
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE_BIN, PKT_VOID),
          OP_READ_OK(PKT_VOID)
     );
 

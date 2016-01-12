@@ -90,7 +90,7 @@ tlog_msg_init(struct tlog_msg *msg, struct json_object *obj)
     GET_FIELD(session, int);
     session = json_object_get_int64(o);
     if (session < 1 || session > UINT_MAX)
-        return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+        return TLOG_RC_MSG_FIELD_INVALID_VALUE_SESSION;
     msg->session = (unsigned int)session;
 
     GET_FIELD(id, int);
@@ -100,7 +100,7 @@ tlog_msg_init(struct tlog_msg *msg, struct json_object *obj)
         || id > (int64_t)SIZE_MAX
 #endif
     ) {
-        return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+        return TLOG_RC_MSG_FIELD_INVALID_VALUE_ID;
     }
     msg->id = (size_t)id;
 
@@ -211,17 +211,17 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
 
             if (sscanf(timing_ptr, "%1[][><+=]%zu%n",
                        type_buf, &first_val, &read) < 2)
-                return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
             type = *type_buf;
             timing_ptr += read;
 
             if (type == '[' || type == ']') {
                 if (sscanf(timing_ptr, "/%zu%n", &second_val, &read) < 1)
-                    return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
                 timing_ptr += read;
             } else if (type == '=') {
                 if (sscanf(timing_ptr, "x%zu%n", &second_val, &read) < 1)
-                    return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
                 timing_ptr += read;
             } else {
                 second_val = 0;
@@ -258,7 +258,7 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
                 }
                 /* Check extents */
                 if (first_val > USHRT_MAX || second_val > USHRT_MAX) {
-                    return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
                 }
                 /* Return window packet */
                 tlog_pkt_init_window(pkt, &msg->pos,
@@ -301,7 +301,7 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
                 msg->pbin_pos = &msg->out_bin_pos;
             } else {
                 assert(false);
-                return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
             }
 
             /* Timing record consumed */
@@ -313,14 +313,14 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
                 for (; first_val > 0; first_val--) {
                     /* If not enough text */
                     if (*msg->ptxt_len == 0)
-                        return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                        return TLOG_RC_MSG_FIELD_INVALID_VALUE_TXT;
                     l = tlog_msg_utf8_len(*(uint8_t *)*msg->ptxt_ptr);
                     /* If found invalid UTF-8 character in text */
                     if (l == 0)
-                        return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                        return TLOG_RC_MSG_FIELD_INVALID_VALUE_TXT;
                     /* If character crosses text boundary */
                     if (l > *msg->ptxt_len)
-                        return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                        return TLOG_RC_MSG_FIELD_INVALID_VALUE_TXT;
                     *msg->ptxt_len -= l;
                     *msg->ptxt_ptr += l;
                 }
@@ -350,14 +350,14 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
                 o = json_object_array_get_idx(msg->bin_obj, *msg->pbin_pos);
                 /* If not enough bytes */
                 if (o == NULL)
-                    return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_BIN;
                 /* If supposed byte is not an int */
                 if (json_object_get_type(o) != json_type_int)
-                    return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_BIN;
                 n = json_object_get_int(o);
                 /* If supposed byte value is out of range */
                 if (n < 0 || n > UINT8_MAX)
-                    return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_BIN;
                 io_buf[io_len] = (uint8_t)n;
                 /* If the I/O buffer is full */
                 if (io_len >= io_size) {
@@ -374,10 +374,10 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
                 l = tlog_msg_utf8_len(b);
                 /* If found invalid UTF-8 character in text */
                 if (l == 0)
-                    return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_TXT;
                 /* If character crosses text boundary */
                 if (l > *msg->ptxt_len)
-                    return TLOG_RC_MSG_FIELD_INVALID_VALUE;
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_TXT;
                 /* If character crosses the I/O buffer boundary */
                 if (io_len + l > io_size) {
                     io_full = true;
