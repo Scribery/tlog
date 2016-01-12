@@ -60,7 +60,7 @@ typedef enum tlog_rc {
 static inline bool
 tlog_rc_is_valid(tlog_rc rc)
 {
-    return (rc >= TLOG_RC_MIN && rc < TLOG_RC_MAX_PLUS_ONE);
+    return rc < TLOG_RC_MAX_PLUS_ONE;
 }
 
 /**

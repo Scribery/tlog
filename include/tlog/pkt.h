@@ -51,7 +51,7 @@ enum tlog_pkt_type {
 static inline bool
 tlog_pkt_type_is_valid(enum tlog_pkt_type type)
 {
-    return type >= 0 && type < TLOG_PKT_TYPE_NUM;
+    return type < TLOG_PKT_TYPE_NUM;
 }
 
 /**
