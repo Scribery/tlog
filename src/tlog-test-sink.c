@@ -173,14 +173,26 @@ main(void)
 
     TEST(window_chunk_overflow,
          .op_list = {
-            OP_WRITE_WINDOW(0, 0, 11111, 11111),
-            OP_WRITE_WINDOW(0, 0, 22222, 22222),
-            OP_WRITE_WINDOW(0, 0, 33333, 33333),
-            OP_WRITE_WINDOW(0, 0, 44444, 44444),
+            OP_WRITE_WINDOW(0, 0, 10001, 10001),
+            OP_WRITE_WINDOW(0, 0, 10002, 10002),
+            OP_WRITE_WINDOW(0, 0, 10003, 10003),
+            OP_WRITE_WINDOW(0, 0, 10004, 10004),
+            OP_WRITE_WINDOW(0, 0, 10005, 10005),
+            OP_WRITE_WINDOW(0, 0, 10006, 10006),
+            OP_WRITE_WINDOW(0, 0, 10007, 10007),
+            OP_WRITE_WINDOW(0, 0, 10008, 10008),
+            OP_WRITE_WINDOW(0, 0, 10009, 10009),
+            OP_WRITE_WINDOW(0, 0, 10010, 10010),
             OP_FLUSH,
          },
-         .output = MSG(1, "0", "=11111x11111=22222x22222", "", "", "", "")
-                   MSG(2, "0", "=33333x33333=44444x44444", "", "", "", "")
+         .output = MSG(1, "0",
+                       "=10001x10001=10002x10002=10003x10003"
+                       "=10004x10004=10005x10005",
+                       "", "", "", "")
+                   MSG(2, "0",
+                       "=10006x10006=10007x10007=10008x10008"
+                       "=10009x10009=10010x10010",
+                       "", "", "", "")
     );
 
     TEST(window_merging,
@@ -281,29 +293,37 @@ main(void)
 
     TEST(input_overflow_flush,
          .op_list = {
-            OP_WRITE_IO(0, 0, false, "0123456789abcdef0123456789abcd", 30),
+            OP_WRITE_IO(0, 0, false,
+                        "0123456789abcdef0123456789abcdef"
+                        "0123456789abcdef0123456789abcd", 62),
          },
-         .output = MSG(1, "0", "<29", 
+         .output = MSG(1, "0", "<61",
+                       "0123456789abcdef0123456789abcdef"
                        "0123456789abcdef0123456789abc", "",
                        "", "")
     );
 
     TEST(output_overflow_flush,
          .op_list = {
-            OP_WRITE_IO(0, 0, true, "0123456789abcdef0123456789abcd", 30),
+            OP_WRITE_IO(0, 0, true,
+                        "0123456789abcdef0123456789abcdef"
+                        "0123456789abcdef0123456789abcd", 62),
          },
-         .output = MSG(1, "0", ">29", "", "",
+         .output = MSG(1, "0", ">61", "", "",
+                       "0123456789abcdef0123456789abcdef"
                        "0123456789abcdef0123456789abc", "")
     );
 
     TEST(both_overflow_flush,
          .op_list = {
-            OP_WRITE_IO(0, 0, false, "0123456789abcdef", 16),
-            OP_WRITE_IO(0, 0, true, "0123456789a", 11),
+            OP_WRITE_IO(0, 0, false,
+                        "0123456789abcdef0123456789abcdef", 32),
+            OP_WRITE_IO(0, 0, true,
+                        "0123456789abcdef0123456789a", 27),
          },
-         .output = MSG(1, "0", "<16>10", 
-                       "0123456789abcdef", "",
-                       "0123456789", "")
+         .output = MSG(1, "0", "<32>26",
+                       "0123456789abcdef0123456789abcdef", "",
+                       "0123456789abcdef0123456789", "")
     );
 
     TEST(incomplete,
@@ -410,8 +430,8 @@ main(void)
             OP_WRITE_WINDOW(TIME_T_MAX_NUM, USEC_MAX_NUM, 200, 200),
             OP_FLUSH
          },
-         .output = MSG(1, "0", "=100x100", "", "", "", "")
-                   MSG(2, TIME_MAX_STR, "=200x200", "", "", "", "")
+         .output = MSG(1, "0", "=100x100+" TIME_MAX_STR "=200x200",
+                       "", "", "", "")
     );
 
     TEST(max_delay_inside_char,
