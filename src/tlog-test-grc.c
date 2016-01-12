@@ -78,7 +78,7 @@ main(void)
     TEST_CODE(gai, again, EAI_AGAIN, gai_strerror);
     TEST_CODE(gai, noname, EAI_NONAME, gai_strerror);
     TEST_CODE(json, success, json_tokener_success, json_tokener_error_desc);
-    TEST_CODE(json, error_size, json_tokener_error_size, json_tokener_error_desc);
+    TEST_CODE(json, error_size, json_tokener_error_depth, json_tokener_error_desc);
     TEST_CODE(curl, failed_init, CURLE_FAILED_INIT, curl_easy_strerror);
     TEST_CODE(curl, couldnt_resolve_host, CURLE_COULDNT_RESOLVE_HOST,
               curl_easy_strerror);
