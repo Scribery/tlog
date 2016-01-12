@@ -83,3 +83,8 @@ Assert object validity after initialization.
 Add transaction interface validation.
 
 Add object validation to function exits.
+
+Limit timestamps passed to sink to not exceed maximum pos recognized by
+source.
+
+Check timing delay range in source.

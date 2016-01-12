@@ -24,6 +24,7 @@
 #include <tlog/test_source.h>
 #include <tlog/rc.h>
 #include <tlog/grc.h>
+#include <tlog/misc.h>
 #include <json_tokener.h>
 
 int
@@ -221,52 +222,30 @@ main(void)
     );
 
     TEST_ANY(pos_max,
-         MSG_DUMMY(1, "9223372036854775807", "=100x200", "", "", "", ""),
+         MSG_DUMMY(1, TLOG_DELAY_MAX_MS_STR, "=100x200", "", "", "", ""),
          4,
          OP_READ(TLOG_RC_OK,
-                 PKT_WINDOW(9223372036854775, 807000000, 100, 200))
+                 PKT_WINDOW(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                            TLOG_DELAY_MAX_TIMESPEC_NSEC,
+                            100, 200))
     );
 
     TEST_ANY(pos_overflow,
-         MSG_DUMMY(1, "9223372036854775808", "=100x200", "", "", "", ""),
+         MSG_DUMMY(1, "1" TLOG_DELAY_MAX_MS_STR, "=100x200", "", "", "", ""),
          4,
-         OP_READ(TLOG_RC_OK,
-                 PKT_WINDOW(9223372036854775, 807000000, 100, 200))
-    );
-
-    TEST_ANY(pos_negative_1ms,
-         MSG_DUMMY(1, "-1", "=100x200", "", "", "", ""),
-         4,
-         OP_READ(TLOG_RC_OK,
-                 PKT_WINDOW(0, -1000000, 100, 200))
-    );
-
-    TEST_ANY(pos_negative_999ms,
-         MSG_DUMMY(1, "-999", "=100x200", "", "", "", ""),
-         4,
-         OP_READ(TLOG_RC_OK,
-                 PKT_WINDOW(0, -999000000, 100, 200))
-    );
-
-    TEST_ANY(pos_negative_1s,
-         MSG_DUMMY(1, "-1000", "=100x200", "", "", "", ""),
-         4,
-         OP_READ(TLOG_RC_OK,
-                 PKT_WINDOW(-1, 0, 100, 200))
-    );
-
-    TEST_ANY(pos_min,
-         MSG_DUMMY(1, "-9223372036854775808", "=100x200", "", "", "", ""),
-         4,
-         OP_READ(TLOG_RC_OK,
-                 PKT_WINDOW(-9223372036854775, -808000000, 100, 200))
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE_POS, PKT_VOID)
     );
 
     TEST_ANY(pos_underflow,
-         MSG_DUMMY(1, "-9223372036854775809", "=100x200", "", "", "", ""),
+         MSG_DUMMY(1, "-1", "=100x200", "", "", "", ""),
          4,
-         OP_READ(TLOG_RC_OK,
-                 PKT_WINDOW(-9223372036854775, -808000000, 100, 200))
+         OP_READ(TLOG_RC_MSG_FIELD_INVALID_VALUE_POS, PKT_VOID)
+    );
+
+    TEST_ANY(pos_min,
+         MSG_DUMMY(1, "0", "=100x200", "", "", "", ""),
+         4,
+         OP_READ(TLOG_RC_OK, PKT_WINDOW(0, 0, 100, 200))
     );
 
     TEST_ANY(syntax_error,

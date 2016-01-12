@@ -58,23 +58,29 @@
         (_type *)((char *)_mptr - TLOG_OFFSET_OF(_type, _member));  \
     })
 
-#if __WORDSIZE == 64
-/** Maximum value of time_t as a number */
-#define TLOG_TIME_T_MAX_NUM ((time_t)9223372036854775807)
-/** Maximum value of time_t as a string */
-#define TLOG_TIME_T_MAX_STR "9223372036854775807"
-#else
-/** Maximum value of time_t as a number */
-#define TLOG_TIME_T_MAX_NUM ((time_t)2147483647)
-/** Maximum value of time_t as a string */
-#define TLOG_TIME_T_MAX_STR "2147483647"
-#endif
+/** Maximum delay in seconds, as a number */
+#define TLOG_DELAY_MAX_S_NUM    INT32_MAX
+/** Maximum delay in seconds, as a string */
+#define TLOG_DELAY_MAX_S_STR    "2147483647"
+/** Maximum delay in milliseconds, as a number */
+#define TLOG_DELAY_MAX_MS_NUM ((int64_t)TLOG_DELAY_MAX_S_NUM * 1000 + 999)
+/** Maximum delay in milliseconds, as a string */
+#define TLOG_DELAY_MAX_MS_STR  TLOG_DELAY_MAX_S_STR "999"
 
-/** Maximum number of milliseconds in struct timespec, as a string */
-#define TLOG_TIMESPEC_MAX_MS_STR TLOG_TIME_T_MAX_STR "999"
+/** Maximum delay's struct timespec tv_sec field value */
+#define TLOG_DELAY_MAX_TIMESPEC_SEC \
+    TLOG_DELAY_MAX_S_NUM
 
-/** Maximum value of struct timespec usec field, as a number */
-#define TLOG_TIMESPEC_USEC_MAX_NUM    999999999L
+/** Maximum delay's struct timespec tv_nsec field value */
+#define TLOG_DELAY_MAX_TIMESPEC_NSEC \
+    (TLOG_DELAY_MAX_MS_NUM % 1000 * 1000000)
+
+/** Maximum delay as a timespec */
+#define TLOG_DELAY_MAX_TIMESPEC \
+    (struct timespec){                              \
+        .tv_sec = TLOG_DELAY_MAX_TIMESPEC_SEC,      \
+        .tv_nsec = TLOG_DELAY_MAX_TIMESPEC_NSEC     \
+    }
 
 /**
  * Subtract timespec b from timespec a and put the result in res.

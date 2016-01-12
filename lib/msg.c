@@ -106,6 +106,9 @@ tlog_msg_init(struct tlog_msg *msg, struct json_object *obj)
 
     GET_FIELD(pos, int);
     pos = json_object_get_int64(o);
+    if (pos < 0 || pos > TLOG_DELAY_MAX_MS_NUM) {
+        return TLOG_RC_MSG_FIELD_INVALID_VALUE_POS;
+    }
     msg->pos.tv_sec = pos / 1000;
     msg->pos.tv_nsec = pos % 1000 * 1000000;
 

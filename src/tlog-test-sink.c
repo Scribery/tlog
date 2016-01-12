@@ -416,34 +416,37 @@ main(void)
     TEST(max_delay_between_windows,
          .op_list = {
             OP_WRITE_WINDOW(0, 0, 100, 100),
-            OP_WRITE_WINDOW(TLOG_TIME_T_MAX_NUM, TLOG_TIMESPEC_USEC_MAX_NUM,
+            OP_WRITE_WINDOW(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                            TLOG_DELAY_MAX_TIMESPEC_NSEC,
                             200, 200),
             OP_FLUSH
          },
          .output = MSG(1, "0",
-                       "=100x100+" TLOG_TIMESPEC_MAX_MS_STR "=200x200",
+                       "=100x100+" TLOG_DELAY_MAX_MS_STR "=200x200",
                        "", "", "", "")
     );
 
     TEST(max_delay_inside_char,
          .op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d", 2),
-            OP_WRITE_IO(TLOG_TIME_T_MAX_NUM, TLOG_TIMESPEC_USEC_MAX_NUM,
+            OP_WRITE_IO(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                        TLOG_DELAY_MAX_TIMESPEC_NSEC,
                         true, "\x84\x9e", 2),
             OP_FLUSH
          },
-         .output = MSG(1, TLOG_TIMESPEC_MAX_MS_STR, ">1",
+         .output = MSG(1, TLOG_DELAY_MAX_MS_STR, ">1",
                        "", "", "\xf0\x9d\x84\x9e", "")
     );
 
     TEST(max_delay_between_chars,
          .op_list = {
             OP_WRITE_IO(0, 0, false, "A", 1),
-            OP_WRITE_IO(TLOG_TIME_T_MAX_NUM, TLOG_TIMESPEC_USEC_MAX_NUM,
+            OP_WRITE_IO(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                        TLOG_DELAY_MAX_TIMESPEC_NSEC,
                         true, "B", 1),
             OP_FLUSH
          },
-         .output = MSG(1, "0", "<1+" TLOG_TIMESPEC_MAX_MS_STR ">1",
+         .output = MSG(1, "0", "<1+" TLOG_DELAY_MAX_MS_STR ">1",
                        "A", "", "B", "")
     );
 
@@ -451,12 +454,13 @@ main(void)
          .op_list = {
             OP_WRITE_IO(0, 0, false, "A", 1),
             OP_FLUSH,
-            OP_WRITE_IO(TLOG_TIME_T_MAX_NUM, TLOG_TIMESPEC_USEC_MAX_NUM,
+            OP_WRITE_IO(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                        TLOG_DELAY_MAX_TIMESPEC_NSEC,
                         true, "B", 1),
             OP_FLUSH
          },
          .output = MSG(1, "0", "<1", "A", "", "", "") \
-                   MSG(2, TLOG_TIMESPEC_MAX_MS_STR, ">1", "", "", "B", "")
+                   MSG(2, TLOG_DELAY_MAX_MS_STR, ">1", "", "", "B", "")
     );
 
     TEST(window_between_chars,
