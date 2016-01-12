@@ -58,6 +58,24 @@
         (_type *)((char *)_mptr - TLOG_OFFSET_OF(_type, _member));  \
     })
 
+#if __WORDSIZE == 64
+/** Maximum value of time_t as a number */
+#define TLOG_TIME_T_MAX_NUM ((time_t)9223372036854775807)
+/** Maximum value of time_t as a string */
+#define TLOG_TIME_T_MAX_STR "9223372036854775807"
+#else
+/** Maximum value of time_t as a number */
+#define TLOG_TIME_T_MAX_NUM ((time_t)2147483647)
+/** Maximum value of time_t as a string */
+#define TLOG_TIME_T_MAX_STR "2147483647"
+#endif
+
+/** Maximum number of milliseconds in struct timespec, as a string */
+#define TLOG_TIMESPEC_MAX_MS_STR TLOG_TIME_T_MAX_STR "999"
+
+/** Maximum value of struct timespec usec field, as a number */
+#define TLOG_TIMESPEC_USEC_MAX_NUM    999999999L
+
 /**
  * Subtract timespec b from timespec a and put the result in res.
  *

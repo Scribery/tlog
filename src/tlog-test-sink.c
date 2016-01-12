@@ -21,19 +21,8 @@
  */
 
 #include <tlog/test_sink.h>
+#include <tlog/misc.h>
 #include <limits.h>
-
-#if __WORDSIZE == 64
-#define TIME_T_MAX_NUM (time_t)9223372036854775807
-#define TIME_T_MAX_STR "9223372036854775807"
-#else
-#define TIME_T_MAX_NUM (time_t)2147483647
-#define TIME_T_MAX_STR "2147483647"
-#endif
-
-#define TIME_MAX_STR TIME_T_MAX_STR "999"
-
-#define USEC_MAX_NUM    999999999
 
 int
 main(void)
@@ -427,30 +416,34 @@ main(void)
     TEST(max_delay_between_windows,
          .op_list = {
             OP_WRITE_WINDOW(0, 0, 100, 100),
-            OP_WRITE_WINDOW(TIME_T_MAX_NUM, USEC_MAX_NUM, 200, 200),
+            OP_WRITE_WINDOW(TLOG_TIME_T_MAX_NUM, TLOG_TIMESPEC_USEC_MAX_NUM,
+                            200, 200),
             OP_FLUSH
          },
-         .output = MSG(1, "0", "=100x100+" TIME_MAX_STR "=200x200",
+         .output = MSG(1, "0",
+                       "=100x100+" TLOG_TIMESPEC_MAX_MS_STR "=200x200",
                        "", "", "", "")
     );
 
     TEST(max_delay_inside_char,
          .op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d", 2),
-            OP_WRITE_IO(TIME_T_MAX_NUM, USEC_MAX_NUM, true, "\x84\x9e", 2),
+            OP_WRITE_IO(TLOG_TIME_T_MAX_NUM, TLOG_TIMESPEC_USEC_MAX_NUM,
+                        true, "\x84\x9e", 2),
             OP_FLUSH
          },
-         .output = MSG(1, TIME_MAX_STR, ">1",
+         .output = MSG(1, TLOG_TIMESPEC_MAX_MS_STR, ">1",
                        "", "", "\xf0\x9d\x84\x9e", "")
     );
 
     TEST(max_delay_between_chars,
          .op_list = {
             OP_WRITE_IO(0, 0, false, "A", 1),
-            OP_WRITE_IO(TIME_T_MAX_NUM, USEC_MAX_NUM, true, "B", 1),
+            OP_WRITE_IO(TLOG_TIME_T_MAX_NUM, TLOG_TIMESPEC_USEC_MAX_NUM,
+                        true, "B", 1),
             OP_FLUSH
          },
-         .output = MSG(1, "0", "<1+" TIME_MAX_STR ">1",
+         .output = MSG(1, "0", "<1+" TLOG_TIMESPEC_MAX_MS_STR ">1",
                        "A", "", "B", "")
     );
 
@@ -458,11 +451,12 @@ main(void)
          .op_list = {
             OP_WRITE_IO(0, 0, false, "A", 1),
             OP_FLUSH,
-            OP_WRITE_IO(TIME_T_MAX_NUM, USEC_MAX_NUM, true, "B", 1),
+            OP_WRITE_IO(TLOG_TIME_T_MAX_NUM, TLOG_TIMESPEC_USEC_MAX_NUM,
+                        true, "B", 1),
             OP_FLUSH
          },
          .output = MSG(1, "0", "<1", "A", "", "", "") \
-                   MSG(2, TIME_MAX_STR, ">1", "", "", "B", "")
+                   MSG(2, TLOG_TIMESPEC_MAX_MS_STR, ">1", "", "", "B", "")
     );
 
     TEST(window_between_chars,
