@@ -29,6 +29,8 @@
 
 #include <tlog/pkt.h>
 
+#define TLOG_TEST_SINK_CHUNK_SIZE   TLOG_SINK_CHUNK_SIZE_MIN
+
 enum tlog_test_sink_op_type {
     TLOG_TEST_SINK_OP_TYPE_NONE,
     TLOG_TEST_SINK_OP_TYPE_WRITE,

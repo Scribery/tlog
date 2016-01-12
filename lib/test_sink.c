@@ -26,8 +26,6 @@
 #include <tlog/misc.h>
 #include <tlog/test_misc.h>
 
-#define SIZE    TLOG_SINK_CHUNK_SIZE_MIN
-
 const char*
 tlog_test_sink_op_type_to_str(enum tlog_test_sink_op_type type)
 {
@@ -65,7 +63,7 @@ tlog_test_sink(const char *name, const struct tlog_test_sink test)
     }
 
     grc = tlog_sink_init(&sink, writer, test.hostname, test.username,
-                         test.session_id, SIZE);
+                         test.session_id, TLOG_TEST_SINK_CHUNK_SIZE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the sink: %s\n",
                 tlog_grc_strerror(grc));
