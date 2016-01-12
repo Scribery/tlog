@@ -346,7 +346,8 @@ main(void)
                             .rem_in = SIZE,
                             .rem_out = SIZE);
     TEST(null_cut,          .op_list = {
-                                OP_CUT(0)
+                                OP_CUT(.meta_off = 0,
+                                       .rem_off = 0)
                             },
                             .rem_in = SIZE,
                             .rem_out = SIZE);
@@ -379,7 +380,8 @@ main(void)
                                 OP_WRITE(.buf = "A",
                                          .len_in = 1,
                                          .rem_off = 3),
-                                OP_CUT(0)
+                                OP_CUT(.meta_off = 0,
+                                       .rem_off = 0)
                             },
                             .rem_in = 3,
                             .txt_buf = "A",
