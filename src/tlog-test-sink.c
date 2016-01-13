@@ -42,7 +42,7 @@ main(void)
 #define MSG(_id_tkn, _pos, _timing, \
             _in_txt, _in_bin, _out_txt, _out_bin)               \
     "{\"host\":\"localhost\","                                  \
-      "\"user\":\"user\",\"session\":0,"                        \
+      "\"user\":\"user\",\"session\":1,"                        \
       "\"id\":" #_id_tkn ",\"pos\":" _pos ","                   \
       "\"timing\":\"" _timing "\","                             \
       "\"in_txt\":\"" _in_txt "\",\"in_bin\":[" _in_bin "],"    \
@@ -56,7 +56,7 @@ main(void)
                     _struct_init_args,              \
                     .input.hostname = "localhost",  \
                     .input.username = "user",       \
-                    .input.session_id = 0,          \
+                    .input.session_id = 1,          \
                 }                                   \
     ) && passed
 
