@@ -38,6 +38,7 @@ tlog_play_LDADD = \
 TESTS = \
     tlog-test-fd-reader         \
     tlog-test-grc               \
+    tlog-test-passthrough       \
     tlog-test-sink              \
     tlog-test-source            \
     tlog-test-stream-btoa       \
@@ -48,6 +49,7 @@ TESTS = \
 check_PROGRAMS = \
     tlog-test-fd-reader         \
     tlog-test-grc               \
+    tlog-test-passthrough       \
     tlog-test-sink              \
     tlog-test-source            \
     tlog-test-stream-btoa       \
@@ -95,6 +97,12 @@ tlog_test_grc_LDADD = \
 
 tlog_test_source_SOURCES = tlog-test-source.c
 tlog_test_source_LDADD = \
+    ../lib/libtlog_test.la  \
+    ../lib/libtlog.la       \
+    $(JSON_LIBS)
+
+tlog_test_passthrough_SOURCES = tlog-test-passthrough.c
+tlog_test_passthrough_LDADD = \
     ../lib/libtlog_test.la  \
     ../lib/libtlog.la       \
     $(JSON_LIBS)
