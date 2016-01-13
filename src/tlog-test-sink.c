@@ -29,7 +29,6 @@ main(void)
 {
     bool passed = true;
 
-#define OP_NONE         TLOG_TEST_SINK_OP_NONE
 #define OP_WRITE(_pkt)  TLOG_TEST_SINK_OP_WRITE(_pkt)
 #define OP_FLUSH        TLOG_TEST_SINK_OP_FLUSH
 #define OP_CUT          TLOG_TEST_SINK_OP_CUT

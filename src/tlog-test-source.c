@@ -41,8 +41,6 @@ main(void)
 #define PKT_IO_STR(_tv_sec, _tv_nsec, _output, _buf) \
     TLOG_PKT_IO_STR(_tv_sec, _tv_nsec, _output, _buf)
 
-#define OP_NONE \
-    TLOG_TEST_SOURCE_OP_NONE
 #define OP_LOC_GET(_exp_loc) \
     TLOG_TEST_SOURCE_OP_LOC_GET(_exp_loc)
 #define OP_READ(_exp_grc, _exp_pkt) \
@@ -87,7 +85,6 @@ main(void)
          .input = "",
          .output.io_size = 4,
          .output.op_list = {
-            OP_NONE
          }
     );
 
