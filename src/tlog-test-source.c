@@ -32,6 +32,22 @@ main(void)
 {
     bool passed = true;
 
+#define PKT_VOID \
+    TLOG_PKT_VOID
+#define PKT_WINDOW(_tv_sec, _tv_nsec, _width, _height) \
+    TLOG_PKT_WINDOW(_tv_sec, _tv_nsec, _width, _height)
+#define PKT_IO(_tv_sec, _tv_nsec, _output, _buf, _len) \
+    TLOG_PKT_IO(_tv_sec, _tv_nsec, _output, _buf, _len)
+#define PKT_IO_STR(_tv_sec, _tv_nsec, _output, _buf) \
+    TLOG_PKT_IO_STR(_tv_sec, _tv_nsec, _output, _buf)
+
+#define OP_NONE \
+    TLOG_TEST_SOURCE_OP_NONE
+#define OP_LOC_GET(_exp_loc) \
+    TLOG_TEST_SOURCE_OP_LOC_GET(_exp_loc)
+#define OP_READ(_exp_grc, _exp_pkt) \
+    TLOG_TEST_SOURCE_OP_READ(_exp_grc, _exp_pkt)
+
 #define MSG_SPEC(_host_token, _user_token, _session_token, \
                  _id_token, _pos,                               \
                  _timing, _in_txt, _in_bin, _out_txt, _out_bin) \
@@ -53,62 +69,8 @@ main(void)
     MSG_SPEC(host, user, 1, _id_token, _pos,                        \
                  _timing, _in_txt, _in_bin, _out_txt, _out_bin)
 
-
-#define OP_NONE {.type = TLOG_TEST_SOURCE_OP_TYPE_NONE}
-
-#define OP_LOC_GET(_exp_loc) \
-    {.type = TLOG_TEST_SOURCE_OP_TYPE_LOC_GET,      \
-     .data = {.loc_get = {.exp_loc = _exp_loc}}}
-
-#define PKT_VOID TLOG_PKT_VOID
-
-#define PKT_WINDOW(_tv_sec, _tv_nsec, _width, _height) \
-    (struct tlog_pkt){                                  \
-        .timestamp  = {_tv_sec, _tv_nsec},              \
-        .type       = TLOG_PKT_TYPE_WINDOW,             \
-        .data       = {                                 \
-            .window = {                                 \
-                .width  = _width,                       \
-                .height = _height                       \
-            }                                           \
-        }                                               \
-    }
-
-#define PKT_IO(_tv_sec, _tv_nsec, _output, _buf, _len) \
-    (struct tlog_pkt){                                  \
-        .timestamp  = {_tv_sec, _tv_nsec},              \
-        .type       = TLOG_PKT_TYPE_IO,                 \
-        .data       = {                                 \
-            .io = {                                     \
-                .output     = _output,                  \
-                .buf        = (uint8_t *)_buf,          \
-                .buf_owned  = false,                    \
-                .len        = _len                      \
-            }                                           \
-        }                                               \
-    }
-
-
-#define PKT_IO_STR(_tv_sec, _tv_nsec, _output, _buf) \
-    (struct tlog_pkt){                                  \
-        .timestamp  = {_tv_sec, _tv_nsec},              \
-        .type       = TLOG_PKT_TYPE_IO,                 \
-        .data       = {                                 \
-            .io = {                                     \
-                .output     = _output,                  \
-                .buf        = (uint8_t *)_buf,          \
-                .buf_owned  = false,                    \
-                .len        = strlen(_buf)              \
-            }                                           \
-        }                                               \
-    }
-
-
-#define OP_READ(_exp_grc, _exp_pkt) \
-    {.type = TLOG_TEST_SOURCE_OP_TYPE_READ,                         \
-     .data = {.read = {.exp_grc = _exp_grc, .exp_pkt = _exp_pkt}}}
-
-#define OP_READ_OK(_args...) OP_READ(TLOG_RC_OK, ##_args)
+#define OP_READ_OK(_exp_pkt) \
+    OP_READ(TLOG_RC_OK, _exp_pkt)
 
 #define TEST(_name_token, _struct_init_args...) \
     passed = tlog_test_source(                  \
