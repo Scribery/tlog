@@ -44,26 +44,26 @@ tlog_test_sink_op_type_to_str(enum tlog_test_sink_op_type type)
 }
 
 bool
-tlog_test_sink(const char *name, const struct tlog_test_sink test)
+tlog_test_sink_run(const char                          *name,
+                   const struct tlog_test_sink_input   *input,
+                   char                               **pres_output_buf,
+                   size_t                              *pres_output_len)
 {
     bool passed = true;
     tlog_grc grc;
     struct tlog_writer *writer = NULL;
     struct tlog_sink sink;
     const struct tlog_test_sink_op *op;
-    size_t exp_output_len;
-    size_t res_output_len;
-    char *res_output = NULL;
 
-    grc = tlog_mem_writer_create(&writer, &res_output, &res_output_len);
+    grc = tlog_mem_writer_create(&writer, pres_output_buf, pres_output_len);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating memory writer: %s\n",
                 tlog_grc_strerror(grc));
         exit(1);
     }
 
-    grc = tlog_sink_init(&sink, writer, test.hostname, test.username,
-                         test.session_id, TLOG_TEST_SINK_CHUNK_SIZE);
+    grc = tlog_sink_init(&sink, writer, input->hostname, input->username,
+                         input->session_id, TLOG_TEST_SINK_CHUNK_SIZE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the sink: %s\n",
                 tlog_grc_strerror(grc));
@@ -79,7 +79,7 @@ tlog_test_sink(const char *name, const struct tlog_test_sink test)
 #define FAIL_OP \
     do {                                                \
         FAIL("op #%zd (%s) failed",                     \
-             op - test.op_list + 1,                     \
+             op - input->op_list + 1,                   \
              tlog_test_sink_op_type_to_str(op->type));  \
         goto cleanup;                                   \
     } while (0)
@@ -90,7 +90,7 @@ tlog_test_sink(const char *name, const struct tlog_test_sink test)
             FAIL_OP;                \
     } while (0)
 
-    for (op = test.op_list; op->type != TLOG_TEST_SINK_OP_TYPE_NONE; op++) {
+    for (op = input->op_list; op->type != TLOG_TEST_SINK_OP_TYPE_NONE; op++) {
         switch (op->type) {
         case TLOG_TEST_SINK_OP_TYPE_WRITE:
             CHECK_OP(tlog_sink_write(&sink, &op->data.write));
@@ -109,25 +109,39 @@ tlog_test_sink(const char *name, const struct tlog_test_sink test)
 
 #undef CHECK_OP
 #undef FAIL_OP
-
-    exp_output_len = strlen((const char *)test.output);
-
-    if (res_output_len != exp_output_len ||
-        memcmp(res_output, test.output, res_output_len) != 0) {
-        fprintf(stderr, "%s: output mismatch:\n", name);
-        tlog_test_diff(stderr,
-                       (const uint8_t *)res_output, res_output_len,
-                       (const uint8_t *)test.output, exp_output_len);
-        passed = false;
-    }
 #undef FAIL
-
-    fprintf(stderr, "%s: %s\n", name, (passed ? "PASS" : "FAIL"));
 
 cleanup:
     tlog_writer_destroy(writer);
-    free(res_output);
     tlog_sink_cleanup(&sink);
     return passed;
 }
 
+bool
+tlog_test_sink(const char *name, const struct tlog_test_sink test)
+{
+    bool passed = true;
+    const char *exp_output_buf = test.output;
+    size_t exp_output_len = strlen(exp_output_buf);
+    char *res_output_buf = NULL;
+    size_t res_output_len = 0;
+
+    passed = tlog_test_sink_run(name,
+                                &test.input,
+                                &res_output_buf,
+                                &res_output_len);
+
+    if (res_output_len != exp_output_len ||
+        memcmp(res_output_buf, exp_output_buf, res_output_len) != 0) {
+        fprintf(stderr, "%s: output mismatch:\n", name);
+        tlog_test_diff(stderr,
+                       (const uint8_t *)res_output_buf, res_output_len,
+                       (const uint8_t *)exp_output_buf, exp_output_len);
+        passed = false;
+    }
+
+    free(res_output_buf);
+
+    fprintf(stderr, "%s: %s\n", name, (passed ? "PASS" : "FAIL"));
+    return passed;
+}

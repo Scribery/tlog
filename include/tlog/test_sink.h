@@ -49,12 +49,22 @@ struct tlog_test_sink_op {
     } data;
 };
 
-struct tlog_test_sink {
+struct tlog_test_sink_input {
     const char                 *hostname;
     const char                 *username;
     unsigned int                session_id;
     struct tlog_test_sink_op    op_list[16];
-    const char                 *output;
+};
+
+extern bool tlog_test_sink_run(
+                    const char                         *name,
+                    const struct tlog_test_sink_input  *input,
+                    char                              **pres_output_buf,
+                    size_t                             *pres_output_len);
+
+struct tlog_test_sink {
+    struct tlog_test_sink_input     input;
+    const char                     *output;
 };
 
 extern bool tlog_test_sink(const char *name,

@@ -30,14 +30,14 @@ main(void)
     bool passed = true;
 
 #define TEST(_name_token, _struct_init_args...) \
-    passed = tlog_test_sink(                    \
-                #_name_token,                   \
-                (struct tlog_test_sink){        \
-                    .hostname = "localhost",    \
-                    .username = "user",         \
-                    .session_id = 0,            \
-                    _struct_init_args           \
-                }                               \
+    passed = tlog_test_sink(                        \
+                #_name_token,                       \
+                (struct tlog_test_sink){            \
+                    _struct_init_args,              \
+                    .input.hostname = "localhost",  \
+                    .input.username = "user",       \
+                    .input.session_id = 0,          \
+                }                                   \
     ) && passed
 
 #define OP_NONE {.type = OP_TYPE_NONE}
@@ -89,44 +89,44 @@ main(void)
       "\"out_txt\":\"" _out_txt "\",\"out_bin\":[" _out_bin "]" \
     "}\n"
 
-    TEST(null,              .op_list = {},
+    TEST(null,              .input.op_list = {},
                             .output = "");
-    TEST(null_cut,          .op_list = {OP_CUT},
+    TEST(null_cut,          .input.op_list = {OP_CUT},
                             .output = "");
-    TEST(null_flushed,      .op_list = {OP_FLUSH},
+    TEST(null_flushed,      .input.op_list = {OP_FLUSH},
                             .output = "");
-    TEST(null_cut_flushed,  .op_list = {OP_CUT, OP_FLUSH},
+    TEST(null_cut_flushed,  .input.op_list = {OP_CUT, OP_FLUSH},
                             .output = "");
-    TEST(null_flushed_cut,  .op_list = {OP_FLUSH, OP_CUT},
+    TEST(null_flushed_cut,  .input.op_list = {OP_FLUSH, OP_CUT},
                             .output = "");
 
     TEST(window_unflushed,
-         .op_list = {OP_WRITE_WINDOW(0, 0, 100, 200)},
+         .input.op_list = {OP_WRITE_WINDOW(0, 0, 100, 200)},
          .output = ""
     );
 
     TEST(window_cut,
-         .op_list = {OP_WRITE_WINDOW(0, 0, 100, 200), OP_CUT},
+         .input.op_list = {OP_WRITE_WINDOW(0, 0, 100, 200), OP_CUT},
          .output = ""
     );
 
     TEST(window_flushed,
-         .op_list = {OP_WRITE_WINDOW(0, 0, 100, 200), OP_FLUSH},
+         .input.op_list = {OP_WRITE_WINDOW(0, 0, 100, 200), OP_FLUSH},
          .output = MSG(1, "0", "=100x200", "", "", "", "")
     );
 
     TEST(window_cut_flushed,
-         .op_list = {OP_WRITE_WINDOW(0, 0, 100, 200), OP_CUT, OP_FLUSH},
+         .input.op_list = {OP_WRITE_WINDOW(0, 0, 100, 200), OP_CUT, OP_FLUSH},
          .output = MSG(1, "0", "=100x200", "", "", "", "")
     );
 
     TEST(window_flushed_cut,
-         .op_list = {OP_WRITE_WINDOW(0, 0, 100, 200), OP_FLUSH, OP_CUT},
+         .input.op_list = {OP_WRITE_WINDOW(0, 0, 100, 200), OP_FLUSH, OP_CUT},
          .output = MSG(1, "0", "=100x200", "", "", "", "")
     );
 
     TEST(min_window,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_WINDOW(0, 0, 0, 0),
             OP_FLUSH,
          },
@@ -134,7 +134,7 @@ main(void)
     );
 
     TEST(max_window,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_WINDOW(0, 0, USHRT_MAX, USHRT_MAX),
             OP_FLUSH,
          },
@@ -142,7 +142,7 @@ main(void)
     );
 
     TEST(three_windows,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_WINDOW(0, 0, 100, 100),
             OP_WRITE_WINDOW(0, 0, 200, 200),
             OP_WRITE_WINDOW(0, 0, 300, 300),
@@ -152,7 +152,7 @@ main(void)
     );
 
     TEST(delay_between_windows,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_WINDOW(0, 0, 100, 100),
             OP_WRITE_WINDOW(0, 100000000, 200, 200),
             OP_FLUSH,
@@ -161,7 +161,7 @@ main(void)
     );
 
     TEST(window_chunk_overflow,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_WINDOW(0, 0, 10001, 10001),
             OP_WRITE_WINDOW(0, 0, 10002, 10002),
             OP_WRITE_WINDOW(0, 0, 10003, 10003),
@@ -185,7 +185,7 @@ main(void)
     );
 
     TEST(window_merging,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_WINDOW(0, 0, 100, 100),
             OP_WRITE_WINDOW(0, 1000000, 100, 100),
             OP_WRITE_WINDOW(0, 2000000, 200, 200),
@@ -196,7 +196,7 @@ main(void)
     );
 
     TEST(window_not_merging,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_WINDOW(0, 0, 100, 100),
             OP_WRITE_WINDOW(0, 1000000, 200, 200),
             OP_WRITE_WINDOW(0, 2000000, 100, 100),
@@ -206,7 +206,7 @@ main(void)
     );
 
     TEST(window_merging_over_chars,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "A", 1),
             OP_WRITE_WINDOW(0, 0, 10, 10),
             OP_WRITE_IO(0, 0, true, "B", 1),
@@ -222,7 +222,7 @@ main(void)
     );
 
     TEST(window_merging_in_chars,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_WINDOW(0, 0, 10, 10),
             OP_WRITE_IO(0, 1000000, true, "\xf0\x9d", 2),
             OP_WRITE_WINDOW(0, 2000000, 10, 10),
@@ -233,7 +233,7 @@ main(void)
     );
 
     TEST(char_io_merging,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 1000000, true, "\xf0", 1),
             OP_WRITE_IO(0, 2000000, true, "\x9d", 1),
             OP_WRITE_IO(0, 3000000, true, "\x84", 1),
@@ -244,27 +244,27 @@ main(void)
     );
 
     TEST(one_byte,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "A", 1)
          },
          .output = ""
     );
     TEST(one_byte_cut,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "A", 1),
             OP_CUT
          },
          .output = ""
     );
     TEST(one_byte_flushed,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "A", 1),
             OP_FLUSH
          },
          .output = MSG(1, "0", ">1", "", "", "A", "")
     );
     TEST(one_byte_flushed_cut,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "A", 1),
             OP_FLUSH,
             OP_CUT
@@ -272,7 +272,7 @@ main(void)
          .output = MSG(1, "0", ">1", "", "", "A", "")
     );
     TEST(one_byte_cut_flushed,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "A", 1),
             OP_CUT,
             OP_FLUSH
@@ -281,7 +281,7 @@ main(void)
     );
 
     TEST(input_overflow_flush,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, false,
                         "0123456789abcdef0123456789abcdef"
                         "0123456789abcdef0123456789abcd", 62),
@@ -293,7 +293,7 @@ main(void)
     );
 
     TEST(output_overflow_flush,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true,
                         "0123456789abcdef0123456789abcdef"
                         "0123456789abcdef0123456789abcd", 62),
@@ -304,7 +304,7 @@ main(void)
     );
 
     TEST(both_overflow_flush,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, false,
                         "0123456789abcdef0123456789abcdef", 32),
             OP_WRITE_IO(0, 0, true,
@@ -316,14 +316,14 @@ main(void)
     );
 
     TEST(incomplete,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d\x84", 3)
          },
          .output = ""
     );
 
     TEST(incomplete_flushed,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d\x84", 3),
             OP_FLUSH
          },
@@ -331,7 +331,7 @@ main(void)
     );
 
     TEST(incomplete_cut,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d\x84", 3),
             OP_CUT
          },
@@ -339,7 +339,7 @@ main(void)
     );
 
     TEST(incomplete_cut_flushed,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d\x84", 3),
             OP_CUT,
             OP_FLUSH
@@ -348,7 +348,7 @@ main(void)
     );
 
     TEST(split_valid,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d", 2),
             OP_WRITE_IO(0, 0, true, "\x84\x9e", 2),
             OP_FLUSH
@@ -357,7 +357,7 @@ main(void)
     );
 
     TEST(split_before_invalid,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d", 2),
             OP_WRITE_IO(0, 0, true, "\x84X", 2),
             OP_FLUSH
@@ -366,7 +366,7 @@ main(void)
     );
 
     TEST(split_on_invalid,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d\x84", 3),
             OP_WRITE_IO(0, 0, true, "X", 1),
             OP_FLUSH
@@ -375,7 +375,7 @@ main(void)
     );
 
     TEST(split_incomplete,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d", 2),
             OP_WRITE_IO(0, 0, true, "\x84", 1),
             OP_CUT,
@@ -385,7 +385,7 @@ main(void)
     );
 
     TEST(delay_inside_char,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d", 2),
             OP_WRITE_IO(0, 1100000, true, "\x84\x9e", 2),
             OP_FLUSH
@@ -394,7 +394,7 @@ main(void)
     );
 
     TEST(delay_between_chars,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, false, "A", 1),
             OP_WRITE_IO(0, 1100000, true, "B", 1),
             OP_FLUSH
@@ -403,7 +403,7 @@ main(void)
     );
 
     TEST(delay_between_messages,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, false, "A", 1),
             OP_FLUSH,
             OP_WRITE_IO(0, 1100000, true, "B", 1),
@@ -414,7 +414,7 @@ main(void)
     );
 
     TEST(max_delay_between_windows,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_WINDOW(0, 0, 100, 100),
             OP_WRITE_WINDOW(TLOG_DELAY_MAX_TIMESPEC_SEC,
                             TLOG_DELAY_MAX_TIMESPEC_NSEC,
@@ -427,7 +427,7 @@ main(void)
     );
 
     TEST(max_delay_inside_char,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d", 2),
             OP_WRITE_IO(TLOG_DELAY_MAX_TIMESPEC_SEC,
                         TLOG_DELAY_MAX_TIMESPEC_NSEC,
@@ -439,7 +439,7 @@ main(void)
     );
 
     TEST(max_delay_between_chars,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, false, "A", 1),
             OP_WRITE_IO(TLOG_DELAY_MAX_TIMESPEC_SEC,
                         TLOG_DELAY_MAX_TIMESPEC_NSEC,
@@ -451,7 +451,7 @@ main(void)
     );
 
     TEST(max_delay_between_messages,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, false, "A", 1),
             OP_FLUSH,
             OP_WRITE_IO(TLOG_DELAY_MAX_TIMESPEC_SEC,
@@ -464,7 +464,7 @@ main(void)
     );
 
     TEST(window_between_chars,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, false, "A", 1),
             OP_WRITE_WINDOW(0, 0, 100, 200),
             OP_WRITE_IO(0, 0, true, "B", 1),
@@ -474,7 +474,7 @@ main(void)
     );
 
     TEST(char_between_windows,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_WINDOW(0, 0, 100, 100),
             OP_WRITE_IO(0, 0, false, "A", 1),
             OP_WRITE_WINDOW(0, 0, 200, 200),
@@ -484,7 +484,7 @@ main(void)
     );
 
     TEST(window_inside_char,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d", 2),
             OP_WRITE_WINDOW(0, 0, 100, 200),
             OP_WRITE_IO(0, 0, true, "\x84\x9e", 2),
@@ -494,7 +494,7 @@ main(void)
     );
 
     TEST(windows_chars_and_delays,
-         .op_list = {
+         .input.op_list = {
             OP_WRITE_IO(0, 10000000, true, "S", 1),
             OP_WRITE_WINDOW(0, 30000000, 100, 100),
             OP_WRITE_WINDOW(0, 60000000, 200, 200),
