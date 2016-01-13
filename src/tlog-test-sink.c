@@ -40,7 +40,7 @@ main(void)
                 }                                   \
     ) && passed
 
-#define OP_NONE {.type = OP_TYPE_NONE}
+#define OP_NONE {.type = TLOG_TEST_SINK_OP_TYPE_NONE}
 
 #define OP_WRITE_WINDOW(_sec, _nsec, _width, _height) \
     {                                                   \
