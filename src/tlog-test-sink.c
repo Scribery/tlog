@@ -42,38 +42,17 @@ main(void)
 
 #define OP_NONE {.type = TLOG_TEST_SINK_OP_TYPE_NONE}
 
-#define OP_WRITE_WINDOW(_sec, _nsec, _width, _height) \
-    {                                                   \
-        .type = TLOG_TEST_SINK_OP_TYPE_WRITE,           \
-        .data.write = {                                 \
-            .type = TLOG_PKT_TYPE_WINDOW,               \
-            .timestamp = {                              \
-                .tv_sec = _sec,                         \
-                .tv_nsec = _nsec                        \
-            },                                          \
-            .data.window = {                            \
-                .width = _width,                        \
-                .height = _height                       \
-            },                                          \
-        }                                               \
+#define OP_WRITE(_pkt) \
+    {                                           \
+        .type = TLOG_TEST_SINK_OP_TYPE_WRITE,   \
+        .data.write = _pkt                      \
     }
 
-#define OP_WRITE_IO(_sec, _nsec, _output, _buf, _len) \
-    {                                                   \
-        .type = TLOG_TEST_SINK_OP_TYPE_WRITE,           \
-        .data.write = {                                 \
-            .type = TLOG_PKT_TYPE_IO,                   \
-            .timestamp = {                              \
-                .tv_sec = _sec,                         \
-                .tv_nsec = _nsec                        \
-            },                                          \
-            .data.io={                                  \
-                .output = _output,                      \
-                .buf = (uint8_t *)_buf,                 \
-                .len = _len,                            \
-            }                                           \
-        }                                               \
-    }
+#define OP_WRITE_WINDOW(_pkt_window_args...) \
+    OP_WRITE(TLOG_PKT_WINDOW(_pkt_window_args))
+
+#define OP_WRITE_IO(_pkt_io_args...) \
+    OP_WRITE(TLOG_PKT_IO(_pkt_io_args))
 
 #define OP_FLUSH {.type = TLOG_TEST_SINK_OP_TYPE_FLUSH}
 
