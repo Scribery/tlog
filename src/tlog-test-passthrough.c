@@ -97,6 +97,7 @@ main(void)
              ) && passed
 
     TEST(null,
+         .input.chunk_size = 32,
          .input.op_list = {},
          .output.io_size = 4,
          .output.op_list = {});

@@ -29,8 +29,6 @@
 
 #include <tlog/pkt.h>
 
-#define TLOG_TEST_SINK_CHUNK_SIZE   64
-
 enum tlog_test_sink_op_type {
     TLOG_TEST_SINK_OP_TYPE_NONE,
     TLOG_TEST_SINK_OP_TYPE_WRITE,
@@ -68,6 +66,7 @@ struct tlog_test_sink_input {
     const char                 *hostname;
     const char                 *username;
     unsigned int                session_id;
+    size_t                      chunk_size;
     struct tlog_test_sink_op    op_list[16];
 };
 

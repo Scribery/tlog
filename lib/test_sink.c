@@ -63,7 +63,7 @@ tlog_test_sink_run(const char                          *name,
     }
 
     grc = tlog_sink_init(&sink, writer, input->hostname, input->username,
-                         input->session_id, TLOG_TEST_SINK_CHUNK_SIZE);
+                         input->session_id, input->chunk_size);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the sink: %s\n",
                 tlog_grc_strerror(grc));

@@ -54,6 +54,7 @@ main(void)
                 #_name_token,                       \
                 (struct tlog_test_sink){            \
                     _struct_init_args,              \
+                    .input.chunk_size = 64,         \
                     .input.hostname = "localhost",  \
                     .input.username = "user",       \
                     .input.session_id = 1,          \
