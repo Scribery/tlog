@@ -49,6 +49,21 @@ struct tlog_test_sink_op {
     } data;
 };
 
+#define TLOG_TEST_SINK_OP_NONE \
+    ((struct tlog_test_sink_op){.type = TLOG_TEST_SINK_OP_TYPE_NONE})
+
+#define TLOG_TEST_SINK_OP_WRITE(_pkt) \
+    ((struct tlog_test_sink_op){                \
+        .type = TLOG_TEST_SINK_OP_TYPE_WRITE,   \
+        .data.write = _pkt                      \
+    })
+
+#define TLOG_TEST_SINK_OP_FLUSH \
+    ((struct tlog_test_sink_op){.type = TLOG_TEST_SINK_OP_TYPE_FLUSH})
+
+#define TLOG_TEST_SINK_OP_CUT \
+    ((struct tlog_test_sink_op){.type = TLOG_TEST_SINK_OP_TYPE_CUT})
+
 struct tlog_test_sink_input {
     const char                 *hostname;
     const char                 *username;

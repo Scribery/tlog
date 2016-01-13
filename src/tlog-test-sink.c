@@ -29,34 +29,16 @@ main(void)
 {
     bool passed = true;
 
-#define TEST(_name_token, _struct_init_args...) \
-    passed = tlog_test_sink(                        \
-                #_name_token,                       \
-                (struct tlog_test_sink){            \
-                    _struct_init_args,              \
-                    .input.hostname = "localhost",  \
-                    .input.username = "user",       \
-                    .input.session_id = 0,          \
-                }                                   \
-    ) && passed
-
-#define OP_NONE {.type = TLOG_TEST_SINK_OP_TYPE_NONE}
-
-#define OP_WRITE(_pkt) \
-    {                                           \
-        .type = TLOG_TEST_SINK_OP_TYPE_WRITE,   \
-        .data.write = _pkt                      \
-    }
+#define OP_NONE         TLOG_TEST_SINK_OP_NONE
+#define OP_WRITE(_pkt)  TLOG_TEST_SINK_OP_WRITE(_pkt)
+#define OP_FLUSH        TLOG_TEST_SINK_OP_FLUSH
+#define OP_CUT          TLOG_TEST_SINK_OP_CUT
 
 #define OP_WRITE_WINDOW(_pkt_window_args...) \
     OP_WRITE(TLOG_PKT_WINDOW(_pkt_window_args))
 
 #define OP_WRITE_IO(_pkt_io_args...) \
     OP_WRITE(TLOG_PKT_IO(_pkt_io_args))
-
-#define OP_FLUSH {.type = TLOG_TEST_SINK_OP_TYPE_FLUSH}
-
-#define OP_CUT {.type = TLOG_TEST_SINK_OP_TYPE_CUT}
 
 #define MSG(_id_tkn, _pos, _timing, \
             _in_txt, _in_bin, _out_txt, _out_bin)               \
@@ -67,6 +49,17 @@ main(void)
       "\"in_txt\":\"" _in_txt "\",\"in_bin\":[" _in_bin "],"    \
       "\"out_txt\":\"" _out_txt "\",\"out_bin\":[" _out_bin "]" \
     "}\n"
+
+#define TEST(_name_token, _struct_init_args...) \
+    passed = tlog_test_sink(                        \
+                #_name_token,                       \
+                (struct tlog_test_sink){            \
+                    _struct_init_args,              \
+                    .input.hostname = "localhost",  \
+                    .input.username = "user",       \
+                    .input.session_id = 0,          \
+                }                                   \
+    ) && passed
 
     TEST(null,              .input.op_list = {},
                             .output = "");
