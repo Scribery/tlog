@@ -90,7 +90,51 @@ struct tlog_pkt {
 };
 
 /** Void packet initializer */
-#define TLOG_PKT_VOID   (struct tlog_pkt){.type = TLOG_PKT_TYPE_VOID}
+#define TLOG_PKT_VOID \
+    ((struct tlog_pkt){.type = TLOG_PKT_TYPE_VOID})
+
+/** Window packet initializer */
+#define TLOG_PKT_WINDOW(_tv_sec, _tv_nsec, _width, _height) \
+    ((struct tlog_pkt){                                     \
+        .timestamp  = {_tv_sec, _tv_nsec},                  \
+        .type       = TLOG_PKT_TYPE_WINDOW,                 \
+        .data       = {                                     \
+            .window = {                                     \
+                .width  = _width,                           \
+                .height = _height                           \
+            }                                               \
+        }                                                   \
+    })
+
+/** Constant buffer I/O packet initializer */
+#define TLOG_PKT_IO(_tv_sec, _tv_nsec, _output, _buf, _len) \
+    ((struct tlog_pkt){                                     \
+        .timestamp  = {_tv_sec, _tv_nsec},                  \
+        .type       = TLOG_PKT_TYPE_IO,                     \
+        .data       = {                                     \
+            .io = {                                         \
+                .output     = _output,                      \
+                .buf        = (uint8_t *)_buf,              \
+                .buf_owned  = false,                        \
+                .len        = _len                          \
+            }                                               \
+        }                                                   \
+    })
+
+/** Constant string I/O packet initializer */
+#define TLOG_PKT_IO_STR(_tv_sec, _tv_nsec, _output, _str) \
+    ((struct tlog_pkt){                                     \
+        .timestamp  = {_tv_sec, _tv_nsec},                  \
+        .type       = TLOG_PKT_TYPE_IO,                     \
+        .data       = {                                     \
+            .io = {                                         \
+                .output     = _output,                      \
+                .buf        = (uint8_t *)_str,              \
+                .buf_owned  = false,                        \
+                .len        = strlen(_str)                  \
+            }                                               \
+        }                                                   \
+    })
 
 /**
  * Initialize a void packet.
