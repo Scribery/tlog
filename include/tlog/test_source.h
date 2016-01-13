@@ -56,13 +56,23 @@ struct tlog_test_source_op {
     } data;
 };
 
-struct tlog_test_source {
-    const char                 *input;
+struct tlog_test_source_output {
     const char                 *hostname;
     const char                 *username;
     unsigned int                session_id;
     size_t                      io_size;
     struct tlog_test_source_op  op_list[16];
+};
+
+extern bool tlog_test_source_run(
+                    const char                             *name,
+                    const char                             *input_buf,
+                    size_t                                  input_len,
+                    const struct tlog_test_source_output   *output);
+
+struct tlog_test_source {
+    const char                     *input;
+    struct tlog_test_source_output  output;
 };
 
 extern bool tlog_test_source(const char *name,

@@ -115,11 +115,12 @@ main(void)
     passed = tlog_test_source(#_name_token,                                 \
                   (struct tlog_test_source){                                \
                     .input      = _input,                                   \
-                    .hostname   = _hostname,                                \
-                    .username   = _username,                                \
-                    .session_id = _session_id,                              \
-                    .io_size    = _io_size,                                 \
-                    .op_list    = {_op_list_init_args, OP_NONE              \
+                    .output = {                                             \
+                        .hostname   = _hostname,                            \
+                        .username   = _username,                            \
+                        .session_id = _session_id,                          \
+                        .io_size    = _io_size,                             \
+                        .op_list    = {_op_list_init_args, OP_NONE}         \
                     }                                                       \
                   }                                                         \
                  ) && passed

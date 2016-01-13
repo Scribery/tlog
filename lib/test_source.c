@@ -107,7 +107,10 @@ pkt_diff(FILE *stream,
 }
 
 bool
-tlog_test_source(const char *name, const struct tlog_test_source test)
+tlog_test_source_run(const char                            *name,
+                     const char                            *input_buf,
+                     size_t                                 input_len,
+                     const struct tlog_test_source_output  *output)
 {
     bool passed = true;
     tlog_grc grc;
@@ -117,15 +120,15 @@ tlog_test_source(const char *name, const struct tlog_test_source test)
     const struct tlog_test_source_op *op;
     size_t loc;
 
-    grc = tlog_mem_reader_create(&reader, test.input, strlen(test.input));
+    grc = tlog_mem_reader_create(&reader, input_buf, input_len);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating memory reader: %s\n",
                 tlog_grc_strerror(grc));
         exit(1);
     }
     grc = tlog_source_create(&source, reader,
-                             test.hostname, test.username, test.session_id,
-                             test.io_size);
+                             output->hostname, output->username,
+                             output->session_id, output->io_size);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating source: %s\n",
                 tlog_grc_strerror(grc));
@@ -140,10 +143,10 @@ tlog_test_source(const char *name, const struct tlog_test_source test)
 
 #define FAIL_OP(_fmt, _args...) \
     FAIL("op #%zd (%s): " _fmt,                                 \
-         op - test.op_list + 1,                                 \
+         op - output->op_list + 1,                                 \
          tlog_test_source_op_type_to_str(op->type), ##_args)
 
-    for (op = test.op_list; op->type != TLOG_TEST_SOURCE_OP_TYPE_NONE; op++) {
+    for (op = output->op_list; op->type != TLOG_TEST_SOURCE_OP_TYPE_NONE; op++) {
         switch (op->type) {
         case TLOG_TEST_SOURCE_OP_TYPE_READ:
             grc = tlog_source_read(source, &pkt);
@@ -186,10 +189,19 @@ tlog_test_source(const char *name, const struct tlog_test_source test)
 #undef FAIL_OP
 #undef FAIL
 
-    fprintf(stderr, "%s: %s\n", name, (passed ? "PASS" : "FAIL"));
-
     tlog_source_destroy(source);
     tlog_reader_destroy(reader);
     return passed;
 }
 
+bool
+tlog_test_source(const char *name, const struct tlog_test_source test)
+{
+    bool passed;
+
+    passed = tlog_test_source_run(name,
+                                  test.input, strlen(test.input),
+                                  &test.output);
+    fprintf(stderr, "%s: %s\n", name, (passed ? "PASS" : "FAIL"));
+    return passed;
+}
