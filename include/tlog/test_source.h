@@ -56,6 +56,23 @@ struct tlog_test_source_op {
     } data;
 };
 
+#define TLOG_TEST_SOURCE_OP_NONE \
+    ((struct tlog_test_source_op){              \
+        .type = TLOG_TEST_SOURCE_OP_TYPE_NONE   \
+    })
+
+#define TLOG_TEST_SOURCE_OP_LOC_GET(_exp_loc) \
+    ((struct tlog_test_source_op){                  \
+        .type = TLOG_TEST_SOURCE_OP_TYPE_LOC_GET,   \
+        .data = {.loc_get = {.exp_loc = _exp_loc}}  \
+    })
+
+#define TLOG_TEST_SOURCE_OP_READ(_exp_grc, _exp_pkt) \
+    ((struct tlog_test_source_op){                                      \
+        .type = TLOG_TEST_SOURCE_OP_TYPE_READ,                          \
+        .data = {.read = {.exp_grc = _exp_grc, .exp_pkt = _exp_pkt}}    \
+    })
+
 struct tlog_test_source_output {
     const char                 *hostname;
     const char                 *username;
