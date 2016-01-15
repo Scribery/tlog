@@ -184,8 +184,8 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
             char            type_buf[2];
             char            type;
             int             read;
-            size_t          first_val;
-            size_t          second_val;
+            uint64_t        first_val;
+            uint64_t        second_val;
             struct timespec delay;
 
             /* Skip leading whitespace */
@@ -212,18 +212,18 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
                 break;
             }
 
-            if (sscanf(timing_ptr, "%1[][><+=]%zu%n",
+            if (sscanf(timing_ptr, "%1[][><+=]%" SCNu64 "%n",
                        type_buf, &first_val, &read) < 2)
                 return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
             type = *type_buf;
             timing_ptr += read;
 
             if (type == '[' || type == ']') {
-                if (sscanf(timing_ptr, "/%zu%n", &second_val, &read) < 1)
+                if (sscanf(timing_ptr, "/%" SCNu64 "%n", &second_val, &read) < 1)
                     return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
                 timing_ptr += read;
             } else if (type == '=') {
-                if (sscanf(timing_ptr, "x%zu%n", &second_val, &read) < 1)
+                if (sscanf(timing_ptr, "x%" SCNu64 "%n", &second_val, &read) < 1)
                     return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
                 timing_ptr += read;
             } else {
@@ -233,6 +233,9 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
             /* If it is a delay record */
             if (type == '+') {
                 if (first_val != 0) {
+                    if (first_val > TLOG_DELAY_MAX_MS_NUM) {
+                        return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
+                    }
                     /* If there was I/O already */
                     if (io_len > 0) {
                         /*
@@ -272,6 +275,9 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
                 return TLOG_RC_OK;
             /* If it is a text input record */
             } else if (type == '<') {
+                if (first_val > SIZE_MAX) {
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
+                }
                 msg->output = false;
                 msg->binary = false;
                 msg->rem = first_val;
@@ -279,6 +285,9 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
                 msg->ptxt_len = &msg->in_txt_len;
             /* If it is a binary input record */
             } else if (type == '[') {
+                if (first_val > SIZE_MAX || second_val > SIZE_MAX) {
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
+                }
                 msg->output = false;
                 msg->binary = true;
                 msg->rem = second_val;
@@ -288,6 +297,9 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
                 msg->pbin_pos = &msg->in_bin_pos;
             /* If it is a text output record */
             } else if (type == '>') {
+                if (first_val > SIZE_MAX) {
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
+                }
                 msg->output = true;
                 msg->binary = false;
                 msg->rem = first_val;
@@ -295,6 +307,9 @@ tlog_msg_read(struct tlog_msg *msg, struct tlog_pkt *pkt,
                 msg->ptxt_len = &msg->out_txt_len;
             /* If it is a binary output record */
             } else if (type == ']') {
+                if (first_val > SIZE_MAX || second_val > SIZE_MAX) {
+                    return TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING;
+                }
                 msg->output = true;
                 msg->binary = true;
                 msg->rem = second_val;
