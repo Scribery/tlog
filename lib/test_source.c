@@ -95,7 +95,7 @@ pkt_diff(FILE *stream,
         if (res->data.io.len != exp->data.io.len ||
             memcmp(res->data.io.buf, exp->data.io.buf,
                    res->data.io.len) != 0) {
-            fprintf(stream, "buf mismatch:");
+            fprintf(stream, "buf mismatch:\n");
             tlog_test_diff(stream,
                            res->data.io.buf, res->data.io.len,
                            exp->data.io.buf, exp->data.io.len);
