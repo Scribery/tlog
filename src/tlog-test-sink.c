@@ -385,6 +385,15 @@ main(void)
                    MSG(2, "1", ">1", "", "", "B", "")
     );
 
+    TEST(min_delay_between_windows,
+         .input.op_list = {
+            OP_WRITE_WINDOW(0, 0, 100, 100),
+            OP_WRITE_WINDOW(0, 1000000, 200, 200),
+            OP_FLUSH
+         },
+         .output = MSG(1, "0", "=100x100+1=200x200", "", "", "", "")
+    );
+
     TEST(max_delay_between_windows,
          .input.op_list = {
             OP_WRITE_WINDOW(0, 0, 100, 100),
@@ -398,6 +407,15 @@ main(void)
                        "", "", "", "")
     );
 
+    TEST(min_delay_inside_char,
+         .input.op_list = {
+            OP_WRITE_IO(0, 0, true, "\xf0\x9d", 2),
+            OP_WRITE_IO(0, 1000000, true, "\x84\x9e", 2),
+            OP_FLUSH
+         },
+         .output = MSG(1, "1", ">1", "", "", "\xf0\x9d\x84\x9e", "")
+    );
+
     TEST(max_delay_inside_char,
          .input.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d", 2),
@@ -408,6 +426,15 @@ main(void)
          },
          .output = MSG(1, TLOG_DELAY_MAX_MS_STR, ">1",
                        "", "", "\xf0\x9d\x84\x9e", "")
+    );
+
+    TEST(min_delay_between_chars,
+         .input.op_list = {
+            OP_WRITE_IO(0, 0, false, "A", 1),
+            OP_WRITE_IO(0, 1000000, true, "B", 1),
+            OP_FLUSH
+         },
+         .output = MSG(1, "0", "<1+1>1", "A", "", "B", "")
     );
 
     TEST(max_delay_between_chars,
