@@ -94,541 +94,725 @@ main(void)
 #define OP_READ_OK(_exp_pkt) \
     OP_READ(TLOG_RC_OK, _exp_pkt)
 
+#define INPUT(_struct_init_args...) \
+    .input = {                      \
+        .hostname = "localhost",    \
+        .username = "user",         \
+        .session_id = 1,            \
+        _struct_init_args           \
+    }
+
+#define OUTPUT(_struct_init_args...) \
+    .output = {                         \
+        .hostname = NULL,               \
+        .username = NULL,               \
+        .session_id = 0,                \
+        _struct_init_args               \
+    }
+
 #define TEST(_name_token, _struct_init_args...) \
-    passed = tlog_test_passthrough(                 \
-                #_name_token,                       \
-                (struct tlog_test_passthrough){     \
-                    _struct_init_args,              \
-                    .input.hostname = "localhost",  \
-                    .input.username = "user",       \
-                    .input.session_id = 1,          \
-                    .output.hostname = NULL,        \
-                    .output.username = NULL,        \
-                    .output.session_id = 0          \
-                }                                   \
+    passed = tlog_test_passthrough(             \
+                #_name_token,                   \
+                (struct tlog_test_passthrough){ \
+                    _struct_init_args           \
+                }                               \
              ) && passed
 
     TEST(null,
-         .input.chunk_size = 32,
-         .input.op_list = {},
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_VOID)
-         }
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {},
+         ),
+         OUTPUT(
+             .io_size = 4,
+             .op_list = {
+                OP_READ_OK(PKT_VOID)
+             }
+         )
     );
 
     TEST(null_flush,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_VOID)
-         }
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_VOID)
+            }
+         )
     );
 
     TEST(window,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_WINDOW(0, 0, 100, 200))
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, 100, 200))
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(window_flush,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(min_window,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_WINDOW(0, 0, 0, 0)),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_WINDOW(0, 0, 0, 0)),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, 0, 0)),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 0, 0)),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(max_window,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_WINDOW(0, 0, USHRT_MAX, USHRT_MAX)),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_WINDOW(0, 0, USHRT_MAX, USHRT_MAX)),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, USHRT_MAX, USHRT_MAX)),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, USHRT_MAX, USHRT_MAX)),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(min_delay_between_windows,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_WINDOW(0, 0, 10, 20)),
-            OP_WRITE(PKT_WINDOW(0, 1000000, 30, 40)),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_WINDOW(0, 0, 10, 20)),
-            OP_READ_OK(PKT_WINDOW(0, 1000000, 30, 40)),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, 10, 20)),
+                OP_WRITE(PKT_WINDOW(0, 1000000, 30, 40)),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 10, 20)),
+                OP_READ_OK(PKT_WINDOW(0, 1000000, 30, 40)),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(max_delay_between_windows,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_WINDOW(0, 0, 10, 20)),
-            OP_WRITE(PKT_WINDOW(TLOG_DELAY_MAX_TIMESPEC_SEC,
-                                TLOG_DELAY_MAX_TIMESPEC_NSEC,
-                                30, 40)),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_WINDOW(0, 0, 10, 20)),
-            OP_READ_OK(PKT_WINDOW(TLOG_DELAY_MAX_TIMESPEC_SEC,
-                                  TLOG_DELAY_MAX_TIMESPEC_NSEC,
-                                  30, 40)),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, 10, 20)),
+                OP_WRITE(PKT_WINDOW(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                                    TLOG_DELAY_MAX_TIMESPEC_NSEC,
+                                    30, 40)),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 10, 20)),
+                OP_READ_OK(PKT_WINDOW(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                                      TLOG_DELAY_MAX_TIMESPEC_NSEC,
+                                      30, 40)),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(one_char_one_byte,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(one_char_two_bytes,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "Я")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "Я")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "Я")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "Я")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(one_char_three_bytes,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "\xe1\x9a\xa0")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "\xe1\x9a\xa0")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "\xe1\x9a\xa0")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "\xe1\x9a\xa0")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(one_char_four_bytes,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d\x84\x9e")),
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d\x84\x9e")),
 
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "\xf0\x9d\x84\x9e")),
-            OP_READ_OK(PKT_VOID)
-         });
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "\xf0\x9d\x84\x9e")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     for (i = 0; i < sizeof(buf); i++) {
         buf[i] = (char)i;
     }
     TEST(all_bytes_forward_unsplit,
-         .input.chunk_size = 2048,
-         .input.op_list = {
-            OP_WRITE(PKT_IO(0, 0, true, buf, sizeof(buf))),
-            OP_FLUSH
-         },
-         .output.io_size = sizeof(buf),
-         .output.op_list = {
-            OP_READ_OK(PKT_IO(0, 0, true, buf, sizeof(buf))),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 2048,
+            .op_list = {
+                OP_WRITE(PKT_IO(0, 0, true, buf, sizeof(buf))),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = sizeof(buf),
+            .op_list = {
+                OP_READ_OK(PKT_IO(0, 0, true, buf, sizeof(buf))),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     for (i = 0; i < sizeof(buf); i++) {
         buf[i] = (char)(sizeof(buf) - i);
     }
     TEST(all_bytes_backward_unsplit,
-         .input.chunk_size = 2048,
-         .input.op_list = {
-            OP_WRITE(PKT_IO(0, 0, true, buf, sizeof(buf))),
-            OP_FLUSH
-         },
-         .output.io_size = sizeof(buf),
-         .output.op_list = {
-            OP_READ_OK(PKT_IO(0, 0, true, buf, sizeof(buf))),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 2048,
+            .op_list = {
+                OP_WRITE(PKT_IO(0, 0, true, buf, sizeof(buf))),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = sizeof(buf),
+            .op_list = {
+                OP_READ_OK(PKT_IO(0, 0, true, buf, sizeof(buf))),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(packet_merging,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
-            OP_WRITE(PKT_IO_STR(0, 0, true, "B")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "AB")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
+                OP_WRITE(PKT_IO_STR(0, 0, true, "B")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "AB")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(min_delay_between_chars,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
-            OP_WRITE(PKT_IO_STR(0, 1000000, true, "B")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
-            OP_READ_OK(PKT_IO_STR(0, 1000000, true, "B")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
+                OP_WRITE(PKT_IO_STR(0, 1000000, true, "B")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
+                OP_READ_OK(PKT_IO_STR(0, 1000000, true, "B")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(max_delay_between_chars,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
-            OP_WRITE(PKT_IO_STR(TLOG_DELAY_MAX_TIMESPEC_SEC,
-                                TLOG_DELAY_MAX_TIMESPEC_NSEC,
-                                true, "B")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
-            OP_READ_OK(PKT_IO_STR(TLOG_DELAY_MAX_TIMESPEC_SEC,
-                                  TLOG_DELAY_MAX_TIMESPEC_NSEC,
-                                  true, "B")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
+                OP_WRITE(PKT_IO_STR(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                                    TLOG_DELAY_MAX_TIMESPEC_NSEC,
+                                    true, "B")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
+                OP_READ_OK(PKT_IO_STR(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                                      TLOG_DELAY_MAX_TIMESPEC_NSEC,
+                                      true, "B")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(min_delay_inside_char,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
-            OP_WRITE(PKT_IO_STR(0, 1000000, true, "\x84\x9e")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 1000000, true, "\xf0\x9d\x84\x9e")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
+                OP_WRITE(PKT_IO_STR(0, 1000000, true, "\x84\x9e")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 1000000, true,
+                                      "\xf0\x9d\x84\x9e")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(max_delay_inside_char,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
-            OP_WRITE(PKT_IO_STR(TLOG_DELAY_MAX_TIMESPEC_SEC,
-                                TLOG_DELAY_MAX_TIMESPEC_NSEC,
-                                true, "\x84\x9e")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(TLOG_DELAY_MAX_TIMESPEC_SEC,
-                                  TLOG_DELAY_MAX_TIMESPEC_NSEC,
-                                  true, "\xf0\x9d\x84\x9e")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
+                OP_WRITE(PKT_IO_STR(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                                    TLOG_DELAY_MAX_TIMESPEC_NSEC,
+                                    true, "\x84\x9e")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(TLOG_DELAY_MAX_TIMESPEC_SEC,
+                                      TLOG_DELAY_MAX_TIMESPEC_NSEC,
+                                      true, "\xf0\x9d\x84\x9e")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(windows_and_chars,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
-            OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
-            OP_WRITE(PKT_WINDOW(0, 0, 300, 400)),
-            OP_WRITE(PKT_IO_STR(0, 0, true, "B")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
-            OP_READ_OK(PKT_WINDOW(0, 0, 300, 400)),
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "B")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
+                OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
+                OP_WRITE(PKT_WINDOW(0, 0, 300, 400)),
+                OP_WRITE(PKT_IO_STR(0, 0, true, "B")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
+                OP_READ_OK(PKT_WINDOW(0, 0, 300, 400)),
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "B")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(chars_and_windows,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
-            OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
-            OP_WRITE(PKT_IO_STR(0, 0, true, "B")),
-            OP_WRITE(PKT_WINDOW(0, 0, 300, 400)),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
-            OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "B")),
-            OP_READ_OK(PKT_WINDOW(0, 0, 300, 400)),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
+                OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
+                OP_WRITE(PKT_IO_STR(0, 0, true, "B")),
+                OP_WRITE(PKT_WINDOW(0, 0, 300, 400)),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
+                OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "B")),
+                OP_READ_OK(PKT_WINDOW(0, 0, 300, 400)),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(input_and_output_merged,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, false, "A")),
-            OP_WRITE(PKT_IO_STR(0, 0, true, "B")),
-            OP_WRITE(PKT_IO_STR(0, 0, false, "C")),
-            OP_WRITE(PKT_IO_STR(0, 0, true, "D")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, false, "AC")),
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "BD")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, false, "A")),
+                OP_WRITE(PKT_IO_STR(0, 0, true, "B")),
+                OP_WRITE(PKT_IO_STR(0, 0, false, "C")),
+                OP_WRITE(PKT_IO_STR(0, 0, true, "D")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, false, "AC")),
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "BD")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(output_and_input_merged,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
-            OP_WRITE(PKT_IO_STR(0, 0, false, "B")),
-            OP_WRITE(PKT_IO_STR(0, 0, true, "C")),
-            OP_WRITE(PKT_IO_STR(0, 0, false, "D")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, false, "BD")),
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "AC")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
+                OP_WRITE(PKT_IO_STR(0, 0, false, "B")),
+                OP_WRITE(PKT_IO_STR(0, 0, true, "C")),
+                OP_WRITE(PKT_IO_STR(0, 0, false, "D")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, false, "BD")),
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "AC")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(input_and_output_separate,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, false, "A")),
-            OP_WRITE(PKT_IO_STR(1, 0, true, "B")),
-            OP_WRITE(PKT_IO_STR(2, 0, false, "C")),
-            OP_WRITE(PKT_IO_STR(3, 0, true, "D")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, false, "A")),
-            OP_READ_OK(PKT_IO_STR(1, 0, true, "B")),
-            OP_READ_OK(PKT_IO_STR(2, 0, false, "C")),
-            OP_READ_OK(PKT_IO_STR(3, 0, true, "D")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, false, "A")),
+                OP_WRITE(PKT_IO_STR(1, 0, true, "B")),
+                OP_WRITE(PKT_IO_STR(2, 0, false, "C")),
+                OP_WRITE(PKT_IO_STR(3, 0, true, "D")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, false, "A")),
+                OP_READ_OK(PKT_IO_STR(1, 0, true, "B")),
+                OP_READ_OK(PKT_IO_STR(2, 0, false, "C")),
+                OP_READ_OK(PKT_IO_STR(3, 0, true, "D")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(output_and_input_separate,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
-            OP_WRITE(PKT_IO_STR(1, 0, false, "B")),
-            OP_WRITE(PKT_IO_STR(2, 0, true, "C")),
-            OP_WRITE(PKT_IO_STR(3, 0, false, "D")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
-            OP_READ_OK(PKT_IO_STR(1, 0, false, "B")),
-            OP_READ_OK(PKT_IO_STR(2, 0, true, "C")),
-            OP_READ_OK(PKT_IO_STR(3, 0, false, "D")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
+                OP_WRITE(PKT_IO_STR(1, 0, false, "B")),
+                OP_WRITE(PKT_IO_STR(2, 0, true, "C")),
+                OP_WRITE(PKT_IO_STR(3, 0, false, "D")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
+                OP_READ_OK(PKT_IO_STR(1, 0, false, "B")),
+                OP_READ_OK(PKT_IO_STR(2, 0, true, "C")),
+                OP_READ_OK(PKT_IO_STR(3, 0, false, "D")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(window_merging_immediate,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
-            OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
+                OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(window_merging_over_char,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
-            OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
-            OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
+                OP_WRITE(PKT_IO_STR(0, 0, true, "A")),
+                OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "A")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(string_flushed,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "AB")),
-            OP_FLUSH,
-            OP_WRITE(PKT_IO_STR(0, 0, true, "CD")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "AB")),
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "CD")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "AB")),
+                OP_FLUSH,
+                OP_WRITE(PKT_IO_STR(0, 0, true, "CD")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "AB")),
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "CD")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(string_cut,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "AB")),
-            OP_CUT,
-            OP_WRITE(PKT_IO_STR(0, 0, true, "CD")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "ABCD")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "AB")),
+                OP_CUT,
+                OP_WRITE(PKT_IO_STR(0, 0, true, "CD")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "ABCD")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(char_flushed,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
-            OP_FLUSH,
-            OP_WRITE(PKT_IO_STR(0, 0, true, "\x84\x9e")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "\xf0\x9d\x84\x9e")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
+                OP_FLUSH,
+                OP_WRITE(PKT_IO_STR(0, 0, true, "\x84\x9e")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "\xf0\x9d\x84\x9e")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(char_cut,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
-            OP_CUT,
-            OP_WRITE(PKT_IO_STR(0, 0, true, "\x84\x9e")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "\xf0\x9d\x84\x9e")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
+                OP_CUT,
+                OP_WRITE(PKT_IO_STR(0, 0, true, "\x84\x9e")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "\xf0\x9d\x84\x9e")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(char_cut_and_flushed,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
-            OP_CUT,
-            OP_FLUSH,
-            OP_WRITE(PKT_IO_STR(0, 0, true, "\x84\x9e")),
-            OP_FLUSH
-         },
-         .output.io_size = 4,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "\x84\x9e")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
+                OP_CUT,
+                OP_FLUSH,
+                OP_WRITE(PKT_IO_STR(0, 0, true, "\x84\x9e")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "\xf0\x9d")),
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "\x84\x9e")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(chinese,
-         .input.chunk_size = 2048,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true,
-                                "自河南经乱关内阻饥兄弟离散各在一处…"
-                                "符离及下邽弟妹"
-                                ""
-                                "时难年饥世业空"
-                                "弟兄羁旅各西东"
-                                "田园寥落干戈后"
-                                "骨肉流离道路中"
-                                "吊影分为千里雁"
-                                "辞根散作九秋蓬"
-                                "共看明月应垂泪"
-                                "一夜乡心五处同")),
-            OP_FLUSH
-         },
-         .output.io_size = 1024,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true,
-                                  "自河南经乱关内阻饥兄弟离散各在一处…"
-                                  "符离及下邽弟妹"
-                                  ""
-                                  "时难年饥世业空"
-                                  "弟兄羁旅各西东"
-                                  "田园寥落干戈后"
-                                  "骨肉流离道路中"
-                                  "吊影分为千里雁"
-                                  "辞根散作九秋蓬"
-                                  "共看明月应垂泪"
-                                  "一夜乡心五处同")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 2048,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true,
+                                    "自河南经乱关内阻饥兄弟离散各在一处…"
+                                    "符离及下邽弟妹"
+                                    ""
+                                    "时难年饥世业空"
+                                    "弟兄羁旅各西东"
+                                    "田园寥落干戈后"
+                                    "骨肉流离道路中"
+                                    "吊影分为千里雁"
+                                    "辞根散作九秋蓬"
+                                    "共看明月应垂泪"
+                                    "一夜乡心五处同")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 1024,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true,
+                                      "自河南经乱关内阻饥兄弟离散各在一处…"
+                                      "符离及下邽弟妹"
+                                      ""
+                                      "时难年饥世业空"
+                                      "弟兄羁旅各西东"
+                                      "田园寥落干戈后"
+                                      "骨肉流离道路中"
+                                      "吊影分为千里雁"
+                                      "辞根散作九秋蓬"
+                                      "共看明月应垂泪"
+                                      "一夜乡心五处同")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(input_splitting,
-         .input.chunk_size = 32,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true,
-                                "0123456789abcdef0123456789abc"
-                                "0123456789abcdef0123456789abc")),
-            OP_FLUSH
-         },
-         .output.io_size = 58,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true,
-                                  "0123456789abcdef0123456789abc")),
-            OP_READ_OK(PKT_IO_STR(0, 0, true,
-                                  "0123456789abcdef0123456789abc")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true,
+                                    "0123456789abcdef0123456789abc"
+                                    "0123456789abcdef0123456789abc")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 58,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true,
+                                      "0123456789abcdef0123456789abc")),
+                OP_READ_OK(PKT_IO_STR(0, 0, true,
+                                      "0123456789abcdef0123456789abc")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     TEST(output_splitting,
-         .input.chunk_size = 35,
-         .input.op_list = {
-            OP_WRITE(PKT_IO_STR(0, 0, true,
-                                "0123456789abcdef0123456789abcdef")),
-            OP_FLUSH
-         },
-         .output.io_size = 16,
-         .output.op_list = {
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "0123456789abcdef")),
-            OP_READ_OK(PKT_IO_STR(0, 0, true, "0123456789abcdef")),
-            OP_READ_OK(PKT_VOID)
-         });
+         INPUT(
+            .chunk_size = 35,
+            .op_list = {
+                OP_WRITE(PKT_IO_STR(0, 0, true,
+                                    "0123456789abcdef0123456789abcdef")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 16,
+            .op_list = {
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "0123456789abcdef")),
+                OP_READ_OK(PKT_IO_STR(0, 0, true, "0123456789abcdef")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
 
     return !passed;
 }
