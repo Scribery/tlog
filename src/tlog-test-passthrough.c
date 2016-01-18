@@ -25,6 +25,11 @@
 #include <string.h>
 #include <limits.h>
 #include <tlog/rc.h>
+#include <tlog/grc.h>
+#include <tlog/mem_writer.h>
+#include <tlog/mem_reader.h>
+#include <tlog/sink.h>
+#include <tlog/source.h>
 #include <tlog/misc.h>
 #include <tlog/test_sink.h>
 #include <tlog/test_source.h>
@@ -63,6 +68,134 @@ tlog_test_passthrough(const char *name,
     free(sink_name);
     free(source_name);
     free(log_buf);
+
+    return passed;
+}
+
+static bool
+tlog_test_passthrough_buf(const char *name,
+                          size_t sink_chunk_size,
+                          size_t source_io_size,
+                          const char *data_buf,
+                          size_t data_len)
+{
+    bool mismatch;
+    bool passed = false;
+    struct tlog_writer *writer = NULL;
+    struct tlog_sink *sink = NULL;
+    struct tlog_reader *reader = NULL;
+    struct tlog_source *source = NULL;
+    struct tlog_pkt pkt = TLOG_PKT_VOID;
+    char *log_buf = NULL;
+    size_t log_len = 0;
+    size_t pkt_pos;
+    size_t data_pos;
+    uint8_t data_byte;
+    uint8_t pkt_byte;
+
+#define GUARD(_op_name, _op_expr) \
+    do {                                                        \
+        tlog_grc grc;                                           \
+        grc = (_op_expr);                                       \
+        if (grc != TLOG_RC_OK) {                                \
+            fprintf(stderr, "%s: Failed to %s: %s\n",           \
+                    name, _op_name, tlog_grc_strerror(grc));    \
+            goto cleanup;                                       \
+        }                                                       \
+    } while (0)
+
+    GUARD("create a memory writer",
+          tlog_mem_writer_create(&writer, &log_buf, &log_len));
+    GUARD("create a sink",
+          tlog_sink_create(&sink, writer, "localhost", "user", 1,
+                           sink_chunk_size));
+
+    fprintf(stderr, "Writing...");
+    pkt = TLOG_PKT_IO(0, 0, true, data_buf, data_len);
+
+    GUARD("write the buffer to the sink", tlog_sink_write(sink, &pkt));
+    GUARD("cut the sink", tlog_sink_cut(sink));
+    GUARD("flush the sink", tlog_sink_flush(sink));
+
+    GUARD("create a memory reader",
+          tlog_mem_reader_create(&reader, log_buf, log_len));
+    GUARD("create a source",
+          tlog_source_create(&source, reader, NULL, NULL, 0,
+                             source_io_size));
+
+    fprintf(stderr, "Reading...");
+    mismatch = false;
+    data_pos = 0;
+    while (true) {
+        tlog_pkt_cleanup(&pkt);
+        GUARD("read a packet from the source",
+              tlog_source_read(source, &pkt));
+        if (pkt.type == TLOG_PKT_TYPE_VOID) {
+            break;
+        } else if (pkt.type != TLOG_PKT_TYPE_IO) {
+            fprintf(stderr,
+                    "%s: Invalid packet type encountered at %zu: %s\n",
+                    name, data_pos, tlog_pkt_type_to_str(pkt.type));
+            goto cleanup;
+        }
+
+        for (pkt_pos = 0; pkt_pos < pkt.data.io.len; pkt_pos++, data_pos++) {
+            pkt_byte = pkt.data.io.buf[pkt_pos];
+            if (data_pos < data_len) {
+                data_byte = data_buf[data_pos];
+                if (pkt_byte != data_byte) {
+                    fprintf(stderr, "%s: mismatch at %zu: 0x%hhx != 0x%hhx\n",
+                            name, data_pos, pkt_byte, data_byte);
+                    mismatch = true;
+                }
+            } else {
+                fprintf(stderr, "%s: extra byte at %zu: 0x%hhx\n",
+                        name, data_pos, pkt_byte);
+                mismatch = true;
+            }
+
+        }
+    }
+    for (; data_pos < data_len; data_pos++) {
+        data_byte = data_buf[data_pos];
+        fprintf(stderr, "%s: missing byte at %zu: 0x%hhx\n",
+                name, data_pos, data_byte);
+        mismatch = true;
+    }
+
+    passed = !mismatch;
+
+cleanup:
+    free(log_buf);
+    tlog_source_destroy(source);
+    tlog_reader_destroy(reader);
+    tlog_sink_destroy(sink);
+    tlog_writer_destroy(writer);
+    return passed;
+}
+
+static bool
+tlog_test_passthrough_random(const char *name,
+                             size_t sink_chunk_size,
+                             size_t source_io_size,
+                             size_t data_len)
+{
+    bool passed;
+    char *data_buf;
+    size_t i;
+
+    fprintf(stderr, "Generating...");
+    data_buf = malloc(data_len);
+    for (i = 0; i < data_len; i++) {
+        data_buf[i] = (uint64_t)random() * 255 / RAND_MAX;
+    }
+
+    fprintf(stderr, "Processing...");
+    passed = tlog_test_passthrough_buf(name,
+                                       sink_chunk_size, source_io_size,
+                                       data_buf, data_len);
+    fprintf(stderr, "Done.");
+    free(data_buf);
 
     return passed;
 }
@@ -813,6 +946,10 @@ main(void)
             }
          )
     );
+
+    passed = tlog_test_passthrough_random("random", 16 * 1024, 16 * 1024,
+                                          256 * 1024) &&
+             passed;
 
     return !passed;
 }
