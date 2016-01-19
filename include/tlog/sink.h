@@ -1,9 +1,9 @@
 /**
  * @file
- * @brief Terminal data sink.
+ * @brief Abstract terminal data sink.
  *
- * Terminal data sink accepts packets, formats log messages and sends them to
- * the writer specified upon creation.
+ * Abstract terminal data sink interface allows creation and usage of sinks of
+ * specific types.
  */
 /*
  * Copyright (C) 2015 Red Hat
@@ -28,31 +28,28 @@
 #ifndef _TLOG_SINK_H
 #define _TLOG_SINK_H
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <time.h>
-#include <stdbool.h>
-#include <tlog/rc.h>
-#include <tlog/pkt.h>
-#include <tlog/chunk.h>
-#include <tlog/writer.h>
+#include <tlog/sink_type.h>
 
-/** Minimum value of data chunk size */
-#define TLOG_SINK_CHUNK_SIZE_MIN   TLOG_CHUNK_SIZE_MIN
-
-/** Sink instance */
+/** Abstract sink */
 struct tlog_sink {
-    struct tlog_writer *writer;         /**< Log message writer */
-    char               *hostname;       /**< Hostname */
-    char               *username;       /**< Username */
-    unsigned int        session_id;     /**< Session ID */
-    size_t              message_id;     /**< Next message ID */
-    bool                started;        /**< True if a packet was written */
-    struct timespec     start;          /**< First packet timestamp */
-    struct tlog_chunk   chunk;          /**< Chunk buffer */
-    uint8_t            *message_buf;    /**< Message buffer pointer */
-    size_t              message_len;    /**< Message buffer length */
+    const struct tlog_sink_type    *type;   /**< Type */
 };
+
+/**
+ * Allocate and initialize a sink of the specified type, with specified
+ * arguments. See the particular type description for specific arguments
+ * required.
+ *
+ * @param psink Location for the created sink pointer, will be set to NULL in
+ *              case of error.
+ * @param type  The type of sink to create.
+ * @param ...   The type-specific sink creation arguments.
+ *
+ * @return Global return code.
+ */
+extern tlog_grc tlog_sink_create(struct tlog_sink **psink,
+                                 const struct tlog_sink_type *type,
+                                 ...);
 
 /**
  * Check if a sink is valid.
@@ -64,46 +61,7 @@ struct tlog_sink {
 extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
 
 /**
- * Initialize a log sink.
- *
- * @param sink              Pointer to the sink to initialize.
- * @param writer            Log message writer.
- * @param hostname          Hostname to use in log messages.
- * @param username          Username to use in log messages.
- * @param session_id        Session ID to use in log messages.
- * @param chunk_size        Maximum data chunk length.
- *
- * @return Global return code.
- */
-extern tlog_grc tlog_sink_init(struct tlog_sink *sink,
-                               struct tlog_writer *writer,
-                               const char *hostname,
-                               const char *username,
-                               unsigned int session_id,
-                               size_t chunk_size);
-
-/**
- * Create (allocate and initialize) a log sink.
- *
- * @param psink             Location for created sink pointer, set to NULL in
- *                          case of error.
- * @param writer            Log message writer.
- * @param hostname          Hostname to use in log messages.
- * @param username          Username to use in log messages.
- * @param session_id        Session ID to use in log messages.
- * @param chunk_size        Maximum data chunk length.
- *
- * @return Global return code.
- */
-extern tlog_grc tlog_sink_create(struct tlog_sink **psink,
-                                 struct tlog_writer *writer,
-                                 const char *hostname,
-                                 const char *username,
-                                 unsigned int session_id,
-                                 size_t chunk_size);
-
-/**
- * Write a packet to a log sink.
+ * Write a packet to a sink.
  *
  * @param sink  Pointer to the sink to write the packet to.
  * @param pkt   The packet to write.
@@ -130,13 +88,6 @@ extern tlog_grc tlog_sink_cut(struct tlog_sink *sink);
  * @return Global return code.
  */
 extern tlog_grc tlog_sink_flush(struct tlog_sink *sink);
-
-/**
- * Cleanup a log sink. Can be called more than once.
- *
- * @param sink  Pointer to the sink to cleanup.
- */
-extern void tlog_sink_cleanup(struct tlog_sink *sink);
 
 /**
  * Destroy (cleanup and free) a log sink.

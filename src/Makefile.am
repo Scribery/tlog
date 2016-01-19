@@ -36,54 +36,54 @@ tlog_play_LDADD = \
     $(LIBCURL)
 
 TESTS = \
-    tlog-test-fd-reader         \
-    tlog-test-grc               \
-    tlog-test-passthrough       \
-    tlog-test-sink              \
-    tlog-test-source            \
-    tlog-test-stream-btoa       \
-    tlog-test-stream-enc-bin    \
-    tlog-test-stream-enc-txt    \
-    tlog-test-stream
+    tlog-test-fd-json-reader        \
+    tlog-test-grc                   \
+    tlog-test-json-passthrough      \
+    tlog-test-json-sink             \
+    tlog-test-json-source           \
+    tlog-test-json-stream           \
+    tlog-test-json-stream-btoa      \
+    tlog-test-json-stream-enc-bin   \
+    tlog-test-json-stream-enc-txt
 
 check_PROGRAMS = \
-    tlog-test-fd-reader         \
-    tlog-test-grc               \
-    tlog-test-passthrough       \
-    tlog-test-sink              \
-    tlog-test-source            \
-    tlog-test-stream-btoa       \
-    tlog-test-stream-enc-bin    \
-    tlog-test-stream-enc-txt    \
-    tlog-test-stream
+    tlog-test-fd-json-reader        \
+    tlog-test-grc                   \
+    tlog-test-json-passthrough      \
+    tlog-test-json-sink             \
+    tlog-test-json-source           \
+    tlog-test-json-stream           \
+    tlog-test-json-stream-btoa      \
+    tlog-test-json-stream-enc-bin   \
+    tlog-test-json-stream-enc-txt
 
-tlog_test_stream_btoa_SOURCES = tlog-test-stream-btoa.c
-tlog_test_stream_btoa_LDADD = \
+tlog_test_json_stream_btoa_SOURCES = tlog-test-json-stream-btoa.c
+tlog_test_json_stream_btoa_LDADD = \
     ../lib/libtlog_test.la      \
     ../lib/libtlog.la
 
-tlog_test_stream_enc_bin_SOURCES = tlog-test-stream-enc-bin.c
-tlog_test_stream_enc_bin_LDADD = \
+tlog_test_json_stream_enc_bin_SOURCES = tlog-test-json-stream-enc-bin.c
+tlog_test_json_stream_enc_bin_LDADD = \
     ../lib/libtlog_test.la          \
     ../lib/libtlog.la
 
-tlog_test_stream_enc_txt_SOURCES = tlog-test-stream-enc-txt.c
-tlog_test_stream_enc_txt_LDADD = \
+tlog_test_json_stream_enc_txt_SOURCES = tlog-test-json-stream-enc-txt.c
+tlog_test_json_stream_enc_txt_LDADD = \
     ../lib/libtlog_test.la          \
     ../lib/libtlog.la
 
-tlog_test_stream_SOURCES = tlog-test-stream.c
-tlog_test_stream_LDADD = \
+tlog_test_json_stream_SOURCES = tlog-test-json-stream.c
+tlog_test_json_stream_LDADD = \
     ../lib/libtlog_test.la  \
     ../lib/libtlog.la
 
-tlog_test_sink_SOURCES = tlog-test-sink.c
-tlog_test_sink_LDADD = \
+tlog_test_json_sink_SOURCES = tlog-test-json-sink.c
+tlog_test_json_sink_LDADD = \
     ../lib/libtlog_test.la  \
     ../lib/libtlog.la
 
-tlog_test_fd_reader_SOURCES = tlog-test-fd-reader.c
-tlog_test_fd_reader_LDADD = \
+tlog_test_fd_json_reader_SOURCES = tlog-test-fd-json-reader.c
+tlog_test_fd_json_reader_LDADD = \
     ../lib/libtlog_test.la  \
     ../lib/libtlog.la       \
     $(JSON_LIBS)
@@ -95,14 +95,14 @@ tlog_test_grc_LDADD = \
     $(JSON_LIBS)            \
     $(LIBCURL)
 
-tlog_test_source_SOURCES = tlog-test-source.c
-tlog_test_source_LDADD = \
+tlog_test_json_source_SOURCES = tlog-test-json-source.c
+tlog_test_json_source_LDADD = \
     ../lib/libtlog_test.la  \
     ../lib/libtlog.la       \
     $(JSON_LIBS)
 
-tlog_test_passthrough_SOURCES = tlog-test-passthrough.c
-tlog_test_passthrough_LDADD = \
+tlog_test_json_passthrough_SOURCES = tlog-test-json-passthrough.c
+tlog_test_json_passthrough_LDADD = \
     ../lib/libtlog_test.la  \
     ../lib/libtlog.la       \
     $(JSON_LIBS)

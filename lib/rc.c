@@ -29,33 +29,33 @@ static const char *tlog_rc_desc_list[TLOG_RC_MAX_PLUS_ONE - TLOG_RC_MIN] = {
         "Success",
     [TLOG_RC_FAILURE] =
         "Failure",
-    [TLOG_RC_MSG_FIELD_MISSING] =
+    [TLOG_RC_JSON_MSG_FIELD_MISSING] =
         "A message field is missing",
-    [TLOG_RC_MSG_FIELD_INVALID_TYPE] =
+    [TLOG_RC_JSON_MSG_FIELD_INVALID_TYPE] =
         "A message field has invalid type",
-    [TLOG_RC_MSG_FIELD_INVALID_VALUE_SESSION] =
+    [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_SESSION] =
         "Message has invalid \"session\" field value",
-    [TLOG_RC_MSG_FIELD_INVALID_VALUE_ID] =
+    [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_ID] =
         "Message has invalid \"id\" field value",
-    [TLOG_RC_MSG_FIELD_INVALID_VALUE_POS] =
+    [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_POS] =
         "Message has invalid \"pos\" field value",
-    [TLOG_RC_MSG_FIELD_INVALID_VALUE_TIMING] =
+    [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TIMING] =
         "Message has invalid \"timing\" field value",
-    [TLOG_RC_MSG_FIELD_INVALID_VALUE_TXT] =
+    [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TXT] =
         "Message has invalid \"in_txt\" or \"out_txt\" field value",
-    [TLOG_RC_MSG_FIELD_INVALID_VALUE_BIN] =
+    [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_BIN] =
         "Message has invalid \"in_bin\" or \"out_bin\" field value",
-    [TLOG_RC_FD_READER_INCOMPLETE_LINE] =
+    [TLOG_RC_FD_JSON_READER_INCOMPLETE_LINE] =
         "Incomplete message object line encountered",
-    [TLOG_RC_SOURCE_MSG_ID_OUT_OF_ORDER] =
+    [TLOG_RC_JSON_SOURCE_MSG_ID_OUT_OF_ORDER] =
         "Message ID is out of order",
-    [TLOG_RC_SOURCE_PKT_TS_OUT_OF_ORDER] =
+    [TLOG_RC_JSON_SOURCE_PKT_TS_OUT_OF_ORDER] =
         "Packet timestamp is out of order",
-    [TLOG_RC_ES_READER_CURL_INIT_FAILED] =
+    [TLOG_RC_ES_JSON_READER_CURL_INIT_FAILED] =
         "Curl handle creation failed",
-    [TLOG_RC_ES_READER_REPLY_INVALID] =
+    [TLOG_RC_ES_JSON_READER_REPLY_INVALID] =
         "Invalid reply received from HTTP server",
-    [TLOG_RC_MEM_READER_INCOMPLETE_LINE] =
+    [TLOG_RC_MEM_JSON_READER_INCOMPLETE_LINE] =
         "Incomplete message object line encountered",
 };
 

@@ -20,6 +20,7 @@
 
 #include <pty.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <signal.h>
 #include <unistd.h>
 #include <limits.h>
@@ -35,8 +36,10 @@
 #include <poll.h>
 #include <stdio.h>
 #include <syslog.h>
-#include <tlog/syslog_writer.h>
-#include <tlog/sink.h>
+#include <time.h>
+#include <tlog/syslog_json_writer.h>
+#include <tlog/json_sink.h>
+#include <tlog/rc.h>
 
 #define IO_LATENCY  3
 #define BUF_SIZE    4096
@@ -149,7 +152,7 @@ main(int argc, char **argv)
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     char *fqdn = NULL;
     struct passwd *passwd;
-    struct tlog_writer *writer = NULL;
+    struct tlog_json_writer *writer = NULL;
     clockid_t clock_id;
     struct timespec timestamp;
     struct tlog_sink *sink = NULL;
@@ -206,7 +209,7 @@ main(int argc, char **argv)
     /* Open syslog */
     openlog("tlog", LOG_NDELAY, LOG_LOCAL0);
     /* Create the syslog writer */
-    grc = tlog_syslog_writer_create(&writer, LOG_INFO);
+    grc = tlog_syslog_json_writer_create(&writer, LOG_INFO);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating syslog writer: %s\n",
                 tlog_grc_strerror(grc));
@@ -240,8 +243,8 @@ main(int argc, char **argv)
     }
 
     /* Create the log sink */
-    grc = tlog_sink_create(&sink, writer, fqdn, passwd->pw_name,
-                           session_id, BUF_SIZE);
+    grc = tlog_json_sink_create(&sink, writer, fqdn, passwd->pw_name,
+                                session_id, BUF_SIZE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
                 tlog_grc_strerror(grc));
@@ -549,7 +552,7 @@ main(int argc, char **argv)
 cleanup:
 
     tlog_sink_destroy(sink);
-    tlog_writer_destroy(writer);
+    tlog_json_writer_destroy(writer);
     free(fqdn);
 
     /* Restore signal handlers */

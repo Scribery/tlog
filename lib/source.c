@@ -1,5 +1,5 @@
 /*
- * Source.
+ * Abstract source.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -20,107 +20,41 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 #include <errno.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>
 #include <tlog/source.h>
 
-bool
-tlog_source_is_valid(const struct tlog_source *source)
-{
-    return source != NULL &&
-           tlog_reader_is_valid(source->reader) &&
-           source->io_buf != NULL &&
-           source->io_size >= TLOG_SOURCE_IO_SIZE_MIN;
-}
-
-
-void
-tlog_source_cleanup(struct tlog_source *source)
-{
-    assert(source != NULL);
-    tlog_msg_cleanup(&source->msg);
-    free(source->hostname);
-    source->hostname = NULL;
-    free(source->username);
-    source->username = NULL;
-    free(source->io_buf);
-    source->io_buf = NULL;
-}
-
-tlog_grc
-tlog_source_init(struct tlog_source *source,
-                 struct tlog_reader *reader,
-                 const char *hostname,
-                 const char *username,
-                 unsigned int session_id,
-                 size_t io_size)
-{
-    tlog_grc grc;
-
-    assert(source != NULL);
-    assert(tlog_reader_is_valid(reader));
-    assert(io_size >= TLOG_SOURCE_IO_SIZE_MIN);
-
-    memset(source, 0, sizeof(*source));
-    source->reader = reader;
-    if (hostname != NULL) {
-        source->hostname = strdup(hostname);
-        if (source->hostname == NULL) {
-            grc = TLOG_GRC_ERRNO;
-            goto error;
-        }
-    }
-    if (username != NULL) {
-        source->username = strdup(username);
-        if (source->username == NULL) {
-            grc = TLOG_GRC_ERRNO;
-            goto error;
-        }
-    }
-    source->session_id = session_id;
-
-    tlog_msg_init(&source->msg, NULL);
-
-    source->io_size = io_size;
-    source->io_buf = malloc(io_size);
-    if (source->io_buf == NULL) {
-        grc = TLOG_GRC_ERRNO;
-        goto error;
-    }
-
-    assert(tlog_source_is_valid(source));
-
-    return TLOG_RC_OK;
-error:
-    tlog_source_cleanup(source);
-    return grc;
-}
-
 tlog_grc
 tlog_source_create(struct tlog_source **psource,
-                   struct tlog_reader *reader,
-                   const char *hostname,
-                   const char *username,
-                   unsigned int session_id,
-                   size_t io_size)
+                   const struct tlog_source_type *type,
+                   ...)
 {
+    va_list ap;
     struct tlog_source *source;
     tlog_grc grc;
 
     assert(psource != NULL);
-    assert(tlog_reader_is_valid(reader));
-    assert(io_size >= TLOG_SOURCE_IO_SIZE_MIN);
+    assert(tlog_source_type_is_valid(type));
+    assert(type->size >= sizeof(*source));
 
-    source = malloc(sizeof(*source));
+    source = calloc(type->size, 1);
     if (source == NULL) {
         grc = TLOG_GRC_ERRNO;
     } else {
-        grc = tlog_source_init(source, reader,
-                               hostname, username, session_id, io_size);
-        if (grc != TLOG_RC_OK) {
+        source->type = type;
+
+        va_start(ap, type);
+        grc = type->init(source, ap);
+        va_end(ap);
+
+        if (grc == TLOG_RC_OK) {
+            assert(tlog_source_is_valid(source));
+        } else {
             free(source);
             source = NULL;
         }
@@ -130,69 +64,37 @@ tlog_source_create(struct tlog_source **psource,
     return grc;
 }
 
-void
-tlog_source_destroy(struct tlog_source *source)
+bool
+tlog_source_is_valid(const struct tlog_source *source)
 {
-    assert(source == NULL || tlog_source_is_valid(source));
-    if (source == NULL)
-        return;
-    tlog_source_cleanup(source);
-    free(source);
+    return source != NULL &&
+           tlog_source_type_is_valid(source->type) && (
+               source->type->is_valid == NULL ||
+               source->type->is_valid(source)
+           );
 }
 
 size_t
 tlog_source_loc_get(const struct tlog_source *source)
 {
     assert(tlog_source_is_valid(source));
-    return tlog_reader_loc_get(source->reader);
+    return (source->type->loc_get != NULL)
+                ? source->type->loc_get(source)
+                : 0;
 }
 
 char *
 tlog_source_loc_fmt(const struct tlog_source *source, size_t loc)
 {
     assert(tlog_source_is_valid(source));
-    return tlog_reader_loc_fmt(source->reader, loc);
-}
-
-/**
- * Read a matching JSON message from the source's reader.
- *
- * @param source    The source to read message for.
- *
- * @return Global return code.
- */
-static tlog_grc
-tlog_source_read_msg(struct tlog_source *source)
-{
-    tlog_grc grc;
-    struct json_object *obj;
-
-    assert(tlog_source_is_valid(source));
-    assert(tlog_msg_is_void(&source->msg));
-
-    for (; ; tlog_msg_cleanup(&source->msg)) {
-        grc = tlog_reader_read(source->reader, &obj);
-        if (grc != TLOG_RC_OK)
-            return grc;
-        if (obj == NULL)
-            return TLOG_RC_OK;
-
-        grc = tlog_msg_init(&source->msg, obj);
-        json_object_put(obj);
-        if (grc != TLOG_RC_OK)
-            return grc;
-
-        if (source->hostname != NULL &&
-            strcmp(source->msg.host, source->hostname) != 0)
-            continue;
-        if (source->username != NULL &&
-            strcmp(source->msg.user, source->username) != 0)
-            continue;
-        if (source->session_id != 0 &&
-            source->msg.session != source->session_id)
-            continue;
-
-        return TLOG_RC_OK;
+    if (source->type->loc_fmt != NULL) {
+        return source->type->loc_fmt(source, loc);
+    } else if (source->type->loc_get != NULL) {
+        char *str = NULL;
+        asprintf(&str, "location %zu", loc);
+        return str;
+    } else {
+        return strdup("unknown location");
     }
 }
 
@@ -200,53 +102,24 @@ tlog_grc
 tlog_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
 {
     tlog_grc grc;
-    struct tlog_msg *msg;
-
     assert(tlog_source_is_valid(source));
     assert(tlog_pkt_is_valid(pkt));
     assert(tlog_pkt_is_void(pkt));
 
-    msg = &source->msg;
+    grc = source->type->read(source, pkt);
 
-    while (true) {
-        if (tlog_msg_is_void(msg)) {
-            grc = tlog_source_read_msg(source);
-            if (grc != TLOG_RC_OK)
-                return grc;
-            if (tlog_msg_is_void(msg))
-                return TLOG_RC_OK;
-            if (source->got_msg) {
-                if (msg->id != (source->last_msg_id + 1)) {
-                    tlog_msg_cleanup(msg);
-                    return TLOG_RC_SOURCE_MSG_ID_OUT_OF_ORDER;
-                }
-            } else {
-                source->got_msg = true;
-            }
-            source->last_msg_id = msg->id;
-        }
+    assert(tlog_source_is_valid(source));
+    return grc;
+}
 
-        grc = tlog_msg_read(msg, pkt, source->io_buf, source->io_size);
-        if (grc != TLOG_RC_OK) {
-            tlog_msg_cleanup(msg);
-            return grc;
-        }
+void
+tlog_source_destroy(struct tlog_source *source)
+{
+    assert(source == NULL || tlog_source_is_valid(source));
 
-        if (tlog_pkt_is_void(pkt)) {
-            tlog_msg_cleanup(msg);
-        } else {
-            if (source->got_pkt) {
-                if (tlog_timespec_cmp(&pkt->timestamp,
-                                      &source->last_pkt_ts) < 0) {
-                    tlog_pkt_cleanup(pkt);
-                    tlog_msg_cleanup(msg);
-                    return TLOG_RC_SOURCE_PKT_TS_OUT_OF_ORDER;
-                }
-            } else {
-                source->got_pkt = true;
-            }
-            source->last_pkt_ts = pkt->timestamp;
-            return TLOG_RC_OK;
-        }
-    }
+    if (source == NULL)
+        return;
+    if (source->type->cleanup != NULL)
+        source->type->cleanup(source);
+    free(source);
 }

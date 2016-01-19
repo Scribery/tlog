@@ -20,37 +20,41 @@
 tlogdir = $(includedir)/tlog
 
 tlog_HEADERS = \
-    chunk.h         \
-    dispatcher.h    \
-    es_reader.h     \
-    fd_reader.h     \
-    fd_writer.h     \
-    grc.h           \
-    mem_reader.h    \
-    mem_writer.h    \
-    misc.h          \
-    msg.h           \
-    pkt.h           \
-    rc.h            \
-    reader.h        \
-    reader_type.h   \
-    sink.h          \
-    source.h        \
-    stream.h        \
-    syslog_writer.h \
-    trx.h           \
-    trx_act.h       \
-    trx_basic.h     \
-    trx_frame.h     \
-    trx_iface.h     \
-    trx_level.h     \
-    trx_state.h     \
-    utf8.h          \
-    writer.h        \
-    writer_type.h
+    es_json_reader.h        \
+    fd_json_reader.h        \
+    fd_json_writer.h        \
+    grc.h                   \
+    json_chunk.h            \
+    json_dispatcher.h       \
+    json_msg.h              \
+    json_reader.h           \
+    json_reader_type.h      \
+    json_sink.h             \
+    json_source.h           \
+    json_stream.h           \
+    json_writer.h           \
+    json_writer_type.h      \
+    mem_json_reader.h       \
+    mem_json_writer.h       \
+    misc.h                  \
+    pkt.h                   \
+    rc.h                    \
+    sink.h                  \
+    sink_type.h             \
+    source.h                \
+    source_type.h           \
+    syslog_json_writer.h    \
+    trx.h                   \
+    trx_act.h               \
+    trx_basic.h             \
+    trx_frame.h             \
+    trx_iface.h             \
+    trx_level.h             \
+    trx_state.h             \
+    utf8.h
 
 noinst_HEADERS = \
-    test_misc.h         \
-    test_sink.h         \
-    test_source.h       \
-    test_stream_enc.h
+    test_json_sink.h        \
+    test_json_source.h      \
+    test_json_stream_enc.h  \
+    test_misc.h

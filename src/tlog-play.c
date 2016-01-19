@@ -27,8 +27,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <curl/curl.h>
-#include <tlog/es_reader.h>
-#include <tlog/source.h>
+#include <tlog/es_json_reader.h>
+#include <tlog/json_source.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>
 
@@ -65,7 +65,7 @@ main(int argc, char **argv)
     struct termios raw_termios;
     struct sigaction sa;
     int status = 1;
-    struct tlog_reader *reader = NULL;
+    struct tlog_json_reader *reader = NULL;
     struct tlog_source *source = NULL;
     bool got_pkt = false;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
@@ -82,7 +82,7 @@ main(int argc, char **argv)
     query = argv[2];
 
     /* Check base URL validity */
-    if (!tlog_es_reader_base_url_is_valid(base_url)) {
+    if (!tlog_es_json_reader_base_url_is_valid(base_url)) {
         fprintf(stderr, "Invalid base URL: %s\n", base_url);
         goto cleanup;
     }
@@ -96,7 +96,7 @@ main(int argc, char **argv)
     }
 
     /* Create the reader */
-    grc = tlog_es_reader_create(&reader, base_url, query, 10);
+    grc = tlog_es_json_reader_create(&reader, base_url, query, 10);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating the reader: %s\n",
                 tlog_grc_strerror(grc));
@@ -104,7 +104,7 @@ main(int argc, char **argv)
     }
 
     /* Create the source */
-    grc = tlog_source_create(&source, reader, NULL, NULL, 0, BUF_SIZE);
+    grc = tlog_json_source_create(&source, reader, NULL, NULL, 0, BUF_SIZE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating the source: %s\n",
                 tlog_grc_strerror(grc));
@@ -232,7 +232,7 @@ cleanup:
     free(loc_str);
     tlog_pkt_cleanup(&pkt);
     tlog_source_destroy(source);
-    tlog_reader_destroy(reader);
+    tlog_json_reader_destroy(reader);
     curl_global_cleanup();
 
     /* Restore signal handlers */

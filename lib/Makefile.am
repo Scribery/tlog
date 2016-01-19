@@ -24,33 +24,34 @@ lib_LTLIBRARIES = libtlog.la
 noinst_LTLIBRARIES = libtlog_test.la
 
 libtlog_la_SOURCES = \
-    chunk.c             \
-    dispatcher.c        \
-    es_reader.c         \
-    fd_reader.c         \
-    fd_writer.c         \
-    grc.c               \
-    mem_reader.c        \
-    mem_writer.c        \
-    misc.c              \
-    msg.c               \
-    pkt.c               \
-    rc.c                \
-    reader.c            \
-    reader_type.c       \
-    sink.c              \
-    source.c            \
-    stream.c            \
-    syslog_writer.c     \
-    utf8.c              \
-    writer.c
+    es_json_reader.c        \
+    fd_json_reader.c        \
+    fd_json_writer.c        \
+    grc.c                   \
+    json_chunk.c            \
+    json_dispatcher.c       \
+    json_msg.c              \
+    json_reader.c           \
+    json_sink.c             \
+    json_source.c           \
+    json_stream.c           \
+    json_writer.c           \
+    mem_json_reader.c       \
+    mem_json_writer.c       \
+    misc.c                  \
+    pkt.c                   \
+    rc.c                    \
+    sink.c                  \
+    source.c                \
+    syslog_json_writer.c    \
+    utf8.c
 
 libtlog_la_LIBADD = $(JSON_LIBS) $(LIBCURL)
 
 libtlog_test_la_SOURCES = \
-    test_misc.c             \
-    test_sink.c             \
-    test_source.c           \
-    test_stream_enc.c
+    test_json_sink.c        \
+    test_json_source.c      \
+    test_json_stream_enc.c  \
+    test_misc.c
 
 libtlog_test_la_LIBADD = libtlog.la
