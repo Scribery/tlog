@@ -82,6 +82,30 @@
         .tv_nsec = TLOG_DELAY_MAX_TIMESPEC_NSEC     \
     }
 
+/** Minimum delay in seconds, as a number */
+#define TLOG_DELAY_MIN_S_NUM    0
+/** Minimum delay in seconds, as a string */
+#define TLOG_DELAY_MIN_S_STR    ""
+/** Minimum delay in milliseconds, as a number */
+#define TLOG_DELAY_MIN_MS_NUM   1
+/** Minimum delay in milliseconds, as a string */
+#define TLOG_DELAY_MIN_MS_STR  "1"
+
+/** Minimum delay's struct timespec tv_sec field value */
+#define TLOG_DELAY_MIN_TIMESPEC_SEC \
+    TLOG_DELAY_MIN_S_NUM
+
+/** Minimum delay's struct timespec tv_nsec field value */
+#define TLOG_DELAY_MIN_TIMESPEC_NSEC \
+    (TLOG_DELAY_MIN_MS_NUM % 1000 * 1000000)
+
+/** Minimum delay as a timespec */
+#define TLOG_DELAY_MIN_TIMESPEC \
+    (struct timespec){                              \
+        .tv_sec = TLOG_DELAY_MIN_TIMESPEC_SEC,      \
+        .tv_nsec = TLOG_DELAY_MIN_TIMESPEC_NSEC     \
+    }
+
 /**
  * Subtract timespec b from timespec a and put the result in res.
  *
