@@ -88,3 +88,6 @@ Limit timestamps passed to sink to not exceed maximum pos recognized by
 source.
 
 Check timing delay range in source.
+
+Add integration test. Perhaps using both tlog-rec and tlog-play from within
+expect and connecting them with a pipe.
