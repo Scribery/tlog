@@ -220,7 +220,7 @@ tlog_json_sink_write(struct tlog_sink *sink, const struct tlog_pkt *pkt)
 {
     struct tlog_json_sink *json_sink = (struct tlog_json_sink *)sink;
     tlog_grc grc;
-    size_t pos = 0;
+    struct tlog_pkt_pos pos = TLOG_PKT_POS_VOID;
 
     assert(!tlog_pkt_is_void(pkt));
 

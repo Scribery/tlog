@@ -29,6 +29,7 @@
 #ifndef _TLOG_PKT_H
 #define _TLOG_PKT_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -209,5 +210,143 @@ extern bool tlog_pkt_is_equal(const struct tlog_pkt *a,
  * @param pkt   The packet to cleanup.
  */
 extern void tlog_pkt_cleanup(struct tlog_pkt *pkt);
+
+/** Position inside a packet */
+struct tlog_pkt_pos {
+    enum tlog_pkt_type  type;   /**< Type of packet */
+    size_t              val;    /**< Position value */
+};
+
+/** Void (zero) position initializer */
+#define TLOG_PKT_POS_VOID \
+    ((struct tlog_pkt_pos){         \
+        .type = TLOG_PKT_TYPE_VOID, \
+        .val = 0                    \
+    })
+
+/**
+ * Check if a packet position is valid.
+ *
+ * @param pos   The position to check.
+ *
+ * @return True if the position is valid, false otherwise.
+ */
+extern bool tlog_pkt_pos_is_valid(const struct tlog_pkt_pos *pos);
+
+/**
+ * Check if a packet position is compatible with a particular packet.
+ *
+ * @param pos   The position to check.
+ * @param pkt   The packet to check against.
+ *
+ * @return True if the position is compatible with the specified packet, false
+ *         otherwise.
+ */
+static inline bool
+tlog_pkt_pos_is_compatible(const struct tlog_pkt_pos *pos,
+                           const struct tlog_pkt *pkt)
+{
+    assert(tlog_pkt_pos_is_valid(pos));
+    assert(tlog_pkt_is_valid(pkt));
+    return pos->type == TLOG_PKT_TYPE_VOID ||
+           pos->type == pkt->type;
+}
+
+/**
+ * Check if a packet position is "reachable" within specified compatible packet.
+ * I.e. that this position is either in, or right after the packet's data.
+ *
+ * @param pos   The position to check.
+ * @param pkt   The packet to check against, must be compatible with position.
+ *
+ * @return True if the position is reachable within the specified packet, false
+ *         otherwise.
+ */
+extern bool tlog_pkt_pos_is_reachable(const struct tlog_pkt_pos *pos,
+                                      const struct tlog_pkt *pkt);
+
+/**
+ * Check if a packet position is inside a compatible packet.
+ *
+ * @param pos   The position to check.
+ * @param pkt   The packet to check against, must be compatible with position.
+ *
+ * @return True if the position is inside the packet, false otherwise.
+ */
+extern bool tlog_pkt_pos_is_in(const struct tlog_pkt_pos *pos,
+                               const struct tlog_pkt *pkt);
+
+/**
+ * Check if a packet position is at or past the end of a compatible packet.
+ *
+ * @param pos   The position to check.
+ * @param pkt   The packet to check against, must be compatible with position.
+ *
+ * @return True if the position is at or past the end of the packet, false
+ *         otherwise.
+ */
+static inline bool
+tlog_pkt_pos_is_past(const struct tlog_pkt_pos *pos,
+                     const struct tlog_pkt *pkt)
+{
+    assert(tlog_pkt_pos_is_valid(pos));
+    assert(tlog_pkt_is_valid(pkt));
+    assert(tlog_pkt_pos_is_compatible(pos, pkt));
+    return !tlog_pkt_pos_is_in(pos, pkt);
+}
+
+/**
+ * Check if a packet position is comparable to another.
+ *
+ * @param a     Position to check.
+ * @param b     Position to check against.
+ *
+ * @return True if the positions are comparable, false otherwise.
+ */
+static inline bool
+tlog_pkt_pos_is_comparable(const struct tlog_pkt_pos *a,
+                           const struct tlog_pkt_pos *b)
+{
+    assert(tlog_pkt_pos_is_valid(a));
+    assert(tlog_pkt_pos_is_valid(b));
+    return a->type == b->type ||
+           a->type == TLOG_PKT_TYPE_VOID ||
+           b->type == TLOG_PKT_TYPE_VOID;
+}
+
+/**
+ * Compare two packet positions of the same type.
+ *
+ * @param a     First position to compare.
+ * @param b     Second position to compare.
+ *
+ * @return Comparison result, one of:
+ *          -1  - a < b
+ *           0  - a == b
+ *           1  - a > b
+ */
+extern int tlog_pkt_pos_cmp(const struct tlog_pkt_pos *a,
+                            const struct tlog_pkt_pos *b);
+
+/**
+ * Add specified amount to packet position within specified compatible packet.
+ * The result cannot be unreachable.
+ *
+ * @param pos   The position to modify.
+ * @param pkt   The packet to act within.
+ * @param off   The value to add.
+ */
+extern void tlog_pkt_pos_move(struct tlog_pkt_pos *pos,
+                              const struct tlog_pkt *pkt,
+                              ssize_t off);
+
+/**
+ * Move packet position past the specified compatible packet's contents.
+ *
+ * @param pos   The position to modify.
+ * @param pkt   The packet to act within.
+ */
+extern void tlog_pkt_pos_move_past(struct tlog_pkt_pos *pos,
+                                   const struct tlog_pkt *pkt);
 
 #endif /* _TLOG_PKT_H */

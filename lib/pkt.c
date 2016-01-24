@@ -159,3 +159,129 @@ tlog_pkt_cleanup(struct tlog_pkt *pkt)
     tlog_pkt_init(pkt);
     assert(tlog_pkt_is_valid(pkt));
 }
+
+bool
+tlog_pkt_pos_is_valid(const struct tlog_pkt_pos *pos)
+{
+    if (pos == NULL || !tlog_pkt_type_is_valid(pos->type))
+        return false;
+
+    switch (pos->type) {
+    case TLOG_PKT_TYPE_VOID:
+        return pos->val == 0;
+    case TLOG_PKT_TYPE_WINDOW:
+        return pos->val <= 1;
+    case TLOG_PKT_TYPE_IO:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool
+tlog_pkt_pos_is_in(const struct tlog_pkt_pos *pos,
+                   const struct tlog_pkt *pkt)
+{
+    assert(tlog_pkt_pos_is_valid(pos));
+    assert(tlog_pkt_is_valid(pkt));
+    assert(tlog_pkt_pos_is_compatible(pos, pkt));
+
+    switch (pos->type) {
+    case TLOG_PKT_TYPE_VOID:
+        return pkt->type != TLOG_PKT_TYPE_VOID;
+    case TLOG_PKT_TYPE_WINDOW:
+        return pos->val < 1;
+    case TLOG_PKT_TYPE_IO:
+        return pos->val < pkt->data.io.len;
+    default:
+        return false;
+    }
+}
+
+bool
+tlog_pkt_pos_is_reachable(const struct tlog_pkt_pos *pos,
+                          const struct tlog_pkt *pkt)
+{
+    assert(tlog_pkt_pos_is_valid(pos));
+    assert(tlog_pkt_is_valid(pkt));
+    assert(tlog_pkt_pos_is_compatible(pos, pkt));
+
+    switch (pos->type) {
+    case TLOG_PKT_TYPE_VOID:
+        return pos->val == 0;
+    case TLOG_PKT_TYPE_WINDOW:
+        return pos->val <= 1;
+    case TLOG_PKT_TYPE_IO:
+        return pos->val <= pkt->data.io.len;
+    default:
+        return false;
+    }
+}
+
+int
+tlog_pkt_pos_cmp(const struct tlog_pkt_pos *a,
+                 const struct tlog_pkt_pos *b)
+{
+    assert(tlog_pkt_pos_is_valid(a));
+    assert(tlog_pkt_pos_is_valid(b));
+    assert(tlog_pkt_pos_is_comparable(a, b));
+    return a->val < b->val ? -1
+                           : (a->val > b->val ? 1 : 0);
+}
+
+void
+tlog_pkt_pos_move(struct tlog_pkt_pos *pos,
+                  const struct tlog_pkt *pkt,
+                  ssize_t off)
+{
+    size_t new_val;
+    assert(tlog_pkt_pos_is_valid(pos));
+    assert(tlog_pkt_is_valid(pkt));
+    assert(tlog_pkt_pos_is_compatible(pos, pkt));
+    assert(tlog_pkt_pos_is_reachable(pos, pkt));
+
+    if (pos->type == TLOG_PKT_TYPE_VOID) {
+        pos->type = pkt->type;
+        pos->val = 0;
+    }
+
+    if (off == 0) {
+        new_val = pos->val;
+    } else if (off < 0) {
+        new_val = pos->val - -off;
+        assert(new_val < pos->val);
+    } else {
+        new_val = pos->val + off;
+        assert(new_val > pos->val);
+    }
+    pos->val = new_val;
+
+    assert(tlog_pkt_pos_is_reachable(pos, pkt));
+}
+
+void
+tlog_pkt_pos_move_past(struct tlog_pkt_pos *pos, const struct tlog_pkt *pkt)
+{
+    assert(tlog_pkt_pos_is_valid(pos));
+    assert(tlog_pkt_is_valid(pkt));
+    assert(tlog_pkt_pos_is_compatible(pos, pkt));
+    assert(tlog_pkt_pos_is_reachable(pos, pkt));
+
+    if (pos->type == TLOG_PKT_TYPE_VOID) {
+        pos->type = pkt->type;
+    }
+
+    switch (pkt->type) {
+    case TLOG_PKT_TYPE_VOID:
+        pos->val = 0;
+        break;
+    case TLOG_PKT_TYPE_WINDOW:
+        pos->val = 1;
+        break;
+    case TLOG_PKT_TYPE_IO:
+        pos->val = pkt->data.io.len;
+        break;
+    default:
+        break;
+    }
+}

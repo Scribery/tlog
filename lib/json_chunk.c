@@ -291,7 +291,7 @@ static bool
 tlog_json_chunk_write_window(tlog_trx_state trx,
                              struct tlog_json_chunk *chunk,
                              const struct tlog_pkt *pkt,
-                             size_t *ppos)
+                             struct tlog_pkt_pos *ppos)
 {
     /* Window string buffer (max: "=65535x65535") */
     char buf[16];
@@ -302,10 +302,11 @@ tlog_json_chunk_write_window(tlog_trx_state trx,
     assert(tlog_json_chunk_is_valid(chunk));
     assert(tlog_pkt_is_valid(pkt));
     assert(pkt->type == TLOG_PKT_TYPE_WINDOW);
-    assert(ppos != NULL);
-    assert(*ppos <= 1);
+    assert(tlog_pkt_pos_is_valid(ppos));
+    assert(tlog_pkt_pos_is_compatible(ppos, pkt));
+    assert(tlog_pkt_pos_is_reachable(ppos, pkt));
 
-    if (*ppos >= 1)
+    if (tlog_pkt_pos_is_past(ppos, pkt))
         return true;
 
     TLOG_TRX_FRAME_BEGIN(trx);
@@ -349,7 +350,7 @@ tlog_json_chunk_write_window(tlog_trx_state trx,
     chunk->last_height = pkt->data.window.height;
 
 success:
-    *ppos = 1;
+    tlog_pkt_pos_move_past(ppos, pkt);
     TLOG_TRX_FRAME_COMMIT(trx);
     return true;
 
@@ -374,7 +375,7 @@ static bool
 tlog_json_chunk_write_io(tlog_trx_state trx,
                          struct tlog_json_chunk *chunk,
                          const struct tlog_pkt *pkt,
-                         size_t *ppos)
+                         struct tlog_pkt_pos *ppos)
 {
     const uint8_t *buf;
     size_t len;
@@ -382,38 +383,42 @@ tlog_json_chunk_write_io(tlog_trx_state trx,
     assert(tlog_json_chunk_is_valid(chunk));
     assert(tlog_pkt_is_valid(pkt));
     assert(pkt->type == TLOG_PKT_TYPE_IO);
-    assert(ppos != NULL);
-    assert(*ppos <= pkt->data.io.len);
+    assert(tlog_pkt_pos_is_valid(ppos));
+    assert(tlog_pkt_pos_is_compatible(ppos, pkt));
+    assert(tlog_pkt_pos_is_reachable(ppos, pkt));
 
-    if (*ppos >= pkt->data.io.len)
+    if (tlog_pkt_pos_is_past(ppos, pkt))
         return true;
 
-    buf = pkt->data.io.buf + *ppos;
-    len = pkt->data.io.len - *ppos;
-    *ppos += tlog_json_stream_write(trx,
-                                    pkt->data.io.output
-                                         ? &chunk->output
-                                         : &chunk->input,
-                                    &pkt->timestamp,
-                                    &buf, &len);
+    buf = pkt->data.io.buf + ppos->val;
+    len = pkt->data.io.len - ppos->val;
+    tlog_pkt_pos_move(ppos, pkt,
+                      tlog_json_stream_write(trx,
+                                             pkt->data.io.output
+                                                  ? &chunk->output
+                                                  : &chunk->input,
+                                             &pkt->timestamp,
+                                             &buf, &len));
     return len == 0;
 }
 
 bool
 tlog_json_chunk_write(struct tlog_json_chunk *chunk,
                       const struct tlog_pkt *pkt,
-                      size_t *ppos)
+                      struct tlog_pkt_pos *ppos)
 {
     tlog_trx_state trx = TLOG_TRX_STATE_ROOT;
     TLOG_TRX_FRAME_DEF_SINGLE(chunk);
 
-    size_t pos;
+    struct tlog_pkt_pos pos;
     bool complete;
 
     assert(tlog_json_chunk_is_valid(chunk));
     assert(tlog_pkt_is_valid(pkt));
     assert(!tlog_pkt_is_void(pkt));
-    assert(ppos != NULL);
+    assert(tlog_pkt_pos_is_valid(ppos));
+    assert(tlog_pkt_pos_is_compatible(ppos, pkt));
+    assert(tlog_pkt_pos_is_reachable(ppos, pkt));
 
     TLOG_TRX_FRAME_BEGIN(trx);
 
@@ -431,10 +436,10 @@ tlog_json_chunk_write(struct tlog_json_chunk *chunk,
             complete = false;
             break;
     }
-    assert(pos >= *ppos);
+    assert(tlog_pkt_pos_cmp(&pos, ppos) >= 0);
 
     /* If no part of the packet fits */
-    if (!complete && pos == *ppos) {
+    if (!complete && tlog_pkt_pos_cmp(&pos, ppos) == 0) {
         TLOG_TRX_FRAME_ABORT(trx);
         return false;
     }
