@@ -110,7 +110,6 @@ tlog_test_json_passthrough_buf(const char *name,
           tlog_json_sink_create(&sink, writer, "localhost", "user", 1,
                                 sink_chunk_size));
 
-    fprintf(stderr, "Writing...");
     pkt = TLOG_PKT_IO(0, 0, true, data_buf, data_len);
 
     GUARD("write the buffer to the sink", tlog_sink_write(sink, &pkt));
@@ -123,7 +122,6 @@ tlog_test_json_passthrough_buf(const char *name,
           tlog_json_source_create(&source, reader, NULL, NULL, 0,
                                   source_io_size));
 
-    fprintf(stderr, "Reading...");
     mismatch = false;
     data_pos = 0;
     while (true) {
@@ -184,17 +182,14 @@ tlog_test_json_passthrough_random(const char *name,
     char *data_buf;
     size_t i;
 
-    fprintf(stderr, "Generating...");
     data_buf = malloc(data_len);
     for (i = 0; i < data_len; i++) {
         data_buf[i] = (uint64_t)random() * 255 / RAND_MAX;
     }
 
-    fprintf(stderr, "Processing...");
     passed = tlog_test_json_passthrough_buf(name,
                                             sink_chunk_size, source_io_size,
                                             data_buf, data_len);
-    fprintf(stderr, "Done.");
     free(data_buf);
 
     return passed;
