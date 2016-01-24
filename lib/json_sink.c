@@ -216,11 +216,15 @@ tlog_json_sink_cut(struct tlog_sink *sink)
 }
 
 static tlog_grc
-tlog_json_sink_write(struct tlog_sink *sink, const struct tlog_pkt *pkt)
+tlog_json_sink_write(struct tlog_sink *sink,
+                     const struct tlog_pkt *pkt,
+                     struct tlog_pkt_pos *ppos)
 {
     struct tlog_json_sink *json_sink = (struct tlog_json_sink *)sink;
     tlog_grc grc;
-    struct tlog_pkt_pos pos = TLOG_PKT_POS_VOID;
+    assert(tlog_pkt_pos_is_valid(ppos));
+    assert(tlog_pkt_pos_is_compatible(ppos, pkt));
+    assert(tlog_pkt_pos_is_reachable(ppos, pkt));
 
     assert(!tlog_pkt_is_void(pkt));
 
@@ -230,7 +234,7 @@ tlog_json_sink_write(struct tlog_sink *sink, const struct tlog_pkt *pkt)
     }
 
     /* While the packet is not yet written completely */
-    while (!tlog_json_chunk_write(&json_sink->chunk, pkt, &pos)) {
+    while (!tlog_json_chunk_write(&json_sink->chunk, pkt, ppos)) {
         grc = tlog_json_sink_flush(sink);
         if (grc != TLOG_RC_OK)
             return grc;

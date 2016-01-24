@@ -71,13 +71,26 @@ tlog_sink_is_valid(const struct tlog_sink *sink)
 
 tlog_grc
 tlog_sink_write(struct tlog_sink *sink,
-                const struct tlog_pkt *pkt)
+                const struct tlog_pkt *pkt,
+                struct tlog_pkt_pos *ppos)
 {
     tlog_grc grc;
     assert(tlog_sink_is_valid(sink));
     assert(tlog_pkt_is_valid(pkt));
 
-    grc = sink->type->write(sink, pkt);
+    if (ppos == NULL) {
+        struct tlog_pkt_pos pos = TLOG_PKT_POS_VOID;
+        do {
+            grc = sink->type->write(sink, pkt, &pos);
+        } while ((grc == TLOG_RC_OK ||
+                  grc == TLOG_GRC_FROM(errno, EINTR)) &&
+                 tlog_pkt_pos_is_in(&pos, pkt));
+    } else {
+        assert(tlog_pkt_pos_is_valid(ppos));
+        assert(tlog_pkt_pos_is_compatible(ppos, pkt));
+        assert(tlog_pkt_pos_is_reachable(ppos, pkt));
+        grc = sink->type->write(sink, pkt, ppos);
+    }
 
     assert(tlog_sink_is_valid(sink));
     return grc;

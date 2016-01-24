@@ -289,7 +289,7 @@ main(int argc, char **argv)
     clock_gettime(clock_id, &timestamp);
     tlog_pkt_init_window(&pkt, &timestamp,
                          winsize.ws_col, winsize.ws_row);
-    grc = tlog_sink_write(sink, &pkt);
+    grc = tlog_sink_write(sink, &pkt, NULL);
     tlog_pkt_cleanup(&pkt);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed logging window size: %s\n",
@@ -374,7 +374,7 @@ main(int argc, char **argv)
                 tlog_pkt_init_window(&pkt, &timestamp,
                                      new_winsize.ws_col,
                                      new_winsize.ws_row);
-                grc = tlog_sink_write(sink, &pkt);
+                grc = tlog_sink_write(sink, &pkt, NULL);
                 tlog_pkt_cleanup(&pkt);
                 if (grc != TLOG_RC_OK) {
                     fprintf(stderr, "Failed logging window size: %s\n",
@@ -411,7 +411,7 @@ main(int argc, char **argv)
                     tlog_pkt_init_io(&pkt, &timestamp,
                                      false, input_buf + input_pos,
                                      false, (size_t)rc);
-                    grc = tlog_sink_write(sink, &pkt);
+                    grc = tlog_sink_write(sink, &pkt, NULL);
                     tlog_pkt_cleanup(&pkt);
                     if (grc != TLOG_RC_OK) {
                         fprintf(stderr, "Failed logging input: %s\n",
@@ -446,7 +446,7 @@ main(int argc, char **argv)
                     tlog_pkt_init_io(&pkt, &timestamp,
                                      true, output_buf + output_pos,
                                      false, (size_t)rc);
-                    grc = tlog_sink_write(sink, &pkt);
+                    grc = tlog_sink_write(sink, &pkt, NULL);
                     tlog_pkt_cleanup(&pkt);
                     if (grc != TLOG_RC_OK) {
                         fprintf(stderr, "Failed logging output: %s\n",
