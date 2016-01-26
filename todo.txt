@@ -42,14 +42,8 @@ Test the code with coverity.
 Consider supporting merging several messages into a single packet when
 reading.
 
-Consider merging window and io messages for simplicity.
-
 Check if there is a way to unify init/cleanup and create/destroy function
 presence across object types.
-
-Consider making source and sinks abstract, renaming existing ones to
-tlog_json_source/sink, and adding terminal source/sink named
-tlog_term_source/sink.
 
 Use "locale charmap" or equivalent to get terminal encoding.
 
@@ -73,8 +67,6 @@ Record terminal type as well.
 Consider the possibility of using tlog in a jump server.
 
 Consider renaming "timing" to "meta".
-
-Implement a test for decoding what was encoded.
 
 Make each message start with window size.
 
