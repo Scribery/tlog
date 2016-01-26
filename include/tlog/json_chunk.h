@@ -126,12 +126,14 @@ extern bool tlog_json_chunk_is_empty(const struct tlog_json_chunk *chunk);
  * @param ppos  Location of position in the packet the write should start at
  *              (set to TLOG_PKT_POS_VOID at the start) / location for
  *              position offset in the packet the write ended at.
+ * @param end   Position in the packet the write should end at.
  *
  * @return True if the whole of the (remaining) packet fit into the chunk.
  */
 extern bool tlog_json_chunk_write(struct tlog_json_chunk *chunk,
                                   const struct tlog_pkt *pkt,
-                                  struct tlog_pkt_pos *ppos);
+                                  struct tlog_pkt_pos *ppos,
+                                  const struct tlog_pkt_pos *end);
 
 /**
  * Flush a chunk - write metadata records to reserved space and reset

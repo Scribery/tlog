@@ -68,15 +68,18 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
  * @param ppos  Location of position in the packet the write should start at
  *              (set to TLOG_PKT_POS_VOID at the start) / location for
  *              position offset in the packet the write ended at.
- *              If NULL, then write will be started from packet's begging and
- *              retried until the whole of the packet is written, or an error
- *              other than EINTR is encountered.
+ *              If NULL, then write will be started from packet's beggining
+ *              and retried until the packet is written to the specified end
+ *              position, or an error other than EINTR is encountered.
+ * @param end   Position in the packet the write should end at, NULL for
+ *              position right after the end of the packet.
  *
  * @return Global return code.
  */
 extern tlog_grc tlog_sink_write(struct tlog_sink *sink,
                                 const struct tlog_pkt *pkt,
-                                struct tlog_pkt_pos *ppos);
+                                struct tlog_pkt_pos *ppos,
+                                const struct tlog_pkt_pos *end);
 
 /**
  * Cut a sink I/O - encode pending incomplete characters.

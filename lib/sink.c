@@ -72,16 +72,28 @@ tlog_sink_is_valid(const struct tlog_sink *sink)
 tlog_grc
 tlog_sink_write(struct tlog_sink *sink,
                 const struct tlog_pkt *pkt,
-                struct tlog_pkt_pos *ppos)
+                struct tlog_pkt_pos *ppos,
+                const struct tlog_pkt_pos *end)
 {
     tlog_grc grc;
     assert(tlog_sink_is_valid(sink));
     assert(tlog_pkt_is_valid(pkt));
+    assert(!tlog_pkt_is_void(pkt));
+    struct tlog_pkt_pos pkt_end = TLOG_PKT_POS_VOID;
+
+    if (end == NULL) {
+        tlog_pkt_pos_move_past(&pkt_end, pkt);
+        end = &pkt_end;
+    } else {
+        assert(tlog_pkt_pos_is_valid(end));
+        assert(tlog_pkt_pos_is_compatible(end, pkt));
+        assert(tlog_pkt_pos_is_reachable(end, pkt));
+    }
 
     if (ppos == NULL) {
         struct tlog_pkt_pos pos = TLOG_PKT_POS_VOID;
         do {
-            grc = sink->type->write(sink, pkt, &pos);
+            grc = sink->type->write(sink, pkt, &pos, end);
         } while ((grc == TLOG_RC_OK ||
                   grc == TLOG_GRC_FROM(errno, EINTR)) &&
                  tlog_pkt_pos_is_in(&pos, pkt));
@@ -89,7 +101,8 @@ tlog_sink_write(struct tlog_sink *sink,
         assert(tlog_pkt_pos_is_valid(ppos));
         assert(tlog_pkt_pos_is_compatible(ppos, pkt));
         assert(tlog_pkt_pos_is_reachable(ppos, pkt));
-        grc = sink->type->write(sink, pkt, ppos);
+        assert(tlog_pkt_pos_cmp(ppos, end) <= 0);
+        grc = sink->type->write(sink, pkt, ppos, end);
     }
 
     assert(tlog_sink_is_valid(sink));

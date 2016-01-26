@@ -65,12 +65,14 @@ typedef bool (*tlog_sink_type_is_valid_fn)(const struct tlog_sink *sink);
  * @param ppos  Location of position in the packet the write should start at
  *              (set to TLOG_PKT_POS_VOID at the start) / location for
  *              position offset in the packet the write ended at.
+ * @param end   Position in the packet the write should end at.
  *
  * @return Global return code.
  */
 typedef tlog_grc (*tlog_sink_type_write_fn)(struct tlog_sink *sink,
                                             const struct tlog_pkt *pkt,
-                                            struct tlog_pkt_pos *ppos);
+                                            struct tlog_pkt_pos *ppos,
+                                            const struct tlog_pkt_pos *end);
 
 /**
  * I/O-cutting function prototype.

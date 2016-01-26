@@ -284,6 +284,7 @@ tlog_json_chunk_is_empty(const struct tlog_json_chunk *chunk)
  * @param ppos      Location of position in the packet the write should start
  *                  at (set to 0 on first write) / location for (opaque)
  *                  position in the packet the write ended at.
+ * @param end       Position in the packet the write should end at.
  *
  * @return True if the whole of the (remaining) packet fit into the chunk.
  */
@@ -291,7 +292,8 @@ static bool
 tlog_json_chunk_write_window(tlog_trx_state trx,
                              struct tlog_json_chunk *chunk,
                              const struct tlog_pkt *pkt,
-                             struct tlog_pkt_pos *ppos)
+                             struct tlog_pkt_pos *ppos,
+                             const struct tlog_pkt_pos *end)
 {
     /* Window string buffer (max: "=65535x65535") */
     char buf[16];
@@ -305,8 +307,11 @@ tlog_json_chunk_write_window(tlog_trx_state trx,
     assert(tlog_pkt_pos_is_valid(ppos));
     assert(tlog_pkt_pos_is_compatible(ppos, pkt));
     assert(tlog_pkt_pos_is_reachable(ppos, pkt));
+    assert(tlog_pkt_pos_is_valid(end));
+    assert(tlog_pkt_pos_is_compatible(end, pkt));
+    assert(tlog_pkt_pos_is_reachable(end, pkt));
 
-    if (tlog_pkt_pos_is_past(ppos, pkt))
+    if (tlog_pkt_pos_cmp(ppos, end) >= 0)
         return true;
 
     TLOG_TRX_FRAME_BEGIN(trx);
@@ -368,6 +373,7 @@ failure:
  * @param ppos      Location of position in the packet the write should start
  *                  at (set to 0 on first write) / location for (opaque)
  *                  position in the packet the write ended at.
+ * @param end       Position in the packet the write should end at.
  *
  * @return True if the whole of the (remaining) packet fit into the chunk.
  */
@@ -375,7 +381,8 @@ static bool
 tlog_json_chunk_write_io(tlog_trx_state trx,
                          struct tlog_json_chunk *chunk,
                          const struct tlog_pkt *pkt,
-                         struct tlog_pkt_pos *ppos)
+                         struct tlog_pkt_pos *ppos,
+                         const struct tlog_pkt_pos *end)
 {
     const uint8_t *buf;
     size_t len;
@@ -386,12 +393,15 @@ tlog_json_chunk_write_io(tlog_trx_state trx,
     assert(tlog_pkt_pos_is_valid(ppos));
     assert(tlog_pkt_pos_is_compatible(ppos, pkt));
     assert(tlog_pkt_pos_is_reachable(ppos, pkt));
+    assert(tlog_pkt_pos_is_valid(end));
+    assert(tlog_pkt_pos_is_compatible(end, pkt));
+    assert(tlog_pkt_pos_is_reachable(end, pkt));
 
-    if (tlog_pkt_pos_is_past(ppos, pkt))
+    if (tlog_pkt_pos_cmp(ppos, end) >= 0)
         return true;
 
     buf = pkt->data.io.buf + ppos->val;
-    len = pkt->data.io.len - ppos->val;
+    len = end->val - ppos->val;
     tlog_pkt_pos_move(ppos, pkt,
                       tlog_json_stream_write(trx,
                                              pkt->data.io.output
@@ -405,7 +415,8 @@ tlog_json_chunk_write_io(tlog_trx_state trx,
 bool
 tlog_json_chunk_write(struct tlog_json_chunk *chunk,
                       const struct tlog_pkt *pkt,
-                      struct tlog_pkt_pos *ppos)
+                      struct tlog_pkt_pos *ppos,
+                      const struct tlog_pkt_pos *end)
 {
     tlog_trx_state trx = TLOG_TRX_STATE_ROOT;
     TLOG_TRX_FRAME_DEF_SINGLE(chunk);
@@ -419,6 +430,9 @@ tlog_json_chunk_write(struct tlog_json_chunk *chunk,
     assert(tlog_pkt_pos_is_valid(ppos));
     assert(tlog_pkt_pos_is_compatible(ppos, pkt));
     assert(tlog_pkt_pos_is_reachable(ppos, pkt));
+    assert(tlog_pkt_pos_is_valid(end));
+    assert(tlog_pkt_pos_is_compatible(end, pkt));
+    assert(tlog_pkt_pos_is_reachable(end, pkt));
 
     TLOG_TRX_FRAME_BEGIN(trx);
 
@@ -426,10 +440,12 @@ tlog_json_chunk_write(struct tlog_json_chunk *chunk,
     pos = *ppos;
     switch (pkt->type) {
         case TLOG_PKT_TYPE_IO:
-            complete = tlog_json_chunk_write_io(trx, chunk, pkt, &pos);
+            complete = tlog_json_chunk_write_io(trx, chunk, pkt,
+                                                &pos, end);
             break;
         case TLOG_PKT_TYPE_WINDOW:
-            complete = tlog_json_chunk_write_window(trx, chunk, pkt, &pos);
+            complete = tlog_json_chunk_write_window(trx, chunk, pkt,
+                                                    &pos, end);
             break;
         default:
             assert(false);

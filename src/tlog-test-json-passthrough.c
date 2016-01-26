@@ -112,7 +112,8 @@ tlog_test_json_passthrough_buf(const char *name,
 
     pkt = TLOG_PKT_IO(0, 0, true, data_buf, data_len);
 
-    GUARD("write the buffer to the sink", tlog_sink_write(sink, &pkt, NULL));
+    GUARD("write the buffer to the sink",
+          tlog_sink_write(sink, &pkt, NULL, NULL));
     GUARD("cut the sink", tlog_sink_cut(sink));
     GUARD("flush the sink", tlog_sink_flush(sink));
 

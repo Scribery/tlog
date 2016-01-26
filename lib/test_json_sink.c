@@ -99,7 +99,7 @@ tlog_test_json_sink_run(
          op++) {
         switch (op->type) {
         case TLOG_TEST_JSON_SINK_OP_TYPE_WRITE:
-            CHECK_OP(tlog_sink_write(sink, &op->data.write, NULL));
+            CHECK_OP(tlog_sink_write(sink, &op->data.write, NULL, NULL));
             break;
         case TLOG_TEST_JSON_SINK_OP_TYPE_FLUSH:
             CHECK_OP(tlog_sink_flush(sink));
