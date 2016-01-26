@@ -51,6 +51,8 @@ tlog_HEADERS = \
     trx_iface.h             \
     trx_level.h             \
     trx_state.h             \
+    tty_sink.h              \
+    tty_source.h            \
     utf8.h
 
 noinst_HEADERS = \
