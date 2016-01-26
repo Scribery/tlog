@@ -38,7 +38,9 @@
 #include <syslog.h>
 #include <time.h>
 #include <tlog/syslog_json_writer.h>
+#include <tlog/tty_source.h>
 #include <tlog/json_sink.h>
+#include <tlog/tty_sink.h>
 #include <tlog/rc.h>
 
 #define IO_LATENCY  3
@@ -54,16 +56,6 @@ exit_sighandler(int signum)
         exit_signum = signum;
 }
 
-/* Number of WINCH signals caught */
-static volatile sig_atomic_t sigwinch_caught = 0;
-
-static void
-winch_sighandler(int signum)
-{
-    (void)signum;
-    sigwinch_caught++;
-}
-
 /* Number of ALRM signals caught */
 static volatile sig_atomic_t alarm_caught = 0;
 
@@ -73,12 +65,6 @@ alarm_sighandler(int signum)
     (void)signum;
     alarm_caught++;
 }
-
-enum fd_idx {
-    FD_IDX_STDIN,
-    FD_IDX_MASTER,
-    FD_IDX_NUM
-};
 
 /**
  * Get process session ID.
@@ -152,36 +138,31 @@ main(int argc, char **argv)
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     char *fqdn = NULL;
     struct passwd *passwd;
-    struct tlog_json_writer *writer = NULL;
+    struct tlog_json_writer *log_writer = NULL;
+    const struct timespec delay_min = TLOG_DELAY_MIN_TIMESPEC;
     clockid_t clock_id;
     struct timespec timestamp;
-    struct tlog_sink *sink = NULL;
+    struct tlog_sink *log_sink = NULL;
+    struct tlog_sink *tty_sink = NULL;
+    struct tlog_source *tty_source = NULL;
     tlog_grc grc;
     ssize_t rc;
     int master_fd;
     pid_t child_pid;
     unsigned int session_id;
-    sig_atomic_t last_sigwinch_caught = 0;
-    sig_atomic_t new_sigwinch_caught;
     sig_atomic_t last_alarm_caught = 0;
     sig_atomic_t new_alarm_caught;
     bool alarm_set = false;
-    bool io_pending = false;
+    bool log_pending = false;
     bool term_attrs_set = false;
     struct termios orig_termios;
     struct termios raw_termios;
     struct winsize winsize;
-    struct winsize new_winsize;
     size_t i, j;
     struct sigaction sa;
-    struct pollfd fds[FD_IDX_NUM];
-    uint8_t input_buf[BUF_SIZE];
-    size_t input_pos = 0;
-    size_t input_len = 0;
-    uint8_t output_buf[BUF_SIZE];
-    size_t output_pos = 0;
-    size_t output_len = 0;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
+    struct tlog_pkt_pos tty_pos = TLOG_PKT_POS_VOID;
+    struct tlog_pkt_pos log_pos = TLOG_PKT_POS_VOID;
     int status = 1;
 
     (void)argv;
@@ -209,7 +190,7 @@ main(int argc, char **argv)
     /* Open syslog */
     openlog("tlog", LOG_NDELAY, LOG_LOCAL0);
     /* Create the syslog writer */
-    grc = tlog_syslog_json_writer_create(&writer, LOG_INFO);
+    grc = tlog_syslog_json_writer_create(&log_writer, LOG_INFO);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating syslog writer: %s\n",
                 tlog_grc_strerror(grc));
@@ -233,7 +214,7 @@ main(int argc, char **argv)
      * if it provides resolution of at least one millisecond.
      */
     if (clock_getres(CLOCK_MONOTONIC_COARSE, &timestamp) == 0 &&
-        timestamp.tv_sec == 0 && timestamp.tv_nsec < 1000000) {
+        tlog_timespec_cmp(&timestamp, &delay_min) <= 0) {
         clock_id = CLOCK_MONOTONIC_COARSE;
     } else if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
         clock_id = CLOCK_MONOTONIC;
@@ -243,7 +224,7 @@ main(int argc, char **argv)
     }
 
     /* Create the log sink */
-    grc = tlog_json_sink_create(&sink, writer, fqdn, passwd->pw_name,
+    grc = tlog_json_sink_create(&log_sink, log_writer, fqdn, passwd->pw_name,
                                 session_id, BUF_SIZE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",
@@ -285,18 +266,6 @@ main(int argc, char **argv)
     /*
      * Parent
      */
-    /* Log initial window size */
-    clock_gettime(clock_id, &timestamp);
-    tlog_pkt_init_window(&pkt, &timestamp,
-                         winsize.ws_col, winsize.ws_row);
-    grc = tlog_sink_write(sink, &pkt, NULL, NULL);
-    tlog_pkt_cleanup(&pkt);
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed logging window size: %s\n",
-                tlog_grc_strerror(grc));
-        goto cleanup;
-    }
-
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
         sigaction(exit_sig[i], NULL, &sa);
@@ -311,13 +280,6 @@ main(int argc, char **argv)
             sigaction(exit_sig[i], &sa, NULL);
         }
     }
-
-    /* Setup WINCH signal handler */
-    sa.sa_handler = winch_sighandler;
-    sigemptyset(&sa.sa_mask);
-    /* NOTE: no SA_RESTART on purpose */
-    sa.sa_flags = 0;
-    sigaction(SIGWINCH, &sa, NULL);
 
     /* Setup ALRM signal handler */
     sa.sa_handler = alarm_sighandler;
@@ -342,217 +304,121 @@ main(int argc, char **argv)
     }
     term_attrs_set = true;
 
-    /*
-     * Transfer I/O and window changes
-     */
-    fds[FD_IDX_STDIN].fd        = STDIN_FILENO;
-    fds[FD_IDX_STDIN].events    = POLLIN;
-    fds[FD_IDX_MASTER].fd       = master_fd;
-    fds[FD_IDX_MASTER].events   = POLLIN;
-
-    while (exit_signum == 0) {
-        /*
-         * Handle SIGWINCH
-         */
-        new_sigwinch_caught = sigwinch_caught;
-        if (new_sigwinch_caught != last_sigwinch_caught) {
-            /* Retrieve window size */
-            rc = ioctl(STDOUT_FILENO, TIOCGWINSZ, &new_winsize);
-            if (rc < 0) {
-                if (errno == EBADF)
-                    status = 0;
-                else
-                    fprintf(stderr, "Failed retrieving window size: %s\n",
-                            strerror(errno));
-                break;
-            }
-            /* If window size has changed */
-            if (new_winsize.ws_row != winsize.ws_row ||
-                new_winsize.ws_col != winsize.ws_col) {
-                /* Log window size */
-                clock_gettime(clock_id, &timestamp);
-                tlog_pkt_init_window(&pkt, &timestamp,
-                                     new_winsize.ws_col,
-                                     new_winsize.ws_row);
-                grc = tlog_sink_write(sink, &pkt, NULL, NULL);
-                tlog_pkt_cleanup(&pkt);
-                if (grc != TLOG_RC_OK) {
-                    fprintf(stderr, "Failed logging window size: %s\n",
-                            tlog_grc_strerror(grc));
-                    break;
-                }
-                /* Propagate window size */
-                rc = ioctl(master_fd, TIOCSWINSZ, &new_winsize);
-                if (rc < 0) {
-                    if (errno == EBADF)
-                        status = 0;
-                    else
-                        fprintf(stderr, "Failed setting window size: %s\n",
-                                strerror(errno));
-                    break;
-                }
-                winsize = new_winsize;
-            }
-            /* Mark SIGWINCH processed */
-            last_sigwinch_caught = new_sigwinch_caught;
-        }
-
-        /*
-         * Deliver I/O
-         */
-        clock_gettime(clock_id, &timestamp);
-
-        if (input_pos < input_len) {
-            rc = write(master_fd, input_buf + input_pos,
-                       input_len - input_pos);
-            if (rc >= 0) {
-                if (rc > 0) {
-                    /* Log delivered input */
-                    tlog_pkt_init_io(&pkt, &timestamp,
-                                     false, input_buf + input_pos,
-                                     false, (size_t)rc);
-                    grc = tlog_sink_write(sink, &pkt, NULL, NULL);
-                    tlog_pkt_cleanup(&pkt);
-                    if (grc != TLOG_RC_OK) {
-                        fprintf(stderr, "Failed logging input: %s\n",
-                                tlog_grc_strerror(grc));
-                        break;
-                    }
-                    io_pending = true;
-                    input_pos += rc;
-                }
-                /* If interrupted by a signal handler */
-                if (input_pos < input_len)
-                    continue;
-                /* Exhausted */
-                input_pos = input_len = 0;
-            } else {
-                if (errno == EINTR)
-                    continue;
-                else if (errno == EBADF || errno == EINVAL)
-                    status = 0;
-                else
-                    fprintf(stderr, "Failed to write to master: %s\n",
-                            strerror(errno));
-                break;
-            };
-        }
-        if (output_pos < output_len) {
-            rc = write(STDOUT_FILENO, output_buf + output_pos,
-                       output_len - output_pos);
-            if (rc >= 0) {
-                if (rc > 0) {
-                    /* Log delivered output */
-                    tlog_pkt_init_io(&pkt, &timestamp,
-                                     true, output_buf + output_pos,
-                                     false, (size_t)rc);
-                    grc = tlog_sink_write(sink, &pkt, NULL, NULL);
-                    tlog_pkt_cleanup(&pkt);
-                    if (grc != TLOG_RC_OK) {
-                        fprintf(stderr, "Failed logging output: %s\n",
-                                tlog_grc_strerror(grc));
-                        break;
-                    }
-                    io_pending = true;
-                    output_pos += rc;
-                }
-                /* If interrupted by a signal handler */
-                if (output_pos < output_len)
-                    continue;
-                /* Exhausted */
-                output_pos = output_len = 0;
-            } else {
-                if (errno == EINTR)
-                    continue;
-                else if (errno == EBADF || errno == EINVAL)
-                    status = 0;
-                else
-                    fprintf(stderr, "Failed to write to stdout: %s\n",
-                            strerror(errno));
-                break;
-            };
-        }
-
-        /*
-         * Handle I/O latency limit
-         */
-        new_alarm_caught = alarm_caught;
-        if (new_alarm_caught != last_alarm_caught) {
-            alarm_set = false;
-            grc = tlog_sink_flush(sink);
-            if (grc != TLOG_RC_OK) {
-                fprintf(stderr, "Failed flushing I/O log: %s\n",
-                        tlog_grc_strerror(grc));
-                goto cleanup;
-            }
-            last_alarm_caught = new_alarm_caught;
-            io_pending = false;
-        } else if (io_pending && !alarm_set) {
-            alarm(IO_LATENCY);
-            alarm_set = true;
-        }
-
-        /*
-         * Wait for I/O
-         */
-        rc = poll(fds, sizeof(fds) / sizeof(fds[0]), -1);
-        if (rc < 0) {
-            if (errno == EINTR)
-                continue;
-            else
-                fprintf(stderr, "Failed waiting for I/O: %s\n",
-                        strerror(errno));
-            break;
-        }
-
-        /*
-         * Retrieve I/O
-         *
-         * NOTE: Reading master first in case child went away.
-         *       Otherwise writing to it can block
-         */
-        if (fds[FD_IDX_MASTER].revents & (POLLIN | POLLHUP | POLLERR)) {
-            rc = read(master_fd, output_buf, sizeof(output_buf));
-            if (rc <= 0) {
-                if (rc < 0 && errno == EINTR)
-                    continue;
-                status = 0;
-                break;
-            }
-            output_len = rc;
-        }
-        if (fds[FD_IDX_STDIN].revents & (POLLIN | POLLHUP | POLLERR)) {
-            rc = read(STDIN_FILENO, input_buf, sizeof(input_buf));
-            if (rc <= 0) {
-                if (rc < 0 && errno == EINTR)
-                    continue;
-                status = 0;
-                break;
-            }
-            input_len = rc;
-        }
-    }
-
-    /* Cut I/O log (write incomplete characters as binary) */
-    grc = tlog_sink_cut(sink);
+    /* Create the TTY source */
+    grc = tlog_tty_source_create(&tty_source, STDIN_FILENO,
+                                 master_fd, STDOUT_FILENO,
+                                 BUF_SIZE, clock_id);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed cutting-off I/O log: %s\n",
+        fprintf(stderr, "Failed creating TTY source: %s\n",
                 tlog_grc_strerror(grc));
         goto cleanup;
     }
 
-    /* Flush I/O log */
-    grc = tlog_sink_flush(sink);
+    /* Create the TTY sink */
+    grc = tlog_tty_sink_create(&tty_sink, master_fd,
+                               STDOUT_FILENO, master_fd);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed flushing I/O log: %s\n",
+        fprintf(stderr, "Failed creating TTY sink: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+
+    /*
+     * Transfer I/O and window changes
+     */
+    while (exit_signum == 0) {
+        /* Handle latency limit */
+        new_alarm_caught = alarm_caught;
+        if (new_alarm_caught != last_alarm_caught) {
+            alarm_set = false;
+            grc = tlog_sink_flush(log_sink);
+            if (grc != TLOG_RC_OK) {
+                fprintf(stderr, "Failed flushing log: %s\n",
+                        tlog_grc_strerror(grc));
+                goto cleanup;
+            }
+            last_alarm_caught = new_alarm_caught;
+            log_pending = false;
+        } else if (log_pending && !alarm_set) {
+            alarm(IO_LATENCY);
+            alarm_set = true;
+        }
+
+        /* Deliver logged data if any */
+        if (tlog_pkt_pos_cmp(&tty_pos, &log_pos) < 0) {
+            grc = tlog_sink_write(tty_sink, &pkt, &tty_pos, &log_pos);
+            if (grc != TLOG_RC_OK) {
+                if (grc == TLOG_GRC_FROM(errno, EINTR)) {
+                    continue;
+                } else if (grc == TLOG_GRC_FROM(errno, EBADF) ||
+                           grc == TLOG_GRC_FROM(errno, EINVAL)) {
+                    status = 0;
+                } else {
+                    fprintf(stderr, "Failed writing terminal data: %s\n",
+                            tlog_grc_strerror(grc));
+                }
+                break;
+            }
+            continue;
+        }
+
+        /* Log the received data, if any */
+        if (tlog_pkt_pos_is_in(&log_pos, &pkt)) {
+            grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
+            if (grc != TLOG_RC_OK &&
+                grc != TLOG_GRC_FROM(errno, EINTR)) {
+                fprintf(stderr, "Failed logging terminal data: %s\n",
+                        tlog_grc_strerror(grc));
+                break;
+            }
+            log_pending = true;
+            continue;
+        }
+
+        /* Read new data */
+        tlog_pkt_cleanup(&pkt);
+        log_pos = TLOG_PKT_POS_VOID;
+        tty_pos = TLOG_PKT_POS_VOID;
+        grc = tlog_source_read(tty_source, &pkt);
+        if (grc != TLOG_RC_OK) {
+            if (grc == TLOG_GRC_FROM(errno, EINTR)) {
+                continue;
+            } else if (grc == TLOG_GRC_FROM(errno, EBADF) ||
+                       grc == TLOG_GRC_FROM(errno, EIO)) {
+                status = 0;
+            } else {
+                fprintf(stderr, "Failed reading terminal data: %s\n",
+                        tlog_grc_strerror(grc));
+            }
+            break;
+        } else if (tlog_pkt_is_void(&pkt)) {
+            status = 0;
+            break;
+        }
+    }
+
+    /* Cut the log (write incomplete characters as binary) */
+    grc = tlog_sink_cut(log_sink);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Failed cutting-off the log: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+
+    /* Flush the log */
+    grc = tlog_sink_flush(log_sink);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Failed flushing the log: %s\n",
                 tlog_grc_strerror(grc));
         goto cleanup;
     }
 
 cleanup:
 
-    tlog_sink_destroy(sink);
-    tlog_json_writer_destroy(writer);
+    tlog_sink_destroy(log_sink);
+    tlog_json_writer_destroy(log_writer);
+    tlog_sink_destroy(tty_sink);
+    tlog_source_destroy(tty_source);
     free(fqdn);
 
     /* Restore signal handlers */

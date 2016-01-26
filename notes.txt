@@ -577,3 +577,95 @@ root header
             trx_iface - interface
             trx_mask - mask
             trx_store - store list
+
+----
+
+        1                                   3
+input >-------------+-------------------------> input
+                    |
+         3          |                        1
+output <----------- | ------+-----------------< output
+                    |       |
+                    |       |
+                  2 |     2 |
+                   \|/     \|/
+
+when to log I/O
+
+* after receiving, before sending
+    single timestamp
+    more likely to get out
+
+* after sending
+    timestamps may need to be set to the time after sending
+    less likely to get out
+
+Should the timestamp be the time we received data, or the time we delivered
+the data?
+
+Neither is guaranteed to be exact - network latency can happen on either side,
+so no advantage here.
+
+So, after receiving and before sending then.
+
+Shall we allow interruption of log writing by signal handlers?
+What shall we do when that happens?
+
+    SIGTERM/INT/HUP
+        we don't need to log anymore, since data will not be delivered anyway
+        don't write data
+    SIGALRM
+        flush log - that can be done as well after writing, since we're
+        already trying to deliver the log as hard as we can.
+    SIGWINCH
+        that can as well be handled after we finish log writing, if a few
+        resizes are missed, it's not a big deal - delivering the last resize
+        before passing any data is what's important.
+
+So if we do partial log writing it is only to handle aborting log writing and
+not writing extra. This can be useful with large buffers, slow logging
+backend and overly chatty user application.
+
+Shall we mix logging and writing? I.e. deliver what we logged if logging is
+interrupted and then try to deliver logs again?
+
+Shall we actually deliver what we read so far before acting on
+SIGTERM/INT/HUP? Or shall we simply exit ASAP? It's likely the sysadmins would
+appreciate the latter more. As well as not finishing logging of undelivered
+data.
+
+With that in mind, there's no use to proceed to writing partially logged data.
+Because otherwise, SIGWINCH... Wait.
+
+What happens when we delay the data in transit and the window gets resized?
+The data that we've read already was expecting the old window size, we can't
+push it back so it needs to be delivered anyway. We'll read next portion only
+after we've delivered the resize. So it's fine.
+
+So, going back, we don't need to do anything with SIGWINCH until we're ready
+to read some more and that's after we've logged the data. Wait. What shall we
+write first: the SIGWINCH, or the input we've read already? SIGWINCH would be
+better, as otherwise delivering input first can make the application fill the
+buffers with response formatted for the old window size. Once again, it
+doesn't matter what we'll deliver first: the output we read already or the
+SIGWINCH we received.
+
+So it seems it is better to have I/O log writing interrupted to log and
+deliver window resizes before resuming logging and delivery of I/O.
+
+Thus our TTY source needs to drop support for reading window sizes as they
+need to have higher priority. Since we need to record timing of our window
+resize deliveries outside the source, we better remove timestamping from the
+source. Thus we'll have timing neither in source nor in sink. However, sink
+can have window writing.
+
+OTOH, input sent before resize was done with the expectation of the old size.
+E.g. a command to go to the bottom of the window in vim (L) would need to move
+the cursor to the old window bottom, not to the new one. So, for the sake of
+simplicity and, it seems, for the sake of consistency it is better to send the
+input received before SIGWINCH before sending the new window size. Thus we can
+preserve the ordering and keep window size retrieval in the source.
+
+As to writing as soon as the (interrupted) data logging is complete (i.e.
+logging/writing interleaving), it might improve interactivity and make the
+program easier/faster to kill.
