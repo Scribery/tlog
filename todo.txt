@@ -83,3 +83,16 @@ Check timing delay range in source.
 
 Add integration test. Perhaps using both tlog-rec and tlog-play from within
 expect and connecting them with a pipe.
+
+Consider adding a real time timestamp to log messages, which would reflect the
+absolute time the data arrived, as opposed to relative time already there and
+the logging time that syslog adds.
+
+Output tlog-rec/tlog-play error messages after restoring terminal settings.
+
+Consider implementing playback in a new, size-controlled terminal window,
+using GNOME's VteTerminal, or XEmbed.
+
+Make tlog suid and drop privileges back to user for the shell.
+
+Implement per-session locking.
