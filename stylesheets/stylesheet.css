@@ -1,6 +1,7 @@
 body {
   margin: 0;
   padding: 0;
+  padding-bottom: 60px;
   background: #151515 url("../images/bkg.png") 0 0;
   color: #eaeaea;
   font: 16px;
