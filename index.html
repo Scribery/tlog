@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <title>tlog by spbnick</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>tlog</h1>
+        <h2>Terminal I/O logger</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/spbnick/tlog/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/spbnick/tlog/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/spbnick/tlog" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <p>Tlog is a terminal I/O logging and playback package. It inserts itself (the
+<code>tlog-rec</code> tool) between the user terminal and the user shell, and logs
+everything that passes through as JSON messages.</p>
+
+<p>The JSON messages are structured to be particularly suitable for storage and
+searching by ElasticSearch, plus for (limited) human review. At the same time,
+they preserve all the passed data and timing (with 1ms resolution).</p>
+
+<p>At the moment terminal output playback is possible using the <code>tlog-play</code> tool
+directly from ElasticSearch URL with the supplied query.</p>
+
+<p>Tlog is intended to be used as part of a larger user session recording
+solution, but is designed to be independent and reusable.</p>
+
+<p>See also <a href="http://spbnick.github.io/2015/10/26/open-source-session-recording.html">a blog post on Open-Source Session Recording</a> and the
+<a href="http://www.freeipa.org/page/Session_Recording">WIP design page</a>.</p>
+      </section>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-72218226-2");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
