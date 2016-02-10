@@ -96,3 +96,6 @@ using GNOME's VteTerminal, or XEmbed.
 Make tlog suid and drop privileges back to user for the shell.
 
 Implement per-session locking.
+
+Evaluate the necessity and the way of getting the FQDN in tlog-rec. Perhaps
+add fallback in case it doesn't work.
