@@ -99,3 +99,5 @@ Implement per-session locking.
 
 Evaluate the necessity and the way of getting the FQDN in tlog-rec. Perhaps
 add fallback in case it doesn't work.
+
+Consider putting common .m4 files under include/tlog.
