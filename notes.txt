@@ -669,3 +669,92 @@ preserve the ordering and keep window size retrieval in the source.
 As to writing as soon as the (interrupted) data logging is complete (i.e.
 logging/writing interleaving), it might improve interactivity and make the
 program easier/faster to kill.
+
+---
+
+Configuration parameters
+
+    Log latency (seconds)
+    Maximum message payload size (bytes)
+    Shell to start (path)
+    Log target (file / syslog / journald?)
+    Log target options:
+        file:
+            path
+        syslog:
+            facility
+            level
+    Recording warning to output on startup
+
+Command line-specific parameters:
+    argv[0] starting with '-' - login shell - passed the same way to the shell
+    '-c' - command to execute - passed the same way to the shell
+    -?tlog-rec-(.*) - shell, perhaps
+
+Mandatory environment parameters:
+    shell
+
+It would be good to have all configuration options available via all sources:
+    configuration file
+    command line
+    environment
+
+We can parse a particular environment variable value as an option string.
+
+We can map command-line options to JSON configuration structure, or the other
+way around.
+
+We can make a mechanism to parse all of these into a common format (JSON?) and
+merging them according to the priority.
+
+E.g. (last overrides first): configuration, environment, command-line.
+
+We'll also need some sort of schema verification for configuration.
+
+Then we can make a module taking that merged configuration and running the
+program.
+
+What should be the common format?
+
+Choices:
+
+    Custom structure, generic perhaps
+        Hmm, not really, no.
+    JSON
+        merging:
+            Generic repeated walking and merging according to priority.
+        validation:
+            Random access with accumulated state.
+        conversion:
+            from ARGV list:
+                Split into levels on dashes within option names, perhaps?
+                Hmm, options often have very short names, which will have to
+                be normalized. Some sort of mapping, then? How to tell the
+                user about that mapping? Build-time documentation generation?
+                M4, ha-ha?
+            environment:
+                if command-line options, convert to ARGV list - need to handle
+                shell quoting
+                otherwise JSON
+    ARGV list
+        merging:
+            Just concatenate lists from various sources according to priority.
+        validation:
+            Regular getopt loop with parsing and accumulated state
+        conversion:
+            from JSON:
+                Walk and convert automatically, say by concatenating with
+                dashes between levels. Still needs schema to provide
+                JSON-oriented error messages (i.e. line number, field
+                reference).
+            from environment:
+                Split into ARGV list - need to handle shell quoting
+
+Values of specific parameters and permitted parameter set have to be validated
+upon parsing the source format. The overall configuration, required parameter
+set should be validated only after merging. The (missing or invalid)
+parameters should be referred by a name common to the configuration sources.
+
+So, we can have an m4 file describing containers and parameters, then generate
+documentation from that, then generate JSON validation, option reading,
+environment variable reading from that.
