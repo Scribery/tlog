@@ -107,7 +107,8 @@ tlog_test_json_passthrough_buf(const char *name,
     GUARD("create a memory writer",
           tlog_mem_json_writer_create(&writer, &log_buf, &log_len));
     GUARD("create a sink",
-          tlog_json_sink_create(&sink, writer, "localhost", "user", 1,
+          tlog_json_sink_create(&sink, writer, false,
+                                "localhost", "user", 1,
                                 sink_chunk_size));
 
     pkt = TLOG_PKT_IO(0, 0, true, data_buf, data_len);
@@ -120,7 +121,8 @@ tlog_test_json_passthrough_buf(const char *name,
     GUARD("create a memory reader",
           tlog_mem_json_reader_create(&reader, log_buf, log_len));
     GUARD("create a source",
-          tlog_json_source_create(&source, reader, NULL, NULL, 0,
+          tlog_json_source_create(&source, reader, false,
+                                  NULL, NULL, 0,
                                   source_io_size));
 
     mismatch = false;

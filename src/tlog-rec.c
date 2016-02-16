@@ -224,7 +224,8 @@ main(int argc, char **argv)
     }
 
     /* Create the log sink */
-    grc = tlog_json_sink_create(&log_sink, log_writer, fqdn, passwd->pw_name,
+    grc = tlog_json_sink_create(&log_sink, log_writer, false,
+                                fqdn, passwd->pw_name,
                                 session_id, BUF_SIZE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",

@@ -44,6 +44,8 @@ extern const struct tlog_sink_type tlog_json_sink_type;
  * @param psink             Location for created sink pointer, set to NULL in
  *                          case of error.
  * @param writer            JSON log message writer.
+ * @param writer_owned      True if the writer should be destroyed upon
+ *                          destruction of the sink, false otherwise.
  * @param hostname          Hostname to use in log messages.
  * @param username          Username to use in log messages.
  * @param session_id        Session ID to use in log messages.
@@ -54,6 +56,7 @@ extern const struct tlog_sink_type tlog_json_sink_type;
 static inline tlog_grc
 tlog_json_sink_create(struct tlog_sink **psink,
                       struct tlog_json_writer *writer,
+                      bool writer_owned,
                       const char *hostname,
                       const char *username,
                       unsigned int session_id,
@@ -67,8 +70,8 @@ tlog_json_sink_create(struct tlog_sink **psink,
     assert(chunk_size >= TLOG_JSON_SINK_CHUNK_SIZE_MIN);
 
     return tlog_sink_create(psink, &tlog_json_sink_type,
-                            writer, hostname, username, session_id,
-                            chunk_size);
+                            writer, writer_owned,
+                            hostname, username, session_id, chunk_size);
 }
 
 #endif /* _TLOG_JSON_SINK_H */

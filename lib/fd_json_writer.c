@@ -29,6 +29,7 @@
 struct tlog_fd_json_writer {
     struct tlog_json_writer writer; /**< Abstract writer instance */
     int fd;                         /**< FD to write to */
+    bool fd_owned;                  /**< True if FD is owned */
 };
 
 static tlog_grc
@@ -37,7 +38,19 @@ tlog_fd_json_writer_init(struct tlog_json_writer *writer, va_list ap)
     struct tlog_fd_json_writer *fd_json_writer =
                                     (struct tlog_fd_json_writer*)writer;
     fd_json_writer->fd = va_arg(ap, int);
+    fd_json_writer->fd_owned = (bool)va_arg(ap, int);
     return TLOG_RC_OK;
+}
+
+static void
+tlog_fd_json_writer_cleanup(struct tlog_json_writer *writer)
+{
+    struct tlog_fd_json_writer *fd_json_writer =
+                                    (struct tlog_fd_json_writer*)writer;
+    if (fd_json_writer->fd_owned) {
+        close(fd_json_writer->fd);
+        fd_json_writer->fd_owned = false;
+    }
 }
 
 static tlog_grc
@@ -65,7 +78,8 @@ tlog_fd_json_writer_write(struct tlog_json_writer *writer,
 }
 
 const struct tlog_json_writer_type tlog_fd_json_writer_type = {
-    .size   = sizeof(struct tlog_fd_json_writer),
-    .init   = tlog_fd_json_writer_init,
-    .write  = tlog_fd_json_writer_write,
+    .size       = sizeof(struct tlog_fd_json_writer),
+    .init       = tlog_fd_json_writer_init,
+    .write      = tlog_fd_json_writer_write,
+    .cleanup    = tlog_fd_json_writer_cleanup,
 };

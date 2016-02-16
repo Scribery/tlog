@@ -36,18 +36,7 @@
 /** Minimum length of I/O data buffer used in packets */
 #define TLOG_JSON_SOURCE_IO_SIZE_MIN TLOG_JSON_MSG_IO_SIZE_MIN
 
-/**
- * JSON source type
- *
- * Creation arguments:
- *
- * const char  *base_url    The base URL to request ElasticSearch, without the
- *                          query or the fragment parts.
- * const char  *query       The query string to send to ElastiSearch.
- * size_t       size        Number of messages to request from ElasticSearch
- *                          in one HTTP request.
- *
- */
+/** JSON source type */
 extern const struct tlog_source_type tlog_json_source_type;
 
 /**
@@ -56,6 +45,8 @@ extern const struct tlog_source_type tlog_json_source_type;
  * @param psource           Location for created source pointer, set to NULL
  *                          in case of error.
  * @param reader            Log message reader.
+ * @param reader_owned      True if the reader should be destroyed upon
+ *                          destruction of the sink, false otherwise.
  * @param hostname          Hostname to filter log messages by, NULL for
  *                          unfiltered.
  * @param username          Username to filter log messages by, NULL for
@@ -69,6 +60,7 @@ extern const struct tlog_source_type tlog_json_source_type;
 static inline tlog_grc
 tlog_json_source_create(struct tlog_source **psource,
                         struct tlog_json_reader *reader,
+                        bool reader_owned,
                         const char *hostname,
                         const char *username,
                         unsigned int session_id,
@@ -79,8 +71,8 @@ tlog_json_source_create(struct tlog_source **psource,
     assert(io_size >= TLOG_JSON_SOURCE_IO_SIZE_MIN);
 
     return tlog_source_create(psource, &tlog_json_source_type,
-                              reader, hostname, username, session_id,
-                              io_size);
+                              reader, reader_owned,
+                              hostname, username, session_id, io_size);
 }
 
 #endif /* _TLOG_JSON_SOURCE_H */

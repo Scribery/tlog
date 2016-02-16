@@ -34,6 +34,8 @@ struct tlog_json_source {
 
     struct tlog_json_reader    *reader; /**< JSON log message reader */
 
+    bool                reader_owned;   /**< True if reader is owned */
+
     char               *hostname;       /**< Hostname to filter messages by,
                                              NULL for unfiltered */
     char               *username;       /**< Username to filter messages by,
@@ -76,6 +78,10 @@ tlog_json_source_cleanup(struct tlog_source *source)
     json_source->username = NULL;
     free(json_source->io_buf);
     json_source->io_buf = NULL;
+    if (json_source->reader_owned) {
+        tlog_json_reader_destroy(json_source->reader);
+        json_source->reader_owned = false;
+    }
 }
 
 static tlog_grc
@@ -85,6 +91,7 @@ tlog_json_source_init(struct tlog_source *source, va_list ap)
                                 (struct tlog_json_source *)source;
     tlog_grc grc;
     struct tlog_json_reader *reader = va_arg(ap, struct tlog_json_reader *);
+    bool reader_owned = (bool)va_arg(ap, int);
     const char *hostname = va_arg(ap, const char *);
     const char *username = va_arg(ap, const char *);
     unsigned int session_id = va_arg(ap, unsigned int);
@@ -93,7 +100,6 @@ tlog_json_source_init(struct tlog_source *source, va_list ap)
     assert(tlog_json_reader_is_valid(reader));
     assert(io_size >= TLOG_JSON_SOURCE_IO_SIZE_MIN);
 
-    json_source->reader = reader;
     if (hostname != NULL) {
         json_source->hostname = strdup(hostname);
         if (json_source->hostname == NULL) {
@@ -118,6 +124,9 @@ tlog_json_source_init(struct tlog_source *source, va_list ap)
         grc = TLOG_GRC_ERRNO;
         goto error;
     }
+
+    json_source->reader = reader;
+    json_source->reader_owned = reader_owned;
 
     return TLOG_RC_OK;
 error:

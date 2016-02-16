@@ -127,7 +127,7 @@ tlog_test_json_source_run(
                 tlog_grc_strerror(grc));
         exit(1);
     }
-    grc = tlog_json_source_create(&source, reader,
+    grc = tlog_json_source_create(&source, reader, false,
                                   output->hostname, output->username,
                                   output->session_id, output->io_size);
     if (grc != TLOG_RC_OK) {

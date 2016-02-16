@@ -31,14 +31,7 @@
 #include <assert.h>
 #include <tlog/json_reader.h>
 
-/**
- * File descriptor message reader type
- *
- * Creation arguments:
- *
- * int      fd      File descriptor to read messages from.
- * size_t   size    Text buffer size (non-zero).
- */
+/** File descriptor message reader type */
 extern const struct tlog_json_reader_type tlog_fd_json_reader_type;
 
 /**
@@ -47,19 +40,21 @@ extern const struct tlog_json_reader_type tlog_fd_json_reader_type;
  * @param preader   Location for the created reader pointer, will be set to
  *                  NULL in case of error.
  * @param fd        File descriptor to read messages from.
+ * @param fd_owned  True if the file descriptor should be closed upon
+ *                  destruction of the reader, false otherwise.
  * @param size      Text buffer size (non-zero).
  *
  * @return Global return code.
  */
 static inline tlog_grc
 tlog_fd_json_reader_create(struct tlog_json_reader **preader,
-                           int fd,
-                           size_t size)
+                           int fd, bool fd_owned, size_t size)
 {
     assert(preader != NULL);
     assert(fd >= 0);
     assert(size > 0);
-    return tlog_json_reader_create(preader, &tlog_fd_json_reader_type, fd, size);
+    return tlog_json_reader_create(preader, &tlog_fd_json_reader_type,
+                                   fd, fd_owned, size);
 }
 
 #endif /* _TLOG_FD_JSON_READER_H */

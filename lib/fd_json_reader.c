@@ -32,14 +32,15 @@
 /** FD reader data */
 struct tlog_fd_json_reader {
     struct tlog_json_reader     reader; /**< Base type */
-    struct json_tokener        *tok;    /**< JSON tokener object */
-    int                         fd;     /**< Filed descriptor to read from */
-    size_t                      line;   /**< Number of the line being read */
-    char                       *buf;    /**< Text buffer pointer */
-    size_t                      size;   /**< Text buffer size */
-    char                       *pos;    /**< Text buffer reading position */
-    char                       *end;    /**< End of valid text buffer data */
-    bool                        eof;    /**< True if EOF was encountered */
+    struct json_tokener    *tok;        /**< JSON tokener object */
+    int                     fd;         /**< Filed descriptor to read from */
+    bool                    fd_owned;   /**< True if FD is owned */
+    size_t                  line;       /**< Number of the line being read */
+    char                   *buf;        /**< Text buffer pointer */
+    size_t                  size;       /**< Text buffer size */
+    char                   *pos;        /**< Text buffer reading position */
+    char                   *end;        /**< End of valid text buffer data */
+    bool                    eof;        /**< True if EOF was encountered */
 };
 
 static void
@@ -53,6 +54,10 @@ tlog_fd_json_reader_cleanup(struct tlog_json_reader *reader)
     }
     free(fd_json_reader->buf);
     fd_json_reader->buf = NULL;
+    if (fd_json_reader->fd_owned) {
+        close(fd_json_reader->fd);
+        fd_json_reader->fd_owned = false;
+    }
 }
 
 static tlog_grc
@@ -61,6 +66,7 @@ tlog_fd_json_reader_init(struct tlog_json_reader *reader, va_list ap)
     struct tlog_fd_json_reader *fd_json_reader =
                                 (struct tlog_fd_json_reader*)reader;
     int fd = va_arg(ap, int);
+    bool fd_owned = (bool)va_arg(ap, int);
     size_t size = va_arg(ap, size_t);
     tlog_grc grc;
 
@@ -82,6 +88,7 @@ tlog_fd_json_reader_init(struct tlog_json_reader *reader, va_list ap)
     }
 
     fd_json_reader->fd = fd;
+    fd_json_reader->fd_owned = fd_owned;
     fd_json_reader->line = 1;
     fd_json_reader->pos = fd_json_reader->end = fd_json_reader->buf;
 

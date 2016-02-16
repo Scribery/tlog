@@ -36,6 +36,7 @@
 struct tlog_json_sink {
     struct tlog_sink            sink;           /**< Abstract sink instance */
     struct tlog_json_writer    *writer;         /**< Log message writer */
+    bool                        writer_owned;   /**< True if writer is owned */
     char                       *hostname;       /**< Hostname */
     char                       *username;       /**< Username */
     unsigned int                session_id;     /**< Session ID */
@@ -60,6 +61,10 @@ tlog_json_sink_cleanup(struct tlog_sink *sink)
     json_sink->username = NULL;
     free(json_sink->hostname);
     json_sink->hostname = NULL;
+    if (json_sink->writer_owned) {
+        tlog_json_writer_destroy(json_sink->writer);
+        json_sink->writer_owned = false;
+    }
 }
 
 static tlog_grc
@@ -67,6 +72,7 @@ tlog_json_sink_init(struct tlog_sink *sink, va_list ap)
 {
     struct tlog_json_sink *json_sink = (struct tlog_json_sink *)sink;
     struct tlog_json_writer *writer = va_arg(ap, struct tlog_json_writer *);
+    bool writer_owned = (bool)va_arg(ap, int);
     const char *hostname = va_arg(ap, const char *);
     const char *username = va_arg(ap, const char *);
     unsigned int session_id = va_arg(ap, unsigned int);
@@ -79,8 +85,6 @@ tlog_json_sink_init(struct tlog_sink *sink, va_list ap)
     assert(username != NULL);
     assert(session_id != 0);
     assert(chunk_size >= TLOG_JSON_SINK_CHUNK_SIZE_MIN);
-
-    json_sink->writer = writer;
 
     json_sink->hostname = strdup(hostname);
     if (json_sink->hostname == NULL) {
@@ -109,6 +113,9 @@ tlog_json_sink_init(struct tlog_sink *sink, va_list ap)
     grc = tlog_json_chunk_init(&json_sink->chunk, chunk_size);
     if (grc != TLOG_RC_OK)
         goto error;
+
+    json_sink->writer = writer;
+    json_sink->writer_owned = writer_owned;
 
     return TLOG_RC_OK;
 

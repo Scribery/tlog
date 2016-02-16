@@ -104,7 +104,8 @@ main(int argc, char **argv)
     }
 
     /* Create the source */
-    grc = tlog_json_source_create(&source, reader, NULL, NULL, 0, BUF_SIZE);
+    grc = tlog_json_source_create(&source, reader, false,
+                                  NULL, NULL, 0, BUF_SIZE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating the source: %s\n",
                 tlog_grc_strerror(grc));

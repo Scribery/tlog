@@ -31,13 +31,7 @@
 #include <assert.h>
 #include <tlog/json_writer.h>
 
-/**
- * File descriptor message writer type
- *
- * Creation arguments:
- *
- * int  fd      File descriptor to write messages to.
- */
+/** File descriptor message writer type */
 extern const struct tlog_json_writer_type tlog_fd_json_writer_type;
 
 /**
@@ -46,14 +40,18 @@ extern const struct tlog_json_writer_type tlog_fd_json_writer_type;
  * @param pwriter   Location for the created writer pointer, will be set to
  *                  NULL in case of error.
  * @param fd        File descriptor to write messages to.
+ * @param fd_owned  True if the file descriptor should be closed upon
+ *                  destruction of the writer, false otherwise.
  *
  * @return Global return code.
  */
 static inline tlog_grc
-tlog_fd_json_writer_create(struct tlog_json_writer **pwriter, int fd)
+tlog_fd_json_writer_create(struct tlog_json_writer **pwriter,
+                           int fd, bool fd_owned)
 {
     assert(fd >= 0);
-    return tlog_json_writer_create(pwriter, &tlog_fd_json_writer_type, fd);
+    return tlog_json_writer_create(pwriter, &tlog_fd_json_writer_type,
+                                   fd, fd_owned);
 }
 
 #endif /* _TLOG_FD_JSON_WRITER_H */
