@@ -30,6 +30,7 @@ libtlog_la_SOURCES = \
     grc.c                   \
     json_chunk.c            \
     json_dispatcher.c       \
+    json_misc.c             \
     json_msg.c              \
     json_reader.c           \
     json_sink.c             \

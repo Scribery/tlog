@@ -26,6 +26,7 @@ tlog_HEADERS = \
     grc.h                   \
     json_chunk.h            \
     json_dispatcher.h       \
+    json_misc.h             \
     json_msg.h              \
     json_reader.h           \
     json_reader_type.h      \
