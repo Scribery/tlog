@@ -45,6 +45,7 @@ libtlog_la_SOURCES = \
     sink.c                  \
     source.c                \
     syslog_json_writer.c    \
+    syslog_misc.c           \
     tty_sink.c              \
     tty_source.c            \
     utf8.c

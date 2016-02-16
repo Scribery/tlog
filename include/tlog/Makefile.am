@@ -45,6 +45,7 @@ tlog_HEADERS = \
     source.h                \
     source_type.h           \
     syslog_json_writer.h    \
+    syslog_misc.h           \
     trx.h                   \
     trx_act.h               \
     trx_basic.h             \
