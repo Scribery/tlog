@@ -1,5 +1,8 @@
+/**
+ * @file
+ * @brief Tlog-rec configuration parameter origin.
+ */
 /*
- * Miscellaneous syslog-related functions.
  *
  * Copyright (C) 2016 Red Hat
  *
@@ -20,33 +23,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <tlog/syslog_misc.h>
-#include <stdlib.h>
-#include <string.h>
-#define SYSLOG_NAMES
-#include <syslog.h>
+#ifndef _TLOG_REC_CONF_ORIGIN_H
+#define _TLOG_REC_CONF_ORIGIN_H
 
-static int
-tlog_syslog_code_from_str(CODE *list, const char *str)
-{
-    CODE *item;
+/** Configuration parameter origin code */
+enum tlog_rec_conf_origin {
+    TLOG_REC_CONF_ORIGIN_FILE,      /**< Configuration file */
+    TLOG_REC_CONF_ORIGIN_ENV,       /**< Environment variable(s) */
+    TLOG_REC_CONF_ORIGIN_OPTS,      /**< Command-line options */
+    TLOG_REC_CONF_ORIGIN_ARGS       /**< Command-line positional arguments */
+};
 
-    for (item = list; item->c_name != NULL; item++) {
-        if (strcasecmp(str, item->c_name) == 0) {
-            return item->c_val;
-        }
-    }
-    return -1;
-}
-
-int
-tlog_syslog_facility_from_str(const char *str)
-{
-    return tlog_syslog_code_from_str(facilitynames, str);
-}
-
-int
-tlog_syslog_priority_from_str(const char *str)
-{
-    return tlog_syslog_code_from_str(prioritynames, str);
-}
+#endif /* _TLOG_REC_CONF_ORIGIN_H */

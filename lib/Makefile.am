@@ -17,11 +17,40 @@
 # along with tlog; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-AM_CPPFLAGS = $(JSON_CFLAGS) $(LIBCURL_CPPFLAGS)
+pkgconflocaldir = $(sysconfdir)/$(PACKAGE)
+pkgconfdefaultdir = $(pkgdatadir)
+
+AM_CPPFLAGS = \
+    -DTLOG_REC_CONF_DEFAULT_PATH='"$(pkgconfdefaultdir)/rec.conf"'  \
+    -DTLOG_REC_CONF_LOCAL_PATH='"$(pkgconflocaldir)/rec.conf"'      \
+    $(JSON_CFLAGS)                                                  \
+    $(LIBCURL_CPPFLAGS)
 
 lib_LTLIBRARIES = libtlog.la
 
 noinst_LTLIBRARIES = libtlog_test.la
+
+dist_noinst_DATA = \
+    misc.m4                 \
+    rec.conf.m4             \
+    rec_conf_cmd.c.m4       \
+    rec_conf_struct.m4      \
+    rec_conf_validate.c.m4
+
+%.conf: %.conf.m4 misc.m4 rec_conf_struct.m4
+	m4 -I $(srcdir) --prefix-builtins $< > $@
+
+%.c: %.c.m4 misc.m4 rec_conf_struct.m4
+	m4 -I $(srcdir) --prefix-builtins $< > $@
+
+pkgconflocal_DATA = rec.conf
+pkgconfdefault_DATA = rec.conf
+
+BUILT_SOURCES = \
+    rec_conf_cmd.c      \
+    rec_conf_validate.c
+
+CLEANFILES = $(BUILT_SOURCES) rec.conf
 
 libtlog_la_SOURCES = \
     es_json_reader.c        \
@@ -42,6 +71,9 @@ libtlog_la_SOURCES = \
     misc.c                  \
     pkt.c                   \
     rc.c                    \
+    rec_conf.c              \
+    rec_conf_cmd.c          \
+    rec_conf_validate.c     \
     sink.c                  \
     source.c                \
     syslog_json_writer.c    \

@@ -1,5 +1,8 @@
+/**
+ * @file
+ * @brief Tlog-rec JSON configuration validation.
+ */
 /*
- * Miscellaneous syslog-related functions.
  *
  * Copyright (C) 2016 Red Hat
  *
@@ -20,33 +23,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <tlog/syslog_misc.h>
-#include <stdlib.h>
-#include <string.h>
-#define SYSLOG_NAMES
-#include <syslog.h>
+#ifndef _TLOG_REC_CONF_VALIDATE_H
+#define _TLOG_REC_CONF_VALIDATE_H
 
-static int
-tlog_syslog_code_from_str(CODE *list, const char *str)
-{
-    CODE *item;
+#include <json.h>
+#include <tlog/grc.h>
+#include <tlog/rec_conf_origin.h>
 
-    for (item = list; item->c_name != NULL; item++) {
-        if (strcasecmp(str, item->c_name) == 0) {
-            return item->c_val;
-        }
-    }
-    return -1;
-}
+/**
+ * Check tlog-rec JSON configuration: if there are no unkown nodes and the
+ * present node types and values are valid.
+ *
+ * @param conf      The configuration JSON object to check.
+ * @param origin    The configuration origin.
+ *
+ * @return Global return code.
+ */
+extern tlog_grc tlog_rec_conf_validate(struct json_object *conf,
+                                       enum tlog_rec_conf_origin origin);
 
-int
-tlog_syslog_facility_from_str(const char *str)
-{
-    return tlog_syslog_code_from_str(facilitynames, str);
-}
-
-int
-tlog_syslog_priority_from_str(const char *str)
-{
-    return tlog_syslog_code_from_str(prioritynames, str);
-}
+#endif /* _TLOG_REC_CONF_VALIDATE_H */

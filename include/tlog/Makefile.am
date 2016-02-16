@@ -40,6 +40,10 @@ tlog_HEADERS = \
     misc.h                  \
     pkt.h                   \
     rc.h                    \
+    rec_conf.h              \
+    rec_conf_cmd.h          \
+    rec_conf_origin.h       \
+    rec_conf_validate.h     \
     sink.h                  \
     sink_type.h             \
     source.h                \

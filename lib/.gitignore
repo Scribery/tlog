@@ -1,0 +1,3 @@
+rec.conf
+rec_conf_cmd.c
+rec_conf_validate.c
