@@ -27,6 +27,7 @@ tlog_rec_SOURCES = \
     tlog-rec.c
 tlog_rec_LDADD = \
     ../lib/libtlog.la   \
+    $(JSON_LIBS)        \
     -lutil
 
 tlog_play_SOURCES = \
