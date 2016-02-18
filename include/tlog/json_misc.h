@@ -44,4 +44,18 @@ extern tlog_grc tlog_json_overlay(struct json_object    **presult,
                                   struct json_object     *lower,
                                   struct json_object     *upper);
 
+/**
+ * Add an object field to a json_object of type json_type_object, located at
+ * the specified dot-separated path. Intermediate objects will be created as
+ * necessary.
+ *
+ * @param obj   The object to begin lookup from.
+ * @param path  The dot-separated path to add the object at.
+ * @param val   The json_object or NULL member to associate with the give
+ *              field.
+ */
+extern tlog_grc tlog_json_object_object_add_path(struct json_object* obj,
+                                                 const char *path,
+                                                 struct json_object *val);
+
 #endif /* _TLOG_JSON_MISC_H */

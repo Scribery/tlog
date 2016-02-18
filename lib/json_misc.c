@@ -20,9 +20,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
 #include <tlog/json_misc.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>
+#include <string.h>
 #include <assert.h>
 
 tlog_grc
@@ -127,5 +129,52 @@ tlog_json_overlay(struct json_object    **presult,
 
 failure:
     json_object_put(result);
+    return grc;
+}
+
+tlog_grc
+tlog_json_object_object_add_path(struct json_object* obj,
+                                 const char *path,
+                                 struct json_object *val)
+{
+    tlog_grc grc;
+    char *buf = NULL;
+    char *name_start;
+    char *name_end;
+    struct json_object *sub_obj = NULL;
+
+    assert(obj != NULL);
+    assert(path != NULL);
+
+    buf = strdup(path);
+    if (buf == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        goto cleanup;
+    }
+
+    for (name_start = buf;
+         *(name_end = strchrnul(name_start, '.')) != '\0';
+         name_start = name_end + 1) {
+        *name_end = '\0';
+        if (!json_object_object_get_ex(obj, name_start, &sub_obj)) {
+            sub_obj = json_object_new_object();
+            if (sub_obj == NULL) {
+                grc = TLOG_GRC_ERRNO;
+                goto cleanup;
+            }
+            /* TODO Handle failure with newer JSON-C */
+            json_object_object_add(obj, name_start, sub_obj);
+        }
+        obj = sub_obj;
+        sub_obj = NULL;
+    }
+
+    /* TODO Handle failure with newer JSON-C */
+    json_object_object_add(obj, name_start, val);
+    grc = TLOG_RC_OK;
+
+cleanup:
+    json_object_put(sub_obj);
+    free(buf);
     return grc;
 }
