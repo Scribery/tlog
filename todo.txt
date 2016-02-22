@@ -1,29 +1,15 @@
-configuration
-    read with libjson-c
-    max I/O data size per message
-    max message latency
-    log sink
-    default shell
-environment
-    shell
 filename
     shell in command's name?
-command line
-    can we have any options?
 
 can tlog be used as sudo shell?
     we can allow commands starting with "tlog" only
     assign shell for target user?
-
-publish design document on FreeIPA wiki
 
 Retrieve character encoding and convert to UTF-8 in JSON.
 For the time being check encoding and abort with a message saying only UTF-8
 is supported.
 
 Add message versions
-
-Refactor tlog.c
 
 Add throttling.
 
@@ -33,9 +19,6 @@ Make all if statements use braces, even single-line ones.
 
 Consider pluggable memory allocation when library grows bigger and there is a
 potential for outside users.
-
-Make tlog_msg functions return diverse global return codes to help with
-debugging parsing errors.
 
 Test the code with coverity.
 
@@ -55,12 +38,6 @@ discarding invalid characters (with "//IGNORE" encoding suffix) to somehow
 extract invalid bytes.
 
 Support running without a terminal.
-
-Support passing arguments to the user's shell.
-
-Print a (configurable) warning upon starting the recorded session. By default
-it should say the session is being recorded. Do it in the child process,
-before starting the shell.
 
 Record terminal type as well.
 
