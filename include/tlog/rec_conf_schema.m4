@@ -143,19 +143,19 @@ m4_dnl
 M4_PARAM(`/log',
          `input', `', `[=BOOL]',
          `M4_TYPE_BOOL(true)', true, `file',
-         `Log user input, default on',
+         `Enable/disable logging user input',
          `If specified as true, user input is logged.')m4_dnl
 m4_dnl
 M4_PARAM(`/log',
          `output', `', `[=BOOL]',
          `M4_TYPE_BOOL(true)', true, `file',
-         `Log terminal output, default on',
+         `Enable/disable logging program output',
          `If specified as true, terminal output is logged.')m4_dnl
 m4_dnl
 M4_PARAM(`/log',
          `window', `', `[=BOOL]',
          `M4_TYPE_BOOL(true)', true, `file',
-         `Log terminal window size changes, default on',
+         `Enable/disable logging terminal window size changes',
          `If specified as true, terminal window size changes are logged.')m4_dnl
 m4_dnl
 m4_dnl
