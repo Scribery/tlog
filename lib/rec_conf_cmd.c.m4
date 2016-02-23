@@ -204,7 +204,7 @@ m4_define(
             ,
             `
                 M4_PARAM_OPT(
-                    m4_ifelse(`$3',,, `-$3/')--m4_substr(m4_translit(`$1/$2', `/', `-'), 1)`$4',
+                    m4_ifelse(`$3',,, `-$3`,' ')--m4_substr(m4_translit(`$1/$2', `/', `-'), 1)`$4',
                     `$8')
             '
         )
