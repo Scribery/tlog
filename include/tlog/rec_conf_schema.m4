@@ -121,7 +121,7 @@ M4_PARAM(`',
                    `and logged.')')m4_dnl
 m4_dnl
 M4_PARAM(`',
-         `login', `l', `[=BOOL]',
+         `login', `l', `',
          `M4_TYPE_BOOL()', false, `opts',
          `Make the shell a login shell',
          `M4_LINES(`Tell the spawned shell it is a login shell.',
@@ -129,7 +129,7 @@ M4_PARAM(`',
                    `with a dash character.')')m4_dnl
 m4_dnl
 M4_PARAM(`',
-         `command', `c', `[=BOOL]',
+         `command', `c', `',
          `M4_TYPE_BOOL()', false, `opts',
          `Execute shell commands',
          `M4_LINES(`Pass the -c option to the shell and all the positional',
