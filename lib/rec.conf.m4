@@ -76,7 +76,7 @@ m4_define(
                     `',
                     `m4_printl(M4_INDENT()`{')',
                     `
-                        m4_printl(M4_INDENT()`// $3')
+                        m4_printl(M4_INDENT()`// $3 parameters')
                         m4_printl(M4_INDENT()`"m4_substr(`$2', 1)": {')
                     '
                 )

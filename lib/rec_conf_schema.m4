@@ -138,7 +138,7 @@ M4_PARAM(`',
 m4_dnl
 m4_dnl
 m4_dnl
-M4_CONTAINER(`', `/log', `Logged data set parameters')m4_dnl
+M4_CONTAINER(`', `/log', `Logged data set')m4_dnl
 m4_dnl
 M4_PARAM(`/log',
          `input', `', `[=BOOL]',
@@ -170,7 +170,7 @@ M4_PARAM(`',
 m4_dnl
 m4_dnl
 m4_dnl
-M4_CONTAINER(`', `/file', `File writer parameters')m4_dnl
+M4_CONTAINER(`', `/file', `File writer')m4_dnl
 m4_dnl
 M4_PARAM(`/file',
          `path', `', `=FILE',
@@ -180,7 +180,7 @@ M4_PARAM(`/file',
 m4_dnl
 m4_dnl
 m4_dnl
-M4_CONTAINER(`', `/syslog', `Syslog writer parameters')m4_dnl
+M4_CONTAINER(`', `/syslog', `Syslog writer')m4_dnl
 m4_dnl
 M4_PARAM(`/syslog',
          `facility', `', `=STRING',
