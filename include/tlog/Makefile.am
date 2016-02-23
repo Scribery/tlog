@@ -66,3 +66,7 @@ noinst_HEADERS = \
     test_json_source.h      \
     test_json_stream_enc.h  \
     test_misc.h
+
+dist_noinst_DATA = \
+    misc.m4                 \
+    rec_conf_schema.m4
