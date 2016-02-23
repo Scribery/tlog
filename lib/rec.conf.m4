@@ -84,7 +84,7 @@ m4_define(
                 m4_pushdef(`M4_INDENT', M4_INDENT()`    ')
                 m4_pushdef(`M4_FIRST', `true')
 
-                m4_include(`rec_conf_struct.m4')
+                m4_include(`rec_conf_schema.m4')
 
                 m4_popdef(`M4_FIRST')
                 m4_popdef(`M4_INDENT')

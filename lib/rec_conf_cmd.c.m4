@@ -63,7 +63,7 @@ m4_define(
         )
     '
 )
-m4_include(`rec_conf_struct.m4')
+m4_include(`rec_conf_schema.m4')
 m4_define(`M4_FIRST', `true')
 m4_define(
     `M4_PARAM',
@@ -95,7 +95,7 @@ m4_define(
         )
     '
 )
-m4_include(`rec_conf_struct.m4')
+m4_include(`rec_conf_schema.m4')
 m4_divert(0)};
 
 /** Description of short options */
@@ -125,7 +125,7 @@ m4_define(
         )
     '
 )
-m4_include(`rec_conf_struct.m4')
+m4_include(`rec_conf_schema.m4')
 m4_divert(0)";
 
 /** Description of long options */
@@ -157,7 +157,7 @@ m4_define(
         )
     '
 )
-m4_include(`rec_conf_struct.m4')
+m4_include(`rec_conf_schema.m4')
 m4_divert(0)m4_dnl
     {
         .name = NULL
@@ -211,7 +211,7 @@ m4_define(
     '
 )
 
-m4_include(`rec_conf_struct.m4')
+m4_include(`rec_conf_schema.m4')
 m4_divert(0)m4_dnl
        "\n";
     if (fprintf(stream, fmt, progname, progname) < 0) {
@@ -418,7 +418,7 @@ m4_define(
         )
     '
 )
-m4_include(`rec_conf_struct.m4')
+m4_include(`rec_conf_schema.m4')
 m4_divert(0)m4_dnl
         case m4_singlequote(`?'):
             grc = TLOG_RC_FAILURE;

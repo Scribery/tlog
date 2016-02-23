@@ -34,13 +34,13 @@ dist_noinst_DATA = \
     misc.m4                 \
     rec.conf.m4             \
     rec_conf_cmd.c.m4       \
-    rec_conf_struct.m4      \
+    rec_conf_schema.m4      \
     rec_conf_validate.c.m4
 
-%.conf: %.conf.m4 misc.m4 rec_conf_struct.m4
+%.conf: %.conf.m4 misc.m4 rec_conf_schema.m4
 	m4 -I $(srcdir) --prefix-builtins $< > $@
 
-%.c: %.c.m4 misc.m4 rec_conf_struct.m4
+%.c: %.c.m4 misc.m4 rec_conf_schema.m4
 	m4 -I $(srcdir) --prefix-builtins $< > $@
 
 pkgconflocal_DATA = rec.conf

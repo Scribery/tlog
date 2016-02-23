@@ -206,7 +206,7 @@ m4_define(
                 m4_pushdef(`M4_PREFIX', M4_PREFIX()`$2')
 
                 m4_pushdef(`M4_PARAM')
-                m4_include(`rec_conf_struct.m4')
+                m4_include(`rec_conf_schema.m4')
                 m4_popdef(`M4_PARAM')
 
                 m4_pushdef(`M4_CONTAINER', m4_defn(`M4_CONTAINER_VALIDATE_CONTAINER'))
@@ -222,7 +222,7 @@ m4_define(
                    `',
                    `    json_object_object_foreach(conf, name, obj) {',
                    `        enum json_type type = json_object_get_type(obj);')
-                m4_include(`rec_conf_struct.m4')
+                m4_include(`rec_conf_schema.m4')
                 m4_printl(
                     `',
                     `        fprintf(stderr, "Unexpected node: \"%s\"\n", name);',
