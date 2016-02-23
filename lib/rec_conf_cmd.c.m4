@@ -171,10 +171,9 @@ tlog_rec_conf_cmd_help(FILE *stream, const char *progname)
        "Usage: %s [OPTION...] [CMD_FILE [CMD_ARG...]]\n"
        "   or: %s -c [OPTION...] CMD_STRING [CMD_NAME [CMD_ARG...]]\n"
        "Start a shell and log terminal I/O.\n"
-       "\n"
-       "Options:\n"
-       "\n"
 m4_divert(-1)
+
+m4_define(`M4_PREFIX', `')
 
 m4_dnl
 m4_dnl Output an option description
@@ -196,22 +195,59 @@ m4_define(
 )
 
 m4_define(
-    `M4_PARAM',
+    `M4_CONTAINER_PARAM',
     `
         m4_ifelse(
-            `$7',
-            `args',
-            ,
+            `$1',
+            M4_PREFIX(),
             `
-                M4_PARAM_OPT(
-                    m4_ifelse(`$3',,, `-$3`,' ')--m4_substr(m4_translit(`$1/$2', `/', `-'), 1)`$4',
-                    `$8')
+                m4_ifelse(
+                    `$7',
+                    `args',
+                    ,
+                    `
+                        M4_PARAM_OPT(
+                            m4_ifelse(`$3',,, `-$3`,' ')--m4_substr(m4_translit(`$1/$2', `/', `-'), 1)`$4',
+                            `$8')
+                    '
+                )
             '
         )
     '
 )
 
-m4_include(`rec_conf_schema.m4')
+m4_pushdef(
+    `M4_CONTAINER',
+    `
+        m4_ifelse(
+            `$1',
+            M4_PREFIX(),
+            `
+                m4_printl(
+                   `       "\n"',
+                   `       "$3 options:\n"')
+                m4_pushdef(`M4_PREFIX', M4_PREFIX()`$2')
+
+                m4_pushdef(`M4_CONTAINER', `')
+                m4_pushdef(`M4_PARAM', m4_defn(`M4_CONTAINER_PARAM'))
+                m4_include(`rec_conf_schema.m4')
+                m4_popdef(`M4_PARAM')
+                m4_popdef(`M4_CONTAINER')
+
+                m4_pushdef(`M4_PARAM', `')
+                m4_include(`rec_conf_schema.m4')
+                m4_popdef(`M4_PARAM')
+
+                m4_popdef(`M4_PREFIX')
+            '
+        )
+    '
+)
+
+M4_CONTAINER(`', `', `General')
+
+m4_popdef(`M4_CONTAINER')
+
 m4_divert(0)m4_dnl
        "\n";
     if (fprintf(stream, fmt, progname, progname) < 0) {
