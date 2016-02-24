@@ -35,5 +35,9 @@ rm ${RPM_BUILD_ROOT}/%{_libdir}/*.la
 %{_bindir}/tlog-*
 %{_includedir}/tlog
 %{_libdir}/libtlog.so*
+%{_datadir}/tlog
+%{_mandir}/man5/*
+%{_mandir}/man8/*
+%config(noreplace) %{_sysconfdir}/tlog/tlog-rec.conf
 
 %changelog
