@@ -81,3 +81,6 @@ Make sure the environment is cleaned and file descriptors are not inherited
 upon exec'ing the shell.
 
 Consider moving common .m4 files to a dedicated directory.
+
+Figure out the proper order and behavior of opts and args origins for tlog-rec
+config parameters.
