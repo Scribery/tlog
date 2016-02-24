@@ -313,8 +313,8 @@ tlog_rec_conf_load(struct json_object **pconf,
 
     /* Overlay with default config */
     GUARD(tlog_rec_conf_get_path(&path, argv[0], 
-                                 TLOG_REC_CONF_DEFAULT_PATH,
-                                 "../../lib/rec.conf"));
+                                 TLOG_REC_CONF_DEFAULT_INST_PATH,
+                                 TLOG_REC_CONF_DEFAULT_BUILD_PATH));
     GUARD(tlog_rec_conf_file_load(&overlay, path));
     free(path);
     path = NULL;
@@ -324,8 +324,8 @@ tlog_rec_conf_load(struct json_object **pconf,
 
     /* Overlay with local system config */
     GUARD(tlog_rec_conf_get_path(&path, argv[0], 
-                                 TLOG_REC_CONF_LOCAL_PATH,
-                                 "../../lib/rec.conf"));
+                                 TLOG_REC_CONF_LOCAL_INST_PATH,
+                                 TLOG_REC_CONF_LOCAL_BUILD_PATH));
     GUARD(tlog_rec_conf_file_load(&overlay, path));
     free(path);
     path = NULL;

@@ -20,9 +20,11 @@
 include $(top_srcdir)/Common.am
 
 AM_CPPFLAGS = \
-    -DTLOG_REC_CONF_DEFAULT_PATH='"$(TLOG_REC_CONF_DEFAULT_PATH)"'  \
-    -DTLOG_REC_CONF_LOCAL_PATH='"$(TLOG_REC_CONF_LOCAL_PATH)"'      \
-    $(JSON_CFLAGS)                                                  \
+    -DTLOG_REC_CONF_DEFAULT_INST_PATH='"$(TLOG_REC_CONF_DEFAULT_INST_PATH)"'    \
+    -DTLOG_REC_CONF_DEFAULT_BUILD_PATH='"$(TLOG_REC_CONF_DEFAULT_BUILD_PATH)"'  \
+    -DTLOG_REC_CONF_LOCAL_INST_PATH='"$(TLOG_REC_CONF_LOCAL_INST_PATH)"'        \
+    -DTLOG_REC_CONF_LOCAL_BUILD_PATH='"$(TLOG_REC_CONF_LOCAL_BUILD_PATH)"'      \
+    $(JSON_CFLAGS)                                                              \
     $(LIBCURL_CPPFLAGS)
 
 lib_LTLIBRARIES = libtlog.la

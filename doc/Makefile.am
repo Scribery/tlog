@@ -29,7 +29,7 @@ dist_noinst_DATA = \
 %.8: %.8.m4 ../include/tlog/misc.m4 ../include/tlog/rec_conf_schema.m4
 	m4 -I $(top_srcdir)/include/tlog \
 	   --prefix-builtins \
-	   -D M4_CONF_PATH="$(TLOG_REC_CONF_LOCAL_PATH)" \
+	   -D M4_CONF_PATH="$(TLOG_REC_CONF_LOCAL_INST_PATH)" \
 	   $< > $@
 
 dist_man_MANS = \
