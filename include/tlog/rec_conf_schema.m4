@@ -92,6 +92,20 @@ M4_PARAM(`', `shell', `file',
          `s', `=SHELL', `Spawn the specified SHELL',
          `M4_LINES(`The path to the shell executable that should be spawned.')')m4_dnl
 m4_dnl
+M4_PARAM(`', `login', `opts',
+         `M4_TYPE_BOOL()', false,
+         `l', `', `Make the shell a login shell',
+         `M4_LINES(`If set to true, the shell is signalled to act as a login shell.',
+                   `This is done by prepending argv[0] of the shell',
+                   `with a dash character.')')m4_dnl
+m4_dnl
+M4_PARAM(`', `command', `opts',
+         `M4_TYPE_BOOL()', false,
+         `c', `', `Execute shell commands',
+         `M4_LINES(`If set to true, tlog-rec passes the -c option to the shell,',
+                   `followed by all the positional arguments, which specify the shell',
+                   `commands to execute along with command name and its arguments.')')m4_dnl
+m4_dnl
 M4_PARAM(`', `notice', `file',
          `M4_TYPE_STRING(`\nATTENTION! Your session is being recorded!\n\n')',
          true,
@@ -113,20 +127,6 @@ M4_PARAM(`', `payload', `file',
          `M4_LINES(`Maximum encoded data (payload) size per message, bytes.',
                    `As soon as payload exceeds this number of bytes,',
                    `it is formatted into a message and logged.')')m4_dnl
-m4_dnl
-M4_PARAM(`', `login', `opts',
-         `M4_TYPE_BOOL()', false,
-         `l', `', `Make the shell a login shell',
-         `M4_LINES(`If set to true, the shell is signalled to act as a login shell.',
-                   `This is done by prepending argv[0] of the shell',
-                   `with a dash character.')')m4_dnl
-m4_dnl
-M4_PARAM(`', `command', `opts',
-         `M4_TYPE_BOOL()', false,
-         `c', `', `Execute shell commands',
-         `M4_LINES(`If set to true, tlog-rec passes the -c option to the shell,',
-                   `followed by all the positional arguments, which specify the shell',
-                   `commands to execute along with command name and its arguments.')')m4_dnl
 m4_dnl
 m4_dnl
 m4_dnl
