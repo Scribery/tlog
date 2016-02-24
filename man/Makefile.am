@@ -22,14 +22,25 @@ include $(top_srcdir)/Common.am
 dist_noinst_DATA = \
     tlog-rec.8.m4
 
-%.8: %.8.m4 ../include/tlog/misc.m4 ../include/tlog/rec_conf_schema.m4
+MAN_DEPS = \
+    $(top_srcdir)/include/tlog/misc.m4              \
+    $(top_srcdir)/include/tlog/rec_conf_schema.m4
+
+%.8: %.8.m4 $(MAN_DEPS)
 	m4 -I $(top_srcdir)/include/tlog \
 	   --prefix-builtins \
 	   -D M4_CONF_PATH="$(TLOG_REC_CONF_LOCAL_INST_PATH)" \
 	   $< > $@
 
+%.5: %.5.m4 $(MAN_DEPS)
+	m4 -I $(top_srcdir)/include/tlog \
+	   --prefix-builtins \
+	   $< > $@
+
 dist_man_MANS = \
-    tlog-rec.8
+    tlog-rec.8      \
+    tlog-rec.conf.5
 
 CLEANFILES = \
-    tlog-rec.8
+    tlog-rec.8      \
+    tlog-rec.conf.5

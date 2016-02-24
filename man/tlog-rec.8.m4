@@ -146,5 +146,8 @@ Record everything but user input:
 Ask the recorded shell to execute a command:
 .B tlog-rec -c whoami
 
+.SH SEE ALSO
+tlog-rec.conf(5)
+
 .SH AUTHOR
 Nikolai Kondrashov <spbnick@gmail.com>
