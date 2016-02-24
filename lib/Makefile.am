@@ -32,24 +32,17 @@ lib_LTLIBRARIES = libtlog.la
 noinst_LTLIBRARIES = libtlog_test.la
 
 dist_noinst_DATA = \
-    rec.conf.m4             \
     rec_conf_cmd.c.m4       \
     rec_conf_validate.c.m4
 
-%.conf: %.conf.m4 ../include/tlog/misc.m4 ../include/tlog/rec_conf_schema.m4
-	m4 -I $(top_srcdir)/include/tlog --prefix-builtins $< > $@
-
 %.c: %.c.m4 ../include/tlog/misc.m4 ../include/tlog/rec_conf_schema.m4
 	m4 -I $(top_srcdir)/include/tlog --prefix-builtins $< > $@
-
-pkgconflocal_DATA = rec.conf
-pkgconfdefault_DATA = rec.conf
 
 BUILT_SOURCES = \
     rec_conf_cmd.c      \
     rec_conf_validate.c
 
-CLEANFILES = $(BUILT_SOURCES) rec.conf
+CLEANFILES = $(BUILT_SOURCES)
 
 libtlog_la_SOURCES = \
     es_json_reader.c        \

@@ -71,4 +71,5 @@ noinst_HEADERS = \
 
 dist_noinst_DATA = \
     misc.m4                 \
+    rec.conf.m4             \
     rec_conf_schema.m4

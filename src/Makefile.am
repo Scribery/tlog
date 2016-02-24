@@ -19,6 +19,26 @@
 
 include $(top_srcdir)/Common.am
 
+pkgconflocal_DATA = $(TLOG_REC_CONF_LOCAL_NAME)
+pkgconfdefault_DATA = $(TLOG_REC_CONF_DEFAULT_NAME)
+
+CLEANFILES = \
+    $(TLOG_REC_CONF_DEFAULT_NAME)   \
+    $(TLOG_REC_CONF_LOCAL_NAME)
+
+REC_CONF_DEPS = \
+    $(top_srcdir)/include/tlog/rec.conf.m4          \
+    $(top_srcdir)/include/tlog/misc.m4              \
+    $(top_srcdir)/include/tlog/rec_conf_schema.m4
+
+$(TLOG_REC_CONF_LOCAL_NAME): $(REC_CONF_DEPS)
+	m4 -I $(top_srcdir)/include/tlog \
+	   --prefix-builtins rec.conf.m4 > $@
+
+$(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
+	m4 -I $(top_srcdir)/include/tlog \
+	   --prefix-builtins rec.conf.m4 > $@
+
 AM_CPPFLAGS = $(JSON_CFLAGS) $(LIBCURL_CPPFLAGS)
 
 bin_PROGRAMS = \
