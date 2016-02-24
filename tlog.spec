@@ -8,6 +8,7 @@ Source:     %{name}-%{version}.tar.gz
 
 BuildRequires:  json-c-devel
 BuildRequires:  libcurl-devel
+BuildRequires:  m4
 
 %description
  Tlog is a terminal I/O recording program similar to "script", but used in

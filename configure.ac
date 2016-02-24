@@ -35,6 +35,8 @@ AC_PROG_CC_STDC
 AC_PROG_INSTALL
 AC_PROG_SED
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
+AC_PATH_PROG([M4], [m4])
+AS_IF([test x$M4 == x], [AC_MSG_ERROR([m4 not found])])
 LT_INIT
 
 # Check for features
