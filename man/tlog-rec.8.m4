@@ -51,9 +51,65 @@ its arguments (CMD_ARG).
 If no non-option arguments are encountered, then the shell is started
 interactively.
 
+.B Tlog-rec
+loads its parameters first from the systemwide configuration file
+M4_CONF_PATH(), then from the file pointed at by TLOG_REC_CONF_FILE
+environment variable (if set), then from the contents of the TLOG_REC_CONF_TEXT
+environment variable (if set), and then from command-line options. Parameters
+from each of these sources override the previous one in turn.
+
 .SH OPTIONS
 m4_divert(-1)
 m4_define(`M4_PREFIX', `')
+m4_define(`M4_TYPE_EXPAND_TO', `')
+
+m4_define(
+    `M4_TYPE_INT',
+    `
+        m4_ifelse(
+            `$2',
+            `',
+            ,
+            `
+                m4_printl(`Value minimum: $2', `.br')
+            '
+        )
+    '
+)
+
+m4_define(`M4_TYPE_STRING', `')
+
+m4_define(`M4_TYPE_BOOL', `')
+
+m4_define(
+    `M4_TYPE_CHOICE_LIST',
+    `
+        m4_ifelse(
+            `$#', `0', `',
+            `$#', `1', `m4_print(`"'m4_patsubst(`$1', `\\', `\\\\')`"')',
+            `
+                m4_print(`"'m4_patsubst(`$1', `\\', `\\\\')`"`, '')
+                M4_TYPE_CHOICE_LIST(m4_shift($@))
+            '
+        )
+    '
+)
+
+m4_define(
+    `M4_TYPE_CHOICE',
+    `
+        m4_ifelse(
+            `$2',
+            `',
+            ,
+            `
+                m4_print(`Value should be one of: ')
+                M4_TYPE_CHOICE_LIST(m4_shift($@))
+                m4_printl(`', `.br')
+            '
+        )
+    '
+)
 
 m4_define(
     `M4_CONTAINER_PARAM',
@@ -76,7 +132,9 @@ m4_define(
                             `$7')
                         m4_printl(
                             `',
-                            `$8')
+                            `$8',
+                            `')
+                        $4
                     '
                 )
             '
