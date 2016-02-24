@@ -256,20 +256,36 @@ M4_CONTAINER(`', `', `Root')
 m4_divert(0)
 .SH EXAMPLES
 .TP
-Start recording a login shell:
-.B tlog-rec -l
+A config specifying only a shell:
+.nf
+
+{
+    "shell": "/usr/bin/zsh"
+}
+.fi
 
 .TP
-Start recording a zsh session:
-.B tlog-rec -s /usr/bin/zsh
+A config disabling logging user input:
+.nf
+
+{
+    "log": {
+        "input": false
+    }
+}
+.fi
 
 .TP
-Record everything but user input:
-.B tlog-rec --log-input=off --log-output=on --log-window=on
+A config specifying logging to a file:
+.nf
 
-.TP
-Ask the recorded shell to execute a command:
-.B tlog-rec -c whoami
+{
+    "writer": "file"
+    "file" : {
+        "path": "/var/log/tlog-rec.log"
+    }
+}
+.fi
 
 .SH SEE ALSO
 tlog-rec(8), http://json.org/
