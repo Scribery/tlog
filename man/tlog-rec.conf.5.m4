@@ -149,26 +149,26 @@ m4_define(
             M4_PREFIX(),
             `
                 m4_ifelse(
-                    `$7',
+                    `$3',
                     `file',
                     `
                         m4_pushdef(`M4_TYPE_EXPAND_TO', `sig')
                         m4_printl(`.TP')
                         m4_print(`$2 (')
-                        $5
+                        $4
                         m4_printl(`)', `$8')
                         m4_popdef(`M4_TYPE_EXPAND_TO')
                         m4_printl(`.sp 1')
                         m4_pushdef(`M4_TYPE_EXPAND_TO', `desc')
-                        $5
+                        $4
                         m4_popdef(`M4_TYPE_EXPAND_TO')
                         m4_ifelse(
-                            `$6',
+                            `$5',
                             `true',
                             `
                                 m4_pushdef(`M4_TYPE_EXPAND_TO', `def')
                                 m4_print(`Default: ')
-                                $5
+                                $4
                                 m4_printl(`')
                                 m4_popdef(`M4_TYPE_EXPAND_TO')
                             ',

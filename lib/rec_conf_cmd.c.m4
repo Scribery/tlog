@@ -42,12 +42,12 @@ m4_define(
     `M4_PARAM',
     `
         m4_ifelse(
-            `$3',
+            `$6',
             `',
             ,
             `
                 m4_ifelse(
-                    `$7',
+                    `$3',
                     `args',
                     ,
                     `
@@ -55,7 +55,7 @@ m4_define(
                             `    TLOG_REC_CONF_CMD_OPT',
                             m4_translit(m4_translit(`$1/$2', `/', `_'), `a-z', `A-Z'),
                             ` = ',
-                            `m4_singlequote(`$3')')
+                            `m4_singlequote(`$6')')
                         m4_printl(`,')
                     '
                 )
@@ -69,11 +69,11 @@ m4_define(
     `M4_PARAM',
     `
         m4_ifelse(
-            `$3',
+            `$6',
             `',
             `
                 m4_ifelse(
-                    `$7',
+                    `$3',
                     `args',
                     ,
                     `
@@ -109,16 +109,16 @@ m4_define(
     `M4_PARAM',
     `
         m4_ifelse(
-            `$7',
+            `$3',
             `args',
             ,
             `
                 m4_ifelse(
-                    `$3',
+                    `$6',
                     `',
                     ,
                     `
-                        m4_print(`$3'$5)
+                        m4_print(`$6'$4)
                     '
                 )
             '
@@ -139,7 +139,7 @@ m4_define(
     `M4_PARAM',
     `
         m4_ifelse(
-            `$7',
+            `$3',
             `args',
             ,
             `
@@ -151,7 +151,7 @@ m4_define(
                    m4_translit(m4_translit(`$1/$2', `/', `_'), `a-z', `A-Z'))
                 m4_printl(
                    `,',
-                   `        .has_arg = $5,',
+                   `        .has_arg = $4,',
                    `    },')
             '
         )
@@ -202,12 +202,12 @@ m4_define(
             M4_PREFIX(),
             `
                 m4_ifelse(
-                    `$7',
+                    `$3',
                     `args',
                     ,
                     `
                         M4_PARAM_OPT(
-                            m4_ifelse(`$3',,, `-$3`,' ')--m4_substr(m4_translit(`$1/$2', `/', `-'), 1)`$4',
+                            m4_ifelse(`$6',,, `-$6`,' ')--m4_substr(m4_translit(`$1/$2', `/', `-'), 1)`$7',
                             `$8')
                     '
                 )
@@ -424,7 +424,7 @@ m4_define(
     `M4_PARAM',
     `
         m4_ifelse(
-            `$7',
+            `$3',
             `args',
             ,
             `
@@ -435,7 +435,7 @@ m4_define(
                     `:')
                 m4_print(
                    `            optname = "',
-                   m4_ifelse(`$3', `', , `-$3/'),
+                   m4_ifelse(`$6', `', , `-$6/'),
                    `--',
                    m4_substr(m4_translit(`$1/$2', `/', `-'), 1),
                    `"')
@@ -446,7 +446,7 @@ m4_define(
                    `"')
                 m4_printl(
                    `;')
-                $5
+                $4
                 m4_printl(
                    `            break;',
                    `')

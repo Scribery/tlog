@@ -63,17 +63,17 @@ m4_define(
             M4_PREFIX(),
             `
                 m4_ifelse(
-                    `$7',
+                    `$3',
                     `args',
                     ,
                     `
                         m4_printl(`.TP')
                         m4_print(
                             `.B ',
-                            m4_ifelse(`$3',,, `-$3`,' '),
+                            m4_ifelse(`$6',,, `-$6`,' '),
                             `--',
                             m4_substr(m4_translit(`$1/$2', `/', `-'), 1),
-                            `$4')
+                            `$7')
                         m4_printl(
                             `',
                             `$8')

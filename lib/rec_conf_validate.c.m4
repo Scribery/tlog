@@ -158,9 +158,9 @@ m4_define(
             `
                 m4_printl(
                    `',
-                   `        if (origin >= TLOG_REC_CONF_ORIGIN_'m4_translit(`$7', `a-z', `A-Z')` &&',
+                   `        if (origin >= TLOG_REC_CONF_ORIGIN_'m4_translit(`$3', `a-z', `A-Z')` &&',
                    `            strcmp(name, "$2") == 0) {')
-                $5
+                $4
                 m4_printl(
                    `            continue;',
                    `        }')

@@ -33,7 +33,7 @@ m4_define(
             M4_PREFIX(),
             `
                 m4_ifelse(
-                    `$7',
+                    `$3',
                     `file',
                     `
                         m4_ifelse(
@@ -45,12 +45,12 @@ m4_define(
                         m4_printl(M4_INDENT()`// $8')
                         m4_print(M4_INDENT())
                         m4_ifelse(
-                            `$6',
+                            `$5',
                             `true',
                             ,
                             `m4_print(`// ')'
                         )
-                        m4_print(`"$2" : ')$5
+                        m4_print(`"$2" : ')$4
                     '
                 )
             '
