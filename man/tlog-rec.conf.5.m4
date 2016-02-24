@@ -33,8 +33,9 @@ is a JSON-format configuration file for
 program.
 Contrary to the strict JSON specification, both C and C++ style comments are
 allowed in the file.
-It must contain a single JSON object with the objects and fields described
-below.
+
+The file must contain a single JSON object with the objects and fields
+described below.
 Almost all of them are optional and assume a default value.
 However, those that do require a value can still be omitted and specified to
 .B tlog-rec
