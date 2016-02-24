@@ -17,12 +17,11 @@
 # along with tlog; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-pkgconflocaldir = $(sysconfdir)/$(PACKAGE)
-pkgconfdefaultdir = $(pkgdatadir)
+include $(top_srcdir)/Common.am
 
 AM_CPPFLAGS = \
-    -DTLOG_REC_CONF_DEFAULT_PATH='"$(pkgconfdefaultdir)/rec.conf"'  \
-    -DTLOG_REC_CONF_LOCAL_PATH='"$(pkgconflocaldir)/rec.conf"'      \
+    -DTLOG_REC_CONF_DEFAULT_PATH='"$(TLOG_REC_CONF_DEFAULT_PATH)"'  \
+    -DTLOG_REC_CONF_LOCAL_PATH='"$(TLOG_REC_CONF_LOCAL_PATH)"'      \
     $(JSON_CFLAGS)                                                  \
     $(LIBCURL_CPPFLAGS)
 

@@ -17,6 +17,8 @@
 # along with tlog; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+include $(top_srcdir)/Common.am
+
 ACLOCAL_AMFLAGS = -Im4
 SUBDIRS = include lib src doc
 dist_doc_DATA = README.md
