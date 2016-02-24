@@ -42,6 +42,12 @@ $(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
 	   -D M4_CONF_TYPE=default \
 	   --prefix-builtins rec.conf.m4 > $@
 
+install-data-hook:
+	: Remove "DO NOT EDIT" warning
+	$(SED) -i -e '/vim:nomodifiable/,/\*\{73\}/ d' \
+	       $(DESTDIR)$(TLOG_REC_CONF_DEFAULT_INST_PATH) \
+	       $(DESTDIR)$(TLOG_REC_CONF_LOCAL_INST_PATH)
+
 AM_CPPFLAGS = $(JSON_CFLAGS) $(LIBCURL_CPPFLAGS)
 
 bin_PROGRAMS = \

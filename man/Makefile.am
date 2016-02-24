@@ -44,3 +44,10 @@ dist_man_MANS = \
 CLEANFILES = \
     tlog-rec.8      \
     tlog-rec.conf.5
+
+install-data-hook:
+	: Remove "DO NOT EDIT" warning
+	$(SED) -i -e '/vim:nomodifiable/,/\*\{73\}/ d' \
+	       $(DESTDIR)$(mandir)/man5/tlog-rec.conf.5 \
+	       $(DESTDIR)$(mandir)/man8/tlog-rec.8
+

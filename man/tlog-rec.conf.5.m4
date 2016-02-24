@@ -1,7 +1,6 @@
 m4_include(`misc.m4')m4_dnl
 .\" Process this file with
 .\" groff -man -Tascii tlog-rec.conf.5
-.\"
 m4_generated_warning(`.\" ')m4_dnl
 .\"
 .\" Copyright (C) 2016 Red Hat
