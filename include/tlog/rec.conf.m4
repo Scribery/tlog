@@ -1,5 +1,10 @@
+m4_include(`misc.m4')m4_dnl
+//
+// Tlog-rec M4_CONF_TYPE() configuration. See tlog-rec.conf(5) for details.
+// This file uses JSON format with both C and C++ comments allowed.
+//
+m4_generated_warning(`// ')m4_dnl
 m4_divert(-1)
-m4_include(`misc.m4')
 
 m4_define(`M4_PREFIX', `')
 m4_define(`M4_INDENT', `')
@@ -64,8 +69,10 @@ m4_define(
                         m4_print(M4_INDENT())
                         m4_ifelse(
                             `$5',
+                            `false',
+                            `m4_print(`// ')',
+                            M4_COMMENT_OUT(),
                             `true',
-                            ,
                             `m4_print(`// ')'
                         )
                         m4_print(`"$2" : ')$4

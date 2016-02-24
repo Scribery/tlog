@@ -33,10 +33,13 @@ REC_CONF_DEPS = \
 
 $(TLOG_REC_CONF_LOCAL_NAME): $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/include/tlog \
+	   -D M4_CONF_TYPE=system-wide \
+	   -D M4_COMMENT_OUT=true \
 	   --prefix-builtins rec.conf.m4 > $@
 
 $(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/include/tlog \
+	   -D M4_CONF_TYPE=default \
 	   --prefix-builtins rec.conf.m4 > $@
 
 AM_CPPFLAGS = $(JSON_CFLAGS) $(LIBCURL_CPPFLAGS)
