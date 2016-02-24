@@ -75,12 +75,12 @@ M4_PARAM(`', `progname', `args',
          `M4_TYPE_STRING()', false,
          `', `', `',
          `M4_LINES(`Program name as given in argv[0] with leading dash',
-                   `optionally stripped')')m4_dnl
+                   `optionally stripped.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `args', `args',
          `M4_TYPE_STRING_ARRAY()', false,
          `', `', `',
-         `M4_LINES(`Non-option positional command-line arguments')')m4_dnl
+         `M4_LINES(`Non-option positional command-line arguments.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `help', `opts',
          `M4_TYPE_BOOL(false)', true,
@@ -90,43 +90,43 @@ m4_dnl
 M4_PARAM(`', `shell', `file',
          `M4_TYPE_STRING(`/bin/bash')', true,
          `s', `=SHELL', `Spawn the specified SHELL',
-         `M4_LINES(`The path to the shell executable that should be spawned')')m4_dnl
+         `M4_LINES(`The path to the shell executable that should be spawned.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `notice', `file',
          `M4_TYPE_STRING(`\nATTENTION! Your session is being recorded!\n\n')',
          true,
          `', `=TEXT', `Print TEXT message before starting recording',
          `M4_LINES(`A message which will be printed before starting',
-                   `recording and the user shell - can be used to warn',
-                   `the user that session is recorded.')')m4_dnl
+                   `recording and the user shell. Can be used to warn',
+                   `the user that the session is recorded.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `latency', `file',
          `M4_TYPE_INT(10, 1)', true,
          `', `=SECONDS', `Cache captured data SECONDS seconds before logging',
-         `M4_LINES(`The data which does not exceed maximum payload,',
-                   `stays in memory and is not logged until SECONDS',
-                   `seconds elapse.')')m4_dnl
+         `M4_LINES(`The data which does not exceed maximum payload',
+                   `stays in memory and is not logged until this number of',
+                   `seconds elapses.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `payload', `file',
          `M4_TYPE_INT(2048, 32)', true,
          `', `=BYTES', `Limit encoded data to BYTES bytes',
-         `M4_LINES(`As soon as encoded collected data exceeds the',
-                   `maximum payload size it is formatted into a message',
-                   `and logged.')')m4_dnl
+         `M4_LINES(`Maximum encoded data (payload) size per message, bytes.',
+                   `As soon as payload exceeds this number of bytes,',
+                   `it is formatted into a message and logged.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `login', `opts',
          `M4_TYPE_BOOL()', false,
          `l', `', `Make the shell a login shell',
-         `M4_LINES(`Tell the spawned shell it is a login shell.',
+         `M4_LINES(`If set to true, the shell is signalled to act as a login shell.',
                    `This is done by prepending argv[0] of the shell',
                    `with a dash character.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `command', `opts',
          `M4_TYPE_BOOL()', false,
          `c', `', `Execute shell commands',
-         `M4_LINES(`Pass the -c option to the shell and all the positional',
-                   `arguments, which specify the shell commands to execute'
-                   `along with command name and its arguments.')')m4_dnl
+         `M4_LINES(`If set to true, tlog-rec passes the -c option to the shell,',
+                   `followed by all the positional arguments, which specify the shell',
+                   `commands to execute along with command name and its arguments.')')m4_dnl
 m4_dnl
 m4_dnl
 m4_dnl
@@ -152,9 +152,8 @@ m4_dnl
 M4_PARAM(`', `writer', `file',
          `M4_TYPE_CHOICE(`syslog', `syslog', `file')', true,
          `', `=STRING', `Use STRING log writer (syslog/file, default syslog)',
-         `M4_LINES(`The type of "log writer" to use for logging.',
-                   `The writer needs to be configured using other',
-                   `parameters.')')m4_dnl
+         `M4_LINES(`The type of "log writer" to use for logging. The writer needs',
+                   `to be configured using its dedicated parameters.')')m4_dnl
 m4_dnl
 m4_dnl
 m4_dnl
@@ -193,8 +192,7 @@ M4_PARAM(`/syslog', `facility', `file',
                          `uucp')',
          true,
          `', `=STRING', `Log with STRING syslog facility',
-         `M4_LINES(`Syslog facility the "syslog" writer should use',
-                   `for the messages.')')m4_dnl
+         `M4_LINES(`Syslog facility the "syslog" writer should use for the messages.')')m4_dnl
 m4_dnl
 M4_PARAM(`/syslog', `priority', `file',
          `M4_TYPE_CHOICE(`info',
@@ -208,6 +206,5 @@ M4_PARAM(`/syslog', `priority', `file',
                          `debug')',
          true,
          `', `=STRING', `Log with STRING syslog priority',
-         `M4_LINES(`Syslog priority the "syslog" writer should use',
-                   `for the messages.')')m4_dnl
+         `M4_LINES(`Syslog priority the "syslog" writer should use for the messages.')')m4_dnl
 m4_dnl
