@@ -178,7 +178,7 @@ m4_define(
                         m4_printl(`)')
                         $9
                         m4_popdef(`M4_TYPE_EXPAND_TO')
-                        m4_printl(`.sp 1')
+                        m4_printl(`')
                         m4_pushdef(`M4_TYPE_EXPAND_TO', `desc')
                         $4
                         m4_popdef(`M4_TYPE_EXPAND_TO')
