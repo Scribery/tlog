@@ -22,18 +22,3 @@ include $(top_srcdir)/Common.am
 dist_doc_DATA = \
     log_format.md   \
     schema.json
-
-dist_noinst_DATA = \
-    tlog-rec.8.m4
-
-%.8: %.8.m4 ../include/tlog/misc.m4 ../include/tlog/rec_conf_schema.m4
-	m4 -I $(top_srcdir)/include/tlog \
-	   --prefix-builtins \
-	   -D M4_CONF_PATH="$(TLOG_REC_CONF_LOCAL_INST_PATH)" \
-	   $< > $@
-
-dist_man_MANS = \
-    tlog-rec.8
-
-CLEANFILES = \
-    tlog-rec.8

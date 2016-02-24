@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 Red Hat
+# Copyright (C) 2016 Red Hat
 #
 # This file is part of tlog.
 #
@@ -19,7 +19,17 @@
 
 include $(top_srcdir)/Common.am
 
-ACLOCAL_AMFLAGS = -Im4
-SUBDIRS = include lib src doc man
-dist_doc_DATA = README.md
-dist_noinst_DATA = tlog.spec
+dist_noinst_DATA = \
+    tlog-rec.8.m4
+
+%.8: %.8.m4 ../include/tlog/misc.m4 ../include/tlog/rec_conf_schema.m4
+	m4 -I $(top_srcdir)/include/tlog \
+	   --prefix-builtins \
+	   -D M4_CONF_PATH="$(TLOG_REC_CONF_LOCAL_INST_PATH)" \
+	   $< > $@
+
+dist_man_MANS = \
+    tlog-rec.8
+
+CLEANFILES = \
+    tlog-rec.8
