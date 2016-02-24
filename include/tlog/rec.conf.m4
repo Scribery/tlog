@@ -26,6 +26,24 @@ m4_define(
 )
 
 m4_define(
+    `M4_LINES',
+    `
+        m4_ifelse(
+            `$#', `0',
+            `',
+            `$#', `1',
+            `
+                m4_printl(M4_INDENT()`// $1')
+            ',
+            `
+                m4_printl(M4_INDENT()`// $1')
+                M4_LINES(m4_shift($@))
+            '
+        )
+    '
+)
+
+m4_define(
     `M4_PARAM',
     `
         m4_ifelse(
@@ -42,7 +60,7 @@ m4_define(
                             `m4_define(`M4_FIRST', `false')',
                             `m4_printl(`,', `')'
                         )
-                        m4_printl(M4_INDENT()`// $8')
+                        $9
                         m4_print(M4_INDENT())
                         m4_ifelse(
                             `$5',

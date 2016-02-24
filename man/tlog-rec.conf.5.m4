@@ -142,6 +142,24 @@ m4_define(
 )
 
 m4_define(
+    `M4_LINES',
+    `
+        m4_ifelse(
+            `$#', `0',
+            `',
+            `$#', `1',
+            `
+                m4_printl(`$1')
+            ',
+            `
+                m4_printl(`$1')
+                M4_LINES(m4_shift($@))
+            '
+        )
+    '
+)
+
+m4_define(
     `M4_PARAM_DESC',
     `
         m4_ifelse(
@@ -156,7 +174,8 @@ m4_define(
                         m4_printl(`.TP')
                         m4_print(`$2 (')
                         $4
-                        m4_printl(`)', `$8')
+                        m4_printl(`)')
+                        $9
                         m4_popdef(`M4_TYPE_EXPAND_TO')
                         m4_printl(`.sp 1')
                         m4_pushdef(`M4_TYPE_EXPAND_TO', `desc')
