@@ -82,3 +82,5 @@ upon exec'ing the shell.
 
 Comment-out all parameters in the installed system-wide config as they're
 matching the defaults.
+
+Consider moving common .m4 files to a dedicated directory.
