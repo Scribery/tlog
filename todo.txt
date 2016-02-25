@@ -86,3 +86,8 @@ Figure out the proper order and behavior of opts and args origins for tlog-rec
 config parameters.
 
 Add -v/--version option support to tlog-rec.
+
+Consider the case of tlog being the user's shell and the user running an X
+session, where he/she can open many terminals with the same session ID.
+Tlog needs to detect that and not record anything as other tools should be
+used to record graphical sessions.
