@@ -21,7 +21,7 @@ m4_generated_warning(`.\" ')m4_dnl
 .\" along with tlog; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 .\"
-.TH tlog-rec "5" "February 2016" "Linux"
+.TH tlog-rec "5" "February 2016" "Tlog"
 .SH NAME
 tlog-rec.conf \- tlog-rec configuration file
 
