@@ -38,7 +38,7 @@ m4_dnl Arguments:
 m4_dnl
 m4_dnl      $1 Container prefix (`' for root)
 m4_dnl      $2 Parameter name
-m4_dnl      $3 Parameter origin, one of "file", "env", "opts", or "args"
+m4_dnl      $3 Parameter origin, one of "file", "env", "name", "opts", or "args"
 m4_dnl      $4 Type, must be an invocation of M4_TYPE_*.
 m4_dnl      $5 `true' if has default value, `false' otherwise
 m4_dnl      $6 Option letter
@@ -71,12 +71,6 @@ m4_dnl Arguments:
 m4_dnl
 m4_dnl      $@ Default values
 m4_dnl
-M4_PARAM(`', `progname', `args',
-         `M4_TYPE_STRING()', false,
-         `', `', `',
-         `M4_LINES(`Program name as given in argv[0] with leading dash',
-                   `optionally stripped.')')m4_dnl
-m4_dnl
 M4_PARAM(`', `args', `args',
          `M4_TYPE_STRING_ARRAY()', false,
          `', `', `',
@@ -92,7 +86,7 @@ M4_PARAM(`', `shell', `file',
          `s', `=SHELL', `Spawn the specified SHELL',
          `M4_LINES(`The path to the shell executable that should be spawned.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `login', `opts',
+M4_PARAM(`', `login', `name',
          `M4_TYPE_BOOL()', false,
          `l', `', `Make the shell a login shell',
          `M4_LINES(`If set to true, the shell is signalled to act as a login shell.',

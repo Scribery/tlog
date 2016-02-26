@@ -41,16 +41,18 @@
 extern tlog_grc tlog_rec_conf_cmd_help(FILE *stream, const char *progname);
 
 /**
- * Load tlog-rec configuration from the command line.
+ * Load tlog-rec configuration from the command line and extract program name.
  *
- * @param pconf Location for the pointer to the JSON object representing
- *              the loaded configuration.
- * @param argc  Tlog-rec argc value.
- * @param argc  Tlog-rec argv value.
+ * @param pprogname Location for the dynamically-allocated program name.
+ * @param pconf     Location for the pointer to the JSON object representing
+ *                  the loaded configuration.
+ * @param argc      Tlog-rec argc value.
+ * @param argc      Tlog-rec argv value.
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_rec_conf_cmd_load(struct json_object **pconf,
+extern tlog_grc tlog_rec_conf_cmd_load(char **pprogname,
+                                       struct json_object **pconf,
                                        int argc, char **argv);
 
 #endif /* _TLOG_REC_CONF_CMD_H */

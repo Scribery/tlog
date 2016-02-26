@@ -758,3 +758,31 @@ parameters should be referred by a name common to the configuration sources.
 So, we can have an m4 file describing containers and parameters, then generate
 documentation from that, then generate JSON validation, option reading,
 environment variable reading from that.
+
+-----
+
+program name - argv[0]
+    This is not configuration, i.e. not something that the user would like to
+    specify, that's why we don't want it in our options or config file. OTOH,
+    a system administrator or a distro package maintainer might like to change
+    it. Still he's not a user and this is done outside the normal
+    configuration path.
+
+    Shall we perhaps transfer it out-of-band? But it's sooo convenient to
+    transfer it via JSON.
+
+shell - cfg, env, argv[0], -s/--shell option
+
+login flag - argv[0], -l/--login option
+
+positional arguments argv[x..]
+
+
+If we take away the program name, then we can split those into three origins:
+
+    name    - login flag, shell
+    opts    - login flag, shell
+    args    - arguments only
+
+Then the login flag and shell would be documented properly and overridable by
+the command-line options.

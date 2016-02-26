@@ -286,13 +286,14 @@ cleanup:
 }
 
 tlog_grc
-tlog_rec_conf_load(struct json_object **pconf,
+tlog_rec_conf_load(char **pprogname, struct json_object **pconf,
                    int argc, char **argv)
 {
     tlog_grc grc;
     struct json_object *conf = NULL;
     struct json_object *overlay = NULL;
     char *path = NULL;
+    char *progname = NULL;
 
 #define GUARD(_expr) \
     do {                            \
@@ -340,7 +341,7 @@ tlog_rec_conf_load(struct json_object **pconf,
     overlay = NULL;
 
     /* Overlay with command-line config */
-    GUARD(tlog_rec_conf_cmd_load(&overlay, argc, argv));
+    GUARD(tlog_rec_conf_cmd_load(&progname, &overlay, argc, argv));
     GUARD(tlog_json_overlay(&conf, conf, overlay));
     json_object_put(overlay);
     overlay = NULL;
@@ -348,9 +349,12 @@ tlog_rec_conf_load(struct json_object **pconf,
 #undef GUARD
 
     grc = TLOG_RC_OK;
+    *pprogname = progname;
+    progname = NULL;
     *pconf = conf;
     conf = NULL;
 cleanup:
+    free(progname);
     free(path);
     json_object_put(overlay);
     json_object_put(conf);

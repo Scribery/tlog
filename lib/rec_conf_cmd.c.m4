@@ -258,11 +258,13 @@ m4_divert(0)m4_dnl
 }
 
 tlog_grc
-tlog_rec_conf_cmd_load(struct json_object **pconf, int argc, char **argv)
+tlog_rec_conf_cmd_load(char **pprogname, struct json_object **pconf,
+                       int argc, char **argv)
 {
     tlog_grc grc;
     char *progpath = NULL;
-    const char *progname;
+    const char *p;
+    char *progname = NULL;
     struct json_object *conf = NULL;
     int optcode;
     const char *optname;
@@ -289,9 +291,9 @@ tlog_rec_conf_cmd_load(struct json_object **pconf, int argc, char **argv)
                 tlog_grc_strerror(grc));
         goto cleanup;
     }
-    progname = basename(progpath);
-    if (progname[0] == m4_singlequote(-)) {
-        progname++;
+    p = basename(progpath);
+    if (p[0] == m4_singlequote(-)) {
+        p++;
         val = json_object_new_boolean(true);
         if (val == NULL) {
             grc = TLOG_GRC_ERRNO;
@@ -307,22 +309,13 @@ tlog_rec_conf_cmd_load(struct json_object **pconf, int argc, char **argv)
         }
         val = NULL;
     }
-
-    /* Store stripped program name */
-    val = json_object_new_string(progname);
-    if (val == NULL) {
+    progname = strdup(p);
+    if (progname == NULL) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed creating program name object: %s\n",
+        fprintf(stderr, "Failed allocating program name: %s\n",
                 tlog_grc_strerror(grc));
         goto cleanup;
     }
-    grc = tlog_json_object_object_add_path(conf, "progname", val);
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed storing program name: %s\n",
-                tlog_grc_strerror(grc));
-        goto cleanup;
-    }
-    val = NULL;
 
     /* Read all options */
     while ((optcode = getopt_long(argc, argv,
@@ -520,11 +513,14 @@ m4_divert(0)m4_dnl
         goto cleanup;
     }
 
+    *pprogname = progname;
+    progname = NULL;
     *pconf = conf;
     conf = NULL;
     grc = TLOG_RC_OK;
 
 cleanup:
+    free(progname);
     free(progpath);
     json_object_put(args);
     json_object_put(val);

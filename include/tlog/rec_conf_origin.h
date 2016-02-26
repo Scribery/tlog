@@ -26,10 +26,11 @@
 #ifndef _TLOG_REC_CONF_ORIGIN_H
 #define _TLOG_REC_CONF_ORIGIN_H
 
-/** Configuration parameter origin code */
+/** Configuration parameter origin codes, lowest priority first */
 enum tlog_rec_conf_origin {
     TLOG_REC_CONF_ORIGIN_FILE,      /**< Configuration file */
     TLOG_REC_CONF_ORIGIN_ENV,       /**< Environment variable(s) */
+    TLOG_REC_CONF_ORIGIN_NAME,      /**< Command name (argv[0]) */
     TLOG_REC_CONF_ORIGIN_OPTS,      /**< Command-line options */
     TLOG_REC_CONF_ORIGIN_ARGS       /**< Command-line positional arguments */
 };

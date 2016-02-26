@@ -683,11 +683,10 @@ cleanup:
 }
 
 static tlog_grc
-run(struct json_object *conf)
+run(const char *progname, struct json_object *conf)
 {
     tlog_grc grc;
     struct json_object *obj;
-    const char *progname;
     int64_t num;
     unsigned int latency;
     unsigned int log_mask;
@@ -707,13 +706,7 @@ run(struct json_object *conf)
     struct termios raw_termios;
     struct winsize winsize;
 
-    /* Get program name */
-    if (!json_object_object_get_ex(conf, "progname", &obj)) {
-        fprintf(stderr, "Program name not found\n");
-        grc = TLOG_RC_FAILURE;
-        goto cleanup;
-    }
-    progname = json_object_get_string(obj);
+    assert(progname != NULL);
 
     /* Check for the help flag */
     if (json_object_object_get_ex(conf, "help", &obj)) {
@@ -895,18 +888,20 @@ main(int argc, char **argv)
 {
     tlog_grc grc;
     struct json_object *conf = NULL;
+    char *progname = NULL;
 
-    /* Read configuration */
-    grc = tlog_rec_conf_load(&conf, argc, argv);
+    /* Read configuration and program name */
+    grc = tlog_rec_conf_load(&progname, &conf, argc, argv);
     if (grc != TLOG_RC_OK) {
         return 1;
     }
 
     /* Run */
-    grc = run(conf);
+    grc = run(progname, conf);
 
-    /* Free configuration */
+    /* Free configuration and program name */
     json_object_put(conf);
+    free(progname);
 
     /* Reproduce the exit signal to get proper exit status */
     if (exit_signum != 0)
