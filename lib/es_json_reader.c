@@ -333,6 +333,11 @@ tlog_es_json_reader_refill_array(struct tlog_es_json_reader *es_json_reader)
     assert(tlog_es_json_reader_is_valid(
                     (struct tlog_json_reader *)es_json_reader));
 
+    /* Initialize callback data */
+    data.tok = es_json_reader->tok;
+    data.rc = json_tokener_success;
+    data.obj = NULL;
+
     /* Free the previous array, if any */
     if (es_json_reader->array != NULL) {
         json_object_put(es_json_reader->array);
@@ -354,9 +359,6 @@ tlog_es_json_reader_refill_array(struct tlog_es_json_reader *es_json_reader)
     }
 
     /* Set callback data */
-    data.tok = es_json_reader->tok;
-    data.rc = json_tokener_success;
-    data.obj = NULL;
     rc = curl_easy_setopt(es_json_reader->curl, CURLOPT_WRITEDATA, &data);
     if (rc != CURLE_OK) {
         grc = TLOG_GRC_FROM(curl, rc);
