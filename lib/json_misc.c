@@ -66,6 +66,7 @@ tlog_json_overlay(struct json_object    **presult,
                 grc = TLOG_GRC_ERRNO;
                 goto failure;
             }
+            result_item = NULL;
         }
     /* Else if it's an object (we need to merge or duplicate) */
     } else if (upper_type == json_type_object) {
@@ -91,6 +92,7 @@ tlog_json_overlay(struct json_object    **presult,
                 }
                 /* TODO Handle failure with newer JSON-C */
                 json_object_object_add(result, lower_key, result_item);
+                result_item = NULL;
             }
         } else {
             lower_item = NULL;
@@ -108,6 +110,7 @@ tlog_json_overlay(struct json_object    **presult,
             }
             /* TODO Handle failure with newer JSON-C */
             json_object_object_add(result, upper_key, result_item);
+            result_item = NULL;
         }
     /* Else if it's NULL (we use lower) */
     } else if (upper_type == json_type_null) {
@@ -127,6 +130,7 @@ tlog_json_overlay(struct json_object    **presult,
     return TLOG_RC_OK;
 
 failure:
+    json_object_put(result_item);
     json_object_put(result);
     return grc;
 }
