@@ -29,10 +29,6 @@
 #include <tlog/rc.h>
 #include <libgen.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <string.h>
 #include <assert.h>
 
@@ -73,79 +69,29 @@ tlog_rec_conf_file_load(struct json_object **pconf,
                         const char *path)
 {
     tlog_grc grc;
-    int fd = -1;
-    size_t size = 0;
-    size_t len = 0;
-    char *buf = NULL;
-    char *new_buf;
-    size_t new_size;
-    ssize_t rc;
+    struct json_object *conf = NULL;
 
-    assert(pconf != NULL);
-    assert(path != NULL);
-
-    /* Open the file */
-    fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed opening \"%s\": %s\n",
-                path, tlog_grc_strerror(grc));
-        goto cleanup;
-    }
-
-    /* Allocate the buffer */
-    size = 2048;
-    buf = malloc(size);
-    if (buf == NULL) {
-        grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed allocating reading buffer: %s\n",
-                tlog_grc_strerror(grc));
-        goto cleanup;
-    }
-
-    /* Read the whole file */
-    while (true) {
-        rc = read(fd, buf + len, size - len - 1);
-        if (rc < 0) {
-            grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed reading \"%s\": %s\n",
-                    path, tlog_grc_strerror(grc));
-            goto cleanup;
-        } else if (rc == 0) {
-            break;
-        }
-
-        len += rc;
-
-        if (len > size / 2) {
-            new_size = size * 2;
-            new_buf = realloc(buf, new_size);
-            if (new_buf == NULL) {
-                grc = TLOG_GRC_ERRNO;
-                fprintf(stderr, "Failed reallocating reading buffer: %s\n",
-                        tlog_grc_strerror(grc));
-                goto cleanup;
-            }
-            buf = new_buf;
-            size = new_size;
-        }
-    }
-    buf[len] = '\0';
-
-    /* Parse the contents */
-    grc = tlog_rec_conf_str_parse(pconf, buf, TLOG_CONF_ORIGIN_FILE);
+    /* Load the file */
+    grc = tlog_json_object_from_file(&conf, path);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed parsing \"%s\": %s\n",
+        fprintf(stderr, "Failed loading \"%s\": %s\n",
                 path, tlog_grc_strerror(grc));
         goto cleanup;
     }
 
+    /* Validate the contents */
+    grc = tlog_rec_conf_validate(conf, TLOG_CONF_ORIGIN_FILE);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Invalid contents of \"%s\": %s\n",
+                path, tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+
+    *pconf = conf;
+    conf = NULL;
     grc = TLOG_RC_OK;
 cleanup:
-    free(buf);
-    if (fd >= 0) {
-        close(fd);
-    }
+    json_object_put(conf);
     return grc;
 }
 
