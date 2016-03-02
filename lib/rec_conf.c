@@ -1,4 +1,6 @@
 /*
+ * Tlog-rec configuration parsing
+ *
  * Copyright (C) 2016 Red Hat
  *
  * This file is part of tlog.
