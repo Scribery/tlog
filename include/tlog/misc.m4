@@ -90,3 +90,9 @@ m4_changequote(`[', `]')m4_dnl
 m4_define([m4_singlequote], ['$1'])m4_dnl
 m4_changequote([`], ['])m4_dnl
 m4_dnl
+m4_dnl Convert all argument letters to upper case.
+m4_dnl Arguments:
+m4_dnl
+m4_dnl      $1  The text to upper-case.
+m4_dnl
+m4_define(`m4_upcase', `m4_translit(`$1', `a-z', `A-Z')')m4_dnl
