@@ -1,2 +1,2 @@
-rec_conf_cmd.c
-rec_conf_validate.c
+*_conf_cmd.c
+*_conf_validate.c

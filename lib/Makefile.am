@@ -32,11 +32,20 @@ lib_LTLIBRARIES = libtlog.la
 noinst_LTLIBRARIES = libtlog_test.la
 
 dist_noinst_DATA = \
-    rec_conf_cmd.c.m4       \
-    rec_conf_validate.c.m4
+    rec_conf_cmd.c.m4   \
+    conf_validate.c.m4
 
-%.c: %.c.m4 ../include/tlog/misc.m4 ../include/tlog/rec_conf_schema.m4
+REC_CONF_DEPS = \
+    $(top_srcdir)/include/tlog/misc.m4              \
+    $(top_srcdir)/include/tlog/rec_conf_schema.m4
+
+rec_conf_cmd.c: rec_conf_cmd.c.m4 $(top_srcdir)/include/tlog/conf_cmd.m4 $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/include/tlog --prefix-builtins $< > $@
+
+rec_conf_validate.c: conf_validate.c.m4 $(REC_CONF_DEPS)
+	m4 -I $(top_srcdir)/include/tlog \
+	   -D M4_PROG_NAME=rec \
+	   --prefix-builtins $< > $@
 
 BUILT_SOURCES = \
     rec_conf_cmd.c      \

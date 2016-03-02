@@ -1,6 +1,6 @@
 m4_include(`misc.m4')m4_dnl
 //
-// Tlog-rec M4_CONF_TYPE() configuration. See tlog-rec.conf(5) for details.
+// Tlog-M4_PROG_NAME() M4_CONF_TYPE() configuration. See tlog-M4_PROG_NAME().conf(5) for details.
 // This file uses JSON format with both C and C++ comments allowed.
 //
 m4_generated_warning(`// ')m4_dnl

@@ -26,21 +26,26 @@ CLEANFILES = \
     $(TLOG_REC_CONF_DEFAULT_NAME)   \
     $(TLOG_REC_CONF_LOCAL_NAME)
 
+CONF_DEPS = \
+    $(top_srcdir)/include/tlog/conf.m4  \
+    $(top_srcdir)/include/tlog/misc.m4
+
 REC_CONF_DEPS = \
-    $(top_srcdir)/include/tlog/rec.conf.m4          \
-    $(top_srcdir)/include/tlog/misc.m4              \
+    $(CONF_DEPS)                                    \
     $(top_srcdir)/include/tlog/rec_conf_schema.m4
 
 $(TLOG_REC_CONF_LOCAL_NAME): $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/include/tlog \
+	   -D M4_PROG_NAME=rec \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
-	   --prefix-builtins rec.conf.m4 > $@
+	   --prefix-builtins conf.m4 > $@
 
 $(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/include/tlog \
+	   -D M4_PROG_NAME=rec \
 	   -D M4_CONF_TYPE=default \
-	   --prefix-builtins rec.conf.m4 > $@
+	   --prefix-builtins conf.m4 > $@
 
 install-data-hook:
 	: Remove "DO NOT EDIT" warning

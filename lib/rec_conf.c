@@ -20,7 +20,7 @@
 
 #include <config.h>
 #include <tlog/rec_conf.h>
-#include <tlog/rec_conf_origin.h>
+#include <tlog/conf_origin.h>
 #include <tlog/rec_conf_cmd.h>
 #include <tlog/rec_conf_validate.h>
 #include <tlog/json_misc.h>
@@ -37,7 +37,7 @@
 static tlog_grc
 tlog_rec_conf_str_parse(struct json_object **pconf,
                         const char *str,
-                        enum tlog_rec_conf_origin origin)
+                        enum tlog_conf_origin origin)
 {
     struct json_object *conf = NULL;
     enum json_tokener_error jerr;
@@ -131,7 +131,7 @@ tlog_rec_conf_file_load(struct json_object **pconf,
     buf[len] = '\0';
 
     /* Parse the contents */
-    grc = tlog_rec_conf_str_parse(pconf, buf, TLOG_REC_CONF_ORIGIN_FILE);
+    grc = tlog_rec_conf_str_parse(pconf, buf, TLOG_CONF_ORIGIN_FILE);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed parsing \"%s\": %s\n",
                 path, tlog_grc_strerror(grc));
@@ -188,7 +188,7 @@ tlog_rec_conf_env_load(struct json_object **pconf)
     /* Load the config text, if specified */
     val = getenv("TLOG_REC_CONF_TEXT");
     if (val != NULL) {
-        grc = tlog_rec_conf_str_parse(&overlay, val, TLOG_REC_CONF_ORIGIN_ENV);
+        grc = tlog_rec_conf_str_parse(&overlay, val, TLOG_CONF_ORIGIN_ENV);
         if (grc != TLOG_RC_OK) {
             fprintf(stderr,
                     "Failed parsing the contents of "

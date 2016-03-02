@@ -22,6 +22,7 @@ include $(top_srcdir)/Common.am
 tlogdir = $(includedir)/tlog
 
 tlog_HEADERS = \
+    conf_origin.h           \
     es_json_reader.h        \
     fd_json_reader.h        \
     fd_json_writer.h        \
@@ -44,7 +45,6 @@ tlog_HEADERS = \
     rc.h                    \
     rec_conf.h              \
     rec_conf_cmd.h          \
-    rec_conf_origin.h       \
     rec_conf_validate.h     \
     sink.h                  \
     sink_type.h             \
@@ -70,6 +70,7 @@ noinst_HEADERS = \
     test_misc.h
 
 dist_noinst_DATA = \
-    misc.m4                 \
-    rec.conf.m4             \
+    conf.m4             \
+    conf_cmd.m4         \
+    misc.m4             \
     rec_conf_schema.m4

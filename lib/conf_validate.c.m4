@@ -1,6 +1,6 @@
 m4_include(`misc.m4')m4_dnl
 /*
- * Tlog-rec JSON configuration validation.
+ * Tlog-M4_PROG_NAME() JSON configuration validation.
  *
 m4_generated_warning(` * ')m4_dnl
  *
@@ -23,7 +23,7 @@ m4_generated_warning(` * ')m4_dnl
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <tlog/rec_conf_validate.h>
+`#'include <tlog/M4_PROG_NAME()_conf_validate.h>
 #include <tlog/grc.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>
@@ -158,7 +158,7 @@ m4_define(
             `
                 m4_printl(
                    `',
-                   `        if (origin >= TLOG_REC_CONF_ORIGIN_'m4_translit(`$3', `a-z', `A-Z')` &&',
+                   `        if (origin >= TLOG_CONF_ORIGIN_'m4_translit(`$3', `a-z', `A-Z')` &&',
                    `            strcmp(name, "$2") == 0) {')
                 $4
                 m4_printl(
@@ -185,7 +185,7 @@ m4_define(
                    `                        name, json_type_to_name(type));',
                    `                return TLOG_RC_FAILURE;',
                    `            }',
-                   `            grc = tlog_rec_conf_validate`'m4_translit(`$1$2', `/', `_')`'(obj, origin);',
+                   `            grc = tlog_'M4_PROG_NAME()`_conf_validate`'m4_translit(`$1$2', `/', `_')`'(obj, origin);',
                    `            if (grc != TLOG_RC_OK) {',
                    `                return grc;',
                    `            }',
@@ -206,7 +206,7 @@ m4_define(
                 m4_pushdef(`M4_PREFIX', M4_PREFIX()`$2')
 
                 m4_pushdef(`M4_PARAM')
-                m4_include(`rec_conf_schema.m4')
+                m4_include(M4_PROG_NAME()`_conf_schema.m4')
                 m4_popdef(`M4_PARAM')
 
                 m4_pushdef(`M4_CONTAINER', m4_defn(`M4_CONTAINER_VALIDATE_CONTAINER'))
@@ -215,14 +215,14 @@ m4_define(
                 m4_ifelse(`$2', `', , `m4_print(`static ')')
                 m4_printl(
                    `tlog_grc',
-                   `tlog_rec_conf_validate`'m4_translit(M4_PREFIX(), `/', `_')(struct json_object *conf,',
-                   `                                enum tlog_rec_conf_origin origin)',
+                   `tlog_'M4_PROG_NAME()`_conf_validate`'m4_translit(M4_PREFIX(), `/', `_')(struct json_object *conf,',
+                   `                                enum tlog_conf_origin origin)',
                    `{',
                    `    assert(conf != NULL);',
                    `',
                    `    json_object_object_foreach(conf, name, obj) {',
                    `        enum json_type type = json_object_get_type(obj);')
-                m4_include(`rec_conf_schema.m4')
+                m4_include(M4_PROG_NAME()`_conf_schema.m4')
                 m4_printl(
                     `',
                     `        fprintf(stderr, "Unexpected node: \"%s\"\n", name);',

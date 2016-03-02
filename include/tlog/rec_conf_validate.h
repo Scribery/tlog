@@ -28,7 +28,7 @@
 
 #include <json.h>
 #include <tlog/grc.h>
-#include <tlog/rec_conf_origin.h>
+#include <tlog/conf_origin.h>
 
 /**
  * Check tlog-rec JSON configuration: if there are no unkown nodes and the
@@ -40,6 +40,6 @@
  * @return Global return code.
  */
 extern tlog_grc tlog_rec_conf_validate(struct json_object *conf,
-                                       enum tlog_rec_conf_origin origin);
+                                       enum tlog_conf_origin origin);
 
 #endif /* _TLOG_REC_CONF_VALIDATE_H */
