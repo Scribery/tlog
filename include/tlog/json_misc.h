@@ -53,9 +53,23 @@ extern tlog_grc tlog_json_overlay(struct json_object    **presult,
  * @param path  The dot-separated path to add the object at.
  * @param val   The json_object or NULL member to associate with the give
  *              field.
+ *
+ * @return Global return code.
  */
 extern tlog_grc tlog_json_object_object_add_path(struct json_object* obj,
                                                  const char *path,
                                                  struct json_object *val);
+
+/**
+ * Read JSON from file, returning an error code, as opposed to
+ * json_object_from_file which doesn't.
+ *
+ * @param pconf     Location for the loaded configuration.
+ * @param path      Path to the file to load and parse.
+ *
+ * @return Global return code.
+ */
+extern tlog_grc tlog_json_object_from_file(struct json_object **pconf,
+                                           const char          *path);
 
 #endif /* _TLOG_JSON_MISC_H */
