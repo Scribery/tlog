@@ -44,11 +44,11 @@ m4_dnl
 m4_dnl      $@  Text to output
 m4_dnl
 m4_define(`m4_print', `m4_dnl
-m4_pushdef(`orig_diversion', m4_divnum)m4_dnl
+m4_pushdef(`m4_orig_divnum', m4_divnum)m4_dnl
 m4_divert(0)m4_dnl
 m4_concat($@)`'m4_dnl
-m4_divert(orig_diversion)m4_dnl
-m4_popdef(`orig_diversion')m4_dnl
+m4_divert(m4_orig_divnum)m4_dnl
+m4_popdef(`m4_orig_divnum')m4_dnl
 ')m4_dnl
 m4_dnl
 m4_dnl
@@ -58,11 +58,11 @@ m4_dnl
 m4_dnl      $@  Text to output
 m4_dnl
 m4_define(`m4_printl', `m4_dnl
-m4_pushdef(`orig_diversion', m4_divnum)m4_dnl
+m4_pushdef(`m4_orig_divnum', m4_divnum)m4_dnl
 m4_divert(0)m4_dnl
 m4_concatl($@)`'m4_dnl
-m4_divert(orig_diversion)m4_dnl
-m4_popdef(`orig_diversion')m4_dnl
+m4_divert(m4_orig_divnum)m4_dnl
+m4_popdef(`m4_orig_divnum')m4_dnl
 ')m4_dnl
 m4_dnl
 m4_dnl
