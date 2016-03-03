@@ -56,6 +56,8 @@ tlog_tty_sink_cleanup(struct tlog_sink *sink)
 {
     struct tlog_tty_sink *tty_sink =
                                 (struct tlog_tty_sink *)sink;
+    (void) tty_sink; /* unused unless asserts are enabled */
+
     assert(tty_sink != NULL);
 }
 
