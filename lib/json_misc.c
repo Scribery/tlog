@@ -48,7 +48,6 @@ tlog_json_overlay(struct json_object    **presult,
         int length = json_object_array_length(upper);
         int i;
         struct json_object *upper_item;
-        struct json_object *result_item;
 
         result = json_object_new_array();
         if (result == NULL) {
