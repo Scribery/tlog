@@ -167,7 +167,6 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
     str = json_object_get_string(obj);
     if (strcmp(str, "file") == 0) {
         struct json_object *conf_file;
-        int fd;
 
         /* Get file writer conf container */
         if (!json_object_object_get_ex(conf, "file", &conf_file)) {
