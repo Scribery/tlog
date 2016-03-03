@@ -27,6 +27,7 @@
 #include <tlog/rec_conf_validate.h>
 #include <tlog/json_misc.h>
 #include <tlog/rc.h>
+#include <tlog/misc.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <string.h>
@@ -161,78 +162,6 @@ cleanup:
     return grc;
 }
 
-static tlog_grc
-tlog_rec_conf_get_path(char       **pabs_path,
-                       const char  *prog_path,
-                       const char  *inst_abs_path,
-                       const char  *build_rel_path)
-{
-    tlog_grc grc;
-    char *real_prog_path = NULL;
-    const char *prog_name;
-    const char *prog_dir;
-    char *rel_path = NULL;
-    char *abs_path = NULL;
-
-    assert(pabs_path != NULL);
-    assert(prog_path != NULL);
-    assert(inst_abs_path != NULL);
-    assert(build_rel_path != NULL);
-
-    /* If we can get the program's path and thus attach the relative path */
-    real_prog_path = realpath(prog_path, NULL);
-    if (real_prog_path != NULL) {
-        /* Assume we get the GNU version, which doesn't modify the buffer */
-        prog_name = basename(real_prog_path);
-
-        /* Skip the initial dash, if any */
-        if (prog_name[0] == '-') {
-            prog_name++;
-        }
-
-        /* If running from the build dir (have "lt-" prefix) */
-        if (prog_name[0] == 'l' && prog_name[1] == 't' && prog_name[2] == '-') {
-            /* Form absolute path from relative */
-            prog_dir = dirname(real_prog_path);
-            rel_path = malloc(strlen(prog_dir) + 1 + strlen(build_rel_path) + 1);
-            if (rel_path == NULL) {
-                grc = TLOG_GRC_ERRNO;
-                goto cleanup;
-            }
-            strcpy(rel_path, prog_dir);
-            strcat(rel_path, "/");
-            strcat(rel_path, build_rel_path);
-            abs_path = realpath(rel_path, NULL);
-            if (abs_path == NULL) {
-                grc = TLOG_GRC_ERRNO;
-                goto cleanup;
-            }
-        }
-    } else if (errno != ENOENT) {
-        grc = TLOG_GRC_ERRNO;
-        goto cleanup;
-    }
-
-    /* If the path wasn't found */
-    if (abs_path == NULL) {
-        /* Duplicate the specified absolute path */
-        abs_path = strdup(inst_abs_path);
-        if (abs_path == NULL) {
-            grc = TLOG_GRC_ERRNO;
-            goto cleanup;
-        }
-    }
-
-    *pabs_path = abs_path;
-    abs_path = NULL;
-    grc = TLOG_RC_OK;
-cleanup:
-    free(abs_path);
-    free(rel_path);
-    free(real_prog_path);
-    return grc;
-}
-
 tlog_grc
 tlog_rec_conf_load(char **pprogname, struct json_object **pconf,
                    int argc, char **argv)
@@ -261,9 +190,9 @@ tlog_rec_conf_load(char **pprogname, struct json_object **pconf,
     }
 
     /* Overlay with default config */
-    GUARD(tlog_rec_conf_get_path(&path, argv[0], 
-                                 TLOG_REC_CONF_DEFAULT_INST_PATH,
-                                 TLOG_REC_CONF_DEFAULT_BUILD_PATH));
+    GUARD(tlog_build_or_inst_path(&path, argv[0],
+                                  TLOG_REC_CONF_DEFAULT_BUILD_PATH,
+                                  TLOG_REC_CONF_DEFAULT_INST_PATH));
     GUARD(tlog_rec_conf_file_load(&overlay, path));
     free(path);
     path = NULL;
@@ -272,9 +201,9 @@ tlog_rec_conf_load(char **pprogname, struct json_object **pconf,
     overlay = NULL;
 
     /* Overlay with local system config */
-    GUARD(tlog_rec_conf_get_path(&path, argv[0], 
-                                 TLOG_REC_CONF_LOCAL_INST_PATH,
-                                 TLOG_REC_CONF_LOCAL_BUILD_PATH));
+    GUARD(tlog_build_or_inst_path(&path, argv[0],
+                                  TLOG_REC_CONF_LOCAL_BUILD_PATH,
+                                  TLOG_REC_CONF_LOCAL_INST_PATH));
     GUARD(tlog_rec_conf_file_load(&overlay, path));
     free(path);
     path = NULL;

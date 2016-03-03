@@ -31,6 +31,7 @@
 #include <time.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <tlog/grc.h>
 
 /** Return number of elements in an array */
 #define TLOG_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -225,5 +226,26 @@ tlog_size_digits(size_t n)
     for (d = 1; n > 9; d++, n /= 10);
     return d;
 }
+
+/**
+ * Retrieve an absolute path to a file either in the build tree, if possible,
+ * and if running from the build tree, or at the installed location.
+ *
+ * @param ppath             Location for the retrieved absolute path.
+ * @param prog_path         Path to a program relative to which the build_rel_path
+ *                          is specified, to use if running from the build tree.
+ * @param build_rel_path    Build tree path relative to prog_path, to use if
+ *                          running from the build tree.
+ * @param inst_abs_path     Absolute installation path to use if not running
+ *                          from the build tree, or if prog_path or
+ *                          build_rel_path were not found.
+ *
+ * @return True if retrieval was successful, false if it failed and errno was
+ *         set to indicate the error.
+ */
+extern tlog_grc tlog_build_or_inst_path(char          **ppath,
+                                        const char     *prog_path,
+                                        const char     *build_rel_path,
+                                        const char     *inst_abs_path);
 
 #endif /* _TLOG_MISC_H */
