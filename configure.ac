@@ -57,7 +57,6 @@ PKG_CHECK_MODULES(JSON, json-c,
                   [AC_DEFINE([HAVE_JSON],[1],[Have JSON library])])
 AM_CONDITIONAL(HAVE_JSON, test -n "$JSON_LIBS")
 
-m4_include([libcurl.m4])
 LIBCURL_CHECK_CONFIG([yes], [7.15.4], ,
                      AC_MSG_ERROR([libcurl not found]))
 
