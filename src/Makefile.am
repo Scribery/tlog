@@ -19,10 +19,17 @@
 
 include $(top_srcdir)/Common.am
 
-pkgconflocal_DATA = $(TLOG_REC_CONF_LOCAL_NAME)
-pkgconfdefault_DATA = $(TLOG_REC_CONF_DEFAULT_NAME)
+pkgconflocal_DATA = \
+    $(TLOG_PLAY_CONF_LOCAL_NAME)    \
+    $(TLOG_REC_CONF_LOCAL_NAME)
+
+pkgconfdefault_DATA = \
+    $(TLOG_PLAY_CONF_DEFAULT_NAME)  \
+    $(TLOG_REC_CONF_DEFAULT_NAME)
 
 CLEANFILES = \
+    $(TLOG_PLAY_CONF_DEFAULT_NAME)  \
+    $(TLOG_PLAY_CONF_LOCAL_NAME)  \
     $(TLOG_REC_CONF_DEFAULT_NAME)   \
     $(TLOG_REC_CONF_LOCAL_NAME)
 
@@ -34,11 +41,28 @@ REC_CONF_DEPS = \
     $(CONF_DEPS)                                    \
     $(top_srcdir)/include/tlog/rec_conf_schema.m4
 
+PLAY_CONF_DEPS = \
+    $(CONF_DEPS)                                    \
+    $(top_srcdir)/include/tlog/play_conf_schema.m4
+
+$(TLOG_PLAY_CONF_LOCAL_NAME): $(PLAY_CONF_DEPS)
+	m4 -I $(top_srcdir)/include/tlog \
+	   -D M4_PROG_NAME=play \
+	   -D M4_CONF_TYPE=system-wide \
+	   -D M4_COMMENT_OUT=true \
+	   --prefix-builtins conf.m4 > $@
+
 $(TLOG_REC_CONF_LOCAL_NAME): $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/include/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
+	   --prefix-builtins conf.m4 > $@
+
+$(TLOG_PLAY_CONF_DEFAULT_NAME): $(PLAY_CONF_DEPS)
+	m4 -I $(top_srcdir)/include/tlog \
+	   -D M4_PROG_NAME=play \
+	   -D M4_CONF_TYPE=default \
 	   --prefix-builtins conf.m4 > $@
 
 $(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
@@ -50,6 +74,8 @@ $(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
 install-data-hook:
 	: Remove "DO NOT EDIT" warning
 	$(SED) -i -e '/vim:nomodifiable/,/\*\{73\}/ d' \
+	       $(DESTDIR)$(TLOG_PLAY_CONF_DEFAULT_INST_PATH) \
+	       $(DESTDIR)$(TLOG_PLAY_CONF_LOCAL_INST_PATH) \
 	       $(DESTDIR)$(TLOG_REC_CONF_DEFAULT_INST_PATH) \
 	       $(DESTDIR)$(TLOG_REC_CONF_LOCAL_INST_PATH)
 

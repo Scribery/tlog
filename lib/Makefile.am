@@ -20,11 +20,15 @@
 include $(top_srcdir)/Common.am
 
 AM_CPPFLAGS = \
-    -DTLOG_REC_CONF_DEFAULT_INST_PATH='"$(TLOG_REC_CONF_DEFAULT_INST_PATH)"'    \
-    -DTLOG_REC_CONF_DEFAULT_BUILD_PATH='"$(TLOG_REC_CONF_DEFAULT_BUILD_PATH)"'  \
-    -DTLOG_REC_CONF_LOCAL_INST_PATH='"$(TLOG_REC_CONF_LOCAL_INST_PATH)"'        \
-    -DTLOG_REC_CONF_LOCAL_BUILD_PATH='"$(TLOG_REC_CONF_LOCAL_BUILD_PATH)"'      \
-    $(JSON_CFLAGS)                                                              \
+    -DTLOG_PLAY_CONF_DEFAULT_BUILD_PATH='"$(TLOG_PLAY_CONF_DEFAULT_BUILD_PATH)"'    \
+    -DTLOG_PLAY_CONF_DEFAULT_INST_PATH='"$(TLOG_PLAY_CONF_DEFAULT_INST_PATH)"'      \
+    -DTLOG_PLAY_CONF_LOCAL_BUILD_PATH='"$(TLOG_PLAY_CONF_LOCAL_BUILD_PATH)"'        \
+    -DTLOG_PLAY_CONF_LOCAL_INST_PATH='"$(TLOG_PLAY_CONF_LOCAL_INST_PATH)"'          \
+    -DTLOG_REC_CONF_DEFAULT_BUILD_PATH='"$(TLOG_REC_CONF_DEFAULT_BUILD_PATH)"'      \
+    -DTLOG_REC_CONF_DEFAULT_INST_PATH='"$(TLOG_REC_CONF_DEFAULT_INST_PATH)"'        \
+    -DTLOG_REC_CONF_LOCAL_BUILD_PATH='"$(TLOG_REC_CONF_LOCAL_BUILD_PATH)"'          \
+    -DTLOG_REC_CONF_LOCAL_INST_PATH='"$(TLOG_REC_CONF_LOCAL_INST_PATH)"'            \
+    $(JSON_CFLAGS)                                                                  \
     $(LIBCURL_CPPFLAGS)
 
 lib_LTLIBRARIES = libtlog.la
@@ -32,15 +36,28 @@ lib_LTLIBRARIES = libtlog.la
 noinst_LTLIBRARIES = libtlog_test.la
 
 dist_noinst_DATA = \
-    rec_conf_cmd.c.m4   \
-    conf_validate.c.m4
+    conf_validate.c.m4  \
+    play_conf_cmd.c.m4  \
+    rec_conf_cmd.c.m4
 
 REC_CONF_DEPS = \
     $(top_srcdir)/include/tlog/misc.m4              \
     $(top_srcdir)/include/tlog/rec_conf_schema.m4
 
+PLAY_CONF_DEPS = \
+    $(top_srcdir)/include/tlog/misc.m4              \
+    $(top_srcdir)/include/tlog/play_conf_schema.m4
+
+play_conf_cmd.c: play_conf_cmd.c.m4 $(top_srcdir)/include/tlog/conf_cmd.m4 $(PLAY_CONF_DEPS)
+	m4 -I $(top_srcdir)/include/tlog --prefix-builtins $< > $@
+
 rec_conf_cmd.c: rec_conf_cmd.c.m4 $(top_srcdir)/include/tlog/conf_cmd.m4 $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/include/tlog --prefix-builtins $< > $@
+
+play_conf_validate.c: conf_validate.c.m4 $(PLAY_CONF_DEPS)
+	m4 -I $(top_srcdir)/include/tlog \
+	   -D M4_PROG_NAME=play \
+	   --prefix-builtins $< > $@
 
 rec_conf_validate.c: conf_validate.c.m4 $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/include/tlog \
@@ -48,7 +65,9 @@ rec_conf_validate.c: conf_validate.c.m4 $(REC_CONF_DEPS)
 	   --prefix-builtins $< > $@
 
 BUILT_SOURCES = \
-    rec_conf_cmd.c      \
+    play_conf_cmd.c         \
+    play_conf_validate.c    \
+    rec_conf_cmd.c          \
     rec_conf_validate.c
 
 CLEANFILES = $(BUILT_SOURCES)
@@ -71,6 +90,9 @@ libtlog_la_SOURCES = \
     mem_json_writer.c       \
     misc.c                  \
     pkt.c                   \
+    play_conf.c             \
+    play_conf_cmd.c         \
+    play_conf_validate.c    \
     rc.c                    \
     rec_conf.c              \
     rec_conf_cmd.c          \
