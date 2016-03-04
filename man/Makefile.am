@@ -24,17 +24,17 @@ dist_noinst_DATA = \
     tlog-rec.conf.5.m4
 
 REC_MAN_DEPS = \
-    $(top_srcdir)/include/tlog/misc.m4              \
-    $(top_srcdir)/include/tlog/rec_conf_schema.m4
+    $(top_srcdir)/m4/tlog/misc.m4               \
+    $(top_srcdir)/m4/tlog/rec_conf_schema.m4
 
 tlog-rec.8: tlog-rec.8.m4 $(REC_MAN_DEPS)
-	m4 -I $(top_srcdir)/include/tlog \
+	m4 -I $(top_srcdir)/m4/tlog \
 	   --prefix-builtins \
 	   -D M4_CONF_PATH="$(TLOG_REC_CONF_LOCAL_INST_PATH)" \
 	   $< > $@
 
 %.5: %.5.m4 $(MAN_DEPS)
-	m4 -I $(top_srcdir)/include/tlog \
+	m4 -I $(top_srcdir)/m4/tlog \
 	   --prefix-builtins \
 	   $< > $@
 

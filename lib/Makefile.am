@@ -41,26 +41,26 @@ dist_noinst_DATA = \
     rec_conf_cmd.c.m4
 
 REC_CONF_DEPS = \
-    $(top_srcdir)/include/tlog/misc.m4              \
-    $(top_srcdir)/include/tlog/rec_conf_schema.m4
+    $(top_srcdir)/m4/tlog/misc.m4               \
+    $(top_srcdir)/m4/tlog/rec_conf_schema.m4
 
 PLAY_CONF_DEPS = \
-    $(top_srcdir)/include/tlog/misc.m4              \
-    $(top_srcdir)/include/tlog/play_conf_schema.m4
+    $(top_srcdir)/m4/tlog/misc.m4               \
+    $(top_srcdir)/m4/tlog/play_conf_schema.m4
 
-play_conf_cmd.c: play_conf_cmd.c.m4 $(top_srcdir)/include/tlog/conf_cmd.m4 $(PLAY_CONF_DEPS)
-	m4 -I $(top_srcdir)/include/tlog --prefix-builtins $< > $@
+play_conf_cmd.c: play_conf_cmd.c.m4 $(top_srcdir)/m4/tlog/conf_cmd.m4 $(PLAY_CONF_DEPS)
+	m4 -I $(top_srcdir)/m4/tlog --prefix-builtins $< > $@
 
-rec_conf_cmd.c: rec_conf_cmd.c.m4 $(top_srcdir)/include/tlog/conf_cmd.m4 $(REC_CONF_DEPS)
-	m4 -I $(top_srcdir)/include/tlog --prefix-builtins $< > $@
+rec_conf_cmd.c: rec_conf_cmd.c.m4 $(top_srcdir)/m4/tlog/conf_cmd.m4 $(REC_CONF_DEPS)
+	m4 -I $(top_srcdir)/m4/tlog --prefix-builtins $< > $@
 
 play_conf_validate.c: conf_validate.c.m4 $(PLAY_CONF_DEPS)
-	m4 -I $(top_srcdir)/include/tlog \
+	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=play \
 	   --prefix-builtins $< > $@
 
 rec_conf_validate.c: conf_validate.c.m4 $(REC_CONF_DEPS)
-	m4 -I $(top_srcdir)/include/tlog \
+	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   --prefix-builtins $< > $@
 

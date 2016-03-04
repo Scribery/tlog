@@ -34,39 +34,39 @@ CLEANFILES = \
     $(TLOG_REC_CONF_LOCAL_NAME)
 
 CONF_DEPS = \
-    $(top_srcdir)/include/tlog/conf.m4  \
-    $(top_srcdir)/include/tlog/misc.m4
+    $(top_srcdir)/m4/tlog/conf.m4   \
+    $(top_srcdir)/m4/tlog/misc.m4
 
 REC_CONF_DEPS = \
-    $(CONF_DEPS)                                    \
-    $(top_srcdir)/include/tlog/rec_conf_schema.m4
+    $(CONF_DEPS)                                \
+    $(top_srcdir)/m4/tlog/rec_conf_schema.m4
 
 PLAY_CONF_DEPS = \
-    $(CONF_DEPS)                                    \
-    $(top_srcdir)/include/tlog/play_conf_schema.m4
+    $(CONF_DEPS)                                \
+    $(top_srcdir)/m4/tlog/play_conf_schema.m4
 
 $(TLOG_PLAY_CONF_LOCAL_NAME): $(PLAY_CONF_DEPS)
-	m4 -I $(top_srcdir)/include/tlog \
+	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=play \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
 	   --prefix-builtins conf.m4 > $@
 
 $(TLOG_REC_CONF_LOCAL_NAME): $(REC_CONF_DEPS)
-	m4 -I $(top_srcdir)/include/tlog \
+	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
 	   --prefix-builtins conf.m4 > $@
 
 $(TLOG_PLAY_CONF_DEFAULT_NAME): $(PLAY_CONF_DEPS)
-	m4 -I $(top_srcdir)/include/tlog \
+	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=play \
 	   -D M4_CONF_TYPE=default \
 	   --prefix-builtins conf.m4 > $@
 
 $(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
-	m4 -I $(top_srcdir)/include/tlog \
+	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_CONF_TYPE=default \
 	   --prefix-builtins conf.m4 > $@

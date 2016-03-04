@@ -62,6 +62,8 @@ LIBCURL_CHECK_CONFIG([yes], [7.15.4], ,
 
 # Output
 AC_CONFIG_FILES([Makefile
+                 m4/Makefile
+                 m4/tlog/Makefile
                  include/Makefile
                  include/tlog/Makefile
                  lib/Makefile

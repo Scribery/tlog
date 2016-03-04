@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015 Red Hat
+# Copyright (C) 2016 Red Hat
 #
 # This file is part of tlog.
 #
@@ -19,7 +19,9 @@
 
 include $(top_srcdir)/Common.am
 
-ACLOCAL_AMFLAGS = -Im4/autotools
-SUBDIRS = m4 include lib src doc man
-dist_doc_DATA = README.md
-dist_noinst_DATA = tlog.spec
+dist_noinst_DATA = \
+    conf.m4             \
+    conf_cmd.m4         \
+    misc.m4             \
+    play_conf_schema.m4 \
+    rec_conf_schema.m4
