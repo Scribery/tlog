@@ -20,6 +20,8 @@
 include $(top_srcdir)/Common.am
 
 dist_noinst_DATA = \
+    tlog-play.8.m4      \
+    tlog-play.conf.5.m4 \
     tlog-rec.8.m4       \
     tlog-rec.conf.5.m4
 
@@ -27,9 +29,19 @@ MAN_DEPS = \
     $(top_srcdir)/m4/tlog/misc.m4   \
     $(top_srcdir)/m4/tlog/man.m4
 
+PLAY_MAN_DEPS = \
+	$(MAN_DEPS)                                    \
+    $(top_srcdir)/m4/tlog/play_conf_schema.m4
+
 REC_MAN_DEPS = \
 	$(MAN_DEPS)                                    \
     $(top_srcdir)/m4/tlog/rec_conf_schema.m4
+
+tlog-play.8: tlog-play.8.m4 $(PLAY_MAN_DEPS)
+	m4 -I $(top_srcdir)/m4/tlog \
+	   --prefix-builtins \
+	   -D M4_CONF_PATH="$(TLOG_PLAY_CONF_LOCAL_INST_PATH)" \
+	   $< > $@
 
 tlog-rec.8: tlog-rec.8.m4 $(REC_MAN_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
@@ -43,16 +55,22 @@ tlog-rec.8: tlog-rec.8.m4 $(REC_MAN_DEPS)
 	   $< > $@
 
 dist_man_MANS = \
-    tlog-rec.8      \
+    tlog-play.8         \
+    tlog-play.conf.5    \
+    tlog-rec.8          \
     tlog-rec.conf.5
 
 CLEANFILES = \
-    tlog-rec.8      \
+    tlog-play.8         \
+    tlog-play.conf.5    \
+    tlog-rec.8          \
     tlog-rec.conf.5
 
 install-data-hook:
 	: Remove "DO NOT EDIT" warning
 	$(SED) -i -e '/vim:nomodifiable/,/\*\{73\}/ d' \
+	       $(DESTDIR)$(mandir)/man5/tlog-play.conf.5 \
 	       $(DESTDIR)$(mandir)/man5/tlog-rec.conf.5 \
+	       $(DESTDIR)$(mandir)/man8/tlog-play.8 \
 	       $(DESTDIR)$(mandir)/man8/tlog-rec.8
 
