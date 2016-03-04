@@ -38,7 +38,7 @@ size, so the playback terminal size needs to match the recorded terminal size
 for proper playback.
 
 .B Tlog-play
-loads its parameters from the systemwide configuration file M4_CONF_PATH(),
+loads its parameters from the system-wide configuration file M4_CONF_PATH(),
 which can be overridden with command-line options described below.
 
 .SH OPTIONS
@@ -47,7 +47,7 @@ M4_MAN_OPTS()
 .SH FILES
 .TP
 M4_CONF_PATH()
-The systemwide configuration file
+The system-wide configuration file
 
 .SH EXAMPLES
 .TP

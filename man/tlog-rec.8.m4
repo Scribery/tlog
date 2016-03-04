@@ -52,7 +52,7 @@ If no non-option arguments are encountered, then the shell is started
 interactively.
 
 .B Tlog-rec
-loads its parameters first from the systemwide configuration file
+loads its parameters first from the system-wide configuration file
 M4_CONF_PATH(), then from the file pointed at by TLOG_REC_CONF_FILE
 environment variable (if set), then from the contents of the TLOG_REC_CONF_TEXT
 environment variable (if set), and then from command-line options. Parameters
@@ -64,7 +64,7 @@ M4_MAN_OPTS()
 .TP
 TLOG_REC_CONF_FILE
 Specifies the location of a configuration file to be read.
-The configuration parameters in this file override the ones in the systemwide
+The configuration parameters in this file override the ones in the system-wide
 configuration file M4_CONF_PATH().
 
 .TP
@@ -76,7 +76,7 @@ specified with TLOG_REC_CONF_FILE.
 .SH FILES
 .TP
 M4_CONF_PATH()
-The systemwide configuration file
+The system-wide configuration file
 
 .SH EXAMPLES
 .TP
