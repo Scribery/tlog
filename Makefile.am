@@ -19,7 +19,7 @@
 
 include $(top_srcdir)/Common.am
 
-ACLOCAL_AMFLAGS = -Im4
+ACLOCAL_AMFLAGS = -Im4/autotools
 SUBDIRS = include lib src doc man
 dist_doc_DATA = README.md
 dist_noinst_DATA = tlog.spec
