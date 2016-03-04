@@ -20,7 +20,8 @@
 include $(top_srcdir)/Common.am
 
 dist_noinst_DATA = \
-    tlog-rec.8.m4
+    tlog-rec.8.m4       \
+    tlog-rec.conf.5.m4
 
 REC_MAN_DEPS = \
     $(top_srcdir)/include/tlog/misc.m4              \
