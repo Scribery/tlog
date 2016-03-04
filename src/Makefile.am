@@ -19,6 +19,9 @@
 
 include $(top_srcdir)/Common.am
 
+dist_noinst_DATA = \
+    tlog-prog.conf.m4
+
 pkgconflocal_DATA = \
     $(TLOG_PLAY_CONF_LOCAL_NAME)    \
     $(TLOG_REC_CONF_LOCAL_NAME)
@@ -34,7 +37,7 @@ CLEANFILES = \
     $(TLOG_REC_CONF_LOCAL_NAME)
 
 CONF_DEPS = \
-    $(top_srcdir)/m4/tlog/conf.m4   \
+    $(srcdir)/tlog-prog.conf.m4     \
     $(top_srcdir)/m4/tlog/misc.m4
 
 REC_CONF_DEPS = \
@@ -50,26 +53,26 @@ $(TLOG_PLAY_CONF_LOCAL_NAME): $(PLAY_CONF_DEPS)
 	   -D M4_PROG_NAME=play \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
-	   --prefix-builtins conf.m4 > $@
+	   --prefix-builtins $< > $@
 
 $(TLOG_REC_CONF_LOCAL_NAME): $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
-	   --prefix-builtins conf.m4 > $@
+	   --prefix-builtins $< > $@
 
 $(TLOG_PLAY_CONF_DEFAULT_NAME): $(PLAY_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=play \
 	   -D M4_CONF_TYPE=default \
-	   --prefix-builtins conf.m4 > $@
+	   --prefix-builtins $< > $@
 
 $(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_CONF_TYPE=default \
-	   --prefix-builtins conf.m4 > $@
+	   --prefix-builtins $< > $@
 
 install-data-hook:
 	: Remove "DO NOT EDIT" warning
