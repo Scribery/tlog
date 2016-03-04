@@ -1,4 +1,5 @@
-m4_include(`misc.m4')m4_dnl
+m4_include(`man.m4')m4_dnl
+m4_define(`M4_PROG_NAME', `rec')m4_dnl
 .\" Process this file with
 .\" groff -man -Tascii tlog-rec.8
 m4_generated_warning(`.\" ')m4_dnl
@@ -58,116 +59,7 @@ environment variable (if set), and then from command-line options. Parameters
 from each of these sources override the previous one in turn.
 
 .SH OPTIONS
-m4_divert(-1)
-m4_define(`M4_PREFIX', `')
-m4_define(`M4_TYPE_EXPAND_TO', `')
-
-m4_define(
-    `M4_TYPE_INT',
-    `
-        m4_ifelse(
-            `$2',
-            `',
-            ,
-            `
-                m4_printl(`Value minimum: $2', `.br')
-            '
-        )
-    '
-)
-
-m4_define(`M4_TYPE_STRING', `')
-
-m4_define(`M4_TYPE_BOOL', `')
-
-m4_define(
-    `M4_TYPE_CHOICE_LIST',
-    `
-        m4_ifelse(
-            `$#', `0', `',
-            `$#', `1', `m4_print(`"'m4_patsubst(`$1', `\\', `\\\\')`"')',
-            `
-                m4_print(`"'m4_patsubst(`$1', `\\', `\\\\')`"`, '')
-                M4_TYPE_CHOICE_LIST(m4_shift($@))
-            '
-        )
-    '
-)
-
-m4_define(
-    `M4_TYPE_CHOICE',
-    `
-        m4_ifelse(
-            `$2',
-            `',
-            ,
-            `
-                m4_print(`Value should be one of: ')
-                M4_TYPE_CHOICE_LIST(m4_shift($@))
-                m4_printl(`', `.br')
-            '
-        )
-    '
-)
-
-m4_define(
-    `M4_CONTAINER_PARAM',
-    `
-        m4_ifelse(
-            `$1',
-            M4_PREFIX(),
-            `
-                m4_ifelse(
-                    `$3',
-                    `args',
-                    ,
-                    `
-                        m4_printl(`.TP')
-                        m4_print(
-                            `.B ',
-                            m4_ifelse(`$6',,, `-$6`,' '),
-                            `--',
-                            m4_substr(m4_translit(`$1/$2', `/', `-'), 1),
-                            `$7')
-                        m4_printl(
-                            `',
-                            `$8',
-                            `')
-                        $4
-                    '
-                )
-            '
-        )
-    '
-)
-
-m4_define(
-    `M4_CONTAINER',
-    `
-        m4_ifelse(
-            `$1',
-            M4_PREFIX(),
-            `
-                m4_printl(`.SS $3 options')
-                m4_pushdef(`M4_PREFIX', M4_PREFIX()`$2')
-
-                m4_pushdef(`M4_CONTAINER', `')
-                m4_pushdef(`M4_PARAM', m4_defn(`M4_CONTAINER_PARAM'))
-                m4_include(`rec_conf_schema.m4')
-                m4_popdef(`M4_PARAM')
-                m4_popdef(`M4_CONTAINER')
-
-                m4_include(`rec_conf_schema.m4')
-
-                m4_popdef(`M4_PREFIX')
-            '
-        )
-    '
-)
-
-M4_CONTAINER(`', `', `General')
-
-m4_divert(0)
+M4_MAN_OPTS()
 .SH ENVIRONMENT
 .TP
 TLOG_REC_CONF_FILE

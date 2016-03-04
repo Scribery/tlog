@@ -22,6 +22,7 @@ include $(top_srcdir)/Common.am
 dist_noinst_DATA = \
     conf.m4             \
     conf_cmd.m4         \
+    man.m4              \
     misc.m4             \
     play_conf_schema.m4 \
     rec_conf_schema.m4

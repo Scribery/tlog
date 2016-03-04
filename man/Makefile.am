@@ -23,8 +23,12 @@ dist_noinst_DATA = \
     tlog-rec.8.m4       \
     tlog-rec.conf.5.m4
 
+MAN_DEPS = \
+    $(top_srcdir)/m4/tlog/misc.m4   \
+    $(top_srcdir)/m4/tlog/man.m4
+
 REC_MAN_DEPS = \
-    $(top_srcdir)/m4/tlog/misc.m4               \
+	$(MAN_DEPS)                                    \
     $(top_srcdir)/m4/tlog/rec_conf_schema.m4
 
 tlog-rec.8: tlog-rec.8.m4 $(REC_MAN_DEPS)
