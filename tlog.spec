@@ -40,5 +40,6 @@ rm ${RPM_BUILD_ROOT}/%{_libdir}/*.la
 %{_mandir}/man5/*
 %{_mandir}/man8/*
 %config(noreplace) %{_sysconfdir}/tlog/tlog-rec.conf
+%config(noreplace) %{_sysconfdir}/tlog/tlog-play.conf
 
 %changelog
