@@ -26,13 +26,18 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <curl/curl.h>
+#include <tlog/play_conf.h>
+#include <tlog/play_conf_cmd.h>
+#include <tlog/fd_json_reader.h>
 #include <tlog/es_json_reader.h>
 #include <tlog/json_source.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>
 
-#define BUF_SIZE    4096
 #define POLL_PERIOD 1
 
 /**< Number of the signal causing exit */
@@ -45,18 +50,152 @@ exit_sighandler(int signum)
         exit_signum = signum;
 }
 
-int
-main(int argc, char **argv)
+/**
+ * Create the log source according to configuration.
+ *
+ * @param psink Location for the created source pointer.
+ * @param conf  Configuration JSON object.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+create_log_source(struct tlog_source **psource, struct json_object *conf)
+{
+    tlog_grc grc;
+    struct json_object *obj;
+    const char *str;
+    int fd = -1;
+    struct tlog_json_reader *reader = NULL;
+    struct tlog_source *source = NULL;
+
+    /*
+     * Create the reader
+     */
+    if (!json_object_object_get_ex(conf, "reader", &obj)) {
+        fprintf(stderr, "Reader type is not specified\n");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    str = json_object_get_string(obj);
+    if (strcmp(str, "es") == 0) {
+        struct json_object *conf_es;
+        const char *baseurl;
+        const char *query;
+
+        /* Get ElasticSearch reader conf container */
+        if (!json_object_object_get_ex(conf, "es", &conf_es)) {
+            fprintf(stderr,
+                    "ElasticSearch reader parameters are not specified\n");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+
+        /* Get the base URL */
+        if (!json_object_object_get_ex(conf_es, "baseurl", &obj)) {
+            fprintf(stderr, "ElasticSearch base URL is not specified\n");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+        baseurl = json_object_get_string(obj);
+
+        /* Check base URL validity */
+        if (!tlog_es_json_reader_base_url_is_valid(baseurl)) {
+            fprintf(stderr, "Invalid ElasticSearch base URL: %s\n", baseurl);
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+
+        /* Get the query */
+        if (!json_object_object_get_ex(conf_es, "query", &obj)) {
+            fprintf(stderr, "ElasticSearch query is not specified\n");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+        query = json_object_get_string(obj);
+
+        /* Create the reader */
+        grc = tlog_es_json_reader_create(&reader, baseurl, query, 10);
+        if (grc != TLOG_RC_OK) {
+            fprintf(stderr, "Failed creating the ElasticSearch reader: %s\n",
+                    tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+    } else if (strcmp(str, "file") == 0) {
+        struct json_object *conf_file;
+
+        /* Get file reader conf container */
+        if (!json_object_object_get_ex(conf, "file", &conf_file)) {
+            fprintf(stderr, "File reader parameters are not specified\n");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+
+        /* Get the file path */
+        if (!json_object_object_get_ex(conf_file, "path", &obj)) {
+            fprintf(stderr, "Log file path is not specified\n");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+        str = json_object_get_string(obj);
+
+        /* Open the file */
+        fd = open(str, O_RDONLY);
+        if (fd < 0) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr, "Failed opening log file \"%s\": %s\n",
+                    str, tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+
+        /* Create the reader, letting it take over the FD */
+        grc = tlog_fd_json_reader_create(&reader, fd, true, 65536);
+        if (grc != TLOG_RC_OK) {
+            fprintf(stderr, "Failed creating file reader: %s\n",
+                    tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+        fd = -1;
+    } else {
+        fprintf(stderr, "Unknown reader type: %s\n", str);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+
+    /* Create the source */
+    grc = tlog_json_source_create(&source, reader, true,
+                                  NULL, NULL, 0, 4096);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Failed creating the source: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+    reader = NULL;
+
+    *psource = source;
+    source = NULL;
+    grc = TLOG_RC_OK;
+
+cleanup:
+
+    if (fd >= 0) {
+        close(fd);
+    }
+    tlog_json_reader_destroy(reader);
+    tlog_source_destroy(source);
+    return grc;
+}
+
+static tlog_grc
+run(const char *progname, struct json_object *conf)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
-    const char *base_url;
-    const char *query;
+    tlog_grc grc;
+    struct json_object *obj;
     struct timespec local_last_ts;
     struct timespec local_this_ts;
     struct timespec local_next_ts;
     struct timespec pkt_last_ts;
     struct timespec pkt_delay_ts;
-    tlog_grc grc;
     ssize_t rc;
     size_t i;
     size_t j;
@@ -64,27 +203,30 @@ main(int argc, char **argv)
     struct termios orig_termios;
     struct termios raw_termios;
     struct sigaction sa;
-    int status = 1;
-    struct tlog_json_reader *reader = NULL;
     struct tlog_source *source = NULL;
     bool got_pkt = false;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
     size_t loc_num;
     char *loc_str = NULL;
 
-    /* Retrieve command-line arguments */
-    if (argc != 3) {
-        fprintf(stderr, "Invalid number of arguments\n");
-        fprintf(stderr, "Usage: tlog-play BASE_URL QUERY\n");
+    assert(progname != NULL);
+
+    /* Check if arguments are provided */
+    if (json_object_object_get_ex(conf, "args", &obj) &&
+        json_object_array_length(obj) > 0) {
+        fprintf(stderr, "Positional arguments are not accepted\n");
+        tlog_play_conf_cmd_help(stderr, progname);
+        grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
-    base_url = argv[1];
-    query = argv[2];
 
-    /* Check base URL validity */
-    if (!tlog_es_json_reader_base_url_is_valid(base_url)) {
-        fprintf(stderr, "Invalid base URL: %s\n", base_url);
-        goto cleanup;
+    /* Check for the help flag */
+    if (json_object_object_get_ex(conf, "help", &obj)) {
+        if (json_object_get_boolean(obj)) {
+            tlog_play_conf_cmd_help(stdout, progname);
+            grc = TLOG_RC_OK;
+            goto cleanup;
+        }
     }
 
     /* Initialize libcurl */
@@ -95,20 +237,11 @@ main(int argc, char **argv)
         goto cleanup;
     }
 
-    /* Create the reader */
-    grc = tlog_es_json_reader_create(&reader, base_url, query, 10);
+    /* Create log source */
+    grc = create_log_source(&source, conf);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating the reader: %s\n",
-                tlog_grc_strerror(grc));
-        goto cleanup;
-    }
-
-    /* Create the source */
-    grc = tlog_json_source_create(&source, reader, false,
-                                  NULL, NULL, 0, BUF_SIZE);
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating the source: %s\n",
-                tlog_grc_strerror(grc));
+        fprintf(stderr, "Failed creating log source: %s\n",
+                strerror(errno));
         goto cleanup;
     }
 
@@ -226,14 +359,13 @@ main(int argc, char **argv)
         pkt_last_ts = pkt.timestamp;
     }
 
-    status = 0;
+    grc = TLOG_RC_OK;
 
 cleanup:
 
     free(loc_str);
     tlog_pkt_cleanup(&pkt);
     tlog_source_destroy(source);
-    tlog_json_reader_destroy(reader);
     curl_global_cleanup();
 
     /* Restore signal handlers */
@@ -249,13 +381,36 @@ cleanup:
         if (rc < 0 && errno != EBADF) {
             fprintf(stderr, "Failed restoring tty attributes: %s\n",
                     strerror(errno));
-            return 1;
+            return TLOG_RC_FAILURE;
         }
     }
+
+    return grc;
+}
+
+int
+main(int argc, char **argv)
+{
+    tlog_grc grc;
+    struct json_object *conf = NULL;
+    char *progname = NULL;
+
+    /* Read configuration and program name */
+    grc = tlog_play_conf_load(&progname, &conf, argc, argv);
+    if (grc != TLOG_RC_OK) {
+        return 1;
+    }
+
+    /* Run */
+    grc = run(progname, conf);
+
+    /* Free configuration and program name */
+    json_object_put(conf);
+    free(progname);
 
     /* Reproduce the exit signal to get proper exit status */
     if (exit_signum != 0)
         raise(exit_signum);
 
-    return status;
+    return grc != TLOG_RC_OK;
 }

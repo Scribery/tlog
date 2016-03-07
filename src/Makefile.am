@@ -99,6 +99,7 @@ tlog_play_SOURCES = \
     tlog-play.c
 tlog_play_LDADD = \
     ../lib/libtlog.la   \
+    $(JSON_LIBS)        \
     $(LIBCURL)
 
 TESTS = \
