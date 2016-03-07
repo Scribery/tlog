@@ -765,22 +765,25 @@ run(const char *progname, struct json_object *conf)
         clock_id = CLOCK_MONOTONIC;
     } else {
         fprintf(stderr, "No clock to use\n");
+        grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
 
     /* Get terminal attributes */
     rc = tcgetattr(STDOUT_FILENO, &orig_termios);
     if (rc < 0) {
+        grc = TLOG_GRC_ERRNO;
         fprintf(stderr, "Failed retrieving tty attributes: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         goto cleanup;
     }
 
     /* Get terminal window size */
     rc = ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize);
     if (rc < 0) {
+        grc = TLOG_GRC_ERRNO;
         fprintf(stderr, "Failed retrieving tty window size: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         goto cleanup;
     }
 
@@ -875,7 +878,7 @@ cleanup:
         if (rc < 0 && errno != EBADF) {
             fprintf(stderr, "Failed restoring tty attributes: %s\n",
                     strerror(errno));
-            return 1;
+            return TLOG_GRC_ERRNO;
         }
     }
 

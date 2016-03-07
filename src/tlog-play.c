@@ -278,8 +278,9 @@ run(const char *progname, struct json_object *conf)
     raw_termios.c_cc[VTIME] = 0;
     rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw_termios);
     if (rc < 0) {
+        grc = TLOG_GRC_ERRNO;
         fprintf(stderr, "Failed setting tty attributes: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         goto cleanup;
     }
     term_attrs_set = true;
@@ -314,8 +315,9 @@ run(const char *progname, struct json_object *conf)
 
         /* Get current time */
         if (clock_gettime(CLOCK_MONOTONIC, &local_this_ts) != 0) {
+            grc = TLOG_GRC_ERRNO;
             fprintf(stderr, "Failed retrieving current time: %s\n",
-                    strerror(errno));
+                    tlog_grc_strerror(grc));
             goto cleanup;
         }
 
@@ -337,7 +339,9 @@ run(const char *progname, struct json_object *conf)
                 if (rc == EINTR) {
                     break;
                 } else if (rc != 0) {
-                    fprintf(stderr, "Failed sleeping: %s\n", strerror(rc));
+                    grc = TLOG_GRC_ERRNO;
+                    fprintf(stderr, "Failed sleeping: %s\n",
+                            tlog_grc_strerror(grc));
                     goto cleanup;
                 }
                 local_last_ts = local_next_ts;
@@ -350,8 +354,9 @@ run(const char *progname, struct json_object *conf)
             if (errno == EINTR) {
                 break;
             } else if (rc != 0) {
+                grc = TLOG_GRC_ERRNO;
                 fprintf(stderr, "Failed writing output: %s\n",
-                        strerror(errno));
+                        tlog_grc_strerror(grc));
                 goto cleanup;
             }
         }
@@ -381,7 +386,7 @@ cleanup:
         if (rc < 0 && errno != EBADF) {
             fprintf(stderr, "Failed restoring tty attributes: %s\n",
                     strerror(errno));
-            return TLOG_RC_FAILURE;
+            return TLOG_GRC_ERRNO;
         }
     }
 
