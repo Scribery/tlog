@@ -45,6 +45,10 @@ rm -r $RPM_BUILD_ROOT/usr/include/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-rec.conf
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-play.conf
 
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
+
 %changelog
 * Wed Mar 09 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2-1
 - Release v2. Not ready for production. Following features are added.
