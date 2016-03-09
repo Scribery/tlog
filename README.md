@@ -1,6 +1,8 @@
 Tlog
 ====
 
+[![Build Status](https://travis-ci.org/Scribery/tlog.svg?branch=master)](https://travis-ci.org/Scribery/tlog)
+
 `Tlog` is a terminal I/O recording and playback package suitable for
 implementing [centralized user session recording][session_recording].
 At the moment it is not ready for production and is to be considered

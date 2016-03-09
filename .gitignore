@@ -21,6 +21,7 @@
 *~
 .*
 !.git*
+!.travis.yml
 *.tar.gz
 *.o
 *.deps
