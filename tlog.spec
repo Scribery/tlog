@@ -4,6 +4,7 @@ Release:    1%{?dist}
 Summary:    Terminal I/O recording shell wrapper
 
 License:    GPLv2+
+URL:        https://github.com/Scribery/tlog
 Source:     %{name}-%{version}.tar.gz
 
 BuildRequires:  json-c-devel
