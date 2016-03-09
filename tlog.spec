@@ -17,6 +17,8 @@ BuildRequires:  m4
  shell afterwards. The recorded I/O can then be forwarded to a logging server
  in JSON format.
 
+%global _hardened_build 1
+
 %prep
 %setup -q
 
