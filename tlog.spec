@@ -1,5 +1,5 @@
 Name:       tlog
-Version:    1
+Version:    2
 Release:    1%{?dist}
 Summary:    Terminal I/O recording shell wrapper
 
