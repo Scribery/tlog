@@ -43,3 +43,15 @@ rm ${RPM_BUILD_ROOT}/%{_libdir}/*.la
 %config(noreplace) %{_sysconfdir}/tlog/tlog-play.conf
 
 %changelog
+* Wed Mar 09 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2-1
+- Release v2. Not ready for production. Following features are added.
+- Add fully-fledged command-line interface to tlog-play, along with config
+  file and man pages.
+
+* Thu Feb 25 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 1-1
+- Release v1. Not ready for production. Following features are included.
+- Recording of user input, program output and window size changes.
+- Support for writing into syslog and files.
+- Tlog-rec configuration through system-wide configuration file
+  /etc/tlog/tlog-rec.conf, environment variables and command line.
+- Very basic playback directly from ElasticSearch.
