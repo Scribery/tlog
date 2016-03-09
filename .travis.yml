@@ -1,0 +1,18 @@
+language: c
+sudo: required
+dist: trusty
+compiler:
+- clang
+- gcc
+os: linux
+before_install:
+- sudo apt-get -qq update
+- sudo apt-get install -y libjson-c-dev libcurl4-gnutls-dev
+before_script:
+- autoreconf -i -f
+- ./configure --disable-silent-rules
+script:
+- make
+- make check
+- make distcheck
+
