@@ -876,9 +876,9 @@ cleanup:
     if (term_attrs_set) {
         rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
         if (rc < 0 && errno != EBADF) {
+            grc = TLOG_GRC_ERRNO;
             fprintf(stderr, "Failed restoring tty attributes: %s\n",
-                    strerror(errno));
-            return TLOG_GRC_ERRNO;
+                    tlog_grc_strerror(grc));
         }
     }
 

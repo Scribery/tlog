@@ -241,15 +241,16 @@ run(const char *progname, struct json_object *conf)
     grc = create_log_source(&source, conf);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log source: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         goto cleanup;
     }
 
     /* Get terminal attributes */
     rc = tcgetattr(STDOUT_FILENO, &orig_termios);
     if (rc < 0) {
+        grc = TLOG_GRC_ERRNO;
         fprintf(stderr, "Failed retrieving tty attributes: %s\n",
-                strerror(errno));
+                tlog_grc_strerror(grc));
         goto cleanup;
     }
 
@@ -384,9 +385,9 @@ cleanup:
     if (term_attrs_set) {
         rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
         if (rc < 0 && errno != EBADF) {
+            grc = TLOG_GRC_ERRNO;
             fprintf(stderr, "Failed restoring tty attributes: %s\n",
-                    strerror(errno));
-            return TLOG_GRC_ERRNO;
+                    tlog_grc_strerror(grc));
         }
     }
 
