@@ -34,14 +34,14 @@ rm ${RPM_BUILD_ROOT}/%{_libdir}/*.la
 %files
 %doc
 %{_defaultdocdir}/%{name}
-%{_bindir}/tlog-*
-%{_includedir}/tlog
-%{_libdir}/libtlog.so*
-%{_datadir}/tlog
+%{_bindir}/%{name}-*
+%{_includedir}/%{name}
+%{_libdir}/lib%{name}.so*
+%{_datadir}/%{name}
 %{_mandir}/man5/*
 %{_mandir}/man8/*
-%config(noreplace) %{_sysconfdir}/tlog/tlog-rec.conf
-%config(noreplace) %{_sysconfdir}/tlog/tlog-play.conf
+%config(noreplace) %{_sysconfdir}/%{name}/%{name}-rec.conf
+%config(noreplace) %{_sysconfdir}/%{name}/%{name}-play.conf
 
 %changelog
 * Wed Mar 09 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2-1
