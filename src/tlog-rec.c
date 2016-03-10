@@ -866,7 +866,8 @@ cleanup:
 
     /* Free shell argv list */
     if (shell_argv != NULL) {
-        for (size_t i = 0; shell_argv[i] != NULL; i++) {
+        size_t i;
+        for (i = 0; shell_argv[i] != NULL; i++) {
             free(shell_argv[i]);
         }
         free(shell_argv);
