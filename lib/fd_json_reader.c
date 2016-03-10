@@ -40,7 +40,6 @@ struct tlog_fd_json_reader {
     size_t                  size;       /**< Text buffer size */
     char                   *pos;        /**< Text buffer reading position */
     char                   *end;        /**< End of valid text buffer data */
-    bool                    eof;        /**< True if EOF was encountered */
 };
 
 static void
@@ -151,14 +150,13 @@ tlog_fd_json_reader_refill_buf(struct tlog_fd_json_reader *fd_json_reader)
     fd_json_reader->pos = fd_json_reader->end = fd_json_reader->buf;
 
     /* Read some more */
-    while (!fd_json_reader->eof &&
-           fd_json_reader->end <
+    while (fd_json_reader->end <
                 (fd_json_reader->buf + fd_json_reader->size)) {
         rc = read(fd_json_reader->fd, fd_json_reader->end,
                   fd_json_reader->buf + fd_json_reader->size -
                     fd_json_reader->end);
         if (rc == 0) {
-            fd_json_reader->eof = true;
+            break;
         } else if (rc < 0) {
             if (errno == EINTR)
                 continue;
