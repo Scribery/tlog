@@ -37,8 +37,7 @@ rm ${RPM_BUILD_ROOT}/%{_libdir}/*.so
 rm -r $RPM_BUILD_ROOT/usr/include/%{name}
 
 %files
-%doc
-%{_defaultdocdir}/%{name}
+%doc %{_defaultdocdir}/%{name}
 %{_bindir}/%{name}-*
 %{_libdir}/lib%{name}.so*
 %{_datadir}/%{name}
