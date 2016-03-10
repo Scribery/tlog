@@ -45,7 +45,6 @@ rm -r $RPM_BUILD_ROOT/usr/include/%{name}
 %{_mandir}/man8/*
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-rec.conf
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-play.conf
-%license COPYING
 
 %post -p /sbin/ldconfig
 
