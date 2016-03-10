@@ -1,7 +1,7 @@
 Name:       tlog
 Version:    2
 Release:    1%{?dist}
-Summary:    Terminal I/O recording shell wrapper
+Summary:    Terminal I/O logger
 
 License:    GPLv2+
 URL:        https://github.com/Scribery/tlog
