@@ -58,6 +58,7 @@ rm -r $RPM_BUILD_ROOT/usr/include/%{name}
 - Fully-fledged command-line interface to tlog-play, along with config file
   and man pages.
 - Support for playback from file in tlog-play.
+- Make tlog-play follow mode controllable and off by default.
 
 * Thu Feb 25 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 1-1
 - Release v1. Not ready for production. Following features are included.
