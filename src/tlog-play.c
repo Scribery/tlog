@@ -191,6 +191,7 @@ run(const char *progname, struct json_object *conf)
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     tlog_grc grc;
     struct json_object *obj;
+    bool follow;
     struct timespec local_last_ts;
     struct timespec local_this_ts;
     struct timespec local_next_ts;
@@ -228,6 +229,10 @@ run(const char *progname, struct json_object *conf)
             goto cleanup;
         }
     }
+
+    /* Get the "follow" flag */
+    follow = json_object_object_get_ex(conf, "follow", &obj) &&
+             json_object_get_boolean(obj);
 
     /* Initialize libcurl */
     grc = TLOG_GRC_FROM(curl, curl_global_init(CURL_GLOBAL_NOTHING));
@@ -304,10 +309,14 @@ run(const char *progname, struct json_object *conf)
         }
         /* If hit the end of stream */
         if (tlog_pkt_is_void(&pkt)) {
-            if (sleep(POLL_PERIOD) != 0) {
+            if (follow) {
+                if (sleep(POLL_PERIOD) != 0) {
+                    break;
+                }
+                continue;
+            } else {
                 break;
             }
-            continue;
         }
         /* If it's not the output */
         if (pkt.type != TLOG_PKT_TYPE_IO || !pkt.data.io.output) {

@@ -81,6 +81,12 @@ M4_PARAM(`', `help', `opts',
          `h', `', `Output a command-line usage message and exit',
          `M4_LINES(`')')m4_dnl
 m4_dnl
+M4_PARAM(`', `follow', `opts',
+         `M4_TYPE_BOOL(false)', true,
+         `f', `', `Wait for and play back new messages',
+         `M4_LINES(`If true, then when the end of the recorded session is reached, wait',
+                   `for new messages to be added and play them back when they appear.')')m4_dnl
+m4_dnl
 M4_PARAM(`', `reader', `file',
          `M4_TYPE_CHOICE(`file', `file', `es')', true,
          `r', `=STRING', `Use STRING log reader (file/es, default file)',
