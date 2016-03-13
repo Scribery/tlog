@@ -36,6 +36,7 @@ m4_generated_warning(` * ')m4_dnl
 #include <getopt.h>
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 
 tlog_grc
 tlog_play_conf_cmd_help(FILE *stream, const char *progname)

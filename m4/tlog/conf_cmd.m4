@@ -318,6 +318,12 @@ m4_define(
     `M4_CONF_CMD_LOAD_ARGS_TYPE_INT',
     `
         m4_printl(
+           `            assert(optarg != NULL);',
+           `            if (optarg == NULL) {',
+           `                fprintf(stderr, "Option %s has no value.\n", optname);',
+           `                grc = TLOG_RC_FAILURE;',
+           `                goto cleanup;',
+           `            }',
            `            if (sscanf(optarg, "%" SCNd64 " %n", &val_int, &end) < 1 ||',
            `                optarg[end] != 0 || val_int < $2) {',
            `                fprintf(stderr, "Invalid %s option value: %s\n",',
@@ -334,6 +340,12 @@ m4_define(
     `M4_CONF_CMD_LOAD_ARGS_TYPE_STRING',
     `
         m4_printl(
+           `            assert(optarg != NULL);',
+           `            if (optarg == NULL) {',
+           `                fprintf(stderr, "Option %s has no value.\n", optname);',
+           `                grc = TLOG_RC_FAILURE;',
+           `                goto cleanup;',
+           `            }',
            `            val = json_object_new_string(optarg);')
     '
 )
@@ -388,6 +400,12 @@ m4_define(
         m4_printl(
            `};',
            `                size_t i;',
+           `                assert(optarg != NULL);',
+           `                if (optarg == NULL) {',
+           `                    fprintf(stderr, "Option %s has no value.\n", optname);',
+           `                    grc = TLOG_RC_FAILURE;',
+           `                    goto cleanup;',
+           `                }',
            `                for (i = 0;',
            `                     i < TLOG_ARRAY_SIZE(list) && strcmp(optarg, list[i]) != 0;',
            `                     i++);',
@@ -484,6 +502,7 @@ m4_define(
            `    struct json_object *val = NULL;',
            `    struct json_object *args = NULL;',
            `    int end;',
+           `    int i;',
            `',
            `    /* May be unused if there are no INT parameters */',
            `    (void)val_int;',
@@ -539,7 +558,7 @@ m4_define(
            `                tlog_grc_strerror(grc));',
            `        goto cleanup;',
            `    }',
-           `    for (int i = 0; optind < argc; i++, optind++) {',
+           `    for (i = 0; optind < argc; i++, optind++) {',
            `        val = json_object_new_string(argv[optind]);',
            `        if (val == NULL) {',
            `            grc = TLOG_GRC_ERRNO;',

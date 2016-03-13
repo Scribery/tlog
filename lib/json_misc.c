@@ -38,7 +38,7 @@ tlog_json_overlay(struct json_object    **presult,
 {
     tlog_grc grc;
     struct json_object *result;
-    struct json_object *result_item;
+    struct json_object *result_item = NULL;
     enum json_type lower_type;
     enum json_type upper_type;
 
