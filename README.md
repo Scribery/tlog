@@ -2,6 +2,7 @@ Tlog
 ====
 
 [![Build Status](https://travis-ci.org/Scribery/tlog.svg?branch=master)](https://travis-ci.org/Scribery/tlog)
+[![Coverage Status](https://coveralls.io/repos/github/Scribery/tlog/badge.svg?branch=master)](https://coveralls.io/github/Scribery/tlog?branch=master)
 
 `Tlog` is a terminal I/O recording and playback package suitable for
 implementing [centralized user session recording][session_recording].
