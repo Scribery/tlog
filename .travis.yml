@@ -5,7 +5,7 @@ env:
 - CONFIGURE_ARGS="" DISTCHECK=yes
 - CONFIGURE_ARGS="--enable-debug" DISTCHECK=yes
 - CONFIGURE_ARGS="--disable-debug" DISTCHECK=yes
-- COVERAGE=yes CFLAGS="--coverage" LDFLAGS="--coverage"
+- COVERAGE=yes CFLAGS="--coverage" LDFLAGS="--coverage" CONFIGURE_ARGS="--enable-debug"
 - CLANG_SCAN_BUILD="scan-build --status-bugs"
 compiler:
 - clang
@@ -15,6 +15,7 @@ before_install:
 - sudo apt-get -qq update
 - sudo apt-get install -y libjson-c-dev libcurl4-gnutls-dev
 - sudo apt-get install -y clang
+- sudo apt-get install -y lcov
 - gem install coveralls-lcov
 before_script:
 - autoreconf -i -f
@@ -24,4 +25,4 @@ script:
 - $CLANG_SCAN_BUILD make check
 - test "x$DISTCHECK" = xyes && make distcheck || true
 after_success:
-- test "x$COVERAGE" = xyes && lcov --compat-libtool --directory . --capture --output-file coverage.info && coveralls-lcov coverage.info
+- test "x$COVERAGE" = xyes -a "x$CC" = "xgcc" && lcov --compat-libtool --directory . --capture --output-file coverage.info && coveralls-lcov coverage.info
