@@ -60,6 +60,7 @@ from each of these sources override the previous one in turn.
 
 .SH OPTIONS
 M4_MAN_OPTS()
+
 .SH ENVIRONMENT
 .TP
 TLOG_REC_CONF_FILE
