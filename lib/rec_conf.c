@@ -153,6 +153,21 @@ tlog_rec_conf_env_load(struct json_object **pconf)
         overlay = NULL;
     }
 
+    /* Load the shell */
+    val = getenv("TLOG_REC_SHELL");
+    if (val != NULL) {
+        overlay = json_object_new_string(val);
+        if (overlay == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr, "Failed creating shell path object: %s",
+                    tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+        /* TODO Handle failure with newer JSON-C */
+        json_object_object_add(conf, "shell", overlay);
+        overlay = NULL;
+    }
+
     *pconf = conf;
     conf = NULL;
     grc = TLOG_RC_OK;

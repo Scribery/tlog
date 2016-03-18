@@ -74,6 +74,11 @@ Specifies the configuration text to be read.
 The configuration parameters in this variable override the ones in the file
 specified with TLOG_REC_CONF_FILE.
 
+.TP
+TLOG_REC_SHELL
+Specifies the shell to spawn. Overrides configuration specified with
+TLOG_REC_CONF_TEXT. Can be overridden with command-line options.
+
 .SH FILES
 .TP
 M4_CONF_PATH()
