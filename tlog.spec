@@ -43,6 +43,7 @@ rm -r %{buildroot}/usr/include/%{name}
 %{_datadir}/%{name}
 %{_mandir}/man5/*
 %{_mandir}/man8/*
+%dir %{_sysconfdir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-rec.conf
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-play.conf
 
