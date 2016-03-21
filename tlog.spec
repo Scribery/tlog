@@ -31,10 +31,10 @@ make %{?_smp_mflags} check
 
 %install
 make install DESTDIR=%{buildroot}
-rm ${RPM_BUILD_ROOT}/%{_libdir}/*.la
+rm %{buildroot}/%{_libdir}/*.la
 # Remove development files as we're not doing a devel package yet
-rm ${RPM_BUILD_ROOT}/%{_libdir}/*.so
-rm -r $RPM_BUILD_ROOT/usr/include/%{name}
+rm %{buildroot}/%{_libdir}/*.so
+rm -r %{buildroot}/usr/include/%{name}
 
 %files
 %doc %{_defaultdocdir}/%{name}
