@@ -773,7 +773,7 @@ run(const char *progname, struct json_object *conf)
     rc = tcgetattr(STDOUT_FILENO, &orig_termios);
     if (rc < 0) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed retrieving tty attributes: %s\n",
+        fprintf(stderr, "Failed retrieving TTY attributes: %s\n",
                 tlog_grc_strerror(grc));
         goto cleanup;
     }
@@ -782,16 +782,16 @@ run(const char *progname, struct json_object *conf)
     rc = ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize);
     if (rc < 0) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed retrieving tty window size: %s\n",
+        fprintf(stderr, "Failed retrieving TTY window size: %s\n",
                 tlog_grc_strerror(grc));
         goto cleanup;
     }
 
-    /* Fork a child under a slave pty */
+    /* Fork a child under a slave PTY */
     child_pid = forkpty(&master_fd, NULL, &orig_termios, &winsize);
     if (child_pid < 0) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed forking a pty: %s\n", tlog_grc_strerror(grc));
+        fprintf(stderr, "Failed forking a PTY: %s\n", tlog_grc_strerror(grc));
         goto cleanup;
     } else if (child_pid == 0) {
         /*
@@ -823,7 +823,7 @@ run(const char *progname, struct json_object *conf)
     rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw_termios);
     if (rc < 0) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed setting tty attributes: %s\n",
+        fprintf(stderr, "Failed setting TTY attributes: %s\n",
                 tlog_grc_strerror(grc));
         goto cleanup;
     }
@@ -878,7 +878,7 @@ cleanup:
         rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
         if (rc < 0 && errno != EBADF) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed restoring tty attributes: %s\n",
+            fprintf(stderr, "Failed restoring TTY attributes: %s\n",
                     tlog_grc_strerror(grc));
         }
     }
