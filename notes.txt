@@ -875,4 +875,76 @@ to enforce the time succession.
 
 So, streams will have to report the last received data timestamp and if chunk
 sees them as too old, it will use the latest time instead.
+
+-----
+
+Do we create a PTY or a pair of pipes for the child?
+    First, effects:
+        If a child uses PTY and we are using non-TTY FDs, then:
+            Child input won't contain expected terminal control symbols
+            Child output will contain unexpected terminal control symbols
+        If a child uses pipes and we are using TTY FDs, then:
+            Child input will contain unexpected terminal control symbols
+            Child output won't contain expected terminal control symbols
+    Next, decision logic:
+        SSH allocates PTY if input is TTY, or if forced
+        What would user expect?
+        Tlog-rec is supposed to start a shell, either interactively or not.
+        When started as the login shell (the primary use case), tlog-rec will
+        either get all descriptors tied to a terminal or all to a non-terminal.
+        What's the use case for starting as a non-login shell?
+            Testing?
+                We won't be outputting to an actual terminal, but will be
+                capturing everything, so we can automate.
+                We will test whatever the user needs.
+                - Not applicable
+            Just the shell being started again, where we need to simply exec
+            the actual user shell.
+                -Not applicable.
+        So what kind of logic can we have?
+            If at least one of in/out/err is a terminal, spawn PTY?
+            If all of in/out/err are terminals, spawn PTY?
+            Which one would be easier for testing?
+                If we're running under expect as we plan, then all FDs will be
+                TTYs.
+                If we want to test non-TTY mode, then we will spawn tlog-rec
+                under pipes, perhaps from shell, Python, or Lua?
+                - Not applicable
+            Which would be more useful?
+                Considering the above the difference is marginal.
+            Which would be easier to implement?
+                If at least one (stdin?) is not a TTY, don't spawn a PTY.
+                However, considering we need to handle open/closed descriptor
+                state and propagate it to the child anyway we can as well
+                check all of the descriptors anyway.
+        The POSIX shell standard says that the shell is considered
+        interactive if both its stdin and stderr are connected to a
+        terminal. We can employ the same logic for deciding whether to spawn
+        the PTY or not.
+        I.e. spawn the PTY only if both stdin and stderr are terminals, ignore
+        stdout.
+        No, tlog-rec is not a shell and in fact any program can be ran under
+        tlog-rec. So we need to employ our own logic.
+        Leaving it at "if any FD is a TTY, spawn PTY" can work as well for
+        now.
+
+Do we create two pipes, one, or none?
+    We create two pipes to match the PTY case.
+    We send both child stdout and stderr to our stdout.
+
+What do we do when any of stdin/stdout/stderr are closed at the start?
+    We ought to pass the closed/opened state to the child.
+    If our stdout is closed, the child's stdout and stderr are closed.
+    If our stdin is closed, the child's stdin is closed.
+    The child is not affected by our stderr state.
+    We need to ensure that the closed FD is not taken over by another FD.
+    So, for example, error messages directed to the initially closed stderr
+    don't get written somewhere else.
+    How? Perhaps by opening /dev/null?
+    What do we do when only input or output is closed?
+    Perhaps switch to pipes and propagate the status?
+
+What do we do when we get an EOF on any of the FDs during operation?
+    We continue the transfer until all FDs get EOF.
+
 ----

@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/socket.h>
 #include <pwd.h>
 #include <netdb.h>
@@ -47,6 +48,16 @@
 #include <tlog/rc.h>
 #include <tlog/rec_conf.h>
 #include <tlog/rec_conf_cmd.h>
+
+/**
+ * Let GNU TLS know we don't need implicit global initialization, which opens
+ * /dev/urandom and can replace standard FDs in case they were closed.
+ */
+int
+_gnutls_global_init_skip(void)
+{
+    return 1;
+}
 
 /**< Number of the signal causing exit */
 static volatile sig_atomic_t exit_signum  = 0;
@@ -681,29 +692,391 @@ cleanup:
     return return_grc;
 }
 
+/**
+ * Fork a child connected via a pair of pipes.
+ *
+ * @param pin_fd    Location for the FD of the input-writing pipe end, or NULL
+ *                  if it should be closed.
+ * @param pout_fd   Location for the FD of the output- and error-reading pipe
+ *                  end, or NULL, if both should be closed.
+ *
+ * @return Child PID, or -1 in case of error with errno set.
+ */
+static int
+forkpipes(int *pin_fd, int *pout_fd)
+{
+    bool success = false;
+    pid_t pid;
+    int orig_errno;
+    int in_pipe[2] = {-1, -1};
+    int out_pipe[2] = {-1, -1};
+
+#define GUARD(_expr) \
+    do {                    \
+        if ((_expr) < 0) {  \
+            goto cleanup;   \
+        }                   \
+    } while (0)
+
+    if (pin_fd != NULL) {
+        GUARD(pipe(in_pipe));
+    }
+    if (pout_fd != NULL) {
+        GUARD(pipe(out_pipe));
+    }
+    GUARD(pid = fork());
+
+    if (pid == 0) {
+        /*
+         * Child
+         */
+        /* Close parent's pipe ends */
+        if (pin_fd != NULL) {
+            GUARD(close(in_pipe[1]));
+            in_pipe[1] = -1;
+        }
+        if (pout_fd != NULL) {
+            GUARD(close(out_pipe[0]));
+            out_pipe[0] = -1;
+        }
+
+        /* Use child's pipe ends */
+        if (pin_fd != NULL) {
+            GUARD(dup2(in_pipe[0], STDIN_FILENO));
+            GUARD(close(in_pipe[0]));
+            in_pipe[0] = -1;
+        } else {
+            close(STDIN_FILENO);
+        }
+        if (pout_fd != NULL) {
+            GUARD(dup2(out_pipe[1], STDOUT_FILENO));
+            GUARD(dup2(out_pipe[1], STDERR_FILENO));
+            GUARD(close(out_pipe[1]));
+            out_pipe[1] = -1;
+        } else {
+            close(STDOUT_FILENO);
+            close(STDERR_FILENO);
+        }
+    } else {
+        /*
+         * Parent
+         */
+        /* Close child's pipe ends and output parent's pipe ends */
+        if (pin_fd != NULL) {
+            GUARD(close(in_pipe[0]));
+            in_pipe[0] = -1;
+            *pin_fd = in_pipe[1];
+            in_pipe[1] = -1;
+        }
+        if (pout_fd != NULL) {
+            GUARD(close(out_pipe[1]));
+            out_pipe[1] = -1;
+            *pout_fd = out_pipe[0];
+            out_pipe[0] = -1;
+        }
+    }
+
+#undef GUARD
+
+    success = true;
+
+cleanup:
+
+    orig_errno = errno;
+    if (in_pipe[0] >= 0) {
+        close(in_pipe[0]);
+    }
+    if (in_pipe[1] >= 0) {
+        close(in_pipe[1]);
+    }
+    if (out_pipe[0] >= 0) {
+        close(out_pipe[0]);
+    }
+    if (out_pipe[1] >= 0) {
+        close(out_pipe[1]);
+    }
+    errno = orig_errno;
+    return success ? pid : -1;
+}
+
+/** I/O tap state */
+struct tap {
+    pid_t               pid;            /**< Shell PID */
+    struct tlog_source *source;         /**< TTY data source */
+    struct tlog_sink   *sink;           /**< TTY data sink */
+    int                 in_fd;          /**< Shell input FD */
+    int                 out_fd;         /**< Shell output FD */
+    int                 tty_fd;         /**< Controlling terminal FD, or -1 */
+    struct termios      termios_orig;   /**< Original terminal attributes */
+    bool                termios_set;    /**< True if terminal attributes were
+                                             changed from the original */
+};
+
+/** A void I/O tap state initializer */
+#define TAP_VOID \
+    (struct tap) {      \
+        .source = NULL, \
+        .sink   = NULL, \
+        .in_fd  = -1,   \
+        .out_fd = -1,   \
+        .tty_fd = -1,   \
+    }
+
+/**
+ * Teardown an I/O tap state.
+ *
+ * @param tap       The tap state to teardown.
+ * @param pstatus   Location for the shell process status as returned by
+ *                  waitpid(2), can be NULL, if not required.
+ *
+ * @return Global return code.
+ */
 static tlog_grc
-run(const char *progname, struct json_object *conf)
+tap_teardown(struct tap *tap, int *pstatus)
+{
+    tlog_grc grc;
+
+    tlog_sink_destroy(tap->sink);
+    tap->sink = NULL;
+    tlog_source_destroy(tap->source);
+    tap->source = NULL;
+
+    if (tap->in_fd >= 0) {
+        close(tap->in_fd);
+        tap->in_fd = -1;
+    }
+    if (tap->out_fd >= 0) {
+        close(tap->out_fd);
+        tap->out_fd = -1;
+    }
+
+    /* Restore terminal attributes */
+    if (tap->termios_set) {
+        int rc;
+        rc = tcsetattr(tap->tty_fd, TCSAFLUSH, &tap->termios_orig);
+        if (rc < 0 && errno != EBADF) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr, "Failed restoring TTY attributes: %s\n",
+                    tlog_grc_strerror(grc));
+            return grc;
+        }
+        tap->termios_set = false;
+    }
+
+    /* Wait for the child, if any */
+    if (tap->pid > 0) {
+        if (waitpid(tap->pid, pstatus, 0) < 0) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr, "Failed waiting for the child: %s\n",
+                    tlog_grc_strerror(grc));
+            return grc;
+        }
+        tap->pid = 0;
+    }
+
+    return TLOG_RC_OK;
+}
+
+/**
+ * Setup I/O tap.
+ *
+ * @param ptap      Location for the tap state.
+ * @param conf      Tlog-rec configuration JSON object.
+ * @param in_fd     Stdin to connect to, or -1 if none.
+ * @param out_fd    Stdout to connect to, or -1 if none.
+ * @param err_fd    Stderr to connect to, or -1 if none.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tap_setup(struct tap *ptap, struct json_object *conf,
+          int in_fd, int out_fd, int err_fd)
+{
+    tlog_grc grc;
+    struct tap tap = TAP_VOID;
+    const char *path;
+    char **argv = NULL;
+    clockid_t clock_id;
+
+    assert(ptap != NULL);
+
+    /* Prepare shell command line */
+    grc = get_shell(conf, &path, &argv);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Failed building shell command line: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+
+    /*
+     * Choose the clock: try to use coarse monotonic clock (which is faster),
+     * if it provides the required resolution.
+     */
+    {
+        const struct timespec delay_min = TLOG_DELAY_MIN_TIMESPEC;
+        struct timespec timestamp;
+        if (clock_getres(CLOCK_MONOTONIC_COARSE, &timestamp) == 0 &&
+            tlog_timespec_cmp(&timestamp, &delay_min) <= 0) {
+            clock_id = CLOCK_MONOTONIC_COARSE;
+        } else if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
+            clock_id = CLOCK_MONOTONIC;
+        } else {
+            fprintf(stderr, "No clock to use\n");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+    }
+
+    /* Try to find a TTY FD and get terminal attributes */
+    errno = 0;
+    if (in_fd >= 0 && tcgetattr(in_fd, &tap.termios_orig) >= 0) {
+        tap.tty_fd = in_fd;
+    } else if (errno == 0 || errno == ENOTTY || errno == EINVAL) {
+        if (out_fd >= 0 && tcgetattr(out_fd, &tap.termios_orig) >= 0) {
+            tap.tty_fd = out_fd;
+        } else if (errno == 0 || errno == ENOTTY || errno == EINVAL) {
+            if (err_fd >= 0 && tcgetattr(err_fd, &tap.termios_orig) >= 0) {
+                tap.tty_fd = err_fd;
+            }
+        }
+    }
+    if (errno != 0 && errno != ENOTTY && errno != EINVAL) {
+        grc = TLOG_GRC_ERRNO;
+        fprintf(stderr, "Failed retrieving TTY attributes: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+
+    /* Don't spawn a PTY if either input or output are closed */
+    if (in_fd < 0 || out_fd < 0) {
+        tap.tty_fd = -1;
+    }
+
+    /* Fork the child */
+    if (tap.tty_fd >= 0) {
+        struct winsize winsize;
+        int master_fd;
+
+        /* Get terminal window size */
+        if (ioctl(tap.tty_fd, TIOCGWINSZ, &winsize) < 0) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr, "Failed retrieving TTY window size: %s\n",
+                    tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+
+        /* Fork a child connected via a PTY */
+        tap.pid = forkpty(&master_fd, NULL, &tap.termios_orig, &winsize);
+        if (tap.pid < 0) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr,
+                    "Failed forking a child connected via a PTY: %s\n",
+                    tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+        /* If parent */
+        if (tap.pid != 0) {
+            /* Split master FD into input and output FDs */
+            tap.in_fd = master_fd;
+            tap.out_fd = dup(master_fd);
+            if (tap.out_fd < 0) {
+                grc = TLOG_GRC_ERRNO;
+                fprintf(stderr, "Failed duplicating PTY master FD: %s\n",
+                        tlog_grc_strerror(grc));
+                goto cleanup;
+            }
+        }
+    } else {
+        /* Fork a child connected via pipes */
+        tap.pid = forkpipes(in_fd >= 0 ? &tap.in_fd : NULL,
+                            out_fd >= 0 ? &tap.out_fd : NULL);
+        if (tap.pid < 0) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr,
+                    "Failed forking a child connected via pipes: %s\n",
+                    tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+    }
+
+    /* Execute the shell in the child */
+    if (tap.pid == 0) {
+        execv(path, argv);
+        grc = TLOG_GRC_ERRNO;
+        fprintf(stderr, "Failed executing %s: %s",
+                path, tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+
+    /* Create the TTY source */
+    grc = tlog_tty_source_create(&tap.source, in_fd, tap.out_fd,
+                                 tap.tty_fd, 4096, clock_id);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Failed creating TTY source: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+
+    /* Create the TTY sink */
+    grc = tlog_tty_sink_create(&tap.sink, tap.in_fd, out_fd,
+                               tap.tty_fd >= 0 ? tap.in_fd : -1);
+    if (grc != TLOG_RC_OK) {
+        fprintf(stderr, "Failed creating TTY sink: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+
+    /* Switch the terminal to raw mode, if any */
+    /* NOTE: Done last to let errors print properly */
+    if (tap.tty_fd >= 0) {
+        int rc;
+        struct termios termios_raw = tap.termios_orig;
+        termios_raw.c_lflag &= ~(ICANON | ISIG | IEXTEN | ECHO);
+        termios_raw.c_iflag &= ~(BRKINT | ICRNL | IGNBRK | IGNCR | INLCR |
+                                 INPCK | ISTRIP | IXON | PARMRK);
+        termios_raw.c_oflag &= ~OPOST;
+        termios_raw.c_cc[VMIN] = 1;
+        termios_raw.c_cc[VTIME] = 0;
+        rc = tcsetattr(tap.tty_fd, TCSAFLUSH, &termios_raw);
+        if (rc < 0) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr, "Failed setting TTY attributes: %s\n",
+                    tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+        tap.termios_set = true;
+    }
+
+    *ptap = tap;
+    tap = TAP_VOID;
+
+cleanup:
+
+    tap_teardown(&tap, NULL);
+
+    /* Free shell argv list */
+    if (argv != NULL) {
+        size_t i;
+        for (i = 0; argv[i] != NULL; i++) {
+            free(argv[i]);
+        }
+        free(argv);
+    }
+
+    return grc;
+}
+
+static tlog_grc
+run(const char *progname, struct json_object *conf,
+    int in_fd, int out_fd, int err_fd)
 {
     tlog_grc grc;
     struct json_object *obj;
     int64_t num;
     unsigned int latency;
     unsigned int log_mask;
-    const char *shell_path;
-    char **shell_argv = NULL;
-    const struct timespec delay_min = TLOG_DELAY_MIN_TIMESPEC;
-    clockid_t clock_id;
-    struct timespec timestamp;
     struct tlog_sink *log_sink = NULL;
-    struct tlog_sink *tty_sink = NULL;
-    struct tlog_source *tty_source = NULL;
-    ssize_t rc;
-    int master_fd;
-    pid_t child_pid;
-    bool term_attrs_set = false;
-    struct termios orig_termios;
-    struct termios raw_termios;
-    struct winsize winsize;
+    struct tap tap = TAP_VOID;
 
     assert(progname != NULL);
 
@@ -714,14 +1087,6 @@ run(const char *progname, struct json_object *conf)
             grc = TLOG_RC_OK;
             goto cleanup;
         }
-    }
-
-    /* Prepare shell command line */
-    grc = get_shell(conf, &shell_path, &shell_argv);
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed building shell command line: %s\n",
-                tlog_grc_strerror(grc));
-        goto cleanup;
     }
 
     /* Read the log latency */
@@ -754,102 +1119,21 @@ run(const char *progname, struct json_object *conf)
         goto cleanup;
     }
 
-    /*
-     * Choose the clock: try to use coarse monotonic clock (which is faster),
-     * if it provides the required resolution.
-     */
-    if (clock_getres(CLOCK_MONOTONIC_COARSE, &timestamp) == 0 &&
-        tlog_timespec_cmp(&timestamp, &delay_min) <= 0) {
-        clock_id = CLOCK_MONOTONIC_COARSE;
-    } else if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
-        clock_id = CLOCK_MONOTONIC;
-    } else {
-        fprintf(stderr, "No clock to use\n");
-        grc = TLOG_RC_FAILURE;
-        goto cleanup;
-    }
-
-    /* Get terminal attributes */
-    rc = tcgetattr(STDOUT_FILENO, &orig_termios);
-    if (rc < 0) {
-        grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed retrieving TTY attributes: %s\n",
-                tlog_grc_strerror(grc));
-        goto cleanup;
-    }
-
-    /* Get terminal window size */
-    rc = ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize);
-    if (rc < 0) {
-        grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed retrieving TTY window size: %s\n",
-                tlog_grc_strerror(grc));
-        goto cleanup;
-    }
-
-    /* Fork a child under a slave PTY */
-    child_pid = forkpty(&master_fd, NULL, &orig_termios, &winsize);
-    if (child_pid < 0) {
-        grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed forking a PTY: %s\n", tlog_grc_strerror(grc));
-        goto cleanup;
-    } else if (child_pid == 0) {
-        /*
-         * Child
-         */
-        execv(shell_path, shell_argv);
-        grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed executing the shell: %s",
-                tlog_grc_strerror(grc));
-        goto cleanup;
-    }
-
-    /*
-     * Parent
-     */
     /* Read and output the notice */
     if (json_object_object_get_ex(conf, "notice", &obj)) {
         fprintf(stderr, "%s", json_object_get_string(obj));
     }
 
-    /* Switch the terminal to raw mode */
-    raw_termios = orig_termios;
-    raw_termios.c_lflag &= ~(ICANON | ISIG | IEXTEN | ECHO);
-    raw_termios.c_iflag &= ~(BRKINT | ICRNL | IGNBRK | IGNCR | INLCR |
-                             INPCK | ISTRIP | IXON | PARMRK);
-    raw_termios.c_oflag &= ~OPOST;
-    raw_termios.c_cc[VMIN] = 1;
-    raw_termios.c_cc[VTIME] = 0;
-    rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw_termios);
-    if (rc < 0) {
-        grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed setting TTY attributes: %s\n",
-                tlog_grc_strerror(grc));
-        goto cleanup;
-    }
-    term_attrs_set = true;
-
-    /* Create the TTY source */
-    grc = tlog_tty_source_create(&tty_source, STDIN_FILENO,
-                                 master_fd, STDOUT_FILENO,
-                                 4096, clock_id);
+    /* Setup the tap */
+    grc = tap_setup(&tap, conf, in_fd, out_fd, err_fd);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating TTY source: %s\n",
-                tlog_grc_strerror(grc));
-        goto cleanup;
-    }
-
-    /* Create the TTY sink */
-    grc = tlog_tty_sink_create(&tty_sink, master_fd,
-                               STDOUT_FILENO, master_fd);
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating TTY sink: %s\n",
+        fprintf(stderr, "Failed setting up the I/O tap: %s\n",
                 tlog_grc_strerror(grc));
         goto cleanup;
     }
 
     /* Transfer and log the data until interrupted or either end is closed */
-    grc = transfer(tty_source, log_sink, tty_sink, latency, log_mask);
+    grc = transfer(tap.source, log_sink, tap.sink, latency, log_mask);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed transferring TTY data: %s\n",
                 tlog_grc_strerror(grc));
@@ -860,29 +1144,8 @@ run(const char *progname, struct json_object *conf)
 
 cleanup:
 
+    tap_teardown(&tap, NULL);
     tlog_sink_destroy(log_sink);
-    tlog_sink_destroy(tty_sink);
-    tlog_source_destroy(tty_source);
-
-    /* Free shell argv list */
-    if (shell_argv != NULL) {
-        size_t i;
-        for (i = 0; shell_argv[i] != NULL; i++) {
-            free(shell_argv[i]);
-        }
-        free(shell_argv);
-    }
-
-    /* Restore terminal attributes */
-    if (term_attrs_set) {
-        rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
-        if (rc < 0 && errno != EBADF) {
-            grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed restoring TTY attributes: %s\n",
-                    tlog_grc_strerror(grc));
-        }
-    }
-
     return grc;
 }
 
@@ -892,6 +1155,21 @@ main(int argc, char **argv)
     tlog_grc grc;
     struct json_object *conf = NULL;
     char *progname = NULL;
+    int std_fds[] = {0, 1, 2};
+
+    /* Check if stdin/stdout/stderr are closed and stub them with /dev/null */
+    while (true) {
+        int fd = open("/dev/null", O_RDWR);
+        if (fd < 0) {
+            fprintf(stderr, "Failed opening /dev/null: %s\n",
+                    strerror(errno));
+        } else if (fd >= (int)TLOG_ARRAY_SIZE(std_fds)) {
+            close(fd);
+            break;
+        } else {
+            std_fds[fd] = -1;
+        }
+    }
 
     /* Read configuration and program name */
     grc = tlog_rec_conf_load(&progname, &conf, argc, argv);
@@ -900,7 +1178,7 @@ main(int argc, char **argv)
     }
 
     /* Run */
-    grc = run(progname, conf);
+    grc = run(progname, conf, std_fds[0], std_fds[1], std_fds[2]);
 
     /* Free configuration and program name */
     json_object_put(conf);
