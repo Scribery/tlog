@@ -172,6 +172,29 @@ tlog_tty_source_loc_fmt(const struct tlog_source *source, size_t loc)
     return str;
 }
 
+/**
+ * Call poll(2) if at least one FD in the poll FD list is "active"
+ * (i.e. non-negative), and poll(2) will be able to return an event.
+ *
+ * @param fds       FD list pointer.
+ * @param nfds      Number of FDs in the list.
+ * @param timeout   Number of milliseconds to block for, negative means
+ *                  infinity.
+ *
+ * @return Number of FDs that got events, or -1 on error.
+ */
+static int
+tlog_tty_source_poll_if_active(struct pollfd *fds, nfds_t nfds, int timeout)
+{
+    nfds_t i;
+    for (i = 0; i < nfds; i++) {
+        if (fds[i].fd >= 0) {
+            return poll(fds, nfds, timeout);
+        }
+    }
+    return 0;
+}
+
 static tlog_grc
 tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
 {
@@ -219,8 +242,9 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
     }
 
     /* Wait for I/O until interrupted by SIGWINCH or other signal */
-    if (poll(tty_source->fd_list,
-             TLOG_ARRAY_SIZE(tty_source->fd_list), -1) < 0) {
+    if (tlog_tty_source_poll_if_active(tty_source->fd_list,
+                                       TLOG_ARRAY_SIZE(tty_source->fd_list),
+                                       -1) < 0) {
             return TLOG_GRC_ERRNO;
     }
 
