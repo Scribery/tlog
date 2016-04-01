@@ -474,6 +474,10 @@ tlog_json_stream_write(tlog_trx_state trx,
     TLOG_TRX_FRAME_BEGIN(trx);
 
     while (true) {
+        /*
+         * Until the current UTF-8 sequence is ended and is considered either
+         * complete or incomplete
+         */
         do {
             /* If input is exhausted */
             if (len == 0) {
