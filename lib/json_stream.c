@@ -506,7 +506,7 @@ tlog_json_stream_write(tlog_trx_state trx,
             if (!tlog_json_stream_write_seq(TLOG_TRX_STATE_SUB(trx),
                                             stream, &stream->ts,
                                             tlog_utf8_is_complete(utf8),
-                                       utf8->buf, utf8->len)) {
+                                            utf8->buf, utf8->len)) {
                 /* Back up unwritten data */
                 buf -= utf8->len;
                 len += utf8->len;
