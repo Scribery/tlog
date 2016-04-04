@@ -497,7 +497,7 @@ tlog_json_stream_write(tlog_trx_state trx,
         if (tlog_utf8_is_empty(utf8)) {
             /* Write single input byte as invalid sequence and skip it */
             if (!tlog_json_stream_write_seq(TLOG_TRX_STATE_SUB(trx),
-                                            stream, &stream->ts, false, buf, 1))
+                                            stream, ts, false, buf, 1))
                 break;
             buf++;
             len--;
