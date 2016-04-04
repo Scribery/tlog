@@ -786,3 +786,93 @@ If we take away the program name, then we can split those into three origins:
 
 Then the login flag and shell would be documented properly and overridable by
 the command-line options.
+
+-----
+
+We need to signal the sink to terminate cached characters. That needs to be
+done with a timestamp.
+
+Since in tlog-rec we don't operate on timestamps anymore, getting them with
+packets from the source, it would be good to have these terminating packets
+from the source too. The most logical way would be to send these packets when
+the corresponding streams in the source are ending.
+
+There's the problem of the TTY source stream end - it usually happens when
+either the child or the terminal go away, which are reported as errors, and
+the source reports all errors to the caller. To return the void packet the
+source would have to interpret the errors, which might be different between
+TTYs, PTYs, pipes and files, and interpreting them incorrectly might hide a
+problem. Let's see what we can get:
+
+    EBADF   - can also be returned if the FD was closed, thus interpreting it
+              as EOF can hide a programming mistake
+    EIO     - can also occur on low level I/O error, thus hiding a serious
+              hardware issue
+
+We have the void packet signifying the end of the whole source stream now. And
+it can't have a timestamp as of now.
+
+Let's consider the following options:
+    Add a timestamp to the void packet
+        We have to have a completely meaningless packet type to denote an
+        empty, meaningless packet
+        - No
+    Add another type of packet signifying the end of the whole source stream
+        When the source would send such a packet? It can send it only when
+        both input and output are closed. Can we put the function of keeping
+        track of the stream status on the source? Seems alright since it
+        manages and encapsulates them.
+    Add another type of packet allowing specifying the end of input/output
+    stream separately
+        Now what about the potential window size stream? Shall we add that
+        too? Wouldn't it make the whole thing too complicated?
+    Add a new meaning to the I/O packet type which signifies the end of stream
+    (e.g. zero length data)
+
+Now, what kind of timestamp would other types of sources specify? E.g.
+ElasticSearch? It doesn't have anywhere to pull the EOF timestamp from!
+
+We shall rethink this. There shouldn't be a timestamp for EOF and it can
+still be signified by a void packet.
+
+We have to accept the fact that sometimes we need to write data that was
+received before the latest data written to the chunk, and that there can't
+always be a timestamp associated with that event. E.g. when converting from
+one storage format to another (e.g. sudo session recording to JSON log and
+having incomplete characters at the end). To properly handle that we would
+need to only allow encoding the packet stream as a whole and that's not what
+we can do.
+
+Which timestamp should we have for such data, then? Well, there's nothing left
+but to use the latest timestamp written to the timing (metadata).
+
+Now, how do we signal the cut-off? Shall we keep the function, since we don't
+need the timestamp anymore, or shall we move to using the void packet?
+
+Void packet
+    Symmetrical to EOF from source.
+    Somewhat obscure code.
+    All the non-UTF-8 sinks would need to explicitly ignore the void packet.
+    More code to write, a little code to remove.
+Function
+    Separate function which complicates the interface and is only needed by
+    one sink so far.
+    Clearer code.
+    All the non-UTF-8 sinks can just not define the cutting function.
+    No code to write.
+
+Let's leave it as function for now.
+Let's have the JSON chunk use the latest timestamp written to the timing for
+cutting.
+
+Wait. We can't use the latest timestamp in the chunk. Because it is possible
+that a stream will be written only the incomplete character and there will be
+no timestamp reported to the chunk at all until we actually "cut" the stream.
+
+Therefore we must allow the chunk to receive timestamps in the past and assume
+the latest timestamp in these cases. The streams, though, will still be able
+to enforce the time succession.
+
+So, streams will have to report the last received data timestamp and if chunk
+sees them as too old, it will use the latest time instead.
+----

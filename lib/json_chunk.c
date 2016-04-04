@@ -78,9 +78,6 @@ tlog_json_chunk_advance(tlog_trx_state trx,
                         struct tlog_json_chunk *chunk,
                         const struct timespec *ts)
 {
-    struct timespec delay;
-    long sec;
-    long msec;
     char delay_buf[32];
     int delay_rc;
     TLOG_TRX_FRAME_DEF_SINGLE(chunk);
@@ -94,18 +91,27 @@ tlog_json_chunk_advance(tlog_trx_state trx,
     if (!chunk->got_ts) {
         chunk->got_ts = true;
         chunk->first_ts = *ts;
+        chunk->last_ts = *ts;
         delay_rc = 0;
     } else {
-        assert(tlog_timespec_cmp(ts, &chunk->last_ts) >= 0);
-        tlog_timespec_sub(ts, &chunk->last_ts, &delay);
-        sec = (long)delay.tv_sec;
-        msec = delay.tv_nsec / 1000000;
-        if (sec != 0) {
-            delay_rc = snprintf(delay_buf, sizeof(delay_buf),
-                                "+%ld%03ld", sec, msec);
-        } else if (msec != 0) {
-            delay_rc = snprintf(delay_buf, sizeof(delay_buf),
-                                "+%ld", msec);
+        if (tlog_timespec_cmp(ts, &chunk->last_ts) > 0) {
+            struct timespec delay;
+            long sec;
+            long msec;
+
+            tlog_timespec_sub(ts, &chunk->last_ts, &delay);
+            chunk->last_ts = *ts;
+            sec = (long)delay.tv_sec;
+            msec = delay.tv_nsec / 1000000;
+            if (sec != 0) {
+                delay_rc = snprintf(delay_buf, sizeof(delay_buf),
+                                    "+%ld%03ld", sec, msec);
+            } else if (msec != 0) {
+                delay_rc = snprintf(delay_buf, sizeof(delay_buf),
+                                    "+%ld", msec);
+            } else {
+                delay_rc = 0;
+            }
         } else {
             delay_rc = 0;
         }
@@ -114,7 +120,6 @@ tlog_json_chunk_advance(tlog_trx_state trx,
         assert(false);
         goto failure;
     }
-    chunk->last_ts = *ts;
 
     /* If we need to add a delay record */
     if (delay_rc > 0) {
@@ -433,6 +438,8 @@ tlog_json_chunk_write(struct tlog_json_chunk *chunk,
     assert(tlog_pkt_pos_is_valid(end));
     assert(tlog_pkt_pos_is_compatible(end, pkt));
     assert(tlog_pkt_pos_is_reachable(end, pkt));
+    assert(!chunk->got_ts ||
+           tlog_timespec_cmp(&chunk->last_ts, &pkt->timestamp) <= 0);
 
     TLOG_TRX_FRAME_BEGIN(trx);
 

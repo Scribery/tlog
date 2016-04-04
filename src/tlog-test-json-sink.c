@@ -315,6 +315,52 @@ main(void)
          OUTPUT("")
     );
 
+    TEST(invalid_byte,
+         INPUT(.op_list = {
+            OP_WRITE_IO(1, 0, true, "\xff", 1),
+            OP_CUT,
+            OP_FLUSH
+         }),
+         OUTPUT(MSG(1, "0", "]1/1",
+                    "", "", "\xef\xbf\xbd", "255"))
+    );
+
+    TEST(invalid_byte_after_window,
+         INPUT(.op_list = {
+            OP_WRITE_WINDOW(1, 0, 100, 100),
+            OP_WRITE_IO(2, 0, true, "\xff", 1),
+            OP_CUT,
+            OP_FLUSH
+         }),
+         OUTPUT(MSG(1, "0", "=100x100+1000]1/1",
+                    "", "", "\xef\xbf\xbd", "255"))
+    );
+
+    TEST(late_character_termination,
+         INPUT(.op_list = {
+            OP_WRITE_IO(1, 0, false, "\xf0\x9d", 2),
+            OP_WRITE_IO(2, 0, true, "x", 1),
+            OP_WRITE_IO(3, 0, false, "\xff", 1),
+            OP_CUT,
+            OP_FLUSH
+         }),
+         OUTPUT(MSG(1, "1000", "[1/2>1+1000[1/1",
+                    "\xef\xbf\xbd\xef\xbf\xbd", "240,157,255",
+                    "x", ""))
+    );
+
+    TEST(late_character_cut,
+         INPUT(.op_list = {
+            OP_WRITE_IO(1, 0, false, "\xf0\x9d", 2),
+            OP_WRITE_IO(2, 0, true, "x", 1),
+            OP_CUT,
+            OP_FLUSH
+         }),
+         OUTPUT(MSG(1, "1000", "[1/2>1",
+                    "\xef\xbf\xbd", "240,157",
+                    "x", ""))
+    );
+
     TEST(incomplete_flushed,
          INPUT(.op_list = {
             OP_WRITE_IO(0, 0, true, "\xf0\x9d\x84", 3),
