@@ -471,17 +471,25 @@ tlog_json_stream_write(tlog_trx_state trx,
     utf8 = &stream->utf8;
     assert(!tlog_utf8_is_ended(utf8));
 
-    TLOG_TRX_FRAME_BEGIN(trx);
-
+    /*
+     * While there's input and byte sequences fit
+     */
+    trx = TLOG_TRX_STATE_SUB(trx);
     while (true) {
+        const uint8_t *start_buf = buf;
+        size_t start_len = len;
+
+        TLOG_TRX_FRAME_BEGIN(trx);
+
         /*
          * Until the current UTF-8 sequence is ended and is considered either
-         * complete or incomplete
+         * complete or incomplete, or the input is exhausted
          */
         do {
             /* If input is exhausted */
             if (len == 0) {
                 /* Exit but leave the incomplete character buffered */
+                TLOG_TRX_FRAME_COMMIT(trx);
                 goto exit;
             }
             /* If the byte was added */
@@ -495,34 +503,34 @@ tlog_json_stream_write(tlog_trx_state trx,
 
         /* If the first byte we encountered was invalid */
         if (tlog_utf8_is_empty(utf8)) {
-            /* Write single input byte as invalid sequence and skip it */
-            if (!tlog_json_stream_write_seq(TLOG_TRX_STATE_SUB(trx),
-                                            stream, ts, false, buf, 1))
-                break;
+            /* Write the single input byte as invalid sequence and skip it */
+            if (!tlog_json_stream_write_seq(trx, stream, ts, false, buf, 1)) {
+                TLOG_TRX_FRAME_ABORT(trx);
+                goto exit;
+            }
             buf++;
             len--;
         } else {
             /* If the (in)complete character doesn't fit into output */
-            if (!tlog_json_stream_write_seq(TLOG_TRX_STATE_SUB(trx),
-                                            stream, &stream->ts,
+            if (!tlog_json_stream_write_seq(trx, stream, &stream->ts,
                                             tlog_utf8_is_complete(utf8),
                                             utf8->buf, utf8->len)) {
                 /* Back up unwritten data */
-                buf -= utf8->len;
-                len += utf8->len;
-                break;
+                buf = start_buf;
+                len = start_len;
+                TLOG_TRX_FRAME_ABORT(trx);
+                goto exit;
             }
         }
         tlog_utf8_reset(utf8);
+        TLOG_TRX_FRAME_COMMIT(trx);
     }
 
-    tlog_utf8_reset(utf8);
 exit:
+
     written = (*plen - len);
     *pbuf = buf;
     *plen = len;
-
-    TLOG_TRX_FRAME_COMMIT(trx);
 
     return written;
 }

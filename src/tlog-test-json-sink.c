@@ -571,5 +571,22 @@ main(void)
                     "", "", "SE", ""))
     );
 
+    TEST(incomplete_char_backoff,
+         INPUT(.op_list = {
+            OP_WRITE_IO(0, 0, false,
+                        "0123456789abcdef0123456789abcdef"
+                        "0123456789abcdef0123456789a\xf0\x9d", 61),
+            OP_WRITE_IO(0, 0, false, "\x84\x9e", 2),
+            OP_FLUSH
+         }),
+         OUTPUT(MSG(1, "0", "<59",
+                    "0123456789abcdef0123456789abcdef"
+                    "0123456789abcdef0123456789a", "",
+                    "", "")
+                MSG(2, "0", "<1",
+                    "\xf0\x9d\x84\x9e", "",
+                    "", ""))
+    );
+
     return !passed;
 }
