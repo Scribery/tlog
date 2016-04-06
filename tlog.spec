@@ -57,12 +57,16 @@ rm -r %{buildroot}/usr/include/%{name}
 %postun -p /sbin/ldconfig
 
 %changelog
-* Thu Mar 10 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2-1
+* Wed Apr 6 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2-1
 - Release v2. Not ready for production. Following features are added.
 - Fully-fledged command-line interface to tlog-play, along with config file
   and man pages.
 - Support for playback from file in tlog-play.
 - Make tlog-play follow mode controllable and off by default.
+- Get tlog-rec shell also from TLOG_REC_SHELL environment variable.
+- Support non-TTY stdin/stdout in tlog-rec, allowing its use with
+  non-interactive SSH sessions.
+- Support building on and packaging for EPEL5.
 
 * Thu Feb 25 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 1-1
 - Release v1. Not ready for production. Following features are included.
