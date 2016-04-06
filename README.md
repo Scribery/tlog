@@ -23,8 +23,8 @@ where it can be searched and queried, and from where it can be played back.
 recording and playback respectively. `Tlog-rec` is intended to be the user's
 login shell. It puts itself between the actual user's shell and the terminal
 upon user login, logging everything that passes through. At the moment,
-`tlog-play` can only playback recordings from ElasticSearch. However, other
-sources are going to be implemented in future releases.
+`tlog-play` can playback recordings from ElasticSearch or from a file written
+by `tlog-rec` with `file` writer selected.
 
 Building
 --------
