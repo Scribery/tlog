@@ -9,7 +9,7 @@ URL:        https://github.com/Scribery/tlog
 Source:     %{name}-%{version}.tar.gz
 
 BuildRequires:  json-c-devel
-BuildRequires:  libcurl-devel
+BuildRequires:  curl-devel
 BuildRequires:  m4
 
 %description
