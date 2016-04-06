@@ -12,6 +12,8 @@ BuildRequires:  json-c-devel
 BuildRequires:  curl-devel
 BuildRequires:  m4
 
+BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+
 %description
 Tlog is a terminal I/O recording program similar to "script", but used in
 place of a user's shell, starting the recording and executing the real user's
