@@ -2,6 +2,7 @@ Name:       tlog
 Version:    2
 Release:    1%{?dist}
 Summary:    Terminal I/O logger
+Group:      Applications/System
 
 License:    GPLv2+
 URL:        https://github.com/Scribery/tlog
