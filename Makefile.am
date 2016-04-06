@@ -21,5 +21,5 @@ include $(top_srcdir)/Common.am
 
 ACLOCAL_AMFLAGS = -Im4/autotools
 SUBDIRS = m4 include lib src doc man
-dist_doc_DATA = README.md COPYING
+dist_doc_DATA = README.md
 dist_noinst_DATA = tlog.spec

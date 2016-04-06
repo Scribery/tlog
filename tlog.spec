@@ -37,6 +37,8 @@ rm %{buildroot}/%{_libdir}/*.so
 rm -r %{buildroot}/usr/include/%{name}
 
 %files
+%{!?_licensedir:%global license %doc}
+%license COPYING
 %doc %{_defaultdocdir}/%{name}
 %{_bindir}/%{name}-*
 %{_libdir}/lib%{name}.so*
