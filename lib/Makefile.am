@@ -105,7 +105,7 @@ libtlog_la_SOURCES = \
     tty_source.c            \
     utf8.c
 
-libtlog_la_LIBADD = $(JSON_LIBS) $(LIBCURL)
+libtlog_la_LIBADD = $(JSON_LIBS) $(LIBCURL) -lrt
 
 libtlog_test_la_SOURCES = \
     test_json_sink.c        \

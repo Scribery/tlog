@@ -93,6 +93,7 @@ tlog_rec_SOURCES = \
 tlog_rec_LDADD = \
     ../lib/libtlog.la   \
     $(JSON_LIBS)        \
+    -lrt                \
     -lutil
 
 tlog_play_SOURCES = \
@@ -100,7 +101,8 @@ tlog_play_SOURCES = \
 tlog_play_LDADD = \
     ../lib/libtlog.la   \
     $(JSON_LIBS)        \
-    $(LIBCURL)
+    $(LIBCURL)          \
+    -lrt
 
 TESTS = \
     tlog-test-fd-json-reader        \
