@@ -916,10 +916,13 @@ tap_setup(struct tap *ptap, struct json_object *conf,
     {
         const struct timespec delay_min = TLOG_DELAY_MIN_TIMESPEC;
         struct timespec timestamp;
+#ifdef CLOCK_MONOTONIC_COARSE
         if (clock_getres(CLOCK_MONOTONIC_COARSE, &timestamp) == 0 &&
             tlog_timespec_cmp(&timestamp, &delay_min) <= 0) {
             clock_id = CLOCK_MONOTONIC_COARSE;
-        } else if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
+        } else
+#endif
+        if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
             clock_id = CLOCK_MONOTONIC;
         } else {
             fprintf(stderr, "No clock to use\n");
