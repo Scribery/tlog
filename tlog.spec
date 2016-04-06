@@ -6,7 +6,7 @@ Group:      Applications/System
 
 License:    GPLv2+
 URL:        https://github.com/Scribery/tlog
-Source:     %{name}-%{version}.tar.gz
+Source:     https://github.com/Scribery/%{name}/releases/download/v%{version}/tlog-%{version}.tar.gz
 
 BuildRequires:  json-c-devel
 BuildRequires:  curl-devel
