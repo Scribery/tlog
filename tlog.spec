@@ -11,6 +11,8 @@ Source:     https://github.com/Scribery/%{name}/releases/download/v%{version}/tl
 BuildRequires:  json-c-devel
 BuildRequires:  curl-devel
 BuildRequires:  m4
+Requires(post):     sed
+Requires(postun):   sed
 
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
@@ -52,9 +54,22 @@ rm -r %{buildroot}/usr/include/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-rec.conf
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-play.conf
 
-%post -p /sbin/ldconfig
+%post
+/sbin/ldconfig
+# Add tlog-rec to /etc/shells if it exists
+test -e '%{_sysconfdir}/shells' &&
+    sed -i \
+        -e '\%^%{_bindir}/%{name}-rec$% q' \
+        -e '$ s%$%\n%{_bindir}/%{name}-rec%' \
+        %{_sysconfdir}/shells
 
-%postun -p /sbin/ldconfig
+%postun
+/sbin/ldconfig
+# Remove tlog-rec from /etc/shells if it exists
+test -e '%{_sysconfdir}/shells' &&
+    sed -i \
+        -e '\%^%{_bindir}/%{name}-rec$% d' \
+        %{_sysconfdir}/shells
 
 %changelog
 * Wed Apr 6 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2-1
