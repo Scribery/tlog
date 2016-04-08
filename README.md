@@ -58,6 +58,20 @@ install`:
 Otherwise you can use the [release binary RPM packages][releases] and install
 them with your favorite tool.
 
+Testing
+-------
+
+You can test that session recording and playback work in general by recording
+into and playing back from a file.
+
+To record into a file execute tlog-rec on the command line as such:
+
+    tlog-rec --writer=file --file-path=tlog.log
+
+After exiting the recorded session you can play it back with tlog-play:
+
+    tlog-play --reader=file --file-path=tlog.log
+
 Usage
 -----
 
