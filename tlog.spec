@@ -1,5 +1,5 @@
 Name:       tlog
-Version:    2
+Version:    3
 Release:    1%{?dist}
 Summary:    Terminal I/O logger
 Group:      Applications/System
@@ -72,6 +72,9 @@ test -e '%{_sysconfdir}/shells' &&
         %{_sysconfdir}/shells
 
 %changelog
+* Tue Apr 12 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3-1
+- Release v3.
+
 * Wed Apr 6 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2-1
 - Release v2. Not ready for production. Following features are added.
 - Fully-fledged command-line interface to tlog-play, along with config file
