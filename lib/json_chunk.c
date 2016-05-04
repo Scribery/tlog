@@ -342,9 +342,6 @@ tlog_json_chunk_write_window(tlog_trx_state trx,
         goto failure;
     }
 
-    if (len > chunk->rem)
-        goto failure;
-
     tlog_json_stream_flush(&chunk->input);
     tlog_json_stream_flush(&chunk->output);
 
