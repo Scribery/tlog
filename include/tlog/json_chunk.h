@@ -3,7 +3,9 @@
  * @brief JSON encoder data chunk buffer.
  *
  * Chunk is used to accumulate I/O and window size data for a single JSON log
- * message.
+ * message repeatedly, for a single message stream. Once created is ready to
+ * accept data for a message. A new message can be started by emptying the
+ * chunk.
  */
 /*
  * Copyright (C) 2015 Red Hat
@@ -158,7 +160,8 @@ extern void tlog_json_chunk_flush(struct tlog_json_chunk *chunk);
 extern bool tlog_json_chunk_cut(struct tlog_json_chunk *chunk);
 
 /**
- * Empty a chunk contents (but not pending incomplete characters).
+ * Empty a chunk contents (but not pending incomplete characters),
+ * preparing it for writing a new message.
  *
  * @param chunk     The chunk to empty.
  */
