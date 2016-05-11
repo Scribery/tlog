@@ -44,10 +44,12 @@
 TLOG_TRX_BASIC_STORE_SIG(tlog_json_chunk) {
     size_t              rem;        /**< Remaining total buffer space */
     uint8_t            *timing_ptr; /**< Timing output pointer */
-    bool                got_ts;     /**< True if got a timestamp */
+    bool                got_ts;     /**< True if got a timestamp since last
+                                         emptied */
     struct timespec     first_ts;   /**< First timestamp */
     struct timespec     last_ts;    /**< Last timestamp */
-    bool                got_window;     /**< True if got a window packet */
+    bool                got_window;     /**< True if got a window packet ever
+                                             before */
     unsigned short int  last_width;     /**< Last window width */
     unsigned short int  last_height;    /**< Last window height */
 };
@@ -66,11 +68,13 @@ struct tlog_json_chunk {
     struct tlog_json_stream     input;  /**< Input stream state and buffer */
     struct tlog_json_stream     output; /**< Output stream state and buffer */
 
-    bool                got_ts;     /**< True if got a timestamp */
+    bool                got_ts;     /**< True if got a timestamp since last
+                                         emptied */
     struct timespec     first_ts;   /**< First timestamp */
     struct timespec     last_ts;    /**< Last timestamp */
 
-    bool                got_window;     /**< True if got a window packet */
+    bool                got_window;     /**< True if got a window packet ever
+                                             before */
     unsigned short int  last_width;     /**< Last window width */
     unsigned short int  last_height;    /**< Last window height */
 
