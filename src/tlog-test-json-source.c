@@ -1052,5 +1052,41 @@ main(void)
          )
     );
 
+    TEST(window_suppression_in_message,
+         INPUT(MSG_DUMMY(1, "0", "=100x200+100=100x200",
+                         "", "", "", "")),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
+
+    TEST(window_suppression_between_messages,
+         INPUT(MSG_DUMMY(1, "0", "=100x200", "", "", "", "")
+               MSG_DUMMY(2, "0", "=100x200", "", "", "", "")),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
+
+    TEST(window_suppression_between_messages_with_delay,
+         INPUT(MSG_DUMMY(1, "0", "=100x200", "", "", "", "")
+               MSG_DUMMY(2, "100", "=100x200", "", "", "", "")),
+         OUTPUT(
+            .io_size = 4,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
+
     return !passed;
 }

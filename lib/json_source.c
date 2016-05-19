@@ -47,6 +47,9 @@ struct tlog_json_source {
     size_t              last_msg_id;    /**< Last message ID */
     bool                got_pkt;        /**< Read at least one packet */
     struct timespec     last_pkt_ts;    /**< Last packet timestamp */
+    bool                got_window;     /**< Read at least one window */
+    unsigned short int  last_width;     /**< Last window's width */
+    unsigned short int  last_height;    /**< Last window's height */
 
     struct tlog_json_msg    msg;        /**< Message parsing state */
 
@@ -245,7 +248,24 @@ tlog_json_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
             } else {
                 json_source->got_pkt = true;
             }
+
             json_source->last_pkt_ts = pkt->timestamp;
+
+            /* Don't return the same window */
+            if (pkt->type == TLOG_PKT_TYPE_WINDOW) {
+                if (json_source->got_window) {
+                    if (pkt->data.window.width == json_source->last_width &&
+                        pkt->data.window.height == json_source->last_height) {
+                        tlog_pkt_cleanup(pkt);
+                        continue;
+                    }
+                } else {
+                    json_source->got_window = true;
+                }
+                json_source->last_width = pkt->data.window.width;
+                json_source->last_height = pkt->data.window.height;
+            }
+
             return TLOG_RC_OK;
         }
     }
