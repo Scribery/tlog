@@ -945,6 +945,57 @@ main(void)
          )
     );
 
+    TEST(window_repeat_suppressed,
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
+                OP_WRITE(PKT_IO_STR(0, 0, true,
+                                    "0123456789abcdef01234"
+                                    "0123456789abcdef01234")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 58,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
+                OP_READ_OK(PKT_IO_STR(0, 0, true,
+                                      "0123456789abcdef01234")),
+                OP_READ_OK(PKT_IO_STR(0, 0, true,
+                                      "0123456789abcdef01234")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
+
+    TEST(window_not_suppressed,
+         INPUT(
+            .chunk_size = 32,
+            .op_list = {
+                OP_WRITE(PKT_WINDOW(0, 0, 100, 200)),
+                OP_WRITE(PKT_IO_STR(0, 0, true,
+                                    "0123456789abcdef01234")),
+                OP_WRITE(PKT_WINDOW(0, 0, 200, 300)),
+                OP_WRITE(PKT_IO_STR(0, 0, true,
+                                    "0123456789abcdef01234")),
+                OP_FLUSH
+            },
+         ),
+         OUTPUT(
+            .io_size = 58,
+            .op_list = {
+                OP_READ_OK(PKT_WINDOW(0, 0, 100, 200)),
+                OP_READ_OK(PKT_IO_STR(0, 0, true,
+                                      "0123456789abcdef01234")),
+                OP_READ_OK(PKT_WINDOW(0, 0, 200, 300)),
+                OP_READ_OK(PKT_IO_STR(0, 0, true,
+                                      "0123456789abcdef01234")),
+                OP_READ_OK(PKT_VOID)
+            }
+         )
+    );
+
     passed = tlog_test_json_passthrough_random("random",
                                                16 * 1024, 16 * 1024,
                                                256 * 1024) &&

@@ -42,6 +42,23 @@
 /** Minimum value of chunk size */
 #define TLOG_JSON_CHUNK_SIZE_MIN    TLOG_JSON_STREAM_SIZE_MIN
 
+/** State of the chunk's window handling */
+enum tlog_json_chunk_window_state {
+    TLOG_JSON_CHUNK_WINDOW_STATE_UNKNOWN,   /** No window packet was ever
+                                                received */
+    TLOG_JSON_CHUNK_WINDOW_STATE_KNOWN,     /** A window packet was received
+                                                since the creation of the
+                                                chunk */
+    TLOG_JSON_CHUNK_WINDOW_STATE_RESERVED,  /** Space for a window's timing
+                                                entry is being reserved, or
+                                                was reserved since the last
+                                                time the chunk was empty */
+    TLOG_JSON_CHUNK_WINDOW_STATE_WRITTEN    /** A window's timing entry is
+                                                being written, or was written
+                                                since the last time the chunk
+                                                was empty */
+};
+
 /** Chunk transaction store */
 TLOG_TRX_BASIC_STORE_SIG(tlog_json_chunk) {
     size_t              rem;        /**< Remaining total buffer space */
@@ -50,8 +67,10 @@ TLOG_TRX_BASIC_STORE_SIG(tlog_json_chunk) {
                                          emptied */
     struct timespec     first_ts;   /**< First timestamp */
     struct timespec     last_ts;    /**< Last timestamp */
-    bool                got_window;     /**< True if got a window packet ever
-                                             before */
+
+    enum tlog_json_chunk_window_state   window_state;   /**< Window handling
+                                                             state */
+
     unsigned short int  last_width;     /**< Last window width */
     unsigned short int  last_height;    /**< Last window height */
 };
@@ -75,8 +94,9 @@ struct tlog_json_chunk {
     struct timespec     first_ts;   /**< First timestamp */
     struct timespec     last_ts;    /**< Last timestamp */
 
-    bool                got_window;     /**< True if got a window packet ever
-                                             before */
+    enum tlog_json_chunk_window_state   window_state;   /**< Window handling
+                                                             state */
+
     unsigned short int  last_width;     /**< Last window width */
     unsigned short int  last_height;    /**< Last window height */
 

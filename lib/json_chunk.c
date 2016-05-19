@@ -33,26 +33,58 @@ TLOG_TRX_BASIC_ACT_SIG(tlog_json_chunk)
     TLOG_TRX_BASIC_ACT_ON_VAR(got_ts);
     TLOG_TRX_BASIC_ACT_ON_VAR(first_ts);
     TLOG_TRX_BASIC_ACT_ON_VAR(last_ts);
-    TLOG_TRX_BASIC_ACT_ON_VAR(got_window);
+    TLOG_TRX_BASIC_ACT_ON_VAR(window_state);
     TLOG_TRX_BASIC_ACT_ON_VAR(last_width);
     TLOG_TRX_BASIC_ACT_ON_VAR(last_height);
     TLOG_TRX_BASIC_ACT_ON_OBJ(input);
     TLOG_TRX_BASIC_ACT_ON_OBJ(output);
 }
 
+/**
+ * Print window coordinates to a string, in timing format.
+ *
+ * @param buf       The buffer to print to, can be NULL if size is 0.
+ * @param size      The size of the buffer to print to, includes terminating zero.
+ * @param width     The window width to print.
+ * @param height    The window height to print.
+ *
+ * @return Number of characters (to be) printed, excluding terminating zero.
+ */
+static size_t
+tlog_json_chunk_sprint_window(uint8_t *buf, size_t size,
+                              unsigned short int width,
+                              unsigned short int height)
+{
+    int rc;
+    assert(buf != NULL || size == 0);
+    rc = snprintf((char *)buf, size, "=%hux%hu", width, height);
+    assert(rc >= 0);
+    return (size_t)rc;
+}
+
 static bool
 tlog_json_chunk_reserve(struct tlog_json_chunk *chunk, size_t len)
 {
     assert(tlog_json_chunk_is_valid(chunk));
+
+    /* If we'll have to write the initial window */
+    if (chunk->window_state == TLOG_JSON_CHUNK_WINDOW_STATE_KNOWN) {
+        len += tlog_json_chunk_sprint_window(NULL, 0,
+                                             chunk->last_width,
+                                             chunk->last_height);
+    }
     if (len > chunk->rem)
         return false;
     chunk->rem -= len;
+    if (chunk->window_state == TLOG_JSON_CHUNK_WINDOW_STATE_KNOWN) {
+        chunk->window_state = TLOG_JSON_CHUNK_WINDOW_STATE_RESERVED;
+    }
     return true;
 }
 
 static void
-tlog_json_chunk_write_timing(struct tlog_json_chunk *chunk,
-                             const uint8_t *ptr, size_t len)
+tlog_json_chunk_write_timing_raw(struct tlog_json_chunk *chunk,
+                                 const uint8_t *ptr, size_t len)
 {
     assert(tlog_json_chunk_is_valid(chunk));
     assert(ptr != NULL || len == 0);
@@ -61,6 +93,25 @@ tlog_json_chunk_write_timing(struct tlog_json_chunk *chunk,
 
     memcpy(chunk->timing_ptr, ptr, len);
     chunk->timing_ptr += len;
+}
+
+static void
+tlog_json_chunk_write_timing(struct tlog_json_chunk *chunk,
+                             const uint8_t *ptr, size_t len)
+{
+    /* If we have to write the (reserved) initial window */
+    if (chunk->window_state == TLOG_JSON_CHUNK_WINDOW_STATE_RESERVED) {
+        /* Window string buffer (max: "=65535x65535") */
+        uint8_t buf[16];
+        size_t len;
+        len = tlog_json_chunk_sprint_window(buf, sizeof(buf),
+                                            chunk->last_width,
+                                            chunk->last_height);
+        assert(len < sizeof(buf));
+        tlog_json_chunk_write_timing_raw(chunk, buf, len);
+        chunk->window_state = TLOG_JSON_CHUNK_WINDOW_STATE_WRITTEN;
+    }
+    tlog_json_chunk_write_timing_raw(chunk, ptr, len);
 }
 
 /**
@@ -301,8 +352,7 @@ tlog_json_chunk_write_window(tlog_trx_state trx,
                              const struct tlog_pkt_pos *end)
 {
     /* Window string buffer (max: "=65535x65535") */
-    char buf[16];
-    int rc;
+    uint8_t buf[16];
     size_t len;
     TLOG_TRX_FRAME_DEF_SINGLE(chunk);
 
@@ -321,24 +371,17 @@ tlog_json_chunk_write_window(tlog_trx_state trx,
 
     TLOG_TRX_FRAME_BEGIN(trx);
 
-    if (chunk->got_window) {
+    if (chunk->window_state >= TLOG_JSON_CHUNK_WINDOW_STATE_KNOWN) {
         if (pkt->data.window.width == chunk->last_width &&
             pkt->data.window.height == chunk->last_height)
             goto success;
-    } else {
-        chunk->got_window = true;
     }
 
-    rc = snprintf(buf, sizeof(buf), "=%hux%hu",
-                  pkt->data.window.width, pkt->data.window.height);
-    if (rc < 0) {
-        assert(false);
-        goto failure;
-    }
-
-    len = (size_t)rc;
+    len = tlog_json_chunk_sprint_window(buf, sizeof(buf),
+                                        pkt->data.window.width,
+                                        pkt->data.window.height);
+    assert(len < sizeof(buf));
     if (len >= sizeof(buf)) {
-        assert(false);
         goto failure;
     }
 
@@ -348,10 +391,14 @@ tlog_json_chunk_write_window(tlog_trx_state trx,
     if (!tlog_json_chunk_advance(trx, chunk, &pkt->timestamp))
         goto failure;
 
+    /* Signal we're reserving space for a window right now */
+    chunk->window_state = TLOG_JSON_CHUNK_WINDOW_STATE_RESERVED;
     if (!tlog_json_chunk_reserve(chunk, len))
         goto failure;
 
-    tlog_json_chunk_write_timing(chunk, (uint8_t *)buf, len);
+    /* Signal we're writing a window right now */
+    chunk->window_state = TLOG_JSON_CHUNK_WINDOW_STATE_WRITTEN;
+    tlog_json_chunk_write_timing(chunk, buf, len);
 
     chunk->last_width = pkt->data.window.width;
     chunk->last_height = pkt->data.window.height;
@@ -509,6 +556,9 @@ tlog_json_chunk_empty(struct tlog_json_chunk *chunk)
     chunk->got_ts = false;
     tlog_timespec_zero(&chunk->first_ts);
     tlog_timespec_zero(&chunk->last_ts);
+    if (chunk->window_state > TLOG_JSON_CHUNK_WINDOW_STATE_KNOWN) {
+        chunk->window_state = TLOG_JSON_CHUNK_WINDOW_STATE_KNOWN;
+    }
     assert(tlog_json_chunk_is_valid(chunk));
 }
 
