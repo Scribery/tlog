@@ -432,6 +432,30 @@ main(void)
                     "", "", ""))
     );
 
+    TEST(window_delayed_change,
+         INPUT(.op_list = {
+            OP_WRITE_WINDOW(0, 0, 100, 200),
+            OP_WRITE_IO(0, 0, false,
+                        "0123456789abcdef0123456789abcdef"
+                        "0123456789abcdef01234",
+                        32 + 16 + 5),
+            OP_WRITE_WINDOW(0, 1000000, 300, 400),
+            OP_WRITE_IO(0, 1000000, false,
+                        "0123456789abcdef0123456789abcdef"
+                        "0123456789abcdef01234",
+                        32 + 16 + 5),
+            OP_FLUSH
+         }),
+         OUTPUT(MSG(1, "0", "=100x200<53",
+                    "0123456789abcdef0123456789abcdef"
+                    "0123456789abcdef01234",
+                    "", "", "")
+                MSG(2, "1", "=300x400<53",
+                    "0123456789abcdef0123456789abcdef"
+                    "0123456789abcdef01234",
+                    "", "", ""))
+    );
+
     TEST(window_same_no_double_repeat,
          INPUT(.op_list = {
             OP_WRITE_WINDOW(0, 0, 100, 200),
