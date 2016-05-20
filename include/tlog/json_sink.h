@@ -48,6 +48,7 @@ extern const struct tlog_sink_type tlog_json_sink_type;
  *                          destruction of the sink, false otherwise.
  * @param hostname          Hostname to use in log messages.
  * @param username          Username to use in log messages.
+ * @param terminal          Terminal type string to use in log messages.
  * @param session_id        Session ID to use in log messages.
  * @param chunk_size        Maximum data chunk length.
  *
@@ -59,6 +60,7 @@ tlog_json_sink_create(struct tlog_sink **psink,
                       bool writer_owned,
                       const char *hostname,
                       const char *username,
+                      const char *terminal,
                       unsigned int session_id,
                       size_t chunk_size)
 {
@@ -66,12 +68,14 @@ tlog_json_sink_create(struct tlog_sink **psink,
     assert(tlog_json_writer_is_valid(writer));
     assert(hostname != NULL);
     assert(username != NULL);
+    assert(terminal != NULL);
     assert(session_id != 0);
     assert(chunk_size >= TLOG_JSON_SINK_CHUNK_SIZE_MIN);
 
     return tlog_sink_create(psink, &tlog_json_sink_type,
                             writer, writer_owned,
-                            hostname, username, session_id, chunk_size);
+                            hostname, username, terminal,
+                            session_id, chunk_size);
 }
 
 #endif /* _TLOG_JSON_SINK_H */

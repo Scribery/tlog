@@ -40,6 +40,8 @@ struct tlog_json_source {
                                              NULL for unfiltered */
     char               *username;       /**< Username to filter messages by,
                                              NULL for unfiltered */
+    char               *terminal;       /**< Terminal type to require in
+                                             messages, NULL for any */
     unsigned int        session_id;     /**< Session ID to filter messages by,
                                              NULL for unfiltered */
 
@@ -97,6 +99,7 @@ tlog_json_source_init(struct tlog_source *source, va_list ap)
     bool reader_owned = (bool)va_arg(ap, int);
     const char *hostname = va_arg(ap, const char *);
     const char *username = va_arg(ap, const char *);
+    const char *terminal = va_arg(ap, const char *);
     unsigned int session_id = va_arg(ap, unsigned int);
     size_t io_size = va_arg(ap, size_t);
 
@@ -113,6 +116,13 @@ tlog_json_source_init(struct tlog_source *source, va_list ap)
     if (username != NULL) {
         json_source->username = strdup(username);
         if (json_source->username == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            goto error;
+        }
+    }
+    if (terminal != NULL) {
+        json_source->terminal = strdup(terminal);
+        if (json_source->terminal == NULL) {
             grc = TLOG_GRC_ERRNO;
             goto error;
         }
@@ -189,6 +199,9 @@ tlog_json_source_read_msg(struct tlog_source *source)
         if (json_source->username != NULL &&
             strcmp(json_source->msg.user, json_source->username) != 0)
             continue;
+        if (json_source->terminal != NULL &&
+            strcmp(json_source->msg.term, json_source->terminal) != 0)
+            return TLOG_RC_JSON_SOURCE_TERMINAL_MISMATCH;
         if (json_source->session_id != 0 &&
             json_source->msg.session != json_source->session_id)
             continue;

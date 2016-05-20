@@ -163,7 +163,7 @@ create_log_source(struct tlog_source **psource, struct json_object *conf)
 
     /* Create the source */
     grc = tlog_json_source_create(&source, reader, true,
-                                  NULL, NULL, 0, 4096);
+                                  NULL, NULL, NULL, 0, 4096);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating the source: %s\n",
                 tlog_grc_strerror(grc));

@@ -76,6 +76,7 @@ struct tlog_test_json_source_op {
 struct tlog_test_json_source_output {
     const char                         *hostname;
     const char                         *username;
+    const char                         *terminal;
     unsigned int                        session_id;
     size_t                              io_size;
     struct tlog_test_json_source_op     op_list[16];

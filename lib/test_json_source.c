@@ -129,7 +129,8 @@ tlog_test_json_source_run(
     }
     grc = tlog_json_source_create(&source, reader, false,
                                   output->hostname, output->username,
-                                  output->session_id, output->io_size);
+                                  output->terminal, output->session_id,
+                                  output->io_size);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating source: %s\n",
                 tlog_grc_strerror(grc));

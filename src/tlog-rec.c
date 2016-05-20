@@ -166,6 +166,7 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
     int fd = -1;
     char *fqdn = NULL;
     struct passwd *passwd;
+    const char *term;
     unsigned int session_id;
 
     /*
@@ -300,6 +301,12 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
         goto cleanup;
     }
 
+    /* Get the terminal type */
+    term = getenv("TERM");
+    if (term == NULL) {
+        term = "";
+    }
+
     /* Get the maximum payload size */
     if (!json_object_object_get_ex(conf, "payload", &obj)) {
         fprintf(stderr, "Maximum payload size is not specified\n");
@@ -310,7 +317,7 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
 
     /* Create the sink, letting it take over the writer */
     grc = tlog_json_sink_create(&sink, writer, true,
-                                fqdn, passwd->pw_name,
+                                fqdn, passwd->pw_name, term,
                                 session_id, (size_t)num);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating log sink: %s\n",

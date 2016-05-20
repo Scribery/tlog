@@ -13,6 +13,10 @@
             "description":  "Recorded user name",
             "type":         "string"
         },
+        "term":     {
+            "description":  "Terminal type",
+            "type":         "string"
+        },
         "session":  {
             "description":  "Recorded audit session ID",
             "type":         "integer",
@@ -67,6 +71,7 @@
     "required":     [
         "host",
         "user",
+        "term",
         "session",
         "id",
         "pos",

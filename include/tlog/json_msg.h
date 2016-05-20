@@ -48,6 +48,7 @@ struct tlog_json_msg {
                                              message */
     const char         *host;           /**< Hostname */
     const char         *user;           /**< Username */
+    const char         *term;           /**< Terminal type */
     unsigned int        session;        /**< Audit session ID */
     size_t              id;             /**< Message ID */
     struct timespec     pos;            /**< Position timestamp */

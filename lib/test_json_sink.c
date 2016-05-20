@@ -67,7 +67,8 @@ tlog_test_json_sink_run(
 
     grc = tlog_json_sink_create(&sink, writer, false,
                                 input->hostname, input->username,
-                                input->session_id, input->chunk_size);
+                                input->terminal, input->session_id,
+                                input->chunk_size);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed initializing the sink: %s\n",
                 tlog_grc_strerror(grc));

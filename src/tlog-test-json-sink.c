@@ -42,7 +42,7 @@ main(void)
 #define MSG(_id_tkn, _pos, _timing, \
             _in_txt, _in_bin, _out_txt, _out_bin)               \
     "{\"host\":\"localhost\","                                  \
-      "\"user\":\"user\",\"session\":1,"                        \
+      "\"user\":\"user\",\"term\":\"xterm\",\"session\":1,"     \
       "\"id\":" #_id_tkn ",\"pos\":" _pos ","                   \
       "\"timing\":\"" _timing "\","                             \
       "\"in_txt\":\"" _in_txt "\",\"in_bin\":[" _in_bin "],"    \
@@ -54,6 +54,7 @@ main(void)
         .chunk_size = 64,           \
         .hostname = "localhost",    \
         .username = "user",         \
+        .terminal = "xterm",        \
         .session_id = 1,            \
         _struct_init_args           \
     }

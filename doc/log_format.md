@@ -10,6 +10,7 @@ properties:
 | --------- | ------------------------- | ----------------------
 | host      | String                    | Recording host name
 | user      | String                    | Recorded user name
+| term      | String                    | Terminal type
 | session   | String                    | Recorded audit session ID
 | id        | Unsigned integer          | ID of the message within session
 | pos       | Unsigned integer          | Message position in session,
@@ -24,11 +25,11 @@ properties:
 | out_bin   | Array of unsigned bytes   | Scrubbed invalid output characters
 |           |                           | as an array of bytes
 
-Each message in a single session has the same `host`, `user`, and `session`
-property values. The `id` value starts with one for the first message and is
-incremented for each new message. The `pos` value is the message temporal
-position in a session, in milliseconds. No assumption should be made about the
-time origin at this moment.
+Each message in a single session has the same `host`, `user`, `term`, and
+`session` property values. The `id` value starts with one for the first
+message and is incremented for each new message. The `pos` value is the
+message temporal position in a session, in milliseconds. No assumption should
+be made about the time origin at this moment.
 
 The `in_txt`/`out_txt` properties store input and output text respectively.
 Any byte sequences which don't constitute a valid character are represented by
@@ -77,6 +78,7 @@ terminal, the command output, and a fresh shell prompt:
     {
         "host":     "server.example.com",
         "user":     "johndoe",
+        "term":     "xterm",
         "session":  324,
         "id":       23,
         "pos":      345349,

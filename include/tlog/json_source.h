@@ -51,6 +51,8 @@ extern const struct tlog_source_type tlog_json_source_type;
  *                          unfiltered.
  * @param username          Username to filter log messages by, NULL for
  *                          unfiltered.
+ * @param terminal          Terminal type string to require in log messages,
+ *                          NULL for any.
  * @param session_id        Session ID to filter log messages by, 0 for
  *                          unfiltered.
  * @param io_size           Size of I/O data buffer used in packets.
@@ -63,6 +65,7 @@ tlog_json_source_create(struct tlog_source **psource,
                         bool reader_owned,
                         const char *hostname,
                         const char *username,
+                        const char *terminal,
                         unsigned int session_id,
                         size_t io_size)
 {
@@ -72,7 +75,8 @@ tlog_json_source_create(struct tlog_source **psource,
 
     return tlog_source_create(psource, &tlog_json_source_type,
                               reader, reader_owned,
-                              hostname, username, session_id, io_size);
+                              hostname, username, terminal, session_id,
+                              io_size);
 }
 
 #endif /* _TLOG_JSON_SOURCE_H */

@@ -46,25 +46,26 @@ main(void)
 #define OP_READ(_exp_grc, _exp_pkt) \
     TLOG_TEST_JSON_SOURCE_OP_READ(_exp_grc, _exp_pkt)
 
-#define MSG_SPEC(_host_token, _user_token, _session_token, \
-                 _id_token, _pos,                               \
-                 _timing, _in_txt, _in_bin, _out_txt, _out_bin) \
-    "{"                                                         \
-        "\"host\":"     "\"" #_host_token "\","                 \
-        "\"user\":"     "\"" #_user_token "\","                 \
-        "\"session\":"  #_session_token ","                     \
-        "\"id\":"       #_id_token ","                          \
-        "\"pos\":"      _pos ","                                \
-        "\"timing\":"   "\"" _timing "\","                      \
-        "\"in_txt\":"   "\"" _in_txt "\","                      \
-        "\"in_bin\":"   "[" _in_bin "],"                        \
-        "\"out_txt\":"  "\"" _out_txt "\","                     \
-        "\"out_bin\":"  "[" _out_bin "]"                        \
+#define MSG_SPEC(_host_token, _user_token, _term_token, _session_token, \
+                 _id_token, _pos,                                       \
+                 _timing, _in_txt, _in_bin, _out_txt, _out_bin)         \
+    "{"                                                                 \
+        "\"host\":"     "\"" #_host_token "\","                         \
+        "\"user\":"     "\"" #_user_token "\","                         \
+        "\"term\":"     "\"" #_term_token "\","                         \
+        "\"session\":"  #_session_token ","                             \
+        "\"id\":"       #_id_token ","                                  \
+        "\"pos\":"      _pos ","                                        \
+        "\"timing\":"   "\"" _timing "\","                              \
+        "\"in_txt\":"   "\"" _in_txt "\","                              \
+        "\"in_bin\":"   "[" _in_bin "],"                                \
+        "\"out_txt\":"  "\"" _out_txt "\","                             \
+        "\"out_bin\":"  "[" _out_bin "]"                                \
     "}\n"
 
 #define MSG_DUMMY(_id_token, _pos, \
                   _timing, _in_txt, _in_bin, _out_txt, _out_bin)    \
-    MSG_SPEC(host, user, 1, _id_token, _pos,                        \
+    MSG_SPEC(host, user, xterm, 1, _id_token, _pos,                 \
                  _timing, _in_txt, _in_bin, _out_txt, _out_bin)
 
 #define OP_READ_OK(_exp_pkt) \
@@ -77,6 +78,7 @@ main(void)
     .output = {                         \
         .hostname = NULL,               \
         .username = NULL,               \
+        .terminal = NULL,               \
         .session_id = 0,                \
         _struct_init_args               \
     }

@@ -39,6 +39,7 @@ struct tlog_json_sink {
     bool                        writer_owned;   /**< True if writer is owned */
     char                       *hostname;       /**< Hostname */
     char                       *username;       /**< Username */
+    char                       *terminal;       /**< Terminal type */
     unsigned int                session_id;     /**< Session ID */
     size_t                      message_id;     /**< Next message ID */
     bool                        started;        /**< True if a packet
@@ -57,6 +58,8 @@ tlog_json_sink_cleanup(struct tlog_sink *sink)
     tlog_json_chunk_cleanup(&json_sink->chunk);
     free(json_sink->message_buf);
     json_sink->message_buf = NULL;
+    free(json_sink->terminal);
+    json_sink->terminal = NULL;
     free(json_sink->username);
     json_sink->username = NULL;
     free(json_sink->hostname);
@@ -75,6 +78,7 @@ tlog_json_sink_init(struct tlog_sink *sink, va_list ap)
     bool writer_owned = (bool)va_arg(ap, int);
     const char *hostname = va_arg(ap, const char *);
     const char *username = va_arg(ap, const char *);
+    const char *terminal = va_arg(ap, const char *);
     unsigned int session_id = va_arg(ap, unsigned int);
     size_t chunk_size = va_arg(ap, size_t);
     tlog_grc grc;
@@ -83,6 +87,7 @@ tlog_json_sink_init(struct tlog_sink *sink, va_list ap)
     assert(tlog_json_writer_is_valid(writer));
     assert(hostname != NULL);
     assert(username != NULL);
+    assert(terminal != NULL);
     assert(session_id != 0);
     assert(chunk_size >= TLOG_JSON_SINK_CHUNK_SIZE_MIN);
 
@@ -94,6 +99,12 @@ tlog_json_sink_init(struct tlog_sink *sink, va_list ap)
 
     json_sink->username = strdup(username);
     if (json_sink->username == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        goto error;
+    }
+
+    json_sink->terminal = strdup(terminal);
+    if (json_sink->terminal == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;
     }
@@ -132,6 +143,7 @@ tlog_json_sink_is_valid(const struct tlog_sink *sink)
            tlog_json_writer_is_valid(json_sink->writer) &&
            json_sink->hostname != NULL &&
            json_sink->username != NULL &&
+           json_sink->terminal != NULL &&
            json_sink->message_buf != NULL &&
            tlog_json_chunk_is_valid(&json_sink->chunk);
 }
@@ -170,6 +182,7 @@ tlog_json_sink_flush(struct tlog_sink *sink)
         "{"
             "\"host\":"     "\"%s\","
             "\"user\":"     "\"%s\","
+            "\"term\":"     "\"%s\","
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
             "\"pos\":"      "%s,"
@@ -181,6 +194,7 @@ tlog_json_sink_flush(struct tlog_sink *sink)
         "}\n",
         json_sink->hostname,
         json_sink->username,
+        json_sink->terminal,
         json_sink->session_id,
         json_sink->message_id,
         pos_buf,

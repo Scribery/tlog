@@ -39,6 +39,7 @@ tlog_json_msg_is_valid(const struct tlog_json_msg *msg)
 
     return msg->host != NULL &&
            msg->user != NULL &&
+           msg->term != NULL &&
            msg->session > 0 &&
            msg->timing_ptr != NULL &&
            msg->in_txt_ptr != NULL &&
@@ -86,6 +87,9 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
 
     GET_FIELD(user, string);
     msg->user = json_object_get_string(o);
+
+    GET_FIELD(term, string);
+    msg->term = json_object_get_string(o);
 
     GET_FIELD(session, int);
     session = json_object_get_int64(o);
