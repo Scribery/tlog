@@ -60,8 +60,7 @@ struct tlog_trx_frame_slot {
     TLOG_TRX_FRAME_DEF(TLOG_TRX_FRAME_SLOT(_obj))
 
 /**
- * Execute an action on transaction frame within scope, if transaction depth
- * is zero.
+ * Execute an action on transaction frame within scope.
  *
  * @param \_trx         Transaction state lvalue.
  * @param \_act_type    Action type.
