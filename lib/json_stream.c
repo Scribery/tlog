@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <tlog/misc.h>
 #include <tlog/json_stream.h>
+#include <tlog/rc.h>
 
 void
 tlog_json_stream_cleanup(struct tlog_json_stream *stream)
