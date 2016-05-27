@@ -107,6 +107,7 @@ tlog_play_LDADD = \
 TESTS = \
     tlog-test-fd-json-reader        \
     tlog-test-grc                   \
+    tlog-test-json-esc              \
     tlog-test-json-overlay          \
     tlog-test-json-passthrough      \
     tlog-test-json-sink             \
@@ -119,6 +120,7 @@ TESTS = \
 check_PROGRAMS = \
     tlog-test-fd-json-reader        \
     tlog-test-grc                   \
+    tlog-test-json-esc              \
     tlog-test-json-overlay          \
     tlog-test-json-passthrough      \
     tlog-test-json-sink             \
@@ -183,3 +185,8 @@ tlog_test_json_overlay_LDADD = \
     ../lib/libtlog_test.la      \
     ../lib/libtlog.la           \
     $(JSON_LIBS)
+
+tlog_test_json_esc_SOURCES = tlog-test-json-esc.c
+tlog_test_json_esc_LDADD = \
+    ../lib/libtlog_test.la      \
+    ../lib/libtlog.la

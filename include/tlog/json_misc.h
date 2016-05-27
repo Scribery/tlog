@@ -27,6 +27,7 @@
 #ifndef _TLOG_JSON_MISC_H
 #define _TLOG_JSON_MISC_H
 
+#include <string.h>
 #include <json.h>
 #include <tlog/grc.h>
 
@@ -71,5 +72,74 @@ extern tlog_grc tlog_json_object_object_add_path(struct json_object* obj,
  */
 extern tlog_grc tlog_json_object_from_file(struct json_object **pconf,
                                            const char          *path);
+
+/**
+ * Escape a string buffer for use inside a JSON string value.
+ *
+ * @param out_ptr   The output buffer pointer, can be NULL, if out_len is 0.
+ * @param out_len   The output buffer length. Must account for terminating
+ *                  zero. If the output doesn't fit into the specified space,
+ *                  then it is terminated after the last character that fits.
+ *                  If zero, then nothing is written.
+ * @param in_ptr    The input buffer pointer, must be valid UTF-8.
+ * @param in_len    The input buffer length, must end the input string so that
+ *                  it remains valid UTF-8.
+ *
+ * @return Number of bytes required for the full output, including the
+ *         terminating zero.
+ */
+extern size_t tlog_json_esc_buf(char       *out_ptr,
+                                size_t      out_len,
+                                const char *in_ptr,
+                                size_t      in_len);
+
+/**
+ * Escape a string for use inside a JSON string value.
+ *
+ * @param out_ptr   The output buffer pointer, can be NULL, if out_len is 0.
+ * @param out_len   The output buffer length. Must account for terminating
+ *                  zero. If the output doesn't fit into the specified space,
+ *                  then it is terminated after the last character that fits.
+ *                  If zero, then nothing is written.
+ * @param in        The input string, must be valid UTF-8.
+ *
+ * @return Number of bytes required for the full output, including the
+ *         terminating zero.
+ */
+static inline size_t
+tlog_json_esc_str(char *out_ptr, size_t out_len, const char *in)
+{
+    return tlog_json_esc_buf(out_ptr, out_len,
+                             in, strlen((const char *)in));
+}
+
+/**
+ * Escape a string buffer for use inside a JSON string value, outputting to a
+ * dynamically-allocated string.
+ *
+ * @param in_ptr    The input buffer pointer, must be valid UTF-8.
+ * @param in_len    The input buffer length, must end the input string so that
+ *                  it remains valid UTF-8.
+ *
+ * @return Pointer to the dynamically-allocated output string, or NULL if
+ *         allocation failed.
+ */
+extern char *tlog_json_aesc_buf(const char *in_ptr, size_t in_len);
+
+
+/**
+ * Escape a string for use inside a JSON string value, outputting to a
+ * dynamically-allocated string.
+ *
+ * @param in        The input string, must be valid UTF-8.
+ *
+ * @return Pointer to the dynamically-allocated output string, or NULL if
+ *         allocation failed.
+ */
+static inline char *
+tlog_json_aesc_str(const char *in)
+{
+    return tlog_json_aesc_buf(in, strlen((const char *)in));
+}
 
 #endif /* _TLOG_JSON_MISC_H */

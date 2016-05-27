@@ -23,6 +23,7 @@
 #include <config.h>
 #include <tlog/json_misc.h>
 #include <tlog/rc.h>
+#include <tlog/utf8.h>
 #include <tlog/misc.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -258,4 +259,147 @@ cleanup:
         close(fd);
     }
     return grc;
+}
+
+/**
+ * Request space for the next escaped character.
+ *
+ * @param pres_len      Location of/for the total required space to add the
+ *                      character length to.
+ * @param pout_of_space Location of/for a flag signifying that the output
+ *                      space ended before or now.
+ * @param pout_len      Location of/for the remaining output space. Only
+ *                      modified if there was enough space.
+ * @param req           The requested space in bytes.
+ *
+ * @return True if the escaped character can be output, false otherwise.
+ */
+static inline bool
+tlog_json_esc_buf_req(size_t *pres_len, bool *pout_of_space,
+                      size_t *pout_len, size_t req)
+{
+    *pres_len += req;
+    if (*pout_of_space) {
+        return false;
+    }
+    if (*pout_len <= req) {
+        *pout_of_space = true;
+        return false;
+    }
+    *pout_len -= req;
+    return true;
+}
+
+size_t
+tlog_json_esc_buf(char *out_ptr, size_t out_len,
+                  const char *in_ptr, size_t in_len)
+{
+    bool out_of_space = false;
+    size_t res_len = 0;
+    struct tlog_utf8 utf8 = TLOG_UTF8_INIT;
+
+    assert(out_ptr != NULL || out_len == 0);
+    assert(in_ptr != NULL || in_len == 0);
+    assert(tlog_utf8_buf_is_valid(in_ptr, in_len));
+
+#define REQ(_n) \
+    tlog_json_esc_buf_req(&res_len, &out_of_space, &out_len, (_n))
+
+    while (in_len > 0) {
+        if (tlog_utf8_add(&utf8, *(const uint8_t *)in_ptr)) {
+            in_len--;
+            in_ptr++;
+        }
+        if (!tlog_utf8_is_ended(&utf8)) {
+            continue;
+        }
+        assert(utf8.len != 0);
+
+        if (!tlog_utf8_is_complete(&utf8) || utf8.len != 1) {
+            if (REQ(utf8.len)) {
+                memcpy(out_ptr, utf8.buf, utf8.len);
+                out_ptr += utf8.len;
+            }
+        } else {
+            uint8_t c = *utf8.buf;
+            switch (c) {
+            case '"':
+            case '\\':
+                if (REQ(2)) {
+                    *out_ptr++ = '\\';
+                    *out_ptr++ = c;
+                }
+                break;
+#define ESC_CASE(_c, _e) \
+            case _c:                    \
+                if (REQ(2)) {             \
+                    *out_ptr++ = '\\';  \
+                    *out_ptr++ = _e;    \
+                }                       \
+                break;
+            ESC_CASE('\b', 'b');
+            ESC_CASE('\f', 'f');
+            ESC_CASE('\n', 'n');
+            ESC_CASE('\r', 'r');
+            ESC_CASE('\t', 't');
+#undef ESC
+            default:
+                if (c < 0x20 || c == 0x7f) {
+                    if (REQ(6)) {
+                        *out_ptr++ = '\\';
+                        *out_ptr++ = 'u';
+                        *out_ptr++ = '0';
+                        *out_ptr++ = '0';
+                        *out_ptr++ = tlog_nibble_digit(c >> 4);
+                        *out_ptr++ = tlog_nibble_digit(c & 0xf);
+                    }
+                } else {
+                    if (REQ(1)) {
+                        *out_ptr++ = c;
+                    }
+                }
+                break;
+            }
+        }
+        tlog_utf8_reset(&utf8);
+    }
+
+    if (tlog_utf8_is_started(&utf8) && !tlog_utf8_is_ended(&utf8)) {
+        if (REQ(utf8.len)) {
+            memcpy(out_ptr, utf8.buf, utf8.len);
+            out_ptr += utf8.len;
+        }
+    }
+
+    if (out_len > 0) {
+        *out_ptr = 0;
+    }
+    res_len++;
+
+#undef REQ
+
+    return res_len;
+}
+
+char *
+tlog_json_aesc_buf(const char *in_ptr, size_t in_len)
+{
+    char *out_ptr;
+    size_t out_len_calc;
+    size_t out_len_out;
+
+    assert(in_ptr != NULL || in_len == 0);
+    assert(tlog_utf8_buf_is_valid(in_ptr, in_len));
+
+    out_len_calc = tlog_json_esc_buf(NULL, 0, in_ptr, in_len);
+    out_ptr = malloc(out_len_calc);
+    if (out_ptr != NULL) {
+        out_len_out = tlog_json_esc_buf(out_ptr, out_len_calc,
+                                        in_ptr, in_len);
+        assert(out_len_out == out_len_calc);
+#if NDEBUG
+        (void)out_len_out;
+#endif
+    }
+    return out_ptr;
 }
