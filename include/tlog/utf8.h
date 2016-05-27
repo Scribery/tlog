@@ -34,7 +34,6 @@
 #include <time.h>
 #include <stdbool.h>
 #include <string.h>
-#include <tlog/rc.h>
 
 /** Valid byte value range */
 struct tlog_utf8_range {
