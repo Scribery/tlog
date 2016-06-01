@@ -65,9 +65,9 @@ tlog_grc_range_gai_strerror(int rc)
 }
 
 const struct tlog_grc_range tlog_grc_range_gai = {
-    .min        = 0x1000,
-    .max        = 0x1fff,
-    .add        = -0x1000,
+    .min        = 10000,
+    .max        = 19999,
+    .add        = -10000,
     .mul        = -1,
     .strerror   = tlog_grc_range_gai_strerror
 };
@@ -79,9 +79,9 @@ tlog_grc_range_json_strerror(int rc)
 }
 
 const struct tlog_grc_range tlog_grc_range_json = {
-    .min        = 0x2000,
-    .max        = 0x2fff,
-    .add        = 0x2000,
+    .min        = 20000,
+    .max        = 29999,
+    .add        = 20000,
     .mul        = 1,
     .strerror   = tlog_grc_range_json_strerror
 };
@@ -93,9 +93,9 @@ tlog_grc_range_curl_strerror(int rc)
 }
 
 const struct tlog_grc_range tlog_grc_range_curl = {
-    .min        = 0x3000,
-    .max        = 0x3fff,
-    .add        = 0x3000,
+    .min        = 30000,
+    .max        = 39999,
+    .add        = 30000,
     .mul        = 1,
     .strerror   = tlog_grc_range_curl_strerror
 };

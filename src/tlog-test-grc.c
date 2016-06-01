@@ -49,9 +49,9 @@ main(void)
 
 #define native_from(x)  (x)
 #define errno_from(x)   (-(x))
-#define gai_from(x)    (-(x) + 0x1000)
-#define json_from(x)    ((x) + 0x2000)
-#define curl_from(x)    ((x) + 0x3000)
+#define gai_from(x)    (-(x) + 10000)
+#define json_from(x)    ((x) + 20000)
+#define curl_from(x)    ((x) + 30000)
 
 #define TEST_CODE(_range_name_token, _rc_name_token, _value, _strerror) \
     do {                                                                    \
