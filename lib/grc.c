@@ -52,8 +52,8 @@ tlog_grc_range_errno_strerror(int rc)
 
 const struct tlog_grc_range tlog_grc_range_errno = {
     .min        = INT_MIN,
-    .max        = -1,
-    .add        = 0,
+    .max        = -10000,
+    .add        = 10000,
     .mul        = -1,
     .strerror   = tlog_grc_range_errno_strerror
 };

@@ -48,7 +48,7 @@ main(void)
     TEST(invalid, !tlog_grc_is_valid(INT_MAX));
 
 #define native_from(x)  (x)
-#define errno_from(x)   (-(x))
+#define errno_from(x)   (-(x) - 10000)
 #define gai_from(x)    (-(x) + 10000)
 #define json_from(x)    ((x) + 20000)
 #define curl_from(x)    ((x) + 30000)
