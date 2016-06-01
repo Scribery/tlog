@@ -125,33 +125,21 @@ main(void)
                  "X\xd0\x90\xe5\x96\x9c\xd0\x90\xd0\x90",
                  "X\xd0\x90\xe5\x96\x9c\xd0\x90\xd0\x90");
 
-    TEST_BUF_BUF(zero_space_zero_bytes, 1,
-                 NULL, 0, NULL, 0);
-    TEST_BUF_BUF(zero_space_one_byte, 2,
-                 NULL, 0, "X", 1);
-    TEST_BUF_BUF(zero_space_two_bytes, 3,
-                 NULL, 0, "XY", 2);
+    TEST_BUF_BUF(zero_space_zero_bytes, 1, "", 0, NULL, 0);
+    TEST_BUF_BUF(zero_space_one_byte, 2, "", 0, "X", 1);
+    TEST_BUF_BUF(zero_space_two_bytes, 3, "", 0, "XY", 2);
 
-    TEST_BUF_BUF(one_space_zero_bytes, 1,
-                 "", 1, NULL, 0);
-    TEST_BUF_BUF(one_space_one_byte, 2,
-                 "", 1, "X", 1);
-    TEST_BUF_BUF(one_space_two_bytes, 3,
-                 "", 1, "XY", 2);
+    TEST_BUF_BUF(one_space_zero_bytes, 1, "", 1, NULL, 0);
+    TEST_BUF_BUF(one_space_one_byte, 2, "", 1, "X", 1);
+    TEST_BUF_BUF(one_space_two_bytes, 3, "", 1, "XY", 2);
 
-    TEST_BUF_BUF(two_spaces_zero_bytes, 1,
-                 "\0 ", 2, NULL, 0);
-    TEST_BUF_BUF(two_spaces_one_byte, 2,
-                 "X", 2, "X", 1);
-    TEST_BUF_BUF(two_spaces_two_bytes, 3,
-                 "X", 2, "XY", 2);
+    TEST_BUF_BUF(two_spaces_zero_bytes, 1, "\0 ", 2, NULL, 0);
+    TEST_BUF_BUF(two_spaces_one_byte, 2, "X", 2, "X", 1);
+    TEST_BUF_BUF(two_spaces_two_bytes, 3, "X", 2, "XY", 2);
 
-    TEST_BUF_BUF(three_spaces_zero_bytes, 1,
-                 "\0  ", 3, NULL, 0);
-    TEST_BUF_BUF(three_spaces_one_byte, 2,
-                 "X\0 ", 3, "X", 1);
-    TEST_BUF_BUF(three_spaces_two_bytes, 3,
-                 "XY", 3, "XY", 2);
+    TEST_BUF_BUF(three_spaces_zero_bytes, 1, "\0  ", 3, NULL, 0);
+    TEST_BUF_BUF(three_spaces_one_byte, 2, "X\0 ", 3, "X", 1);
+    TEST_BUF_BUF(three_spaces_two_bytes, 3, "XY", 3, "XY", 2);
 
     TEST_BUF_STR(cut_two_byte_chars_0, 5,
                  "\xd0\x90", 3, "\xd0\x90\xd0\x90");
