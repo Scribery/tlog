@@ -44,4 +44,19 @@ extern tlog_grc tlog_rec_conf_load(char **pprogname,
                                    struct json_object **pconf,
                                    int argc, char **argv);
 
+/**
+ * Get shell parameters from a loaded tlog-rec configuration JSON object.
+ *
+ * @param conf  Tlog-rec configuration JSON object.
+ * @param ppath Location for the shell path pointer, references the
+ *              configuration object.
+ * @param pargv Location for the NULL-terminated shell argv array, to be
+ *              freed, both the array and the elements.
+ *
+ * @return Global return code.
+ */
+extern tlog_grc tlog_rec_conf_get_shell(struct json_object *conf,
+                                        const char **ppath,
+                                        char ***pargv);
+
 #endif /* _TLOG_REC_CONF_H */

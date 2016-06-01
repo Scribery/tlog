@@ -252,3 +252,129 @@ cleanup:
     json_object_put(conf);
     return grc;
 }
+
+tlog_grc
+tlog_rec_conf_get_shell(struct json_object *conf,
+                        const char **ppath,
+                        char ***pargv)
+{
+    tlog_grc grc;
+    struct json_object *obj;
+    struct json_object *args;
+    bool login;
+    bool command;
+    const char *path;
+    char *name = NULL;
+    char *buf = NULL;
+    char **argv = NULL;
+    size_t argi;
+    char *arg = NULL;
+    int i;
+
+    /* Read the login flag */
+    login = json_object_object_get_ex(conf, "login", &obj) &&
+            json_object_get_boolean(obj);
+
+    /* Read the shell path */
+    if (!json_object_object_get_ex(conf, "shell", &obj)) {
+        fprintf(stderr, "Shell is not specified\n");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    path = json_object_get_string(obj);
+
+    /* Format shell name */
+    buf = strdup(path);
+    if (buf == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        fprintf(stderr, "Failed duplicating shell path: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+    if (login) {
+        const char *str = basename(buf);
+        name = malloc(strlen(str) + 2);
+        if (name == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr, "Failed allocating shell name: %s\n",
+                    tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+        name[0] = '-';
+        strcpy(name + 1, str);
+        free(buf);
+    } else {
+        name = buf;
+    }
+    buf = NULL;
+
+    /* Read the command flag */
+    command = json_object_object_get_ex(conf, "command", &obj) &&
+              json_object_get_boolean(obj);
+
+    /* Read and check the positional arguments */
+    if (!json_object_object_get_ex(conf, "args", &args)) {
+        fprintf(stderr, "Positional arguments are not specified\n");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    if (command && json_object_array_length(args) == 0) {
+        fprintf(stderr, "Command string is not specified\n");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+
+    /* Create and fill argv list */
+    argv = calloc(1 + (command ? 1 : 0) + json_object_array_length(args) + 1,
+                  sizeof(*argv));
+    if (argv == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        fprintf(stderr, "Failed allocating argv list: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+    argi = 0;
+    argv[argi++] = name;
+    name = NULL;
+    if (command) {
+        arg = strdup("-c");
+        if (arg == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr, "Failed allocating shell argv[#%zu]: %s\n",
+                    argi, tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+        argv[argi++] = arg;
+        arg = NULL;
+    }
+    for (i = 0; i < json_object_array_length(args); i++, argi++) {
+        obj = json_object_array_get_idx(args, i);
+        arg = strdup(json_object_get_string(obj));
+        if (arg == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr, "Failed allocating shell argv[#%zu]: %s\n",
+                    argi, tlog_grc_strerror(grc));
+            goto cleanup;
+        }
+        argv[argi] = arg;
+        arg = NULL;
+    }
+
+    /* Output results */
+    *ppath = path;
+    *pargv = argv;
+    argv = NULL;
+    grc = TLOG_RC_OK;
+cleanup:
+
+    free(arg);
+    if (argv != NULL) {
+        for (argi = 0; argv[argi] != NULL; argi++) {
+            free(argv[argi]);
+        }
+        free(argv);
+    }
+    free(name);
+    free(buf);
+    return grc;
+}
