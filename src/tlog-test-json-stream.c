@@ -26,6 +26,7 @@
 #include <tlog/json_stream.h>
 #include <tlog/test_misc.h>
 #include <tlog/misc.h>
+#include <tlog/rc.h>
 
 #define SIZE    TLOG_JSON_STREAM_SIZE_MIN
 
