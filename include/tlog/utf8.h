@@ -61,6 +61,9 @@ struct tlog_utf8 {
                                                  ended */
 };
 
+/** Empty UTF-8 filter initializer */
+#define TLOG_UTF8_INIT (struct tlog_utf8){.len = 0}
+
 /**
  * Check if a UTF-8 filter is valid.
  *
