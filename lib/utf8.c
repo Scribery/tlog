@@ -35,3 +35,22 @@ const struct tlog_utf8_seq tlog_utf8_seq_list[] = {
     {{{0xf4, 0xf4},     {0x80, 0x8f},   {0x80, 0xbf},   {0x80, 0xbf}}},
     {{}}
 };
+
+bool
+tlog_utf8_buf_is_valid(const char *ptr, size_t len)
+{
+    struct tlog_utf8 utf8 = TLOG_UTF8_INIT;
+
+    assert(ptr != NULL || len == 0);
+
+    for (; len > 0; len--, ptr++) {
+        if (!tlog_utf8_add(&utf8, *(const uint8_t *)ptr)) {
+            return false;
+        }
+        if (tlog_utf8_is_ended(&utf8)) {
+            tlog_utf8_reset(&utf8);
+        }
+    }
+
+    return !tlog_utf8_is_started(&utf8);
+}

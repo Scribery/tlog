@@ -199,4 +199,27 @@ tlog_utf8_add(struct tlog_utf8 *utf8, uint8_t b)
     return true;
 }
 
+/**
+ * Check if a buffer contents is valid UTF-8 text.
+ *
+ * @param ptr   Pointer to the buffer to check.
+ * @param len   Length of the buffer to check.
+ *
+ * @return True if the buffer contents is valid UTF-8, false otherwise.
+ */
+extern bool tlog_utf8_buf_is_valid(const char *ptr, size_t len);
+
+/**
+ * Check if a zero-terminated string is valid UTF-8 text.
+ *
+ * @param str   The string to check.
+ *
+ * @return True if the string contents is valid UTF-8, false otherwise.
+ */
+static inline bool
+tlog_utf8_str_is_valid(const char *str)
+{
+    return tlog_utf8_buf_is_valid(str, strlen(str));
+}
+
 #endif /* _TLOG_UTF8_H */
