@@ -277,6 +277,11 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
                 tlog_grc_strerror(grc));
         goto cleanup;
     }
+    if (!tlog_utf8_str_is_valid(fqdn)) {
+        fprintf(stderr, "Host FQDN is not valid UTF-8: %s", fqdn);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
 
     /* Get session ID */
     grc = get_session_id(&session_id);
@@ -300,11 +305,22 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
         }
         goto cleanup;
     }
+    if (!tlog_utf8_str_is_valid(passwd->pw_name)) {
+        fprintf(stderr, "Host FQDN is not valid UTF-8: %s", passwd->pw_name);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
 
     /* Get the terminal type */
     term = getenv("TERM");
     if (term == NULL) {
         term = "";
+    }
+    if (!tlog_utf8_str_is_valid(term)) {
+        fprintf(stderr, "TERM environment variable is not valid UTF-8: %s",
+                term);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
     }
 
     /* Get the maximum payload size */

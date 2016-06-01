@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <tlog/json_sink.h>
+#include <tlog/json_misc.h>
 #include <tlog/misc.h>
 
 /** JSON sink instance */
@@ -37,9 +38,10 @@ struct tlog_json_sink {
     struct tlog_sink            sink;           /**< Abstract sink instance */
     struct tlog_json_writer    *writer;         /**< Log message writer */
     bool                        writer_owned;   /**< True if writer is owned */
-    char                       *hostname;       /**< Hostname */
-    char                       *username;       /**< Username */
-    char                       *terminal;       /**< Terminal type */
+    char                       *hostname;       /**< Hostname, JSON-escaped */
+    char                       *username;       /**< Username, JSON-escaped */
+    char                       *terminal;       /**< Terminal type,
+                                                     JSON-escaped */
     unsigned int                session_id;     /**< Session ID */
     size_t                      message_id;     /**< Next message ID */
     bool                        started;        /**< True if a packet
@@ -86,24 +88,27 @@ tlog_json_sink_init(struct tlog_sink *sink, va_list ap)
     assert(json_sink != NULL);
     assert(tlog_json_writer_is_valid(writer));
     assert(hostname != NULL);
+    assert(tlog_utf8_str_is_valid(hostname));
     assert(username != NULL);
+    assert(tlog_utf8_str_is_valid(username));
     assert(terminal != NULL);
+    assert(tlog_utf8_str_is_valid(terminal));
     assert(session_id != 0);
     assert(chunk_size >= TLOG_JSON_SINK_CHUNK_SIZE_MIN);
 
-    json_sink->hostname = strdup(hostname);
+    json_sink->hostname = tlog_json_aesc_str(hostname);
     if (json_sink->hostname == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
-    json_sink->username = strdup(username);
+    json_sink->username = tlog_json_aesc_str(username);
     if (json_sink->username == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
-    json_sink->terminal = strdup(terminal);
+    json_sink->terminal = tlog_json_aesc_str(terminal);
     if (json_sink->terminal == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;

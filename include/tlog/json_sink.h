@@ -46,9 +46,12 @@ extern const struct tlog_sink_type tlog_json_sink_type;
  * @param writer            JSON log message writer.
  * @param writer_owned      True if the writer should be destroyed upon
  *                          destruction of the sink, false otherwise.
- * @param hostname          Hostname to use in log messages.
- * @param username          Username to use in log messages.
- * @param terminal          Terminal type string to use in log messages.
+ * @param hostname          Hostname to use in log messages,
+ *                          must be valid UTF-8.
+ * @param username          Username to use in log messages,
+ *                          must be valid UTF-8.
+ * @param terminal          Terminal type string to use in log messages,
+ *                          must be valid UTF-8.
  * @param session_id        Session ID to use in log messages.
  * @param chunk_size        Maximum data chunk length.
  *
