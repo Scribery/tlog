@@ -33,6 +33,8 @@ static const char *tlog_rc_desc_list[TLOG_RC_MAX_PLUS_ONE - TLOG_RC_MIN] = {
         "A message field is missing",
     [TLOG_RC_JSON_MSG_FIELD_INVALID_TYPE] =
         "A message field has invalid type",
+    [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_VER] =
+        "Message has unsupported \"ver\" field value",
     [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_SESSION] =
         "Message has invalid \"session\" field value",
     [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_ID] =

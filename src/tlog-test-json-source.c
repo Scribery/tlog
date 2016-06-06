@@ -50,6 +50,7 @@ main(void)
                  _id_token, _pos,                                       \
                  _timing, _in_txt, _in_bin, _out_txt, _out_bin)         \
     "{"                                                                 \
+        "\"ver\":"      "1,"                                            \
         "\"host\":"     "\"" #_host_token "\","                         \
         "\"user\":"     "\"" #_user_token "\","                         \
         "\"term\":"     "\"" #_term_token "\","                         \

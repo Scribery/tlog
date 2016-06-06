@@ -8,6 +8,7 @@ properties:
 
 | Name      | Type                      | Description
 | --------- | ------------------------- | ----------------------
+| ver       | Unsigned integer > 0      | Format version number (1)
 | host      | String                    | Recording host name
 | user      | String                    | Recorded user name
 | term      | String                    | Terminal type

@@ -46,6 +46,7 @@ struct tlog_json_msg {
     struct json_object *obj;            /**< The JSON object behind the
                                              message, NULL for a void
                                              message */
+    unsigned int        ver;            /**< Version */
     const char         *host;           /**< Hostname */
     const char         *user;           /**< Username */
     const char         *term;           /**< Terminal type */

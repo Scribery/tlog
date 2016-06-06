@@ -5,6 +5,11 @@
     "type":         "object",
 
     "properties":   {
+        "ver":      {
+            "description":  "Format version number",
+            "type":         "integer",
+            "minimum":      1
+        },
         "host":     {
             "description":  "Recording host name",
             "type":         "string"
@@ -69,6 +74,7 @@
     },
 
     "required":     [
+        "ver",
         "host",
         "user",
         "term",

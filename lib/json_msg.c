@@ -61,6 +61,7 @@ tlog_grc
 tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
 {
     struct json_object *o;
+    int64_t ver;
     int64_t session;
     int64_t id;
     int64_t pos;
@@ -81,6 +82,12 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
         if (json_object_get_type(o) != json_type_##_type_token) \
             return TLOG_RC_JSON_MSG_FIELD_INVALID_TYPE;         \
     } while (0)
+
+    GET_FIELD(ver, int);
+    ver = json_object_get_int(o);
+    if (ver != 1)
+        return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_VER;
+    msg->ver = (unsigned int)ver;
 
     GET_FIELD(host, string);
     msg->host = json_object_get_string(o);
