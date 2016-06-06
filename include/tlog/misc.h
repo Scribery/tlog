@@ -163,16 +163,8 @@ tlog_timespec_is_zero(const struct timespec *t)
 /** Zero timespec initializer */
 #define TLOG_TIMESPEC_ZERO  ((struct timespec){0, 0})
 
-/**
- * Set a timespec value to zero.
- *
- * @param t     Timespec to zero.
- */
-static inline void
-tlog_timespec_zero(struct timespec *t)
-{
-    *t = TLOG_TIMESPEC_ZERO;
-}
+/** Zero timespec constant */
+extern const struct timespec tlog_timespec_zero;
 
 /**
  * Compare two timespec's.

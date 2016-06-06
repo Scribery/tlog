@@ -554,8 +554,8 @@ tlog_json_chunk_empty(struct tlog_json_chunk *chunk)
     tlog_json_stream_empty(&chunk->input);
     tlog_json_stream_empty(&chunk->output);
     chunk->got_ts = false;
-    tlog_timespec_zero(&chunk->first_ts);
-    tlog_timespec_zero(&chunk->last_ts);
+    chunk->first_ts = TLOG_TIMESPEC_ZERO;
+    chunk->last_ts = TLOG_TIMESPEC_ZERO;
     if (chunk->window_state > TLOG_JSON_CHUNK_WINDOW_STATE_KNOWN) {
         chunk->window_state = TLOG_JSON_CHUNK_WINDOW_STATE_KNOWN;
     }
