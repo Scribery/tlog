@@ -253,7 +253,14 @@ tlog_json_sink_write(struct tlog_sink *sink,
 
     assert(!tlog_pkt_is_void(pkt));
 
-    if (!json_sink->started) {
+    if (json_sink->started) {
+#ifndef NDEBUG
+        struct timespec diff;
+        tlog_timespec_sub(&pkt->timestamp, &json_sink->start, &diff);
+        assert(tlog_timespec_cmp(&diff, &tlog_timespec_zero) >= 0);
+        assert(tlog_timespec_cmp(&diff, &tlog_delay_max_timespec) <= 0);
+#endif
+    } else {
         json_sink->started = true;
         json_sink->start = pkt->timestamp;
     }
