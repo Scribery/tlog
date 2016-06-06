@@ -20,13 +20,13 @@
         "session":  {
             "description":  "Recorded audit session ID",
             "type":         "integer",
-            "minimum":      0
+            "minimum":      1
         },
 
         "id":       {
             "description":  "ID of the message within session",
             "type":         "integer",
-            "minimum":      0
+            "minimum":      1
         },
         "pos":      {
             "description":  "Message position in session, milliseconds",

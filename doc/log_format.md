@@ -11,8 +11,8 @@ properties:
 | host      | String                    | Recording host name
 | user      | String                    | Recorded user name
 | term      | String                    | Terminal type
-| session   | String                    | Recorded audit session ID
-| id        | Unsigned integer          | ID of the message within session
+| session   | Unsigned integer > 0      | Recorded audit session ID
+| id        | Unsigned integer > 0      | ID of the message within session
 | pos       | Unsigned integer          | Message position in session,
 |           |                           | milliseconds
 | timing    | String                    | Distribution of events in time
