@@ -76,12 +76,15 @@
 #define TLOG_DELAY_MAX_TIMESPEC_NSEC \
     (TLOG_DELAY_MAX_MS_NUM % 1000 * 1000000)
 
-/** Maximum delay as a timespec */
+/** Maximum delay as a timespec initializer */
 #define TLOG_DELAY_MAX_TIMESPEC \
     (struct timespec){                              \
         .tv_sec = TLOG_DELAY_MAX_TIMESPEC_SEC,      \
         .tv_nsec = TLOG_DELAY_MAX_TIMESPEC_NSEC     \
     }
+
+/** Maximum delay as a timespec constant */
+extern const struct timespec tlog_delay_max_timespec;
 
 /** Minimum delay in seconds, as a number */
 #define TLOG_DELAY_MIN_S_NUM    0
@@ -100,12 +103,15 @@
 #define TLOG_DELAY_MIN_TIMESPEC_NSEC \
     (TLOG_DELAY_MIN_MS_NUM % 1000 * 1000000)
 
-/** Minimum delay as a timespec */
+/** Minimum delay as a timespec initializer */
 #define TLOG_DELAY_MIN_TIMESPEC \
     (struct timespec){                              \
         .tv_sec = TLOG_DELAY_MIN_TIMESPEC_SEC,      \
         .tv_nsec = TLOG_DELAY_MIN_TIMESPEC_NSEC     \
     }
+
+/** Minimum delay as a timespec constant */
+extern const struct timespec tlog_delay_min_timespec;
 
 /**
  * Subtract timespec b from timespec a and put the result in res.

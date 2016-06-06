@@ -30,6 +30,17 @@
 /* NOTE: Not using the macro from the header to workaround a gcc 4.8 bug */
 const struct timespec tlog_timespec_zero = {0, 0};
 
+/* NOTE: Not using the macro from the header to workaround a gcc 4.8 bug */
+const struct timespec tlog_delay_min_timespec = {
+    .tv_sec = TLOG_DELAY_MIN_TIMESPEC_SEC,
+    .tv_nsec = TLOG_DELAY_MIN_TIMESPEC_NSEC
+};
+/* NOTE: Not using the macro from the header to workaround a gcc 4.8 bug */
+const struct timespec tlog_delay_max_timespec = {
+    .tv_sec = TLOG_DELAY_MAX_TIMESPEC_SEC,
+    .tv_nsec = TLOG_DELAY_MAX_TIMESPEC_NSEC
+};
+
 tlog_grc
 tlog_build_or_inst_path(char          **ppath,
                         const char     *prog_path,
