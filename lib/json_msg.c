@@ -25,6 +25,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <tlog/rc.h>
+#include <tlog/delay.h>
 #include <tlog/misc.h>
 #include <tlog/json_msg.h>
 

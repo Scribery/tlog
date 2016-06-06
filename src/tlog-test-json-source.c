@@ -24,6 +24,7 @@
 #include <tlog/test_json_source.h>
 #include <tlog/rc.h>
 #include <tlog/grc.h>
+#include <tlog/delay.h>
 #include <tlog/misc.h>
 #include <json_tokener.h>
 

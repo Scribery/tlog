@@ -46,6 +46,7 @@
 #include <tlog/json_sink.h>
 #include <tlog/tty_sink.h>
 #include <tlog/syslog_misc.h>
+#include <tlog/delay.h>
 #include <tlog/rc.h>
 #include <tlog/rec_conf.h>
 #include <tlog/rec_conf_cmd.h>

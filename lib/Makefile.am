@@ -73,6 +73,7 @@ BUILT_SOURCES = \
 CLEANFILES = $(BUILT_SOURCES)
 
 libtlog_la_SOURCES = \
+    delay.c                 \
     es_json_reader.c        \
     fd_json_reader.c        \
     fd_json_writer.c        \

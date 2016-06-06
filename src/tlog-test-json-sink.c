@@ -21,6 +21,7 @@
  */
 
 #include <tlog/test_json_sink.h>
+#include <tlog/delay.h>
 #include <tlog/misc.h>
 #include <limits.h>
 

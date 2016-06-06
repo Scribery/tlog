@@ -30,6 +30,7 @@
 #include <tlog/mem_json_reader.h>
 #include <tlog/json_sink.h>
 #include <tlog/json_source.h>
+#include <tlog/delay.h>
 #include <tlog/misc.h>
 #include <tlog/test_json_sink.h>
 #include <tlog/test_json_source.h>
