@@ -22,6 +22,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <tlog/timespec.h>
 #include <tlog/json_chunk.h>
 
 static

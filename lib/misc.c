@@ -27,9 +27,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-/* NOTE: Not using the macro from the header to workaround a gcc 4.8 bug */
-const struct timespec tlog_timespec_zero = {0, 0};
-
 tlog_grc
 tlog_build_or_inst_path(char          **ppath,
                         const char     *prog_path,

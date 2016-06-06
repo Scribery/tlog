@@ -31,6 +31,7 @@
 #include <syslog.h>
 #include <tlog/json_sink.h>
 #include <tlog/json_misc.h>
+#include <tlog/timespec.h>
 #include <tlog/delay.h>
 #include <tlog/misc.h>
 

@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>
+#include <tlog/timespec.h>
 #include <tlog/json_msg.h>
 #include <tlog/json_source.h>
 

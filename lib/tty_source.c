@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <tlog/rc.h>
+#include <tlog/timespec.h>
 #include <tlog/misc.h>
 #include <tlog/tty_source.h>
 

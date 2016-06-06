@@ -36,6 +36,7 @@
 #include <tlog/es_json_reader.h>
 #include <tlog/json_source.h>
 #include <tlog/rc.h>
+#include <tlog/timespec.h>
 #include <tlog/misc.h>
 
 #define POLL_PERIOD 1
