@@ -802,11 +802,10 @@ tap_setup(struct tap *ptap, struct json_object *conf,
      * if it provides the required resolution.
      */
     {
-        const struct timespec delay_min = TLOG_DELAY_MIN_TIMESPEC;
         struct timespec timestamp;
 #ifdef CLOCK_MONOTONIC_COARSE
         if (clock_getres(CLOCK_MONOTONIC_COARSE, &timestamp) == 0 &&
-            tlog_timespec_cmp(&timestamp, &delay_min) <= 0) {
+            tlog_timespec_cmp(&timestamp, &tlog_delay_min_timespec) <= 0) {
             clock_id = CLOCK_MONOTONIC_COARSE;
         } else
 #endif
