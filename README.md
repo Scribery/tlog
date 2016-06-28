@@ -154,7 +154,7 @@ In the future `tlog` will run under a special user, which would help to
 securely filter messages in rsyslog and increase the confidence of message
 authenticity.
 
-[session_recording]: http://spbnick.github.io/2015/10/26/open-source-session-recording.html
+[session_recording]: http://scribery.github.io/
 [log_format]: doc/log_format.md
 [elasticsearch]: https://www.elastic.co/products/elasticsearch
-[releases]: https://github.com/spbnick/tlog/releases
+[releases]: https://github.com/Scribery/tlog/releases
