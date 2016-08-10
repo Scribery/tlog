@@ -894,6 +894,17 @@ tap_setup(struct tap *ptap, struct json_object *conf,
 
     /* Execute the shell in the child */
     if (tap.pid == 0) {
+        /*
+         * Set the SHELL environment variable to the actual shell. Otherwise
+         * programs trying to spawn the user's shell would start tlog-rec
+         * instead.
+         */
+        if (setenv("SHELL", path, /*overwrite=*/1) != 0) {
+            grc = TLOG_GRC_ERRNO;
+            fprintf(stderr, "Failed to set SHELL environment variable: %s\n",
+                    tlog_grc_strerror(grc));
+            goto cleanup;
+        }
         execv(path, argv);
         grc = TLOG_GRC_ERRNO;
         fprintf(stderr, "Failed executing %s: %s",
