@@ -1062,6 +1062,7 @@ main(int argc, char **argv)
     int std_fds[] = {0, 1, 2};
 
     /* Check if stdin/stdout/stderr are closed and stub them with /dev/null */
+    /* NOTE: Must be done first to avoid FD takeover by other code */
     while (true) {
         int fd = open("/dev/null", O_RDWR);
         if (fd < 0) {
