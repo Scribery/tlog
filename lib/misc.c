@@ -20,12 +20,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "config.h"
 #include <tlog/rc.h>
 #include <tlog/misc.h>
 #include <libgen.h>
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+
+const char *tlog_version =
+    PACKAGE_STRING "\n"
+    "Copyright (C) 2015-2016 Red Hat\n"
+    "License GPLv2+: GNU GPL version 2 or later "
+        "<http://gnu.org/licenses/gpl.html>.\n"
+    "\n"
+    "This is free software: "
+        "you are free to change and redistribute it.\n"
+    "There is NO WARRANTY, to the extent permitted by law.\n";
 
 tlog_grc
 tlog_build_or_inst_path(char          **ppath,

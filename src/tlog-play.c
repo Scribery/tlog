@@ -233,6 +233,15 @@ run(const char *progname, struct json_object *conf)
         }
     }
 
+    /* Check for the version flag */
+    if (json_object_object_get_ex(conf, "version", &obj)) {
+        if (json_object_get_boolean(obj)) {
+            printf("%s", tlog_version);;
+            grc = TLOG_RC_OK;
+            goto cleanup;
+        }
+    }
+
     /* Get the "follow" flag */
     follow = json_object_object_get_ex(conf, "follow", &obj) &&
              json_object_get_boolean(obj);

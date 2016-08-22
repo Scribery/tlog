@@ -81,6 +81,11 @@ M4_PARAM(`', `help', `opts',
          `h', `', `Output a command-line usage message and exit',
          `M4_LINES(`')')m4_dnl
 m4_dnl
+M4_PARAM(`', `version', `opts',
+         `M4_TYPE_BOOL(false)', true,
+         `v', `', `Output version information and exit',
+         `M4_LINES(`')')m4_dnl
+m4_dnl
 M4_PARAM(`', `shell', `file',
          `M4_TYPE_STRING(`/bin/bash')', true,
          `s', `=SHELL', `Spawn the specified SHELL',

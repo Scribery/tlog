@@ -32,6 +32,9 @@
 #include <stdint.h>
 #include <tlog/grc.h>
 
+/** Tlog version and license information */
+extern const char *tlog_version;
+
 /** Return number of elements in an array */
 #define TLOG_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
