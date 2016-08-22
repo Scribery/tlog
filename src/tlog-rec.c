@@ -40,6 +40,8 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <time.h>
+#include <locale.h>
+#include <langinfo.h>
 #include <tlog/syslog_json_writer.h>
 #include <tlog/fd_json_writer.h>
 #include <tlog/tty_source.h>
@@ -1060,6 +1062,7 @@ main(int argc, char **argv)
     struct json_object *conf = NULL;
     char *progname = NULL;
     int std_fds[] = {0, 1, 2};
+    const char *charset;
 
     /* Check if stdin/stdout/stderr are closed and stub them with /dev/null */
     /* NOTE: Must be done first to avoid FD takeover by other code */
@@ -1076,9 +1079,20 @@ main(int argc, char **argv)
         }
     }
 
+    /* Set locale from environment variables */
+    setlocale(LC_ALL, "");
+
     /* Read configuration and program name */
     grc = tlog_rec_conf_load(&progname, &conf, argc, argv);
     if (grc != TLOG_RC_OK) {
+        return 1;
+    }
+
+    /* Check that the character encoding is supported */
+    charset = nl_langinfo(CODESET);
+    if (strcmp(charset, "UTF-8") != 0) {
+        fprintf(stderr, "%s: Unsupported locale charset: %s\n",
+                progname, charset);
         return 1;
     }
 

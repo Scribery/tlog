@@ -30,6 +30,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <curl/curl.h>
+#include <locale.h>
+#include <langinfo.h>
 #include <tlog/play_conf.h>
 #include <tlog/play_conf_cmd.h>
 #include <tlog/fd_json_reader.h>
@@ -410,10 +412,22 @@ main(int argc, char **argv)
     tlog_grc grc;
     struct json_object *conf = NULL;
     char *progname = NULL;
+    const char *charset;
+
+    /* Set locale from environment variables */
+    setlocale(LC_ALL, "");
 
     /* Read configuration and program name */
     grc = tlog_play_conf_load(&progname, &conf, argc, argv);
     if (grc != TLOG_RC_OK) {
+        return 1;
+    }
+
+    /* Check that the character encoding is supported */
+    charset = nl_langinfo(CODESET);
+    if (strcmp(charset, "UTF-8") != 0) {
+        fprintf(stderr, "%s: Unsupported locale charset: %s\n",
+                progname, charset);
         return 1;
     }
 
