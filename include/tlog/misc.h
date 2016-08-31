@@ -102,8 +102,7 @@ tlog_size_digits(size_t n)
  *                          from the build tree, or if prog_path or
  *                          build_rel_path were not found.
  *
- * @return True if retrieval was successful, false if it failed and errno was
- *         set to indicate the error.
+ * @return Global return code.
  */
 extern tlog_grc tlog_build_or_inst_path(char          **ppath,
                                         const char     *prog_path,
