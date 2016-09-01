@@ -46,7 +46,7 @@ tlog_play_conf_cmd_help(FILE *stream, const char *progname)
        "Play back a terminal I/O recording done by tlog-rec.\n"
 M4_CONF_CMD_HELP_OPTS()m4_dnl
        "\n";
-    if (fprintf(stream, fmt, progname, progname) < 0) {
+    if (fprintf(stream, fmt, progname) < 0) {
         return TLOG_GRC_ERRNO;
     } else {
         return TLOG_RC_OK;
