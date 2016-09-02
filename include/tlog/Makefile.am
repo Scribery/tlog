@@ -24,6 +24,7 @@ tlogdir = $(includedir)/tlog
 tlog_HEADERS = \
     conf_origin.h           \
     delay.h                 \
+    errs.h                  \
     es_json_reader.h        \
     fd_json_reader.h        \
     fd_json_writer.h        \
