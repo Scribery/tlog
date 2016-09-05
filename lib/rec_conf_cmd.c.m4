@@ -113,12 +113,16 @@ tlog_rec_conf_cmd_load(struct tlog_errs **perrs,
     }
     grc = tlog_rec_conf_cmd_load_args(perrs, conf, help, argc, argv);
     if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs,
+                        "Failed extracting configuration "
+                        "from options and arguments");
         goto cleanup;
     }
 
     /* Validate the result */
     grc = tlog_rec_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ARGS);
     if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs, "Validation of loaded configuration failed");
         goto cleanup;
     }
 

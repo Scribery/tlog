@@ -187,6 +187,7 @@ m4_define(
                    `            }',
                    `            grc = tlog_'M4_PROG_NAME()`_conf_validate`'m4_translit(`$1$2', `/', `_')`'(perrs, obj, origin);',
                    `            if (grc != TLOG_RC_OK) {',
+                   `                tlog_errs_pushf(perrs, "Failed to validate \"%s\" section", name);',
                    `                return grc;',
                    `            }',
                    `            continue;',

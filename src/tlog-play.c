@@ -438,6 +438,7 @@ main(int argc, char **argv)
     /* Read configuration and command-line usage message */
     grc = tlog_play_conf_load(&errs, &cmd_help, &conf, argc, argv);
     if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(&errs, "Failed retrieving configuration");
         goto cleanup;
     }
 

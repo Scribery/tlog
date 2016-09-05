@@ -625,6 +625,7 @@ m4_define(
            `    /* Validate the result */',
            `    grc = tlog_'M4_PROG_NAME()`_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ARGS);',
            `    if (grc != TLOG_RC_OK) {',
+           `        tlog_errs_pushs(perrs, "Failed to validate loaded configuration");',
            `        goto cleanup;',
            `    }',
            `',

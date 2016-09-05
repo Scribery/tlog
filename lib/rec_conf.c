@@ -57,6 +57,8 @@ tlog_rec_conf_str_parse(struct tlog_errs **perrs,
 
     grc = tlog_rec_conf_validate(perrs, conf, origin);
     if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs,
+                        "Failed validating configuration from the string");
         goto cleanup;
     }
 

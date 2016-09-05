@@ -101,6 +101,7 @@ tlog_play_conf_cmd_load(struct tlog_errs **perrs,
     /* Validate the result */
     grc = tlog_play_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ARGS);
     if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs, "Validation of loaded configuration failed");
         goto cleanup;
     }
 
