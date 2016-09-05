@@ -412,11 +412,21 @@ cleanup:
 
     /* Restore terminal attributes */
     if (term_attrs_set) {
+        const char newline = '\n';
+
         rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
         if (rc < 0 && errno != EBADF) {
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed restoring tty attributes");
+        }
+
+        /* Clear off remaining reproduced output */
+        rc = write(STDOUT_FILENO, &newline, sizeof(newline));
+        if (rc < 0 && errno != EBADF) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed writing newline to tty");
         }
     }
 

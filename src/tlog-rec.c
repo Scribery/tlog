@@ -759,6 +759,8 @@ tap_teardown(struct tlog_errs **perrs, struct tap *tap, int *pstatus)
     /* Restore terminal attributes */
     if (tap->termios_set) {
         int rc;
+        const char newline = '\n';
+
         rc = tcsetattr(tap->tty_fd, TCSAFLUSH, &tap->termios_orig);
         if (rc < 0 && errno != EBADF) {
             grc = TLOG_GRC_ERRNO;
@@ -767,6 +769,15 @@ tap_teardown(struct tlog_errs **perrs, struct tap *tap, int *pstatus)
             return grc;
         }
         tap->termios_set = false;
+
+        /* Clear off remaining child output */
+        rc = write(tap->tty_fd, &newline, sizeof(newline));
+        if (rc < 0 && errno != EBADF) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed writing newline to TTY");
+            return grc;
+        }
     }
 
     /* Wait for the child, if any */
