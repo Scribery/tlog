@@ -196,6 +196,10 @@ tlog_rec_conf_load(struct tlog_errs **perrs,
     char *path = NULL;
     char *cmd_help = NULL;
 
+    assert(pcmd_help != NULL);
+    assert(pconf != NULL);
+    assert(argv != NULL);
+
     /* Create empty config */
     conf = json_object_new_object();
     if (conf == NULL) {

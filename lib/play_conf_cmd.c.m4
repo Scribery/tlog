@@ -58,6 +58,10 @@ tlog_play_conf_cmd_load(struct tlog_errs **perrs,
     char *help = NULL;
     struct json_object *conf = NULL;
 
+    assert(phelp != NULL);
+    assert(pconf != NULL);
+    assert(argv != NULL);
+
     /* Create empty configuration */
     conf = json_object_new_object();
     if (conf == NULL) {
