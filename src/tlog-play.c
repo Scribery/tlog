@@ -433,7 +433,13 @@ main(int argc, char **argv)
     const char *charset;
 
     /* Set locale from environment variables */
-    setlocale(LC_ALL, "");
+    if (setlocale(LC_ALL, "") == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(&errs, grc);
+        tlog_errs_pushs(&errs,
+                        "Failed setting locale from environment variables");
+        goto cleanup;
+    }
 
     /* Read configuration and command-line usage message */
     grc = tlog_play_conf_load(&errs, &cmd_help, &conf, argc, argv);
