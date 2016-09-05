@@ -275,7 +275,7 @@ run(struct tlog_errs **perrs,
     if (rc < 0) {
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed retrieving tty attributes");
+        tlog_errs_pushs(perrs, "Failed retrieving TTY attributes");
         goto cleanup;
     }
 
@@ -306,7 +306,7 @@ run(struct tlog_errs **perrs,
     if (rc < 0) {
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed setting tty attributes");
+        tlog_errs_pushs(perrs, "Failed setting TTY attributes");
         goto cleanup;
     }
     term_attrs_set = true;
@@ -418,7 +418,7 @@ cleanup:
         if (rc < 0 && errno != EBADF) {
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed restoring tty attributes");
+            tlog_errs_pushs(perrs, "Failed restoring TTY attributes");
         }
 
         /* Clear off remaining reproduced output */
@@ -426,7 +426,7 @@ cleanup:
         if (rc < 0 && errno != EBADF) {
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed writing newline to tty");
+            tlog_errs_pushs(perrs, "Failed writing newline to TTY");
         }
     }
 
