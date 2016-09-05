@@ -33,11 +33,11 @@
  * Load tlog-play configuration from various sources and extract program name.
  *
  * @param pcmd_help Location for the dynamically-allocated command-line usage
- *                  help message.
+ *                  help message. Cannot be NULL.
  * @param pconf     Location for the pointer to the JSON object representing
- *                  the loaded configuration.
+ *                  the loaded configuration. Cannot be NULL.
  * @param argc      Tlog-play argc value.
- * @param argv      Tlog-play argv value.
+ * @param argv      Tlog-play argv value. Cannot be NULL.
  *
  * @return Global return code.
  */

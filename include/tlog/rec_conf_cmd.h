@@ -34,10 +34,11 @@
  * Load tlog-rec configuration from the command line and extract program name.
  *
  * @param phelp     Location for the dynamically-allocated usage help message.
+ *                  Cannot be NULL.
  * @param pconf     Location for the pointer to the JSON object representing
- *                  the loaded configuration.
+ *                  the loaded configuration. Cannot be NULL.
  * @param argc      Tlog-rec argc value.
- * @param argv      Tlog-rec argv value.
+ * @param argv      Tlog-rec argv value. Cannot be NULL.
  *
  * @return Global return code.
  */
