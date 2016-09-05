@@ -49,7 +49,8 @@ M4_CONF_CMD_HELP_OPTS()m4_dnl
 M4_CONF_CMD_LOAD_ARGS()m4_dnl
 
 tlog_grc
-tlog_rec_conf_cmd_load(char **phelp, struct json_object **pconf,
+tlog_rec_conf_cmd_load(struct tlog_errs **perrs,
+                       char **phelp, struct json_object **pconf,
                        int argc, char **argv)
 {
     tlog_grc grc;
@@ -64,8 +65,8 @@ tlog_rec_conf_cmd_load(char **phelp, struct json_object **pconf,
     conf = json_object_new_object();
     if (conf == NULL) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed creating configuration object: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating configuration object");
         goto cleanup;
     }
 
@@ -73,8 +74,8 @@ tlog_rec_conf_cmd_load(char **phelp, struct json_object **pconf,
     progpath = strdup(argv[0]);
     if (progpath == NULL) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed allocating a copy of program path: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed allocating a copy of program path");
         goto cleanup;
     }
     p = basename(progpath);
@@ -83,14 +84,14 @@ tlog_rec_conf_cmd_load(char **phelp, struct json_object **pconf,
         val = json_object_new_boolean(true);
         if (val == NULL) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed creating login flag: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating login flag");
             goto cleanup;
         }
         grc = tlog_json_object_object_add_path(conf, "login", val);
         if (grc != TLOG_RC_OK) {
-            fprintf(stderr, "Failed storing login flag: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed storing login flag");
             goto cleanup;
         }
         val = NULL;
@@ -98,25 +99,25 @@ tlog_rec_conf_cmd_load(char **phelp, struct json_object **pconf,
     progname = strdup(p);
     if (progname == NULL) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed allocating program name: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed allocating program name");
         goto cleanup;
     }
 
     /* Extract options and positional arguments */
     if (asprintf(&help, tlog_rec_conf_cmd_help_fmt, progname) < 0) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed formatting help message: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed formatting help message");
         goto cleanup;
     }
-    grc = tlog_rec_conf_cmd_load_args(conf, help, argc, argv);
+    grc = tlog_rec_conf_cmd_load_args(perrs, conf, help, argc, argv);
     if (grc != TLOG_RC_OK) {
         goto cleanup;
     }
 
     /* Validate the result */
-    grc = tlog_rec_conf_validate(conf, TLOG_CONF_ORIGIN_ARGS);
+    grc = tlog_rec_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ARGS);
     if (grc != TLOG_RC_OK) {
         goto cleanup;
     }

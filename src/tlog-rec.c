@@ -153,13 +153,16 @@ get_fqdn(char **pfqdn)
 /**
  * Create the log sink according to configuration.
  *
+ * @param perrs Location for the error stack. Can be NULL.
  * @param psink Location for the created sink pointer.
  * @param conf  Configuration JSON object.
  *
  * @return Global return code.
  */
 static tlog_grc
-create_log_sink(struct tlog_sink **psink, struct json_object *conf)
+create_log_sink(struct tlog_errs **perrs,
+                struct tlog_sink **psink,
+                struct json_object *conf)
 {
     tlog_grc grc;
     int64_t num;
@@ -177,7 +180,7 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
      * Create the writer
      */
     if (!json_object_object_get_ex(conf, "writer", &obj)) {
-        fprintf(stderr, "Writer type is not specified\n");
+        tlog_errs_pushs(perrs, "Writer type is not specified");
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
@@ -187,14 +190,14 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
 
         /* Get file writer conf container */
         if (!json_object_object_get_ex(conf, "file", &conf_file)) {
-            fprintf(stderr, "File writer parameters are not specified\n");
+            tlog_errs_pushs(perrs, "File writer parameters are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
 
         /* Get the file path */
         if (!json_object_object_get_ex(conf_file, "path", &obj)) {
-            fprintf(stderr, "Log file path is not specified\n");
+            tlog_errs_pushs(perrs, "Log file path is not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -204,16 +207,16 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
         fd = open(str, O_WRONLY | O_CREAT | O_APPEND, S_IRWXU | S_IRWXG);
         if (fd < 0) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed opening log file \"%s\": %s\n",
-                    str, tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed opening log file \"%s\"", str);
             goto cleanup;
         }
 
         /* Create the writer, letting it take over the FD */
         grc = tlog_fd_json_writer_create(&writer, fd, true);
         if (grc != TLOG_RC_OK) {
-            fprintf(stderr, "Failed creating file writer: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating file writer");
             goto cleanup;
         }
         fd = -1;
@@ -224,35 +227,35 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
 
         /* Get syslog writer conf container */
         if (!json_object_object_get_ex(conf, "syslog", &conf_syslog)) {
-            fprintf(stderr, "Syslog writer parameters are not specified\n");
+            tlog_errs_pushs(perrs, "Syslog writer parameters are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
 
         /* Get facility */
         if (!json_object_object_get_ex(conf_syslog, "facility", &obj)) {
-            fprintf(stderr, "Syslog facility is not specified\n");
+            tlog_errs_pushs(perrs, "Syslog facility is not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
         str = json_object_get_string(obj);
         facility = tlog_syslog_facility_from_str(str);
         if (facility < 0) {
-            fprintf(stderr, "Unknown syslog facility: %s\n", str);
+            tlog_errs_pushf(perrs, "Unknown syslog facility: %s", str);
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
 
         /* Get priority */
         if (!json_object_object_get_ex(conf_syslog, "priority", &obj)) {
-            fprintf(stderr, "Syslog priority is not specified\n");
+            tlog_errs_pushs(perrs, "Syslog priority is not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
         str = json_object_get_string(obj);
         priority = tlog_syslog_priority_from_str(str);
         if (priority < 0) {
-            fprintf(stderr, "Unknown syslog priority: %s\n", str);
+            tlog_errs_pushf(perrs, "Unknown syslog priority: %s", str);
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -261,12 +264,12 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
         openlog("tlog", LOG_NDELAY, facility);
         grc = tlog_syslog_json_writer_create(&writer, priority);
         if (grc != TLOG_RC_OK) {
-            fprintf(stderr, "Failed creating syslog writer: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating syslog writer");
             goto cleanup;
         }
     } else {
-        fprintf(stderr, "Unknown writer type: %s\n", str);
+        tlog_errs_pushf(perrs, "Unknown writer type: %s", str);
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
@@ -277,12 +280,12 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
     /* Get host FQDN */
     grc = get_fqdn(&fqdn);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed retrieving host FQDN: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed retrieving host FQDN");
         goto cleanup;
     }
     if (!tlog_utf8_str_is_valid(fqdn)) {
-        fprintf(stderr, "Host FQDN is not valid UTF-8: %s", fqdn);
+        tlog_errs_pushf(perrs, "Host FQDN is not valid UTF-8: %s", fqdn);
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
@@ -290,8 +293,8 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
     /* Get session ID */
     grc = get_session_id(&session_id);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed retrieving session ID: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed retrieving session ID");
         goto cleanup;
     }
 
@@ -301,16 +304,17 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
     if (passwd == NULL) {
         if (errno == 0) {
             grc = TLOG_RC_FAILURE;
-            fprintf(stderr, "User entry not found\n");
+            tlog_errs_pushs(perrs, "User entry not found");
         } else {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed retrieving user entry: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed retrieving user entry");
         }
         goto cleanup;
     }
     if (!tlog_utf8_str_is_valid(passwd->pw_name)) {
-        fprintf(stderr, "User name is not valid UTF-8: %s", passwd->pw_name);
+        tlog_errs_pushf(perrs, "User name is not valid UTF-8: %s",
+                        passwd->pw_name);
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
@@ -321,15 +325,16 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
         term = "";
     }
     if (!tlog_utf8_str_is_valid(term)) {
-        fprintf(stderr, "TERM environment variable is not valid UTF-8: %s",
-                term);
+        tlog_errs_pushf(perrs,
+                        "TERM environment variable is not valid UTF-8: %s",
+                        term);
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
 
     /* Get the maximum payload size */
     if (!json_object_object_get_ex(conf, "payload", &obj)) {
-        fprintf(stderr, "Maximum payload size is not specified\n");
+        tlog_errs_pushs(perrs, "Maximum payload size is not specified");
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
@@ -340,8 +345,8 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
                                 fqdn, passwd->pw_name, term,
                                 session_id, (size_t)num);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating log sink: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating log sink");
         goto cleanup;
     }
     writer = NULL;
@@ -383,13 +388,16 @@ tlog_log_item_from_pkt(const struct tlog_pkt *pkt)
 /**
  * Read a log mask from a configuration object.
  *
+ * @param perrs Location for the error stack. Can be NULL.
  * @param conf  Log mask JSON configuration object.
  * @param pmask Location for the read mask.
  *
  * @return Global return code.
  */
 static tlog_grc
-get_log_mask(struct json_object *conf, unsigned int *pmask)
+get_log_mask(struct tlog_errs **perrs,
+             struct json_object *conf,
+             unsigned int *pmask)
 {
     unsigned int mask = 0;
     struct json_object *obj;
@@ -400,7 +408,9 @@ get_log_mask(struct json_object *conf, unsigned int *pmask)
 #define READ_ITEM(_NAME, _Name, _name) \
     do {                                                                \
         if (!json_object_object_get_ex(conf, #_name, &obj)) {           \
-            fprintf(stderr, #_Name " logging flag is not specified\n"); \
+            tlog_errs_pushf(perrs,                                      \
+                            "%s logging flag is not specified",         \
+                            #_Name);                                    \
             return TLOG_RC_FAILURE;                                     \
         }                                                               \
         mask |= json_object_get_boolean(obj) << TLOG_LOG_ITEM_##_NAME;  \
@@ -419,6 +429,7 @@ get_log_mask(struct json_object *conf, unsigned int *pmask)
 /**
  * Transfer and log terminal data until interrupted or either end closes.
  *
+ * @param perrs         Location for the error stack. Can be NULL.
  * @param tty_source    TTY data source.
  * @param log_sink      Log sink.
  * @param tty_sink      TTY data sink.
@@ -428,7 +439,8 @@ get_log_mask(struct json_object *conf, unsigned int *pmask)
  * @return Global return code.
  */
 static tlog_grc
-transfer(struct tlog_source    *tty_source,
+transfer(struct tlog_errs     **perrs,
+         struct tlog_source    *tty_source,
          struct tlog_sink      *log_sink,
          struct tlog_sink      *tty_sink,
          unsigned int           latency,
@@ -479,8 +491,8 @@ transfer(struct tlog_source    *tty_source,
             alarm_set = false;
             grc = tlog_sink_flush(log_sink);
             if (grc != TLOG_RC_OK) {
-                fprintf(stderr, "Failed flushing log: %s\n",
-                        tlog_grc_strerror(grc));
+                tlog_errs_pushc(perrs, grc);
+                tlog_errs_pushs(perrs, "Failed flushing log");
                 return_grc = grc;
                 goto cleanup;
             }
@@ -499,8 +511,8 @@ transfer(struct tlog_source    *tty_source,
                     continue;
                 } else if (grc != TLOG_GRC_FROM(errno, EBADF) &&
                            grc != TLOG_GRC_FROM(errno, EINVAL)) {
-                    fprintf(stderr, "Failed writing terminal data: %s\n",
-                            tlog_grc_strerror(grc));
+                    tlog_errs_pushc(perrs, grc);
+                    tlog_errs_pushs(perrs, "Failed writing terminal data");
                     return_grc = grc;
                 }
                 break;
@@ -515,8 +527,8 @@ transfer(struct tlog_source    *tty_source,
                 grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
                 if (grc != TLOG_RC_OK &&
                     grc != TLOG_GRC_FROM(errno, EINTR)) {
-                    fprintf(stderr, "Failed logging terminal data: %s\n",
-                            tlog_grc_strerror(grc));
+                    tlog_errs_pushc(perrs, grc);
+                    tlog_errs_pushs(perrs, "Failed logging terminal data");
                     return_grc = grc;
                     goto cleanup;
                 }
@@ -537,8 +549,8 @@ transfer(struct tlog_source    *tty_source,
                 continue;
             } else if (grc != TLOG_GRC_FROM(errno, EBADF) &&
                        grc != TLOG_GRC_FROM(errno, EIO)) {
-                fprintf(stderr, "Failed reading terminal data: %s\n",
-                        tlog_grc_strerror(grc));
+                tlog_errs_pushc(perrs, grc);
+                tlog_errs_pushs(perrs, "Failed reading terminal data");
                 return_grc = grc;
             }
             break;
@@ -550,8 +562,8 @@ transfer(struct tlog_source    *tty_source,
     /* Cut the log (write incomplete characters as binary) */
     grc = tlog_sink_cut(log_sink);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed cutting-off the log: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed cutting-off the log");
         if (return_grc == TLOG_RC_OK) {
             return_grc = grc;
         }
@@ -561,8 +573,8 @@ transfer(struct tlog_source    *tty_source,
     /* Flush the log */
     grc = tlog_sink_flush(log_sink);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed flushing the log: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed flushing the log");
         if (return_grc == TLOG_RC_OK) {
             return_grc = grc;
         }
@@ -718,6 +730,7 @@ struct tap {
 /**
  * Teardown an I/O tap state.
  *
+ * @param perrs     Location for the error stack. Can be NULL.
  * @param tap       The tap state to teardown.
  * @param pstatus   Location for the shell process status as returned by
  *                  waitpid(2), can be NULL, if not required.
@@ -725,7 +738,7 @@ struct tap {
  * @return Global return code.
  */
 static tlog_grc
-tap_teardown(struct tap *tap, int *pstatus)
+tap_teardown(struct tlog_errs **perrs, struct tap *tap, int *pstatus)
 {
     tlog_grc grc;
 
@@ -749,8 +762,8 @@ tap_teardown(struct tap *tap, int *pstatus)
         rc = tcsetattr(tap->tty_fd, TCSAFLUSH, &tap->termios_orig);
         if (rc < 0 && errno != EBADF) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed restoring TTY attributes: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed restoring TTY attributes");
             return grc;
         }
         tap->termios_set = false;
@@ -760,8 +773,8 @@ tap_teardown(struct tap *tap, int *pstatus)
     if (tap->pid > 0) {
         if (waitpid(tap->pid, pstatus, 0) < 0) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed waiting for the child: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed waiting for the child");
             return grc;
         }
         tap->pid = 0;
@@ -773,6 +786,7 @@ tap_teardown(struct tap *tap, int *pstatus)
 /**
  * Setup I/O tap.
  *
+ * @param perrs     Location for the error stack. Can be NULL.
  * @param ptap      Location for the tap state.
  * @param conf      Tlog-rec configuration JSON object.
  * @param in_fd     Stdin to connect to, or -1 if none.
@@ -782,7 +796,8 @@ tap_teardown(struct tap *tap, int *pstatus)
  * @return Global return code.
  */
 static tlog_grc
-tap_setup(struct tap *ptap, struct json_object *conf,
+tap_setup(struct tlog_errs **perrs,
+          struct tap *ptap, struct json_object *conf,
           int in_fd, int out_fd, int err_fd)
 {
     tlog_grc grc;
@@ -794,10 +809,9 @@ tap_setup(struct tap *ptap, struct json_object *conf,
     assert(ptap != NULL);
 
     /* Prepare shell command line */
-    grc = tlog_rec_conf_get_shell(conf, &path, &argv);
+    grc = tlog_rec_conf_get_shell(perrs, conf, &path, &argv);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed building shell command line: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushs(perrs, "Failed building shell command line");
         goto cleanup;
     }
 
@@ -816,7 +830,7 @@ tap_setup(struct tap *ptap, struct json_object *conf,
         if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
             clock_id = CLOCK_MONOTONIC;
         } else {
-            fprintf(stderr, "No clock to use\n");
+            tlog_errs_pushs(perrs, "No clock to use");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -837,8 +851,8 @@ tap_setup(struct tap *ptap, struct json_object *conf,
     }
     if (errno != 0 && errno != ENOTTY && errno != EINVAL) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed retrieving TTY attributes: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed retrieving TTY attributes");
         goto cleanup;
     }
 
@@ -855,8 +869,8 @@ tap_setup(struct tap *ptap, struct json_object *conf,
         /* Get terminal window size */
         if (ioctl(tap.tty_fd, TIOCGWINSZ, &winsize) < 0) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed retrieving TTY window size: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed retrieving TTY window size");
             goto cleanup;
         }
 
@@ -864,9 +878,8 @@ tap_setup(struct tap *ptap, struct json_object *conf,
         tap.pid = forkpty(&master_fd, NULL, &tap.termios_orig, &winsize);
         if (tap.pid < 0) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr,
-                    "Failed forking a child connected via a PTY: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed forking a child connected via a PTY");
             goto cleanup;
         }
         /* If parent */
@@ -876,8 +889,8 @@ tap_setup(struct tap *ptap, struct json_object *conf,
             tap.out_fd = dup(master_fd);
             if (tap.out_fd < 0) {
                 grc = TLOG_GRC_ERRNO;
-                fprintf(stderr, "Failed duplicating PTY master FD: %s\n",
-                        tlog_grc_strerror(grc));
+                tlog_errs_pushc(perrs, grc);
+                tlog_errs_pushs(perrs, "Failed duplicating PTY master FD");
                 goto cleanup;
             }
         }
@@ -887,9 +900,9 @@ tap_setup(struct tap *ptap, struct json_object *conf,
                             out_fd >= 0 ? &tap.out_fd : NULL);
         if (tap.pid < 0) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr,
-                    "Failed forking a child connected via pipes: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs,
+                            "Failed forking a child connected via pipes");
             goto cleanup;
         }
     }
@@ -903,14 +916,14 @@ tap_setup(struct tap *ptap, struct json_object *conf,
          */
         if (setenv("SHELL", path, /*overwrite=*/1) != 0) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed to set SHELL environment variable: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed to set SHELL environment variable");
             goto cleanup;
         }
         execv(path, argv);
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed executing %s: %s",
-                path, tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed executing %s", path);
         goto cleanup;
     }
 
@@ -918,8 +931,8 @@ tap_setup(struct tap *ptap, struct json_object *conf,
     grc = tlog_tty_source_create(&tap.source, in_fd, tap.out_fd,
                                  tap.tty_fd, 4096, clock_id);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating TTY source: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating TTY source");
         goto cleanup;
     }
 
@@ -927,13 +940,12 @@ tap_setup(struct tap *ptap, struct json_object *conf,
     grc = tlog_tty_sink_create(&tap.sink, tap.in_fd, out_fd,
                                tap.tty_fd >= 0 ? tap.in_fd : -1);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating TTY sink: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating TTY sink");
         goto cleanup;
     }
 
     /* Switch the terminal to raw mode, if any */
-    /* NOTE: Done last to let errors print properly */
     if (tap.tty_fd >= 0) {
         int rc;
         struct termios termios_raw = tap.termios_orig;
@@ -946,8 +958,8 @@ tap_setup(struct tap *ptap, struct json_object *conf,
         rc = tcsetattr(tap.tty_fd, TCSAFLUSH, &termios_raw);
         if (rc < 0) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed setting TTY attributes: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed setting TTY attributes");
             goto cleanup;
         }
         tap.termios_set = true;
@@ -958,7 +970,7 @@ tap_setup(struct tap *ptap, struct json_object *conf,
 
 cleanup:
 
-    tap_teardown(&tap, NULL);
+    tap_teardown(perrs, &tap, NULL);
 
     /* Free shell argv list */
     if (argv != NULL) {
@@ -973,7 +985,8 @@ cleanup:
 }
 
 static tlog_grc
-run(const char *cmd_help, struct json_object *conf,
+run(struct tlog_errs **perrs,
+    const char *cmd_help, struct json_object *conf,
     int in_fd, int out_fd, int err_fd)
 {
     tlog_grc grc;
@@ -1006,7 +1019,7 @@ run(const char *cmd_help, struct json_object *conf,
 
     /* Read the log latency */
     if (!json_object_object_get_ex(conf, "latency", &obj)) {
-        fprintf(stderr, "Log latency is not specified\n");
+        tlog_errs_pushs(perrs, "Log latency is not specified");
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
@@ -1015,22 +1028,22 @@ run(const char *cmd_help, struct json_object *conf,
 
     /* Read log mask */
     if (!json_object_object_get_ex(conf, "log", &obj)) {
-        fprintf(stderr, "Logged data set parameters are not specified\n");
+        tlog_errs_pushs(perrs,
+                        "Logged data set parameters are not specified");
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
-    grc = get_log_mask(obj, &log_mask);
+    grc = get_log_mask(perrs, obj, &log_mask);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed reading log mask: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed reading log mask");
         goto cleanup;
     }
 
     /* Create the log sink */
-    grc = create_log_sink(&log_sink, conf);
+    grc = create_log_sink(perrs, &log_sink, conf);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating log sink: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushs(perrs, "Failed creating log sink");
         goto cleanup;
     }
 
@@ -1040,18 +1053,16 @@ run(const char *cmd_help, struct json_object *conf,
     }
 
     /* Setup the tap */
-    grc = tap_setup(&tap, conf, in_fd, out_fd, err_fd);
+    grc = tap_setup(perrs, &tap, conf, in_fd, out_fd, err_fd);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed setting up the I/O tap: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushs(perrs, "Failed setting up the I/O tap");
         goto cleanup;
     }
 
     /* Transfer and log the data until interrupted or either end is closed */
-    grc = transfer(tap.source, log_sink, tap.sink, latency, log_mask);
+    grc = transfer(perrs, tap.source, log_sink, tap.sink, latency, log_mask);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed transferring TTY data: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushs(perrs, "Failed transferring TTY data");
         goto cleanup;
     }
 
@@ -1059,7 +1070,7 @@ run(const char *cmd_help, struct json_object *conf,
 
 cleanup:
 
-    tap_teardown(&tap, NULL);
+    tap_teardown(perrs, &tap, NULL);
     tlog_sink_destroy(log_sink);
     return grc;
 }
@@ -1068,6 +1079,7 @@ int
 main(int argc, char **argv)
 {
     tlog_grc grc;
+    struct tlog_errs *errs = NULL;
     struct json_object *conf = NULL;
     char *cmd_help = NULL;
     int std_fds[] = {0, 1, 2};
@@ -1078,9 +1090,10 @@ main(int argc, char **argv)
     while (true) {
         int fd = open("/dev/null", O_RDWR);
         if (fd < 0) {
-            fprintf(stderr, "Failed opening /dev/null: %s\n",
-                    strerror(errno));
-            return 1;
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(&errs, grc);
+            tlog_errs_pushs(&errs, "Failed opening /dev/null");
+            goto cleanup;
         } else if (fd >= (int)TLOG_ARRAY_SIZE(std_fds)) {
             close(fd);
             break;
@@ -1093,25 +1106,30 @@ main(int argc, char **argv)
     setlocale(LC_ALL, "");
 
     /* Read configuration and command-line usage message */
-    grc = tlog_rec_conf_load(&cmd_help, &conf, argc, argv);
+    grc = tlog_rec_conf_load(&errs, &cmd_help, &conf, argc, argv);
     if (grc != TLOG_RC_OK) {
-        return 1;
+        goto cleanup;
     }
 
     /* Check that the character encoding is supported */
     charset = nl_langinfo(CODESET);
     if (strcmp(charset, "UTF-8") != 0) {
-        fprintf(stderr, "Unsupported locale charset: %s\n",
-                charset);
-        return 1;
+        grc = TLOG_RC_FAILURE;
+        tlog_errs_pushf(&errs, "Unsupported locale charset: %s", charset);
+        goto cleanup;
     }
 
     /* Run */
-    grc = run(cmd_help, conf, std_fds[0], std_fds[1], std_fds[2]);
+    grc = run(&errs, cmd_help, conf, std_fds[0], std_fds[1], std_fds[2]);
 
-    /* Free configuration and command-line usage message */
+cleanup:
+
+    /* Print error stack, if any */
+    tlog_errs_print(stderr, errs);
+
     json_object_put(conf);
     free(cmd_help);
+    tlog_errs_destroy(&errs);
 
     /* Reproduce the exit signal to get proper exit status */
     if (exit_signum != 0)

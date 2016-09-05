@@ -34,7 +34,8 @@
 #include <assert.h>
 
 static tlog_grc
-tlog_rec_conf_str_parse(struct json_object **pconf,
+tlog_rec_conf_str_parse(struct tlog_errs **perrs,
+                        struct json_object **pconf,
                         const char *str,
                         enum tlog_conf_origin origin)
 {
@@ -49,10 +50,12 @@ tlog_rec_conf_str_parse(struct json_object **pconf,
     conf = json_tokener_parse_verbose(str, &jerr);
     if (conf == NULL) {
         grc = TLOG_GRC_FROM(json, jerr);
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed parsing the configuration string");
         goto cleanup;
     }
 
-    grc = tlog_rec_conf_validate(conf, origin);
+    grc = tlog_rec_conf_validate(perrs, conf, origin);
     if (grc != TLOG_RC_OK) {
         goto cleanup;
     }
@@ -66,7 +69,8 @@ cleanup:
 }
 
 static tlog_grc
-tlog_rec_conf_file_load(struct json_object **pconf,
+tlog_rec_conf_file_load(struct tlog_errs **perrs,
+                        struct json_object **pconf,
                         const char *path)
 {
     tlog_grc grc;
@@ -75,16 +79,16 @@ tlog_rec_conf_file_load(struct json_object **pconf,
     /* Load the file */
     grc = tlog_json_object_from_file(&conf, path);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed loading \"%s\": %s\n",
-                path, tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed loading \"%s\"", path);
         goto cleanup;
     }
 
     /* Validate the contents */
-    grc = tlog_rec_conf_validate(conf, TLOG_CONF_ORIGIN_FILE);
+    grc = tlog_rec_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_FILE);
     if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Invalid contents of \"%s\": %s\n",
-                path, tlog_grc_strerror(grc));
+        tlog_errs_pushf(perrs,
+                        "Failed validating contents of \"%s\"", path);
         goto cleanup;
     }
 
@@ -97,7 +101,7 @@ cleanup:
 }
 
 static tlog_grc
-tlog_rec_conf_env_load(struct json_object **pconf)
+tlog_rec_conf_env_load(struct tlog_errs **perrs, struct json_object **pconf)
 {
     tlog_grc grc;
     const char *val;
@@ -110,24 +114,25 @@ tlog_rec_conf_env_load(struct json_object **pconf)
     conf = json_object_new_object();
     if (conf == NULL) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed creating configuration object: %s",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating configuration object");
         goto cleanup;
     }
 
     /* Load the config file, if specified */
     val = getenv("TLOG_REC_CONF_FILE");
     if (val != NULL) {
-        grc = tlog_rec_conf_file_load(&overlay, val);
+        grc = tlog_rec_conf_file_load(perrs, &overlay, val);
         if (grc != TLOG_RC_OK) {
-            fprintf(stderr,
-                    "Failed loading the file referenced by "
-                    "TLOG_REC_CONF_FILE environment variable: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushs(perrs,
+                            "Failed loading the file referenced by "
+                            "TLOG_REC_CONF_FILE environment variable");
             goto cleanup;
         }
         grc = tlog_json_overlay(&conf, conf, overlay);
         if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed overlaying configuration");
             goto cleanup;
         }
         json_object_put(overlay);
@@ -137,16 +142,17 @@ tlog_rec_conf_env_load(struct json_object **pconf)
     /* Load the config text, if specified */
     val = getenv("TLOG_REC_CONF_TEXT");
     if (val != NULL) {
-        grc = tlog_rec_conf_str_parse(&overlay, val, TLOG_CONF_ORIGIN_ENV);
+        grc = tlog_rec_conf_str_parse(perrs, &overlay, val, TLOG_CONF_ORIGIN_ENV);
         if (grc != TLOG_RC_OK) {
-            fprintf(stderr,
-                    "Failed parsing the contents of "
-                    "TLOG_REC_CONF_TEXT environment variable: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushs(perrs,
+                            "Failed parsing the contents of "
+                            "TLOG_REC_CONF_TEXT environment variable");
             goto cleanup;
         }
         grc = tlog_json_overlay(&conf, conf, overlay);
         if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed overlaying configuration");
             goto cleanup;
         }
         json_object_put(overlay);
@@ -159,8 +165,8 @@ tlog_rec_conf_env_load(struct json_object **pconf)
         overlay = json_object_new_string(val);
         if (overlay == NULL) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed creating shell path object: %s",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating shell path object");
             goto cleanup;
         }
         /* TODO Handle failure with newer JSON-C */
@@ -178,7 +184,8 @@ cleanup:
 }
 
 tlog_grc
-tlog_rec_conf_load(char **pcmd_help, struct json_object **pconf,
+tlog_rec_conf_load(struct tlog_errs **perrs,
+                   char **pcmd_help, struct json_object **pconf,
                    int argc, char **argv)
 {
     tlog_grc grc;
@@ -187,58 +194,100 @@ tlog_rec_conf_load(char **pcmd_help, struct json_object **pconf,
     char *path = NULL;
     char *cmd_help = NULL;
 
-#define GUARD(_expr) \
-    do {                            \
-        grc = (_expr);              \
-        if (grc != TLOG_RC_OK) {    \
-            goto cleanup;           \
-        }                           \
-    } while (0)
-
     /* Create empty config */
     conf = json_object_new_object();
     if (conf == NULL) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed creating configuration object: %s",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating configuration object: %s");
         goto cleanup;
     }
 
     /* Overlay with default config */
-    GUARD(tlog_build_or_inst_path(&path, argv[0],
+    grc = tlog_build_or_inst_path(&path, argv[0],
                                   TLOG_REC_CONF_DEFAULT_BUILD_PATH,
-                                  TLOG_REC_CONF_DEFAULT_INST_PATH));
-    GUARD(tlog_rec_conf_file_load(&overlay, path));
+                                  TLOG_REC_CONF_DEFAULT_INST_PATH);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed finding default configuration");
+        goto cleanup;
+    }
+    grc = tlog_rec_conf_file_load(perrs, &overlay, path);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs, "Failed loading default configuration");
+        goto cleanup;
+    }
     free(path);
     path = NULL;
-    GUARD(tlog_json_overlay(&conf, conf, overlay));
+    grc = tlog_json_overlay(&conf, conf, overlay);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed overlaying default configuration");
+        goto cleanup;
+    }
     json_object_put(overlay);
     overlay = NULL;
 
     /* Overlay with local system config */
-    GUARD(tlog_build_or_inst_path(&path, argv[0],
+    grc = tlog_build_or_inst_path(&path, argv[0],
                                   TLOG_REC_CONF_LOCAL_BUILD_PATH,
-                                  TLOG_REC_CONF_LOCAL_INST_PATH));
-    GUARD(tlog_rec_conf_file_load(&overlay, path));
+                                  TLOG_REC_CONF_LOCAL_INST_PATH);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed finding system configuration");
+        goto cleanup;
+    }
+    grc = tlog_rec_conf_file_load(perrs, &overlay, path);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs, "Failed loading system configuration");
+        goto cleanup;
+    }
     free(path);
     path = NULL;
-    GUARD(tlog_json_overlay(&conf, conf, overlay));
+    grc = tlog_json_overlay(&conf, conf, overlay);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed overlaying system configuration");
+        goto cleanup;
+    }
     json_object_put(overlay);
     overlay = NULL;
 
     /* Overlay with environment config */
-    GUARD(tlog_rec_conf_env_load(&overlay));
-    GUARD(tlog_json_overlay(&conf, conf, overlay));
+    grc = tlog_rec_conf_env_load(perrs, &overlay);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs,
+                        "Failed retrieving configuration "
+                        "from environment variables");
+        goto cleanup;
+    }
+    grc = tlog_json_overlay(&conf, conf, overlay);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs,
+                        "Failed overlaying configuration "
+                        "retrieved from environment variables");
+        goto cleanup;
+    }
     json_object_put(overlay);
     overlay = NULL;
 
     /* Overlay with command-line config */
-    GUARD(tlog_rec_conf_cmd_load(&cmd_help, &overlay, argc, argv));
-    GUARD(tlog_json_overlay(&conf, conf, overlay));
+    grc = tlog_rec_conf_cmd_load(perrs, &cmd_help, &overlay, argc, argv);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs,
+                        "Failed retrieving configuration from command line");
+        goto cleanup;
+    }
+    grc = tlog_json_overlay(&conf, conf, overlay);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs,
+                        "Failed overlaying command-line configuration");
+        goto cleanup;
+    }
     json_object_put(overlay);
     overlay = NULL;
-
-#undef GUARD
 
     grc = TLOG_RC_OK;
     *pcmd_help = cmd_help;
@@ -254,7 +303,8 @@ cleanup:
 }
 
 tlog_grc
-tlog_rec_conf_get_shell(struct json_object *conf,
+tlog_rec_conf_get_shell(struct tlog_errs **perrs,
+                        struct json_object *conf,
                         const char **ppath,
                         char ***pargv)
 {
@@ -277,7 +327,7 @@ tlog_rec_conf_get_shell(struct json_object *conf,
 
     /* Read the shell path */
     if (!json_object_object_get_ex(conf, "shell", &obj)) {
-        fprintf(stderr, "Shell is not specified\n");
+        tlog_errs_pushs(perrs, "Shell is not specified");
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
@@ -287,8 +337,8 @@ tlog_rec_conf_get_shell(struct json_object *conf,
     buf = strdup(path);
     if (buf == NULL) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed duplicating shell path: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed duplicating shell path");
         goto cleanup;
     }
     if (login) {
@@ -296,8 +346,8 @@ tlog_rec_conf_get_shell(struct json_object *conf,
         name = malloc(strlen(str) + 2);
         if (name == NULL) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed allocating shell name: %s\n",
-                    tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed allocating shell name");
             goto cleanup;
         }
         name[0] = '-';
@@ -314,12 +364,12 @@ tlog_rec_conf_get_shell(struct json_object *conf,
 
     /* Read and check the positional arguments */
     if (!json_object_object_get_ex(conf, "args", &args)) {
-        fprintf(stderr, "Positional arguments are not specified\n");
+        tlog_errs_pushs(perrs, "Positional arguments are not specified");
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
     if (command && json_object_array_length(args) == 0) {
-        fprintf(stderr, "Command string is not specified\n");
+        tlog_errs_pushs(perrs, "Command string is not specified");
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
@@ -329,8 +379,8 @@ tlog_rec_conf_get_shell(struct json_object *conf,
                   sizeof(*argv));
     if (argv == NULL) {
         grc = TLOG_GRC_ERRNO;
-        fprintf(stderr, "Failed allocating argv list: %s\n",
-                tlog_grc_strerror(grc));
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed allocating argv list");
         goto cleanup;
     }
     argi = 0;
@@ -340,8 +390,8 @@ tlog_rec_conf_get_shell(struct json_object *conf,
         arg = strdup("-c");
         if (arg == NULL) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed allocating shell argv[#%zu]: %s\n",
-                    argi, tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed allocating shell argv[#%zu]", argi);
             goto cleanup;
         }
         argv[argi++] = arg;
@@ -352,8 +402,9 @@ tlog_rec_conf_get_shell(struct json_object *conf,
         arg = strdup(json_object_get_string(obj));
         if (arg == NULL) {
             grc = TLOG_GRC_ERRNO;
-            fprintf(stderr, "Failed allocating shell argv[#%zu]: %s\n",
-                    argi, tlog_grc_strerror(grc));
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs,
+                            "Failed allocating shell argv[#%zu]", argi);
             goto cleanup;
         }
         argv[argi] = arg;

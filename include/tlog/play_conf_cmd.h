@@ -33,6 +33,7 @@
 /**
  * Load tlog-play configuration from the command line and extract program name.
  *
+ * @param perrs     Location for the error stack. Can be NULL.
  * @param phelp     Location for the dynamically-allocated usage help message.
  *                  Cannot be NULL.
  * @param pconf     Location for the pointer to the JSON object representing
@@ -42,7 +43,8 @@
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_play_conf_cmd_load(char **phelp,
+extern tlog_grc tlog_play_conf_cmd_load(struct tlog_errs **perrs,
+                                        char **phelp,
                                         struct json_object **pconf,
                                         int argc, char **argv);
 

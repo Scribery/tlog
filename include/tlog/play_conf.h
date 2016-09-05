@@ -26,12 +26,14 @@
 #ifndef _TLOG_PLAY_CONF_H
 #define _TLOG_PLAY_CONF_H
 
+#include <tlog/errs.h>
 #include <tlog/grc.h>
 #include <json.h>
 
 /**
  * Load tlog-play configuration from various sources and extract program name.
  *
+ * @param perrs     Location for the error stack. Can be NULL.
  * @param pcmd_help Location for the dynamically-allocated command-line usage
  *                  help message. Cannot be NULL.
  * @param pconf     Location for the pointer to the JSON object representing
@@ -41,7 +43,8 @@
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_play_conf_load(char **pcmd_help,
+extern tlog_grc tlog_play_conf_load(struct tlog_errs **perrs,
+                                    char **pcmd_help,
                                     struct json_object **pconf,
                                     int argc, char **argv);
 

@@ -41,8 +41,8 @@ m4_define(
     `
         m4_printl(
            `            if (type != json_type_boolean) {',
-           `                fprintf(stderr, "Invalid \"%s\" type: %s\n",',
-           `                        name, json_type_to_name(type));',
+           `                tlog_errs_pushf(perrs, "Invalid \"%s\" type: %s",',
+           `                                name, json_type_to_name(type));',
            `                return TLOG_RC_FAILURE;',
            `            }')
     '
@@ -53,8 +53,8 @@ m4_define(
     `
         m4_printl(
            `            if (type != json_type_string) {',
-           `                fprintf(stderr, "Invalid \"%s\" type: %s\n",',
-           `                        name, json_type_to_name(type));',
+           `                tlog_errs_pushf(perrs, "Invalid \"%s\" type: %s",',
+           `                                name, json_type_to_name(type));',
            `                return TLOG_RC_FAILURE;',
            `            }')
     '
@@ -79,8 +79,8 @@ m4_define(
     `
         m4_printl(
            `            if (type != json_type_string) {',
-           `                fprintf(stderr, "Invalid \"%s\" type: %s\n",',
-           `                        name, json_type_to_name(type));',
+           `                tlog_errs_pushf(perrs, "Invalid \"%s\" type: %s",',
+           `                                name, json_type_to_name(type));',
            `                return TLOG_RC_FAILURE;',
            `            }')
         m4_print(
@@ -95,8 +95,8 @@ m4_define(
            `                 strcmp(value, value_list[i]) != 0;',
            `                 i++);',
            `            if (i >= TLOG_ARRAY_SIZE(value_list)) {',
-           `                fprintf(stderr, "Invalid \"%s\" value: %s\n",',
-           `                        name, value);',
+           `                tlog_errs_pushf(perrs, "Invalid \"%s\" value: %s",',
+           `                                name, value);',
            `                return TLOG_RC_FAILURE;',
            `            }')
     '
@@ -107,8 +107,8 @@ m4_define(
     `
         m4_printl(
            `            if (type != json_type_int) {',
-           `                fprintf(stderr, "Invalid \"%s\" type: %s\n",',
-           `                        name, json_type_to_name(type));',
+           `                tlog_errs_pushf(perrs, "Invalid \"%s\" type: %s",',
+           `                                name, json_type_to_name(type));',
            `                return TLOG_RC_FAILURE;',
            `            }')
         m4_ifelse(
@@ -117,8 +117,8 @@ m4_define(
                 m4_printl(
                    `            int64_t value = json_object_get_int64(obj);',
                    `            if (value < $2) {',
-                   `                fprintf(stderr, "Invalid \"%s\" value: %" PRId64 "\n",',
-                   `                        name, value);',
+                   `                tlog_errs_pushf(perrs, "Invalid \"%s\" value: %" PRId64,',
+                   `                                name, value);',
                    `                return TLOG_RC_FAILURE;',
                    `            }')
             '
@@ -131,8 +131,8 @@ m4_define(
     `
         m4_printl(
            `            if (type != json_type_array) {',
-           `                fprintf(stderr, "Invalid \"%s\" type: %s\n",',
-           `                        name, json_type_to_name(type));',
+           `                tlog_errs_pushf(perrs, "Invalid \"%s\" type: %s",',
+           `                                name, json_type_to_name(type));',
            `                return TLOG_RC_FAILURE;',
            `            }',
            `            int i;',
@@ -140,8 +140,8 @@ m4_define(
            `                struct json_object *item_obj = json_object_array_get_idx(obj, i);',
            `                enum json_type item_type = json_object_get_type(item_obj);',
            `                if (item_type != json_type_string) {',
-           `                    fprintf(stderr, "Invalid \"%s\" item #%d type: %s\n",',
-           `                            name, i, json_type_to_name(item_type));',
+           `                    tlog_errs_pushf(perrs, "Invalid \"%s\" item #%d type: %s",',
+           `                                    name, i, json_type_to_name(item_type));',
            `                    return TLOG_RC_FAILURE;',
            `                }',
            `            }')
@@ -181,11 +181,11 @@ m4_define(
                    `        if (strcmp(name, "m4_substr(`$2', 1)") == 0) {',
                    `            tlog_grc grc;',
                    `            if (type != json_type_object) {',
-                   `                fprintf(stderr, "Invalid \"%s\" type: %s\n",',
-                   `                        name, json_type_to_name(type));',
+                   `                tlog_errs_pushf(perrs, "Invalid \"%s\" type: %s",',
+                   `                                name, json_type_to_name(type));',
                    `                return TLOG_RC_FAILURE;',
                    `            }',
-                   `            grc = tlog_'M4_PROG_NAME()`_conf_validate`'m4_translit(`$1$2', `/', `_')`'(obj, origin);',
+                   `            grc = tlog_'M4_PROG_NAME()`_conf_validate`'m4_translit(`$1$2', `/', `_')`'(perrs, obj, origin);',
                    `            if (grc != TLOG_RC_OK) {',
                    `                return grc;',
                    `            }',
@@ -215,7 +215,8 @@ m4_define(
                 m4_ifelse(`$2', `', , `m4_print(`static ')')
                 m4_printl(
                    `tlog_grc',
-                   `tlog_'M4_PROG_NAME()`_conf_validate`'m4_translit(M4_PREFIX(), `/', `_')(struct json_object *conf,',
+                   `tlog_'M4_PROG_NAME()`_conf_validate`'m4_translit(M4_PREFIX(), `/', `_')(struct tlog_errs **perrs,',
+                   `                                struct json_object *conf,',
                    `                                enum tlog_conf_origin origin)',
                    `{',
                    `    assert(conf != NULL);',
@@ -225,7 +226,7 @@ m4_define(
                 m4_include(M4_PROG_NAME()`_conf_schema.m4')
                 m4_printl(
                     `',
-                    `        fprintf(stderr, "Unexpected node: \"%s\"\n", name);',
+                    `        tlog_errs_pushf(perrs, "Unexpected node: \"%s\"", name);',
                     `        return TLOG_RC_FAILURE;',
                     `    }',
                     `    return TLOG_RC_OK;',

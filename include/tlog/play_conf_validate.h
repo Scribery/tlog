@@ -28,18 +28,21 @@
 
 #include <json.h>
 #include <tlog/grc.h>
+#include <tlog/errs.h>
 #include <tlog/conf_origin.h>
 
 /**
  * Check tlog-play JSON configuration: if there are no unkown nodes and the
  * present node types and values are valid.
  *
+ * @param perrs     Location for the error stack. Can be NULL.
  * @param conf      The configuration JSON object to check.
  * @param origin    The configuration origin.
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_play_conf_validate(struct json_object *conf,
+extern tlog_grc tlog_play_conf_validate(struct tlog_errs **perrs,
+                                        struct json_object *conf,
                                         enum tlog_conf_origin origin);
 
 #endif /* _TLOG_PLAY_CONF_VALIDATE_H */
