@@ -37,7 +37,7 @@
  * @param pconf     Location for the pointer to the JSON object representing
  *                  the loaded configuration.
  * @param argc      Tlog-rec argc value.
- * @param argc      Tlog-rec argv value.
+ * @param argv      Tlog-rec argv value.
  *
  * @return Global return code.
  */
