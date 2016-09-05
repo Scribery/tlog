@@ -973,7 +973,7 @@ cleanup:
 }
 
 static tlog_grc
-run(const char *progname, struct json_object *conf,
+run(const char *cmd_help, struct json_object *conf,
     int in_fd, int out_fd, int err_fd)
 {
     tlog_grc grc;
@@ -984,12 +984,12 @@ run(const char *progname, struct json_object *conf,
     struct tlog_sink *log_sink = NULL;
     struct tap tap = TAP_VOID;
 
-    assert(progname != NULL);
+    assert(cmd_help != NULL);
 
     /* Check for the help flag */
     if (json_object_object_get_ex(conf, "help", &obj)) {
         if (json_object_get_boolean(obj)) {
-            tlog_rec_conf_cmd_help(stdout, progname);
+            fprintf(stdout, "%s\n", cmd_help);
             grc = TLOG_RC_OK;
             goto cleanup;
         }
@@ -1069,7 +1069,7 @@ main(int argc, char **argv)
 {
     tlog_grc grc;
     struct json_object *conf = NULL;
-    char *progname = NULL;
+    char *cmd_help = NULL;
     int std_fds[] = {0, 1, 2};
     const char *charset;
 
@@ -1091,8 +1091,8 @@ main(int argc, char **argv)
     /* Set locale from environment variables */
     setlocale(LC_ALL, "");
 
-    /* Read configuration and program name */
-    grc = tlog_rec_conf_load(&progname, &conf, argc, argv);
+    /* Read configuration and command-line usage message */
+    grc = tlog_rec_conf_load(&cmd_help, &conf, argc, argv);
     if (grc != TLOG_RC_OK) {
         return 1;
     }
@@ -1100,17 +1100,17 @@ main(int argc, char **argv)
     /* Check that the character encoding is supported */
     charset = nl_langinfo(CODESET);
     if (strcmp(charset, "UTF-8") != 0) {
-        fprintf(stderr, "%s: Unsupported locale charset: %s\n",
-                progname, charset);
+        fprintf(stderr, "Unsupported locale charset: %s\n",
+                charset);
         return 1;
     }
 
     /* Run */
-    grc = run(progname, conf, std_fds[0], std_fds[1], std_fds[2]);
+    grc = run(cmd_help, conf, std_fds[0], std_fds[1], std_fds[2]);
 
-    /* Free configuration and program name */
+    /* Free configuration and command-line usage message */
     json_object_put(conf);
-    free(progname);
+    free(cmd_help);
 
     /* Reproduce the exit signal to get proper exit status */
     if (exit_signum != 0)

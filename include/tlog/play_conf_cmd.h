@@ -31,19 +31,9 @@
 #include <stdio.h>
 
 /**
- * Output a tlog-play command-line help message to a stream.
- *
- * @param stream    The stream to output the message to.
- * @param progname  The program name to refer to in the help message.
- *
- * @return Global return code.
- */
-extern tlog_grc tlog_play_conf_cmd_help(FILE *stream, const char *progname);
-
-/**
  * Load tlog-play configuration from the command line and extract program name.
  *
- * @param pprogname Location for the dynamically-allocated program name.
+ * @param phelp     Location for the dynamically-allocated usage help message.
  * @param pconf     Location for the pointer to the JSON object representing
  *                  the loaded configuration.
  * @param argc      Tlog-play argc value.
@@ -51,7 +41,7 @@ extern tlog_grc tlog_play_conf_cmd_help(FILE *stream, const char *progname);
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_play_conf_cmd_load(char **pprogname,
+extern tlog_grc tlog_play_conf_cmd_load(char **phelp,
                                         struct json_object **pconf,
                                         int argc, char **argv);
 

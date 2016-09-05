@@ -32,7 +32,8 @@
 /**
  * Load tlog-rec configuration from various sources and extract program name.
  *
- * @param pprogname Location for the dynamically-allocated program name.
+ * @param pcmd_help Location for the dynamically-allocated command-line usage
+ *                  help message.
  * @param pconf     Location for the pointer to the JSON object representing
  *                  the loaded configuration.
  * @param argc      Tlog-rec argc value.
@@ -40,7 +41,7 @@
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_rec_conf_load(char **pprogname,
+extern tlog_grc tlog_rec_conf_load(char **pcmd_help,
                                    struct json_object **pconf,
                                    int argc, char **argv);
 

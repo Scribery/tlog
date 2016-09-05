@@ -225,7 +225,7 @@ m4_define(
     `M4_CONF_CMD_HELP_OPTS_CONTAINER_PARAM_OPT',
     `
         m4_print(
-           `       "    ',
+           `    "    ',
            `$1',
            m4_substr(`                            ', m4_len(`$1')),
            `$2')
@@ -277,8 +277,8 @@ m4_define(
             M4_PREFIX(),
             `
                 m4_printl(
-                   `       "\n"',
-                   `       "$3 options:\n"')
+                   `    "\n"',
+                   `    "$3 options:\n"')
                 m4_pushdef(`M4_PREFIX', M4_PREFIX()`$2')
 
                 m4_pushdef(`M4_CONTAINER', `')
@@ -326,9 +326,8 @@ m4_define(
            `            }',
            `            if (sscanf(optarg, "%" SCNd64 " %n", &val_int, &end) < 1 ||',
            `                optarg[end] != 0 || val_int < $2) {',
-           `                fprintf(stderr, "Invalid %s option value: %s\n",',
-           `                        optname, optarg);',
-           `                tlog_'M4_PROG_NAME()`_conf_cmd_help(stderr, progname);',
+           `                fprintf(stderr, "Invalid %s option value: %s\n%s\n",',
+           `                        optname, optarg, help);',
            `                grc = TLOG_RC_FAILURE;',
            `                goto cleanup;',
            `            }',
@@ -366,9 +365,8 @@ m4_define(
            `            } else {',
            `                fprintf(stderr,',
            `                        "Invalid %s option value: %s,\n"',
-           `                        "expecting yes/on/true or no/off/false.\n",',
-           `                        optname, optarg);',
-           `                tlog_'M4_PROG_NAME()`_conf_cmd_help(stderr, progname);',
+           `                        "expecting yes/on/true or no/off/false.\n%s\n",',
+           `                        optname, optarg, help);',
            `                grc = TLOG_RC_FAILURE;',
            `                goto cleanup;',
            `            }')
@@ -410,10 +408,9 @@ m4_define(
            `                     i < TLOG_ARRAY_SIZE(list) && strcmp(optarg, list[i]) != 0;',
            `                     i++);',
            `                if (i >= TLOG_ARRAY_SIZE(list)) {',
-           `                    fprintf(stderr, "Invalid %s option value: %s\n",',
-           `                            optname, optarg);',
+           `                    fprintf(stderr, "Invalid %s option value: %s\n%s\n",',
+           `                            optname, optarg, help);',
            `                    grc = TLOG_RC_FAILURE;',
-           `                    tlog_'M4_PROG_NAME()`_conf_cmd_help(stderr, progname);',
            `                    goto cleanup;',
            `                }',
            `            }',
@@ -468,8 +465,8 @@ m4_define(
     `m4_pushdef(`m4_orig_divnum', m4_divnum)m4_divert(-1)
         m4_printl(
            `static tlog_grc',
-           `tlog_'M4_PROG_NAME()`_conf_cmd_load_args(const char *progname,',
-           `                            struct json_object *conf,',
+           `tlog_'M4_PROG_NAME()`_conf_cmd_load_args(struct json_object *conf,',
+           `                            const char *help,',
            `                            int argc, char **argv)',
            `{',
            `    /* Option codes */',
@@ -526,7 +523,7 @@ m4_define(
         m4_printl(
            `        case m4_singlequote(`?'):',
            `            grc = TLOG_RC_FAILURE;',
-           `            tlog_'M4_PROG_NAME()`_conf_cmd_help(stderr, progname);',
+           `            fprintf(stderr, "%s\n", help);',
            `            goto cleanup;',
            `',
            `        default:',

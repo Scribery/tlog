@@ -189,7 +189,7 @@ cleanup:
 }
 
 static tlog_grc
-run(const char *progname, struct json_object *conf)
+run(const char *cmd_help, struct json_object *conf)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     tlog_grc grc;
@@ -213,13 +213,13 @@ run(const char *progname, struct json_object *conf)
     size_t loc_num;
     char *loc_str = NULL;
 
-    assert(progname != NULL);
+    assert(cmd_help != NULL);
 
     /* Check if arguments are provided */
     if (json_object_object_get_ex(conf, "args", &obj) &&
         json_object_array_length(obj) > 0) {
-        fprintf(stderr, "Positional arguments are not accepted\n");
-        tlog_play_conf_cmd_help(stderr, progname);
+        fprintf(stderr, "Positional arguments are not accepted\n%s\n",
+                cmd_help);
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
@@ -227,7 +227,7 @@ run(const char *progname, struct json_object *conf)
     /* Check for the help flag */
     if (json_object_object_get_ex(conf, "help", &obj)) {
         if (json_object_get_boolean(obj)) {
-            tlog_play_conf_cmd_help(stdout, progname);
+            fprintf(stdout, "%s\n", cmd_help);
             grc = TLOG_RC_OK;
             goto cleanup;
         }
@@ -420,14 +420,14 @@ main(int argc, char **argv)
 {
     tlog_grc grc;
     struct json_object *conf = NULL;
-    char *progname = NULL;
+    char *cmd_help = NULL;
     const char *charset;
 
     /* Set locale from environment variables */
     setlocale(LC_ALL, "");
 
-    /* Read configuration and program name */
-    grc = tlog_play_conf_load(&progname, &conf, argc, argv);
+    /* Read configuration and command-line usage message */
+    grc = tlog_play_conf_load(&cmd_help, &conf, argc, argv);
     if (grc != TLOG_RC_OK) {
         return 1;
     }
@@ -435,17 +435,17 @@ main(int argc, char **argv)
     /* Check that the character encoding is supported */
     charset = nl_langinfo(CODESET);
     if (strcmp(charset, "UTF-8") != 0) {
-        fprintf(stderr, "%s: Unsupported locale charset: %s\n",
-                progname, charset);
+        fprintf(stderr, "Unsupported locale charset: %s\n",
+                charset);
         return 1;
     }
 
     /* Run */
-    grc = run(progname, conf);
+    grc = run(cmd_help, conf);
 
     /* Free configuration and program name */
     json_object_put(conf);
-    free(progname);
+    free(cmd_help);
 
     /* Reproduce the exit signal to get proper exit status */
     if (exit_signum != 0)

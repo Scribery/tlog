@@ -25,6 +25,7 @@ m4_generated_warning(` * ')m4_dnl
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
 #include <tlog/play_conf_validate.h>
 #include <tlog/play_conf_cmd.h>
 #include <tlog/json_misc.h>
@@ -38,30 +39,22 @@ m4_generated_warning(` * ')m4_dnl
 #include <inttypes.h>
 #include <assert.h>
 
-tlog_grc
-tlog_play_conf_cmd_help(FILE *stream, const char *progname)
-{
-    const char *fmt =
-       "Usage: %s [OPTION...]\n"
-       "Play back a terminal I/O recording done by tlog-rec.\n"
+static const char *tlog_play_conf_cmd_help_fmt =
+    "Usage: %1$s [OPTION...]\n"
+    "Play back a terminal I/O recording done by tlog-rec.\n"
 M4_CONF_CMD_HELP_OPTS()m4_dnl
-       "\n";
-    if (fprintf(stream, fmt, progname) < 0) {
-        return TLOG_GRC_ERRNO;
-    } else {
-        return TLOG_RC_OK;
-    }
-}
+    "";
 
 M4_CONF_CMD_LOAD_ARGS()m4_dnl
 
 tlog_grc
-tlog_play_conf_cmd_load(char **pprogname, struct json_object **pconf,
+tlog_play_conf_cmd_load(char **phelp, struct json_object **pconf,
                         int argc, char **argv)
 {
     tlog_grc grc;
     char *progpath = NULL;
     char *progname = NULL;
+    char *help = NULL;
     struct json_object *conf = NULL;
 
     /* Create empty configuration */
@@ -90,7 +83,13 @@ tlog_play_conf_cmd_load(char **pprogname, struct json_object **pconf,
     }
 
     /* Extract options and positional arguments */
-    grc = tlog_play_conf_cmd_load_args(progname, conf, argc, argv);
+    if (asprintf(&help, tlog_play_conf_cmd_help_fmt, progname) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        fprintf(stderr, "Failed formatting help message: %s\n",
+                tlog_grc_strerror(grc));
+        goto cleanup;
+    }
+    grc = tlog_play_conf_cmd_load_args(conf, help, argc, argv);
     if (grc != TLOG_RC_OK) {
         goto cleanup;
     }
@@ -101,13 +100,14 @@ tlog_play_conf_cmd_load(char **pprogname, struct json_object **pconf,
         goto cleanup;
     }
 
-    *pprogname = progname;
-    progname = NULL;
+    *phelp = help;
+    help = NULL;
     *pconf = conf;
     conf = NULL;
     grc = TLOG_RC_OK;
 
 cleanup:
+    free(help);
     free(progname);
     free(progpath);
     json_object_put(conf);
