@@ -310,7 +310,7 @@ create_log_sink(struct tlog_sink **psink, struct json_object *conf)
         goto cleanup;
     }
     if (!tlog_utf8_str_is_valid(passwd->pw_name)) {
-        fprintf(stderr, "Host FQDN is not valid UTF-8: %s", passwd->pw_name);
+        fprintf(stderr, "User name is not valid UTF-8: %s", passwd->pw_name);
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
