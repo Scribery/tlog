@@ -1080,6 +1080,7 @@ main(int argc, char **argv)
         if (fd < 0) {
             fprintf(stderr, "Failed opening /dev/null: %s\n",
                     strerror(errno));
+            return 1;
         } else if (fd >= (int)TLOG_ARRAY_SIZE(std_fds)) {
             close(fd);
             break;
