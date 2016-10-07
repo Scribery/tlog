@@ -117,9 +117,11 @@ tlog_source_destroy(struct tlog_source *source)
 {
     assert(source == NULL || tlog_source_is_valid(source));
 
-    if (source == NULL)
+    if (source == NULL) {
         return;
-    if (source->type->cleanup != NULL)
+    }
+    if (source->type->cleanup != NULL) {
         source->type->cleanup(source);
+    }
     free(source);
 }

@@ -101,14 +101,15 @@ extern const struct timespec tlog_timespec_zero;
 static inline int
 tlog_timespec_cmp(const struct timespec *a, const struct timespec *b)
 {
-    if (a->tv_sec < b->tv_sec)
+    if (a->tv_sec < b->tv_sec) {
         return -1;
-    else if (a->tv_sec > b->tv_sec)
+    } else if (a->tv_sec > b->tv_sec) {
         return 1;
-    if (a->tv_nsec < b->tv_nsec)
+    } if (a->tv_nsec < b->tv_nsec) {
         return -1;
-    else if (a->tv_nsec > b->tv_nsec)
+    } else if (a->tv_nsec > b->tv_nsec) {
         return 1;
+    }
     return 0;
 }
 

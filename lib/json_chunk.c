@@ -74,8 +74,9 @@ tlog_json_chunk_reserve(struct tlog_json_chunk *chunk, size_t len)
                                              chunk->last_width,
                                              chunk->last_height);
     }
-    if (len > chunk->rem)
+    if (len > chunk->rem) {
         return false;
+    }
     chunk->rem -= len;
     if (chunk->window_state == TLOG_JSON_CHUNK_WINDOW_STATE_KNOWN) {
         chunk->window_state = TLOG_JSON_CHUNK_WINDOW_STATE_RESERVED;
@@ -178,8 +179,9 @@ tlog_json_chunk_advance(tlog_trx_state trx,
         tlog_json_stream_flush(&chunk->input);
         tlog_json_stream_flush(&chunk->output);
         /* If it doesn't fit */
-        if (!tlog_json_chunk_reserve(chunk, (size_t)delay_rc))
+        if (!tlog_json_chunk_reserve(chunk, (size_t)delay_rc)) {
             goto failure;
+        }
         tlog_json_chunk_write_timing(chunk,
                                      (uint8_t *)delay_buf, (size_t)delay_rc);
     }
@@ -278,12 +280,14 @@ tlog_json_chunk_init(struct tlog_json_chunk *chunk, size_t size)
 
     grc = tlog_json_stream_init(&chunk->input, &chunk->dispatcher,
                                 size, '<', '[');
-    if (grc != TLOG_RC_OK)
+    if (grc != TLOG_RC_OK) {
         goto error;
+    }
     grc = tlog_json_stream_init(&chunk->output, &chunk->dispatcher,
                                 size, '>', ']');
-    if (grc != TLOG_RC_OK)
+    if (grc != TLOG_RC_OK) {
         goto error;
+    }
     chunk->timing_buf = malloc(size);
     if (chunk->timing_buf == NULL) {
         grc = TLOG_GRC_ERRNO;
@@ -367,15 +371,17 @@ tlog_json_chunk_write_window(tlog_trx_state trx,
     assert(tlog_pkt_pos_is_compatible(end, pkt));
     assert(tlog_pkt_pos_is_reachable(end, pkt));
 
-    if (tlog_pkt_pos_cmp(ppos, end) >= 0)
+    if (tlog_pkt_pos_cmp(ppos, end) >= 0) {
         return true;
+    }
 
     TLOG_TRX_FRAME_BEGIN(trx);
 
     if (chunk->window_state >= TLOG_JSON_CHUNK_WINDOW_STATE_KNOWN) {
         if (pkt->data.window.width == chunk->last_width &&
-            pkt->data.window.height == chunk->last_height)
+            pkt->data.window.height == chunk->last_height) {
             goto success;
+        }
     }
 
     len = tlog_json_chunk_sprint_window(buf, sizeof(buf),
@@ -389,13 +395,15 @@ tlog_json_chunk_write_window(tlog_trx_state trx,
     tlog_json_stream_flush(&chunk->input);
     tlog_json_stream_flush(&chunk->output);
 
-    if (!tlog_json_chunk_advance(trx, chunk, &pkt->timestamp))
+    if (!tlog_json_chunk_advance(trx, chunk, &pkt->timestamp)) {
         goto failure;
+    }
 
     /* Signal we're reserving space for a window right now */
     chunk->window_state = TLOG_JSON_CHUNK_WINDOW_STATE_RESERVED;
-    if (!tlog_json_chunk_reserve(chunk, len))
+    if (!tlog_json_chunk_reserve(chunk, len)) {
         goto failure;
+    }
 
     /* Signal we're writing a window right now */
     chunk->window_state = TLOG_JSON_CHUNK_WINDOW_STATE_WRITTEN;
@@ -447,8 +455,9 @@ tlog_json_chunk_write_io(tlog_trx_state trx,
     assert(tlog_pkt_pos_is_compatible(end, pkt));
     assert(tlog_pkt_pos_is_reachable(end, pkt));
 
-    if (tlog_pkt_pos_cmp(ppos, end) >= 0)
+    if (tlog_pkt_pos_cmp(ppos, end) >= 0) {
         return true;
+    }
 
     buf = pkt->data.io.buf + ppos->val;
     len = end->val - ppos->val;

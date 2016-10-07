@@ -49,8 +49,9 @@ static volatile sig_atomic_t exit_signum  = 0;
 static void
 exit_sighandler(int signum)
 {
-    if (exit_signum == 0)
+    if (exit_signum == 0) {
         exit_signum = signum;
+    }
 }
 
 /**
@@ -286,8 +287,9 @@ run(struct tlog_errs **perrs,
         {
             sa.sa_handler = exit_sighandler;
             sigemptyset(&sa.sa_mask);
-            for (j = 0; j < TLOG_ARRAY_SIZE(exit_sig); j++)
+            for (j = 0; j < TLOG_ARRAY_SIZE(exit_sig); j++) {
                 sigaddset(&sa.sa_mask, exit_sig[j]);
+            }
             /* NOTE: no SA_RESTART on purpose */
             sa.sa_flags = 0;
             sigaction(exit_sig[i], &sa, NULL);
@@ -406,8 +408,9 @@ cleanup:
     /* Restore signal handlers */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
         sigaction(exit_sig[i], NULL, &sa);
-        if (sa.sa_handler != SIG_IGN)
+        if (sa.sa_handler != SIG_IGN) {
             signal(exit_sig[i], SIG_DFL);
+        }
     }
 
     /* Restore terminal attributes */
@@ -479,8 +482,9 @@ cleanup:
     tlog_errs_destroy(&errs);
 
     /* Reproduce the exit signal to get proper exit status */
-    if (exit_signum != 0)
+    if (exit_signum != 0) {
         raise(exit_signum);
+    }
 
     return grc != TLOG_RC_OK;
 }

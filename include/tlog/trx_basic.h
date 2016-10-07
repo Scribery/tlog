@@ -72,8 +72,9 @@ typedef unsigned int tlog_trx_basic_mask;
     assert(level < TLOG_ARRAY_SIZE(object->trx_store_list));                    \
     tlog_trx_basic_mask mask = (1 << level);                                    \
     if ((act_type == TLOG_TRX_ACT_TYPE_BACKUP) !=                               \
-        (!(object->trx_store_mask & mask)))                                     \
+        (!(object->trx_store_mask & mask))) {                                   \
         return;                                                                 \
+    }                                                                           \
     object->trx_store_mask = (object->trx_store_mask & ~mask) |                 \
                              ((act_type == TLOG_TRX_ACT_TYPE_BACKUP) << level); \
     TLOG_TRX_BASIC_STORE_SIG(_type_token) *store =                              \
@@ -81,11 +82,12 @@ typedef unsigned int tlog_trx_basic_mask;
 
 /** Act on transaction data of a variable member */
 #define TLOG_TRX_BASIC_ACT_ON_VAR(_name) \
-    do {                                                \
-        if (act_type == TLOG_TRX_ACT_TYPE_BACKUP)       \
-            store->_name = object->_name;               \
-        else if (act_type == TLOG_TRX_ACT_TYPE_RESTORE) \
-            object->_name = store->_name;               \
+    do {                                                    \
+        if (act_type == TLOG_TRX_ACT_TYPE_BACKUP) {         \
+            store->_name = object->_name;                   \
+        } else if (act_type == TLOG_TRX_ACT_TYPE_RESTORE) { \
+            object->_name = store->_name;                   \
+        }                                                   \
     } while (0)
 
 /** Act on transaction data of an embedded object member */

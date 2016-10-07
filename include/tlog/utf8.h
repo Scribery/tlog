@@ -178,8 +178,9 @@ tlog_utf8_add(struct tlog_utf8 *utf8, uint8_t b)
                 assert(tlog_utf8_is_valid(utf8));
                 return false;
             }
-            if (b >= r->min && b <= r->max)
+            if (b >= r->min && b <= r->max) {
                 break;
+            }
             seq++;
         }
     } else {
@@ -192,8 +193,9 @@ tlog_utf8_add(struct tlog_utf8 *utf8, uint8_t b)
     }
     utf8->buf[utf8->len++] = b;
     utf8->range = r + 1;
-    if (utf8->range->max == 0)
+    if (utf8->range->max == 0) {
         utf8->end = true;
+    }
     assert(tlog_utf8_is_valid(utf8));
     return true;
 }

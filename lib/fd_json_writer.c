@@ -65,13 +65,15 @@ tlog_fd_json_writer_write(struct tlog_json_writer *writer,
     while (true) {
         rc = write(fd_json_writer->fd, buf, len);
         if (rc < 0) {
-            if (errno == EINTR)
+            if (errno == EINTR) {
                 continue;
-            else
+            } else {
                 return TLOG_GRC_ERRNO;
+            }
         }
-        if ((size_t)rc == len)
+        if ((size_t)rc == len) {
             return TLOG_RC_OK;
+        }
         buf += rc;
         len -= (size_t)rc;
     }

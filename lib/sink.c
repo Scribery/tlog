@@ -140,9 +140,11 @@ tlog_sink_destroy(struct tlog_sink *sink)
 {
     assert(sink == NULL || tlog_sink_is_valid(sink));
 
-    if (sink == NULL)
+    if (sink == NULL) {
         return;
-    if (sink->type->cleanup != NULL)
+    }
+    if (sink->type->cleanup != NULL) {
         sink->type->cleanup(sink);
+    }
     free(sink);
 }

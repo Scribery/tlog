@@ -42,9 +42,10 @@ tlog_test_diff_side(FILE *stream, const char *name,
         fputc(((c >= 0x20 && c < 0x7f) ? c : ' '), stream);
     }
     fputc('\n', stream);
-    for (o = out_buf, e = exp_buf, i = 0; i < max_len; o++, e++, i++)
+    for (o = out_buf, e = exp_buf, i = 0; i < max_len; o++, e++, i++) {
         fprintf(stream, "%c",
                 ((i < min_len && *o == *e) ? ' ' : '^'));
+    }
 
     fprintf(stream, "\n%s hex:\n", name);
     for (o = out_buf, e = exp_buf, i = 0, col = 0;
@@ -60,8 +61,9 @@ tlog_test_diff_side(FILE *stream, const char *name,
             fprintf(stream, "\n");
         }
     }
-    if (col != 0)
+    if (col != 0) {
         fprintf(stream, "\n");
+    }
 }
 
 void

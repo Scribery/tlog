@@ -70,8 +70,9 @@ static volatile sig_atomic_t exit_signum  = 0;
 static void
 exit_sighandler(int signum)
 {
-    if (exit_signum == 0)
+    if (exit_signum == 0) {
         exit_signum = signum;
+    }
 }
 
 /* Number of ALRM signals caught */
@@ -101,15 +102,18 @@ get_session_id(unsigned int *pid)
     assert(pid != NULL);
 
     file = fopen("/proc/self/sessionid", "r");
-    if (file == NULL)
+    if (file == NULL) {
         return TLOG_RC_FAILURE;
+    }
     rc = fscanf(file, "%u", pid);
     orig_errno = errno;
     fclose(file);
-    if (rc == 1)
+    if (rc == 1) {
         return TLOG_RC_OK;
-    if (rc == 0)
+    }
+    if (rc == 0) {
         return TLOG_GRC_FROM(errno, EINVAL);
+    }
 
     return TLOG_GRC_FROM(errno, orig_errno);
 }
@@ -133,19 +137,22 @@ get_fqdn(char **pfqdn)
     assert(pfqdn != NULL);
 
     /* Get hostname */
-    if (gethostname(hostname, sizeof(hostname)) < 0)
+    if (gethostname(hostname, sizeof(hostname)) < 0) {
         return TLOG_GRC_ERRNO;
+    }
 
     /* Resolve hostname to FQDN */
     gai_error = getaddrinfo(hostname, NULL, &hints, &info);
-    if (gai_error != 0)
+    if (gai_error != 0) {
         return TLOG_GRC_FROM(gai, gai_error);
+    }
 
     /* Duplicate retrieved FQDN */
     *pfqdn = strdup(info->ai_canonname);
     freeaddrinfo(info);
-    if (*pfqdn == NULL)
+    if (*pfqdn == NULL) {
         return TLOG_GRC_ERRNO;
+    }
 
     return TLOG_RC_OK;
 }
@@ -466,8 +473,9 @@ transfer(struct tlog_errs     **perrs,
         {
             sa.sa_handler = exit_sighandler;
             sigemptyset(&sa.sa_mask);
-            for (j = 0; j < TLOG_ARRAY_SIZE(exit_sig); j++)
+            for (j = 0; j < TLOG_ARRAY_SIZE(exit_sig); j++) {
                 sigaddset(&sa.sa_mask, exit_sig[j]);
+            }
             /* NOTE: no SA_RESTART on purpose */
             sa.sa_flags = 0;
             sigaction(exit_sig[i], &sa, NULL);
@@ -590,8 +598,9 @@ cleanup:
     signal(SIGALRM, SIG_DFL);
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
         sigaction(exit_sig[i], NULL, &sa);
-        if (sa.sa_handler != SIG_IGN)
+        if (sa.sa_handler != SIG_IGN) {
             signal(exit_sig[i], SIG_DFL);
+        }
     }
 
     return return_grc;
@@ -836,15 +845,18 @@ tap_setup(struct tlog_errs **perrs,
         if (clock_getres(CLOCK_MONOTONIC_COARSE, &timestamp) == 0 &&
             tlog_timespec_cmp(&timestamp, &tlog_delay_min_timespec) <= 0) {
             clock_id = CLOCK_MONOTONIC_COARSE;
-        } else
-#endif
-        if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
-            clock_id = CLOCK_MONOTONIC;
         } else {
-            tlog_errs_pushs(perrs, "No clock to use");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
+#endif
+            if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
+                clock_id = CLOCK_MONOTONIC;
+            } else {
+                tlog_errs_pushs(perrs, "No clock to use");
+                grc = TLOG_RC_FAILURE;
+                goto cleanup;
+            }
+#ifdef CLOCK_MONOTONIC_COARSE
         }
+#endif
     }
 
     /* Try to find a TTY FD and get terminal attributes */
@@ -1150,8 +1162,9 @@ cleanup:
     tlog_errs_destroy(&errs);
 
     /* Reproduce the exit signal to get proper exit status */
-    if (exit_signum != 0)
+    if (exit_signum != 0) {
         raise(exit_signum);
+    }
 
     return grc != TLOG_RC_OK;
 }

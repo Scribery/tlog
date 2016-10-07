@@ -86,8 +86,9 @@ struct tlog_trx_frame_slot {
 #define TLOG_TRX_FRAME_BEGIN(_trx) \
     do {                                                                    \
         assert(TLOG_TRX_STATE_GET_DEPTH(_trx) < TLOG_TRX_STATE_MAX_DEPTH);  \
-        if (TLOG_TRX_STATE_GET_DEPTH(_trx) == 0)                            \
+        if (TLOG_TRX_STATE_GET_DEPTH(_trx) == 0) {                          \
             TLOG_TRX_FRAME_ACT(_trx, TLOG_TRX_ACT_TYPE_BACKUP);             \
+        }                                                                   \
         (_trx)++;                                                           \
     } while (0)
 
@@ -101,8 +102,9 @@ struct tlog_trx_frame_slot {
     do {                                                            \
         assert(TLOG_TRX_STATE_GET_DEPTH(_trx) > 0);                 \
         (_trx)--;                                                   \
-        if (TLOG_TRX_STATE_GET_DEPTH(_trx) == 0)                    \
+        if (TLOG_TRX_STATE_GET_DEPTH(_trx) == 0) {                  \
             TLOG_TRX_FRAME_ACT(_trx, TLOG_TRX_ACT_TYPE_RESTORE);    \
+        }                                                           \
     } while (0)
 
 /**
@@ -115,8 +117,9 @@ struct tlog_trx_frame_slot {
     do {                                                            \
         assert(TLOG_TRX_STATE_GET_DEPTH(_trx) > 0);                 \
         (_trx)--;                                                   \
-        if (TLOG_TRX_STATE_GET_DEPTH(_trx) == 0)                    \
+        if (TLOG_TRX_STATE_GET_DEPTH(_trx) == 0) {                  \
             TLOG_TRX_FRAME_ACT(_trx, TLOG_TRX_ACT_TYPE_DISCARD);    \
+        }                                                           \
     } while (0)
 
 #endif /* _TLOG_TRX_FRAME_H */

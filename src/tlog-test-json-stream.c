@@ -128,8 +128,9 @@ test_meta_dispatcher_reserve(struct tlog_json_dispatcher *dispatcher,
                                                struct test_meta,
                                                dispatcher);
     assert(tlog_json_dispatcher_is_valid(dispatcher));
-    if (len > meta->rem)
+    if (len > meta->rem) {
         return false;
+    }
     meta->rem -= len;
     return true;
 }
@@ -232,52 +233,62 @@ test(const char *n, const struct test t)
             if ((buf < op->data.write.buf) ||
                 (buf - op->data.write.buf) !=
                     (ssize_t)(op->data.write.len_in -
-                              op->data.write.len_out))
+                              op->data.write.len_out)) {
                 FAIL_OP("off %zd != %zu",
                         (buf - op->data.write.buf),
                         (op->data.write.len_in - op->data.write.len_out));
-            if (len != op->data.write.len_out)
+            }
+            if (len != op->data.write.len_out) {
                 FAIL_OP("len %zu != %zu", len, op->data.write.len_out);
-            if ((meta.ptr - last_ptr) != op->data.write.meta_off)
+            }
+            if ((meta.ptr - last_ptr) != op->data.write.meta_off) {
                 FAIL_OP("meta_off %zd != %zd",
                         (meta.ptr - last_ptr), op->data.write.meta_off);
+            }
             last_ptr = meta.ptr;
             if (((ssize_t)last_rem - (ssize_t)meta.rem) !=
-                    op->data.write.rem_off)
+                    op->data.write.rem_off) {
                 FAIL_OP("rem_off %zd != %zd",
                         (last_rem - meta.rem), op->data.write.rem_off);
+            }
             last_rem = meta.rem;
-            if (passed)
+            if (passed) {
                 break;
-            else
+            } else {
                 goto cleanup;
+            }
         case OP_TYPE_FLUSH:
             tlog_json_stream_flush(&meta.stream);
-            if ((meta.ptr - last_ptr) != op->data.flush.meta_off)
+            if ((meta.ptr - last_ptr) != op->data.flush.meta_off) {
                 FAIL_OP("meta_off %zd != %zd",
                         (meta.ptr - last_ptr),
                         op->data.flush.meta_off);
+            }
             last_ptr = meta.ptr;
-            if (passed)
+            if (passed) {
                 break;
-            else
+            } else {
                 goto cleanup;
+            }
         case OP_TYPE_CUT:
             tlog_json_stream_cut(TLOG_TRX_STATE_ROOT, &meta.stream);
-            if ((meta.ptr - last_ptr) != op->data.cut.meta_off)
+            if ((meta.ptr - last_ptr) != op->data.cut.meta_off) {
                 FAIL_OP("meta_off %zd != %zd",
                         (meta.ptr - last_ptr), op->data.cut.meta_off);
+            }
             last_ptr = meta.ptr;
             if (((ssize_t)last_rem - (ssize_t)meta.rem) !=
-                    op->data.cut.rem_off)
+                    op->data.cut.rem_off) {
                 FAIL_OP("rem_off %zd != %zd",
                         ((ssize_t)last_rem - (ssize_t)meta.rem),
                         op->data.cut.rem_off);
+            }
             last_rem = meta.rem;
-            if (passed)
+            if (passed) {
                 break;
-            else
+            } else {
                 goto cleanup;
+            }
         case OP_TYPE_EMPTY:
             tlog_json_stream_empty(&meta.stream);
             break;
@@ -289,8 +300,9 @@ test(const char *n, const struct test t)
 
 #undef FAIL_OP
 
-    if (last_rem != t.rem_out)
+    if (last_rem != t.rem_out) {
         FAIL("rem %zu != %zu", last_rem, t.rem_out);
+    }
 
 #define BUF_CMP(_name, \
                 _result_ptr, _result_len, _expected_ptr, _expected_len) \
