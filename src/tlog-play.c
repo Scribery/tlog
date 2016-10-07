@@ -283,8 +283,7 @@ run(struct tlog_errs **perrs,
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
         sigaction(exit_sig[i], NULL, &sa);
-        if (sa.sa_handler != SIG_IGN)
-        {
+        if (sa.sa_handler != SIG_IGN) {
             sa.sa_handler = exit_sighandler;
             sigemptyset(&sa.sa_mask);
             for (j = 0; j < TLOG_ARRAY_SIZE(exit_sig); j++) {
