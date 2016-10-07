@@ -36,7 +36,7 @@
 extern const char *tlog_version;
 
 /** Return number of elements in an array */
-#define TLOG_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define TLOG_ARRAY_SIZE(_x) (sizeof(_x) / sizeof((_x)[0]))
 
 /** Return maximum of two numbers */
 #define TLOG_MAX(_a, _b) ((_a) > (_b) ? (_a) : (_b))
