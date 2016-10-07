@@ -54,8 +54,9 @@ test_meta_dispatcher_reserve(struct tlog_json_dispatcher *dispatcher,
                                                struct test_meta,
                                                dispatcher);
     assert(tlog_json_dispatcher_is_valid(dispatcher));
-    if (len > meta->rem)
+    if (len > meta->rem) {
         return false;
+    }
     meta->rem -= len;
     return true;
 }
@@ -122,16 +123,18 @@ tlog_test_json_stream_enc(const char *n,
     } while (0)
 
 #define CMP_SIZE(_name) \
-    do {                                                        \
-        if (_name != t._name##_out)                            \
+    do {                                                       \
+        if (_name != t._name##_out) {                          \
             FAIL(#_name " %zu != %zu", _name, t._name##_out);  \
+        }                                                      \
     } while (0)
 
 #define CMP_BOOL(_name) \
     do {                                                        \
-        if (_name != t._name##_out)                            \
+        if (_name != t._name##_out) {                           \
             FAIL(#_name " %s != %s",                            \
-                 BOOL_STR(_name), BOOL_STR(t._name##_out));    \
+                 BOOL_STR(_name), BOOL_STR(t._name##_out));     \
+        }                                                       \
     } while (0)
 
     fit = t.func(TLOG_TRX_STATE_ROOT, &meta.dispatcher,

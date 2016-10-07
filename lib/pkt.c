@@ -90,13 +90,15 @@ bool
 tlog_pkt_is_valid(const struct tlog_pkt *pkt)
 {
     if (!(pkt != NULL &&
-          tlog_pkt_type_is_valid(pkt->type)))
+          tlog_pkt_type_is_valid(pkt->type))) {
         return false;
+    }
 
     switch (pkt->type) {
     case TLOG_PKT_TYPE_IO:
-        if (!(pkt->data.io.buf != NULL || pkt->data.io.len == 0))
+        if (!(pkt->data.io.buf != NULL || pkt->data.io.len == 0)) {
             return false;
+        }
         break;
     default:
         break;
@@ -120,20 +122,23 @@ tlog_pkt_is_equal(const struct tlog_pkt *a, const struct tlog_pkt *b)
 
     if (a->type != b->type ||
         a->timestamp.tv_sec != b->timestamp.tv_sec ||
-        a->timestamp.tv_nsec != b->timestamp.tv_nsec)
+        a->timestamp.tv_nsec != b->timestamp.tv_nsec) {
         return false;
+    }
 
     switch (a->type) {
     case TLOG_PKT_TYPE_WINDOW:
         if (a->data.window.width != b->data.window.width ||
-            a->data.window.height != b->data.window.height)
+            a->data.window.height != b->data.window.height) {
             return false;
+        }
         break;
     case TLOG_PKT_TYPE_IO:
         if (a->data.io.output != b->data.io.output ||
             a->data.io.len != b->data.io.len ||
-            memcmp(a->data.io.buf, b->data.io.buf, a->data.io.len) != 0)
+            memcmp(a->data.io.buf, b->data.io.buf, a->data.io.len) != 0) {
             return false;
+        }
         break;
     default:
         break;
@@ -149,8 +154,9 @@ tlog_pkt_cleanup(struct tlog_pkt *pkt)
 
     switch (pkt->type) {
     case TLOG_PKT_TYPE_IO:
-        if (pkt->data.io.buf_owned)
+        if (pkt->data.io.buf_owned) {
             free(pkt->data.io.buf);
+        }
         break;
     default:
         break;
@@ -163,8 +169,9 @@ tlog_pkt_cleanup(struct tlog_pkt *pkt)
 bool
 tlog_pkt_pos_is_valid(const struct tlog_pkt_pos *pos)
 {
-    if (pos == NULL || !tlog_pkt_type_is_valid(pos->type))
+    if (pos == NULL || !tlog_pkt_type_is_valid(pos->type)) {
         return false;
+    }
 
     switch (pos->type) {
     case TLOG_PKT_TYPE_VOID:

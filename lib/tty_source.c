@@ -168,8 +168,9 @@ tlog_tty_source_loc_fmt(const struct tlog_source *source, size_t loc)
 {
     char *str;
     (void)source;
-    if (asprintf(&str, "%zums", loc) < 0)
+    if (asprintf(&str, "%zums", loc) < 0) {
         return NULL;
+    }
     return str;
 }
 

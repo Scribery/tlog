@@ -33,11 +33,13 @@
 bool
 tlog_json_msg_is_valid(const struct tlog_json_msg *msg)
 {
-    if (msg == NULL)
+    if (msg == NULL) {
         return false;
+    }
 
-    if (msg->obj == NULL)
+    if (msg->obj == NULL) {
         return true;
+    }
 
     return msg->host != NULL &&
            msg->user != NULL &&
@@ -87,8 +89,9 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
 
     GET_FIELD(ver, int);
     ver = json_object_get_int(o);
-    if (ver != 1)
+    if (ver != 1) {
         return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_VER;
+    }
     msg->ver = (unsigned int)ver;
 
     GET_FIELD(host, string);
@@ -102,8 +105,9 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
 
     GET_FIELD(session, int);
     session = json_object_get_int64(o);
-    if (session < 1 || session > UINT_MAX)
+    if (session < 1 || session > UINT_MAX) {
         return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_SESSION;
+    }
     msg->session = (unsigned int)session;
 
     GET_FIELD(id, int);
@@ -160,16 +164,17 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
 static size_t
 tlog_json_msg_utf8_len(uint8_t b)
 {
-    if ((b & 0x80) == 0)
+    if ((b & 0x80) == 0) {
         return 1;
-    else if ((b & 0xe0) == 0xc0)
+    } else if ((b & 0xe0) == 0xc0) {
         return 2;
-    else if ((b & 0xf0) == 0xe0)
+    } else if ((b & 0xf0) == 0xe0) {
         return 3;
-    else if ((b & 0xf8) == 0xf0)
+    } else if ((b & 0xf8) == 0xf0) {
         return 4;
-    else
+    } else {
         return 0;
+    }
 };
 
 tlog_grc
@@ -226,18 +231,21 @@ tlog_json_msg_read(struct tlog_json_msg *msg, struct tlog_pkt *pkt,
             }
 
             if (sscanf(timing_ptr, "%1[][><+=]%" SCNu64 "%n",
-                       type_buf, &first_val, &read) < 2)
+                       type_buf, &first_val, &read) < 2) {
                 return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TIMING;
+            }
             type = *type_buf;
             timing_ptr += read;
 
             if (type == '[' || type == ']') {
-                if (sscanf(timing_ptr, "/%" SCNu64 "%n", &second_val, &read) < 1)
+                if (sscanf(timing_ptr, "/%" SCNu64 "%n", &second_val, &read) < 1) {
                     return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TIMING;
+                }
                 timing_ptr += read;
             } else if (type == '=') {
-                if (sscanf(timing_ptr, "x%" SCNu64 "%n", &second_val, &read) < 1)
+                if (sscanf(timing_ptr, "x%" SCNu64 "%n", &second_val, &read) < 1) {
                     return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TIMING;
+                }
                 timing_ptr += read;
             } else {
                 second_val = 0;
@@ -343,23 +351,27 @@ tlog_json_msg_read(struct tlog_json_msg *msg, struct tlog_pkt *pkt,
                 /* Skip replacement characters */
                 for (; first_val > 0; first_val--) {
                     /* If not enough text */
-                    if (*msg->ptxt_len == 0)
+                    if (*msg->ptxt_len == 0) {
                         return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TXT;
+                    }
                     l = tlog_json_msg_utf8_len(*(uint8_t *)*msg->ptxt_ptr);
                     /* If found invalid UTF-8 character in text */
-                    if (l == 0)
+                    if (l == 0) {
                         return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TXT;
+                    }
                     /* If character crosses text boundary */
-                    if (l > *msg->ptxt_len)
+                    if (l > *msg->ptxt_len) {
                         return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TXT;
+                    }
                     *msg->ptxt_len -= l;
                     *msg->ptxt_ptr += l;
                 }
             }
 
             /* Ignore zero I/O */
-            if (msg->rem == 0)
+            if (msg->rem == 0) {
                 continue;
+            }
         }
 
         /* Stop if the packet I/O is in different direction */
@@ -380,15 +392,18 @@ tlog_json_msg_read(struct tlog_json_msg *msg, struct tlog_pkt *pkt,
             for (; msg->rem > 0; msg->rem--, io_len++, (*msg->pbin_pos)++) {
                 o = json_object_array_get_idx(msg->bin_obj, *msg->pbin_pos);
                 /* If not enough bytes */
-                if (o == NULL)
+                if (o == NULL) {
                     return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_BIN;
+                }
                 /* If supposed byte is not an int */
-                if (json_object_get_type(o) != json_type_int)
+                if (json_object_get_type(o) != json_type_int) {
                     return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_BIN;
+                }
                 n = json_object_get_int(o);
                 /* If supposed byte value is out of range */
-                if (n < 0 || n > UINT8_MAX)
+                if (n < 0 || n > UINT8_MAX) {
                     return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_BIN;
+                }
                 io_buf[io_len] = (uint8_t)n;
                 /* If the I/O buffer is full */
                 if (io_len >= io_size) {
@@ -404,11 +419,13 @@ tlog_json_msg_read(struct tlog_json_msg *msg, struct tlog_pkt *pkt,
                 b = *(uint8_t *)*msg->ptxt_ptr;
                 l = tlog_json_msg_utf8_len(b);
                 /* If found invalid UTF-8 character in text */
-                if (l == 0)
+                if (l == 0) {
                     return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TXT;
+                }
                 /* If character crosses text boundary */
-                if (l > *msg->ptxt_len)
+                if (l > *msg->ptxt_len) {
                     return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TXT;
+                }
                 /* If character crosses the I/O buffer boundary */
                 if (io_len + l > io_size) {
                     io_full = true;
@@ -420,8 +437,9 @@ tlog_json_msg_read(struct tlog_json_msg *msg, struct tlog_pkt *pkt,
                     (*msg->ptxt_len)--;
                     (*msg->ptxt_ptr)++;
                     l--;
-                    if (l == 0)
+                    if (l == 0) {
                         break;
+                    }
                     b = *(uint8_t *)*msg->ptxt_ptr;
                 }
                 msg->rem--;

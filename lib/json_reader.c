@@ -105,8 +105,9 @@ tlog_json_reader_read(struct tlog_json_reader *reader,
     assert(tlog_json_reader_is_valid(reader));
     assert(pobject != NULL);
     grc = reader->type->read(reader, pobject);
-    if (grc != TLOG_RC_OK)
+    if (grc != TLOG_RC_OK) {
         *pobject = NULL;
+    }
     assert(tlog_json_reader_is_valid(reader));
     return grc;
 }
@@ -116,9 +117,11 @@ tlog_json_reader_destroy(struct tlog_json_reader *reader)
 {
     assert(reader == NULL || tlog_json_reader_is_valid(reader));
 
-    if (reader == NULL)
+    if (reader == NULL) {
         return;
-    if (reader->type->cleanup != NULL)
+    }
+    if (reader->type->cleanup != NULL) {
         reader->type->cleanup(reader);
+    }
     free(reader);
 }

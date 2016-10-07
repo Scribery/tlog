@@ -146,16 +146,18 @@ tlog_json_stream_btoa(uint8_t *buf, size_t len, uint8_t b)
         }
         l++;
     }
-    if (len > 0)
+    if (len > 0) {
         *buf = '0' + b;
+    }
     l++;
     return l;
 }
 
 #define REQ(_dispatcher, _l) \
-    do {                                                    \
-        if (!tlog_json_dispatcher_reserve(_dispatcher, _l)) \
-            goto failure;                                   \
+    do {                                                      \
+        if (!tlog_json_dispatcher_reserve(_dispatcher, _l)) { \
+            goto failure;                                     \
+        }                                                     \
     } while (0)
 
 #define ADV(_dispatcher, _l) \
@@ -183,8 +185,9 @@ tlog_json_stream_enc_bin(tlog_trx_state trx,
     assert(pidig != NULL);
     assert(ibuf != NULL || ilen == 0);
 
-    if (ilen == 0)
+    if (ilen == 0) {
         return true;
+    }
 
     TLOG_TRX_FRAME_BEGIN(trx);
     olen = *polen;
@@ -244,8 +247,9 @@ tlog_json_stream_enc_txt(tlog_trx_state trx,
     assert(pidig != NULL);
     assert(ibuf != NULL || ilen == 0);
 
-    if (ilen == 0)
+    if (ilen == 0) {
         return true;
+    }
 
     TLOG_TRX_FRAME_BEGIN(trx);
     olen = *polen;
@@ -397,20 +401,23 @@ tlog_json_stream_write_seq(tlog_trx_state trx,
     assert(tlog_json_stream_is_valid(stream));
     assert(buf != NULL || len == 0);
 
-    if (len == 0)
+    if (len == 0) {
         return true;
+    }
 
     TLOG_TRX_FRAME_BEGIN(trx);
 
     /* Cut the run, if changing type */
-    if ((!valid) != (stream->bin_run != 0))
+    if ((!valid) != (stream->bin_run != 0)) {
         tlog_json_stream_write_meta(stream->dispatcher,
                                     stream->valid_mark, stream->invalid_mark,
                                     &stream->txt_run, &stream->bin_run);
+    }
 
     /* Advance the time */
-    if (!tlog_json_dispatcher_advance(trx, stream->dispatcher, ts))
+    if (!tlog_json_dispatcher_advance(trx, stream->dispatcher, ts)) {
         goto failure;
+    }
 
     if (valid) {
         /* Write the character to the text buffer */
@@ -419,8 +426,9 @@ tlog_json_stream_write_seq(tlog_trx_state trx,
                                       stream->txt_buf + stream->txt_len,
                                       &stream->txt_len,
                                       &stream->txt_run, &stream->txt_dig,
-                                      buf, len))
+                                      buf, len)) {
             goto failure;
+        }
     } else {
         /* Write the replacement character to the text buffer */
         if (!tlog_json_stream_enc_txt(trx,
@@ -428,8 +436,9 @@ tlog_json_stream_write_seq(tlog_trx_state trx,
                                       stream->txt_buf + stream->txt_len,
                                       &stream->txt_len,
                                       &stream->txt_run, &stream->txt_dig,
-                                      repl_buf, sizeof(repl_buf)))
+                                      repl_buf, sizeof(repl_buf))) {
             goto failure;
+        }
 
         /* Write bytes to the binary buffer */
         if (!tlog_json_stream_enc_bin(trx,
@@ -437,8 +446,9 @@ tlog_json_stream_write_seq(tlog_trx_state trx,
                                       stream->bin_buf + stream->bin_len,
                                       &stream->bin_len,
                                       &stream->bin_run, &stream->bin_dig,
-                                      buf, len))
+                                      buf, len)) {
             goto failure;
+        }
     }
 
     TLOG_TRX_FRAME_COMMIT(trx);

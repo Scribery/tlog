@@ -184,28 +184,35 @@ tlog_json_source_read_msg(struct tlog_source *source)
 
     for (; ; tlog_json_msg_cleanup(&json_source->msg)) {
         grc = tlog_json_reader_read(json_source->reader, &obj);
-        if (grc != TLOG_RC_OK)
+        if (grc != TLOG_RC_OK) {
             return grc;
-        if (obj == NULL)
+        }
+        if (obj == NULL) {
             return TLOG_RC_OK;
+        }
 
         grc = tlog_json_msg_init(&json_source->msg, obj);
         json_object_put(obj);
-        if (grc != TLOG_RC_OK)
+        if (grc != TLOG_RC_OK) {
             return grc;
+        }
 
         if (json_source->hostname != NULL &&
-            strcmp(json_source->msg.host, json_source->hostname) != 0)
+            strcmp(json_source->msg.host, json_source->hostname) != 0) {
             continue;
+        }
         if (json_source->username != NULL &&
-            strcmp(json_source->msg.user, json_source->username) != 0)
+            strcmp(json_source->msg.user, json_source->username) != 0) {
             continue;
+        }
         if (json_source->terminal != NULL &&
-            strcmp(json_source->msg.term, json_source->terminal) != 0)
+            strcmp(json_source->msg.term, json_source->terminal) != 0) {
             return TLOG_RC_JSON_SOURCE_TERMINAL_MISMATCH;
+        }
         if (json_source->session_id != 0 &&
-            json_source->msg.session != json_source->session_id)
+            json_source->msg.session != json_source->session_id) {
             continue;
+        }
 
         return TLOG_RC_OK;
     }
@@ -227,10 +234,12 @@ tlog_json_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
     while (true) {
         if (tlog_json_msg_is_void(msg)) {
             grc = tlog_json_source_read_msg(source);
-            if (grc != TLOG_RC_OK)
+            if (grc != TLOG_RC_OK) {
                 return grc;
-            if (tlog_json_msg_is_void(msg))
+            }
+            if (tlog_json_msg_is_void(msg)) {
                 return TLOG_RC_OK;
+            }
             if (json_source->got_msg) {
                 if (msg->id != (json_source->last_msg_id + 1)) {
                     tlog_json_msg_cleanup(msg);

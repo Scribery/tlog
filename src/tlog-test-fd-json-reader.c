@@ -143,10 +143,11 @@ test(const char *n, const struct test t)
                         res_str, grc,
                         exp_str, op->data.read.exp_grc);
             }
-            if ((object == NULL) != (op->data.read.exp_string == NULL))
+            if ((object == NULL) != (op->data.read.exp_string == NULL)) {
                 FAIL_OP("object: %s != %s",
                         (object ? "!NULL" : "NULL"),
                         (op->data.read.exp_string ? "!NULL" : "NULL"));
+            }
             else if (object != NULL) {
                 res_string = json_object_to_json_string(object);
                 res_string_len = strlen(res_string);
@@ -163,8 +164,9 @@ test(const char *n, const struct test t)
                             exp_string_len);
                 }
             }
-            if (object != NULL)
+            if (object != NULL) {
                 json_object_put(object);
+            }
             break;
         case OP_TYPE_LOC_GET:
             loc = tlog_json_reader_loc_get(reader);
@@ -193,8 +195,9 @@ test(const char *n, const struct test t)
     fprintf(stderr, "%s: %s\n", n, (passed ? "PASS" : "FAIL"));
 
     tlog_json_reader_destroy(reader);
-    if (fd >= 0)
+    if (fd >= 0) {
         close(fd);
+    }
     return passed;
 }
 

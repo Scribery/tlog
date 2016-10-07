@@ -90,9 +90,10 @@ tlog_test_json_sink_run(
     } while (0)
 
 #define CHECK_OP(_expr) \
-    do {                            \
-        if ((_expr) != TLOG_RC_OK)  \
-            FAIL_OP;                \
+    do {                             \
+        if ((_expr) != TLOG_RC_OK) { \
+            FAIL_OP;                 \
+        }                            \
     } while (0)
 
     for (op = input->op_list;

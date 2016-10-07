@@ -129,8 +129,9 @@ tlog_json_sink_init(struct tlog_sink *sink, va_list ap)
     }
 
     grc = tlog_json_chunk_init(&json_sink->chunk, chunk_size);
-    if (grc != TLOG_RC_OK)
+    if (grc != TLOG_RC_OK) {
         goto error;
+    }
 
     json_sink->writer = writer;
     json_sink->writer_owned = writer_owned;
@@ -164,8 +165,9 @@ tlog_json_sink_flush(struct tlog_sink *sink)
     int len;
     struct timespec pos;
 
-    if (tlog_json_chunk_is_empty(&json_sink->chunk))
+    if (tlog_json_chunk_is_empty(&json_sink->chunk)) {
         return TLOG_RC_OK;
+    }
 
     /* Write terminating metadata records to reserved space */
     tlog_json_chunk_flush(&json_sink->chunk);
@@ -212,16 +214,18 @@ tlog_json_sink_flush(struct tlog_sink *sink)
         (int)json_sink->chunk.input.bin_len, json_sink->chunk.input.bin_buf,
         (int)json_sink->chunk.output.txt_len, json_sink->chunk.output.txt_buf,
         (int)json_sink->chunk.output.bin_len, json_sink->chunk.output.bin_buf);
-    if (len < 0)
+    if (len < 0) {
         return TLOG_RC_FAILURE;
+    }
     if ((size_t)len >= json_sink->message_len) {
         return TLOG_GRC_FROM(errno, ENOMEM);
     }
 
     grc = tlog_json_writer_write(json_sink->writer,
                                  json_sink->message_buf, len);
-    if (grc != TLOG_RC_OK)
+    if (grc != TLOG_RC_OK) {
         return grc;
+    }
 
     json_sink->message_id++;
     tlog_json_chunk_empty(&json_sink->chunk);
@@ -237,8 +241,9 @@ tlog_json_sink_cut(struct tlog_sink *sink)
 
     while (!tlog_json_chunk_cut(&json_sink->chunk)) {
         grc = tlog_json_sink_flush(sink);
-        if (grc != TLOG_RC_OK)
+        if (grc != TLOG_RC_OK) {
             return grc;
+        }
     }
 
     return TLOG_RC_OK;
@@ -270,8 +275,9 @@ tlog_json_sink_write(struct tlog_sink *sink,
     /* While the packet is not yet written completely */
     while (!tlog_json_chunk_write(&json_sink->chunk, pkt, ppos, end)) {
         grc = tlog_json_sink_flush(sink);
-        if (grc != TLOG_RC_OK)
+        if (grc != TLOG_RC_OK) {
             return grc;
+        }
     }
     return TLOG_RC_OK;
 }

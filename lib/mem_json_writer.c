@@ -67,8 +67,9 @@ tlog_mem_json_writer_write(struct tlog_json_writer *writer,
              new_size < new_len;
              new_size *= 2);
         new_buf = realloc(*mem_json_writer->pbuf, new_size);
-        if (new_buf == NULL)
+        if (new_buf == NULL) {
             return TLOG_GRC_ERRNO;
+        }
         *mem_json_writer->pbuf = new_buf;
         mem_json_writer->size = new_size;
     }

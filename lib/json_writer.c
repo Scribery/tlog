@@ -85,9 +85,11 @@ tlog_json_writer_destroy(struct tlog_json_writer *writer)
 {
     assert(writer == NULL || tlog_json_writer_is_valid(writer));
 
-    if (writer == NULL)
+    if (writer == NULL) {
         return;
-    if (writer->type->cleanup != NULL)
+    }
+    if (writer->type->cleanup != NULL) {
         writer->type->cleanup(writer);
+    }
     free(writer);
 }

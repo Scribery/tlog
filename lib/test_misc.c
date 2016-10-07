@@ -60,8 +60,9 @@ tlog_test_diff_side(FILE *stream, const char *name,
             fprintf(stream, "\n");
         }
     }
-    if (col != 0)
+    if (col != 0) {
         fprintf(stream, "\n");
+    }
 }
 
 void

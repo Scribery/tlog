@@ -158,10 +158,11 @@ tlog_fd_json_reader_refill_buf(struct tlog_fd_json_reader *fd_json_reader)
         if (rc == 0) {
             break;
         } else if (rc < 0) {
-            if (errno == EINTR)
+            if (errno == EINTR) {
                 continue;
-            else
+            } else {
                 return TLOG_GRC_ERRNO;
+            }
         } else {
             fd_json_reader->end += rc;
         }
@@ -205,8 +206,9 @@ tlog_fd_json_reader_skip_whitespace(
         }
 
         grc = tlog_fd_json_reader_refill_buf(fd_json_reader);
-        if (grc != TLOG_RC_OK)
+        if (grc != TLOG_RC_OK) {
             return grc;
+        }
     } while (fd_json_reader->end > fd_json_reader->buf);
 
     return TLOG_RC_OK;
@@ -239,8 +241,9 @@ tlog_fd_json_reader_skip_line(struct tlog_fd_json_reader *fd_json_reader)
         }
 
         grc = tlog_fd_json_reader_refill_buf(fd_json_reader);
-        if (grc != TLOG_RC_OK)
+        if (grc != TLOG_RC_OK) {
             return grc;
+        }
     } while (fd_json_reader->end > fd_json_reader->buf);
 
     return TLOG_RC_OK;
@@ -308,8 +311,9 @@ tlog_fd_json_reader_read_json(struct tlog_fd_json_reader *fd_json_reader,
         }
 
         grc = tlog_fd_json_reader_refill_buf(fd_json_reader);
-        if (grc != TLOG_RC_OK)
+        if (grc != TLOG_RC_OK) {
             return grc;
+        }
     } while (fd_json_reader->end > fd_json_reader->buf);
 
     if (got_text) {
@@ -331,16 +335,18 @@ tlog_fd_json_reader_read(struct tlog_json_reader *reader,
 
     /* Skip leading whitespace */
     grc = tlog_fd_json_reader_skip_whitespace(fd_json_reader);
-    if (grc != TLOG_RC_OK)
+    if (grc != TLOG_RC_OK) {
         return grc;
+    }
 
     /* (Try to) read the JSON object line */
     read_grc = tlog_fd_json_reader_read_json(fd_json_reader, pobject);
 
     /* Throw away the rest of the line */
     grc = tlog_fd_json_reader_skip_line(fd_json_reader);
-    if (grc != TLOG_RC_OK)
+    if (grc != TLOG_RC_OK) {
         return grc;
+    }
 
     return read_grc;
 }
