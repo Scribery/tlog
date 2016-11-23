@@ -26,6 +26,10 @@ upon user login, logging everything that passes through. At the moment,
 `tlog-play` can playback recordings from ElasticSearch or from a file written
 by `tlog-rec` with `file` writer selected.
 
+<iframe src="https://www.youtube.com/embed/PMHOCvivets?rel=0&showinfo=0"
+        width="600" height="338" frameborder="0" allowfullscreen="">
+</iframe>
+
 Building
 --------
 
