@@ -28,11 +28,11 @@
 
 /** Configuration parameter origin codes, lowest priority first */
 enum tlog_conf_origin {
-    TLOG_CONF_ORIGIN_FILE,  /**< Configuration file */
-    TLOG_CONF_ORIGIN_ENV,   /**< Environment variable(s) */
-    TLOG_CONF_ORIGIN_NAME,  /**< Command name (argv[0]) */
-    TLOG_CONF_ORIGIN_OPTS,  /**< Command-line options */
-    TLOG_CONF_ORIGIN_ARGS   /**< Command-line positional arguments */
+    TLOG_CONF_ORIGIN_FILE = 1,  /**< Configuration file */
+    TLOG_CONF_ORIGIN_ENV,       /**< Environment variable(s) */
+    TLOG_CONF_ORIGIN_NAME,      /**< Command name (argv[0]) */
+    TLOG_CONF_ORIGIN_OPTS,      /**< Command-line options */
+    TLOG_CONF_ORIGIN_ARGS       /**< Command-line positional arguments */
 };
 
 #endif /* _TLOG_CONF_ORIGIN_H */
