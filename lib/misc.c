@@ -46,8 +46,9 @@ tlog_build_or_inst_path(char          **ppath,
 {
     tlog_grc grc = TLOG_RC_FAILURE;
     char *abs_prog_path = NULL;
-    const char *prog_name;
-    const char *prog_dir;
+    char *prog_dir = NULL;
+    char *prog_dir_copy = NULL;
+    const char *prog_dir_name;
     char *rel_path = NULL;
     char *abs_path = NULL;
 
@@ -59,18 +60,27 @@ tlog_build_or_inst_path(char          **ppath,
     /* If we can get the program's path and thus attach the relative path */
     abs_prog_path = realpath(prog_path, NULL);
     if (abs_prog_path != NULL) {
-        /* Assume we get the GNU version, which doesn't modify the buffer */
-        prog_name = basename(abs_prog_path);
-
-        /* Skip the initial dash - login shell flag, if any */
-        if (prog_name[0] == '-') {
-            prog_name++;
+        /*
+         * Check if the last path component is the libtool's ".libs" dir
+         * created in the build tree.
+         */
+        /* Get the executable's directory */
+        prog_dir = strdup(dirname(abs_prog_path));
+        if (prog_dir == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            goto cleanup;
         }
+        /* Get the executable's directory name */
+        prog_dir_copy = strdup(prog_dir);
+        if (prog_dir_copy == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            goto cleanup;
+        }
+        prog_dir_name = basename(prog_dir_copy);
 
-        /* If running from the build dir (have "lt-" prefix) */
-        if (prog_name[0] == 'l' && prog_name[1] == 't' && prog_name[2] == '-') {
+        /* If running from the build dir (executable under ".libs") */
+        if (strcmp(prog_dir_name, ".libs") == 0) {
             /* Form absolute path from relative */
-            prog_dir = dirname(abs_prog_path);
             rel_path = malloc(strlen(prog_dir) + 1 + strlen(build_rel_path) + 1);
             if (rel_path == NULL) {
                 grc = TLOG_GRC_ERRNO;
@@ -106,6 +116,8 @@ tlog_build_or_inst_path(char          **ppath,
 cleanup:
     free(abs_path);
     free(rel_path);
+    free(prog_dir_copy);
+    free(prog_dir);
     free(abs_prog_path);
     return grc;
 }
