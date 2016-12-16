@@ -116,6 +116,7 @@ and real time timestamp needs to be added, which can be done with this
                regex.expression="{\\(.*\\)"
                regex.submatch="1")
       constant(value="\n")
+    }
 
 Finally, a rule to send messages originating from `tlog` to ElasticSearch
 needs to be added:
