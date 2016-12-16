@@ -2,8 +2,8 @@ Tlog Log Format
 ===============
 
 Tlog logs terminal I/O split into messages of maximum configured size, using
-single message format. The message format is JSON and is described by a [JSON
-Schema](schema.json) and accompanied by an [Elasticsearch
+single message format. The message format is JSON described by a [JSON
+Schema](schema.json), and accompanied by an [Elasticsearch
 mapping](mapping.json). It has mostly flat structure with the following
 properties:
 
