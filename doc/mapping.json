@@ -1,0 +1,54 @@
+{
+    "properties": {
+        "ver": {
+            "type": "long"
+        },
+        "host": {
+            "type": "string",
+            "fields": {
+                "raw": {
+                    "type":     "string",
+                    "index":    "not_analyzed"
+                }
+            }
+        },
+        "user": {
+            "type": "string",
+            "fields": {
+                "raw": {
+                    "type":     "string",
+                    "index":    "not_analyzed"
+                }
+            }
+        },
+        "session": {
+            "type": "long"
+        },
+        "term": {
+            "type":     "string",
+            "index":    "not_analyzed"
+        },
+        "id": {
+            "type": "long"
+        },
+        "pos": {
+            "type": "long"
+        },
+        "timing": {
+            "type": "string",
+            "index":    "not_analyzed"
+        },
+        "in_txt": {
+            "type": "string"
+        },
+        "in_bin": {
+            "type": "short"
+        },
+        "out_txt": {
+            "type": "string"
+        },
+        "out_bin": {
+            "type": "short"
+        }
+    }
+}
