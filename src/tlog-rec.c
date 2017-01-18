@@ -883,7 +883,7 @@ tap_setup(struct tlog_errs **perrs,
         tap.tty_fd = -1;
     }
 
-    /* Fork the child */
+    /* If we've got a TTY */
     if (tap.tty_fd >= 0) {
         struct winsize winsize;
         int master_fd;
