@@ -95,7 +95,7 @@ tlog_build_or_inst_path(char          **ppath,
                 goto cleanup;
             }
         }
-    } else if (errno != ENOENT) {
+    } else if (errno != ENOENT && errno != EACCES && errno != ENOTDIR) {
         grc = TLOG_GRC_ERRNO;
         goto cleanup;
     }
