@@ -54,12 +54,12 @@ A config specifying only a shell:
 .fi
 
 .TP
-A config disabling logging user input:
+A config enabling logging user input:
 .nf
 
 {
     "log": {
-        "input": false
+        "input": true
     }
 }
 .fi

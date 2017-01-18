@@ -132,7 +132,7 @@ m4_dnl
 M4_CONTAINER(`', `/log', `Logged data set')m4_dnl
 m4_dnl
 M4_PARAM(`/log', `input', `file',
-         `M4_TYPE_BOOL(true)', true,
+         `M4_TYPE_BOOL(false)', true,
          `', `[=BOOL]', `Enable/disable logging user input',
          `M4_LINES(`If specified as true, user input is logged.')')m4_dnl
 m4_dnl
