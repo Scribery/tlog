@@ -49,7 +49,12 @@ tlog-rec.8: tlog-rec.8.m4 $(REC_MAN_DEPS)
 	   -D M4_CONF_PATH="$(TLOG_REC_CONF_LOCAL_INST_PATH)" \
 	   $< > $@
 
-%.5: %.5.m4 $(MAN_DEPS)
+tlog-rec.conf.5: tlog-rec.conf.5.m4 $(REC_MAN_DEPS)
+	m4 -I $(top_srcdir)/m4/tlog \
+	   --prefix-builtins \
+	   $< > $@
+
+tlog-play.conf.5: tlog-play.conf.5.m4 $(PLAY_MAN_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   --prefix-builtins \
 	   $< > $@
