@@ -211,7 +211,8 @@ create_log_sink(struct tlog_errs **perrs,
         str = json_object_get_string(obj);
 
         /* Open the file */
-        fd = open(str, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
+        fd = open(str, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC,
+                  S_IRUSR | S_IWUSR);
         if (fd < 0) {
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
