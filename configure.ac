@@ -39,6 +39,10 @@ AC_PATH_PROG([M4], [m4])
 AS_IF([test x$M4 == x], [AC_MSG_ERROR([m4 not found])])
 LT_INIT
 
+# Check for pthreads
+# Needs to be before adding -Werror, otherwise fails
+AX_PTHREAD
+
 # Check for features
 AC_ARG_ENABLE(
     debug,

@@ -34,6 +34,13 @@ make %{?_smp_mflags}
 %check
 make %{?_smp_mflags} check
 
+%pre
+getent group tlog >/dev/null ||
+    groupadd -r tlog
+getent passwd tlog >/dev/null ||
+    useradd -r -g tlog -d /var/run/tlog -s /sbin/nologin \
+            -c "Tlog terminal I/O logger" tlog
+
 %install
 make install DESTDIR=%{buildroot}
 rm %{buildroot}/%{_libdir}/*.la
@@ -45,7 +52,8 @@ rm -r %{buildroot}/usr/include/%{name}
 %{!?_licensedir:%global license %doc}
 %license COPYING
 %doc %{_defaultdocdir}/%{name}
-%{_bindir}/%{name}-*
+%attr(6755,tlog,tlog) %{_bindir}/%{name}-rec
+%{_bindir}/%{name}-play
 %{_libdir}/lib%{name}.so*
 %{_datadir}/%{name}
 %{_mandir}/man5/*

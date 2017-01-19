@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
 #include <pty.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -28,7 +29,10 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
+#include <sys/mman.h>
+#include <semaphore.h>
 #include <pwd.h>
+#include <grp.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <string.h>
@@ -306,9 +310,9 @@ create_log_sink(struct tlog_errs **perrs,
         goto cleanup;
     }
 
-    /* Get effective user entry */
+    /* Get real user entry */
     errno = 0;
-    passwd = getpwuid(geteuid());
+    passwd = getpwuid(getuid());
     if (passwd == NULL) {
         if (errno == 0) {
             grc = TLOG_RC_FAILURE;
@@ -808,6 +812,8 @@ tap_teardown(struct tlog_errs **perrs, struct tap *tap, int *pstatus)
  *
  * @param perrs     Location for the error stack. Can be NULL.
  * @param ptap      Location for the tap state.
+ * @param euid      The effective UID the program was started with.
+ * @param egid      The effective GID the program was started with.
  * @param conf      Tlog-rec configuration JSON object.
  * @param in_fd     Stdin to connect to, or -1 if none.
  * @param out_fd    Stdout to connect to, or -1 if none.
@@ -817,7 +823,8 @@ tap_teardown(struct tlog_errs **perrs, struct tap *tap, int *pstatus)
  */
 static tlog_grc
 tap_setup(struct tlog_errs **perrs,
-          struct tap *ptap, struct json_object *conf,
+          struct tap *ptap, uid_t euid, gid_t egid,
+          struct json_object *conf,
           int in_fd, int out_fd, int err_fd)
 {
     tlog_grc grc;
@@ -825,6 +832,8 @@ tap_setup(struct tlog_errs **perrs,
     const char *path;
     char **argv = NULL;
     clockid_t clock_id;
+    sem_t *sem = MAP_FAILED;
+    bool sem_initialized = false;
 
     assert(ptap != NULL);
 
@@ -884,6 +893,24 @@ tap_setup(struct tlog_errs **perrs,
         tap.tty_fd = -1;
     }
 
+    /* Allocate privilege-locking semaphore */
+    sem = mmap(NULL, sizeof(*sem), PROT_READ | PROT_WRITE,
+               MAP_SHARED | MAP_ANONYMOUS, 0, 0);
+    if (sem == MAP_FAILED) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed mmapping privilege-locking semaphore");
+        goto cleanup;
+    }
+    /* Initialize privilege-locking semaphore */
+    if (sem_init(sem, 1, 0) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating privilege-locking semaphore");
+        goto cleanup;
+    }
+    sem_initialized = true;
+
     /* If we've got a TTY */
     if (tap.tty_fd >= 0) {
         struct winsize winsize;
@@ -932,6 +959,9 @@ tap_setup(struct tlog_errs **perrs,
 
     /* Execute the shell in the child */
     if (tap.pid == 0) {
+        uid_t uid = getuid();
+        gid_t gid = getgid();
+
         /*
          * Set the SHELL environment variable to the actual shell. Otherwise
          * programs trying to spawn the user's shell would start tlog-rec
@@ -943,10 +973,58 @@ tap_setup(struct tlog_errs **perrs,
             tlog_errs_pushs(perrs, "Failed to set SHELL environment variable");
             goto cleanup;
         }
+        /* Drop the possibly-privileged EGID permanently */
+        if (setresgid(gid, gid, gid) < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed dropping EGID");
+            goto cleanup;
+        }
+        /* Drop the possibly-privileged EUID permanently */
+        if (setresuid(uid, uid, uid) < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed dropping EUID");
+            goto cleanup;
+        }
+        /* Wait for the parent to lock the privileges */
+        if (sem_wait(sem) < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs,
+                            "Failed waiting for parent to lock privileges");
+            goto cleanup;
+        }
+        /* Exec the shell */
         execv(path, argv);
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushf(perrs, "Failed executing %s", path);
+        goto cleanup;
+    }
+
+    /* Lock the possibly-privileged GID permanently */
+    if (setresgid(egid, egid, egid) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed locking GID");
+        goto cleanup;
+    }
+
+    /* Lock the possibly-privileged UID permanently */
+    if (setresuid(euid, euid, euid) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed locking UID");
+        goto cleanup;
+    }
+
+    /* Signal the child we locked our privileges */
+    if (sem_post(sem) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed signaling the child "
+                               "the privileges are locked");
         goto cleanup;
     }
 
@@ -993,6 +1071,12 @@ tap_setup(struct tlog_errs **perrs,
 
 cleanup:
 
+    if (sem_initialized) {
+        sem_destroy(sem);
+    }
+    if (sem != MAP_FAILED) {
+        munmap(sem, sizeof(*sem));
+    }
     tap_teardown(perrs, &tap, NULL);
 
     /* Free shell argv list */
@@ -1008,7 +1092,7 @@ cleanup:
 }
 
 static tlog_grc
-run(struct tlog_errs **perrs,
+run(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     const char *cmd_help, struct json_object *conf,
     int in_fd, int out_fd, int err_fd)
 {
@@ -1076,7 +1160,7 @@ run(struct tlog_errs **perrs,
     }
 
     /* Setup the tap */
-    grc = tap_setup(perrs, &tap, conf, in_fd, out_fd, err_fd);
+    grc = tap_setup(perrs, &tap, euid, egid, conf, in_fd, out_fd, err_fd);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed setting up the I/O tap");
         goto cleanup;
@@ -1102,11 +1186,31 @@ int
 main(int argc, char **argv)
 {
     tlog_grc grc;
+    uid_t euid;
+    gid_t egid;
     struct tlog_errs *errs = NULL;
     struct json_object *conf = NULL;
     char *cmd_help = NULL;
     int std_fds[] = {0, 1, 2};
     const char *charset;
+
+    /* Remember effective UID/GID so we can return to them later */
+    euid = geteuid();
+    egid = getegid();
+
+    /* Drop the privileges temporarily in case we're SUID/SGID */
+    if (seteuid(getuid()) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(&errs, grc);
+        tlog_errs_pushs(&errs, "Failed setting EUID");
+        goto cleanup;
+    }
+    if (setegid(getgid()) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(&errs, grc);
+        tlog_errs_pushs(&errs, "Failed setting EGID");
+        goto cleanup;
+    }
 
     /* Check if stdin/stdout/stderr are closed and stub them with /dev/null */
     /* NOTE: Must be done first to avoid FD takeover by other code */
@@ -1150,7 +1254,8 @@ main(int argc, char **argv)
     }
 
     /* Run */
-    grc = run(&errs, cmd_help, conf, std_fds[0], std_fds[1], std_fds[2]);
+    grc = run(&errs, euid, egid, cmd_help, conf,
+              std_fds[0], std_fds[1], std_fds[2]);
 
 cleanup:
 

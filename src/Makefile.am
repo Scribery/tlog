@@ -90,9 +90,12 @@ bin_PROGRAMS = \
 
 tlog_rec_SOURCES = \
     tlog-rec.c
+tlog_rec_CFLAGS = \
+    $(PTHREAD_CFLAGS)
 tlog_rec_LDADD = \
     ../lib/libtlog.la   \
     $(JSON_LIBS)        \
+    $(PTHREAD_LIBS)     \
     -lrt                \
     -lutil
 
