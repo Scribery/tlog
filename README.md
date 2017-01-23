@@ -105,7 +105,7 @@ Customize `tlog-rec` configuration in `/etc/tlog/tlog-rec.conf` as necessary
 
 ### Recording to Elasticsearch
 
-`Rsyslog` can be set up to deliver `tlog` messages to Elasticsearch. First of
+Rsyslog can be set up to deliver tlog messages to Elasticsearch. First of
 all increase the maximum message size to be 1k more than the `tlog-rec` payload.
 The default payload is 2kB, so the `rsyslog` maximum message size needs to be
 "3k" if the defaults are used:
@@ -121,7 +121,7 @@ Then the Elasticsearch output module needs to be loaded:
 
 #### Massaging JSON
 
-Before sending `tlog` messages to Elasticsearch they need to be reformatted
+Before sending tlog messages to Elasticsearch they need to be reformatted
 and real time timestamp needs to be added, which can be done with this
 `rsyslog` template:
 
@@ -140,7 +140,7 @@ and real time timestamp needs to be added, which can be done with this
 
 #### Filtering out tlog messages
 
-Then, a rule routing messages originating from `tlog` to Elasticsearch
+Then, a rule routing messages originating from tlog to Elasticsearch
 needs to be added. If you installed v3 or later tlog RPM package, or set up
 `tlog-rec` as SUID/SGID to a dedicated user yourself, then the rule can use
 that user ID to filter genuine tlog messages securely.
@@ -199,7 +199,7 @@ described above, to an Elasticsearch server running on localhost and default
 port, and would put them into index `tlog-rsyslog` with type `tlog`, using the
 bulk interface.
 
-Add the following action if you want to also send `tlog` messages to a dedicated
+Add the following action if you want to also send tlog messages to a dedicated
 file for debugging:
 
     action(name="tlog-file"
@@ -208,12 +208,12 @@ file for debugging:
            fileCreateMode="0600"
            template="tlog")
 
-Further, if you don't want `tlog` messages delivered anywhere else you can add
+Further, if you don't want tlog messages delivered anywhere else you can add
 the discard action (`~`) after both of those:
 
     ~
 
-If you'd like to exclude `tlog` messages from *any* other logs remember to put
+If you'd like to exclude tlog messages from *any* other logs remember to put
 its rule before any other rules in `rsyslog.conf`.
 
 Here is a complete example of a rule matching messages arriving from `tlog-rec`
