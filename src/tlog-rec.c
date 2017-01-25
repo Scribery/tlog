@@ -1027,6 +1027,8 @@ tap_teardown(struct tlog_errs **perrs, struct tap *tap, int *pstatus)
 {
     tlog_grc grc;
 
+    assert(tap != NULL);
+
     tlog_sink_destroy(tap->sink);
     tap->sink = NULL;
     tlog_source_destroy(tap->source);
