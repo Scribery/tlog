@@ -1477,7 +1477,7 @@ main(int argc, char **argv)
     char *cmd_help = NULL;
     int std_fds[] = {0, 1, 2};
     const char *charset;
-    int status;
+    int status = 1;
 
     /* Remember effective UID/GID so we can return to them later */
     euid = geteuid();
