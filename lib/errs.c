@@ -37,10 +37,13 @@ tlog_errs_destroy(struct tlog_errs **perrs)
 {
     assert(perrs != NULL);
 
-    if (*perrs != NULL && *perrs != &tlog_errs_nomem) {
-        tlog_errs_destroy(&(*perrs)->next);
-        free((*perrs)->msg);
-        free(*perrs);
+    if (*perrs != NULL) {
+        if (*perrs != &tlog_errs_nomem) {
+            tlog_errs_destroy(&(*perrs)->next);
+            free((*perrs)->msg);
+            free(*perrs);
+        }
+        *perrs = NULL;
     }
 }
 
