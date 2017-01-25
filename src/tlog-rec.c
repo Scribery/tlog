@@ -194,6 +194,10 @@ session_format_lock_path(char **ppath, unsigned int id)
 
     if (asprintf(&path, TLOG_SESSION_LOCK_DIR "/session.%u.lock", id) < 0) {
         grc = TLOG_GRC_ERRNO;
+        /* Silence Clang scanner warnings */
+        if (grc == TLOG_RC_OK) {
+            grc = TLOG_RC_FAILURE;
+        }
         goto cleanup;
     }
 
