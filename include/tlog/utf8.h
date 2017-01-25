@@ -220,7 +220,8 @@ extern bool tlog_utf8_buf_is_valid(const char *ptr, size_t len);
 static inline bool
 tlog_utf8_str_is_valid(const char *str)
 {
-    return tlog_utf8_buf_is_valid(str, strlen(str));
+    assert(str != NULL);
+    return str != NULL && tlog_utf8_buf_is_valid(str, strlen(str));
 }
 
 #endif /* _TLOG_UTF8_H */
