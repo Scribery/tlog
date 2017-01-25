@@ -90,6 +90,59 @@ alarm_sighandler(int signum)
 }
 
 /**
+ * Evaluate an expression with specified EUID/EGID set temporarily.
+ *
+ * In case of an error setting/restoring EUID/EGID, sets the "grc" variable,
+ * pushes messages to the specified error stack and jumps to "cleanup" label.
+ *
+ * @param _perrs    Location for the error stack. Can be NULL.
+ * @param _euid     The EUID to set temporarily.
+ * @param _egid     The EGID to set temporarily.
+ * @param _expr     The expression to evaluate with EUID/EGID set.
+ */
+#define EVAL_WITH_EUID_EGID(_perrs, _euid, _egid, _expr) \
+    do {                                                        \
+        struct tlog_errs **__perrs = (_perrs);                  \
+        uid_t _orig_euid = geteuid();                           \
+        gid_t _orig_egid = getegid();                           \
+                                                                \
+        /* Set EUID temporarily */                              \
+        if (seteuid(_euid) < 0) {                               \
+            grc = TLOG_GRC_ERRNO;                               \
+            tlog_errs_pushc(__perrs, grc);                      \
+            tlog_errs_pushs(__perrs, "Failed setting EUID");    \
+            goto cleanup;                                       \
+        }                                                       \
+                                                                \
+        /* Set EGID temporarily */                              \
+        if (setegid(_egid) < 0) {                               \
+            grc = TLOG_GRC_ERRNO;                               \
+            tlog_errs_pushc(__perrs, grc);                      \
+            tlog_errs_pushs(__perrs, "Failed setting EGID");    \
+            goto cleanup;                                       \
+        }                                                       \
+                                                                \
+        /* Evaluate */                                          \
+        _expr;                                                  \
+                                                                \
+        /* Restore EUID */                                      \
+        if (seteuid(_orig_euid) < 0) {                          \
+            grc = TLOG_GRC_ERRNO;                               \
+            tlog_errs_pushc(__perrs, grc);                      \
+            tlog_errs_pushs(__perrs, "Failed restoring EUID");  \
+            goto cleanup;                                       \
+        }                                                       \
+                                                                \
+        /* Restore EGID */                                      \
+        if (setegid(_orig_egid) < 0) {                          \
+            grc = TLOG_GRC_ERRNO;                               \
+            tlog_errs_pushc(__perrs, grc);                      \
+            tlog_errs_pushs(__perrs, "Failed restoring EGID");  \
+            goto cleanup;                                       \
+        }                                                       \
+    } while (0)
+
+/**
  * Get process session ID.
  *
  * @param pid   Location for the retrieved session ID.
@@ -97,7 +150,7 @@ alarm_sighandler(int signum)
  * @return Global return code.
  */
 static tlog_grc
-get_session_id(unsigned int *pid)
+session_get_id(unsigned int *pid)
 {
     FILE *file;
     int orig_errno;
@@ -120,6 +173,160 @@ get_session_id(unsigned int *pid)
     }
 
     return TLOG_GRC_FROM(errno, orig_errno);
+}
+
+/**
+ * Format a session lock file path.
+ *
+ * @param ppath Location for the pointer to the dynamically-allocated
+ *              formatted path. Not modified in case of error.
+ * @param id    Session ID to format lock file path for.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+session_format_lock_path(char **ppath, unsigned int id)
+{
+    tlog_grc grc;
+    char *path;
+
+    assert(ppath != NULL);
+
+    if (asprintf(&path, TLOG_SESSION_LOCK_DIR "/session.%u.lock", id) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        goto cleanup;
+    }
+
+    *ppath = path;
+    grc = TLOG_RC_OK;
+cleanup:
+    return grc;
+}
+
+/**
+ * Lock a session.
+ *
+ * @param perrs     Location for the error stack. Can be NULL.
+ * @param id        ID of the session to lock
+ * @param euid      EUID to use while creating the lock.
+ * @param egid      EGID to use while creating the lock.
+ * @param pacquired Location for the flag which is set to true if the session
+ *                  lock was acquired , and to false if the session was
+ *                  already locked. Not modified in case of error.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+session_lock(struct tlog_errs **perrs, unsigned int id,
+             uid_t euid, gid_t egid, bool *pacquired)
+{
+    /*
+     * It's better to assume we locked the session,
+     * as it is better to record a session than not.
+     */
+    bool acquired = true;
+    tlog_grc grc;
+    char *path = NULL;
+    int fd = -1;
+
+    /* Format lock file path */
+    grc = session_format_lock_path(&path, id);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed formatting lock file path");
+        goto cleanup;
+    }
+
+    /*
+     * Attempt to create session lock file.
+     * Assume session ID never repeats (never wraps around).
+     * FIXME Handle repeating session IDs.
+     */
+    EVAL_WITH_EUID_EGID(perrs, euid, egid,
+                        fd = open(path,
+                                  O_CREAT | O_CLOEXEC | O_EXCL,
+                                  S_IRUSR | S_IWUSR));
+    if (fd < 0) {
+        int open_errno = errno;
+        tlog_grc open_grc = TLOG_GRC_ERRNO;
+        if (open_errno == EEXIST) {
+            acquired = false;
+        } else {
+            tlog_errs_pushc(perrs, open_grc);
+            tlog_errs_pushf(perrs, "Failed creating lock file %s", path);
+            switch (open_errno) {
+            case EPERM:
+            case EACCES:
+            case ENOENT:
+            case ENOTDIR:
+                tlog_errs_pushs(perrs, "Assuming session was unlocked");
+                break;
+            default:
+                grc = open_grc;
+                goto cleanup;
+            }
+        }
+    }
+
+    *pacquired = acquired;
+    grc = TLOG_RC_OK;
+
+cleanup:
+    if (fd >= 0) {
+        close(fd);
+    }
+    free(path);
+    return grc;
+}
+
+/**
+ * Unlock a session.
+ *
+ * @param perrs     Location for the error stack. Can be NULL.
+ * @param id        ID of the session to unlock
+ * @param euid      EUID to use while removing the lock.
+ * @param egid      EGID to use while removing the lock.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+session_unlock(struct tlog_errs **perrs, unsigned int id,
+               uid_t euid, gid_t egid)
+{
+    int rc;
+    tlog_grc grc;
+    char *path = NULL;
+
+    /* Format lock file path */
+    grc = session_format_lock_path(&path, id);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed formatting lock file path");
+        goto cleanup;
+    }
+
+    /* Remove the lock file */
+    EVAL_WITH_EUID_EGID(perrs, euid, egid, rc = unlink(path));
+    if (rc < 0) {
+        int unlink_errno = errno;
+        tlog_grc unlink_grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, unlink_grc);
+        tlog_errs_pushf(perrs, "Failed removing lock file %s", path);
+        switch (unlink_errno) {
+        case ENOENT:
+            tlog_errs_pushs(perrs, "Ignoring non-existent lock file");
+            break;
+        default:
+            grc = unlink_grc;
+            goto cleanup;
+        }
+    }
+
+    grc = TLOG_RC_OK;
+
+cleanup:
+    free(path);
+    return grc;
 }
 
 /**
@@ -164,16 +371,18 @@ get_fqdn(char **pfqdn)
 /**
  * Create the log sink according to configuration.
  *
- * @param perrs Location for the error stack. Can be NULL.
- * @param psink Location for the created sink pointer.
- * @param conf  Configuration JSON object.
+ * @param perrs         Location for the error stack. Can be NULL.
+ * @param psink         Location for the created sink pointer.
+ * @param conf          Configuration JSON object.
+ * @param session_id    The ID of the session being recorded.
  *
  * @return Global return code.
  */
 static tlog_grc
 create_log_sink(struct tlog_errs **perrs,
                 struct tlog_sink **psink,
-                struct json_object *conf)
+                struct json_object *conf,
+                unsigned int session_id)
 {
     tlog_grc grc;
     int64_t num;
@@ -185,7 +394,6 @@ create_log_sink(struct tlog_errs **perrs,
     char *fqdn = NULL;
     struct passwd *passwd;
     const char *term;
-    unsigned int session_id;
 
     /*
      * Create the writer
@@ -299,14 +507,6 @@ create_log_sink(struct tlog_errs **perrs,
     if (!tlog_utf8_str_is_valid(fqdn)) {
         tlog_errs_pushf(perrs, "Host FQDN is not valid UTF-8: %s", fqdn);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
-    }
-
-    /* Get session ID */
-    grc = get_session_id(&session_id);
-    if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed retrieving session ID");
         goto cleanup;
     }
 
@@ -717,6 +917,78 @@ cleanup:
     return success ? pid : -1;
 }
 
+/**
+ * Execute the shell with path and arguments specified in tlog-rec
+ * configuration.
+ *
+ * @param perrs     Location for the error stack. Can be NULL.
+ * @param conf      Tlog-rec configuration JSON object.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+shell_exec(struct tlog_errs **perrs,
+           struct json_object *conf)
+{
+    tlog_grc grc;
+    const char *path;
+    char **argv = NULL;
+    uid_t uid = getuid();
+    gid_t gid = getgid();
+
+    /* Prepare shell command line */
+    grc = tlog_rec_conf_get_shell(perrs, conf, &path, &argv);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs, "Failed building shell command line");
+        goto cleanup;
+    }
+
+    /*
+     * Set the SHELL environment variable to the actual shell. Otherwise
+     * programs trying to spawn the user's shell would start tlog-rec
+     * instead.
+     */
+    if (setenv("SHELL", path, /*overwrite=*/1) != 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed to set SHELL environment variable");
+        goto cleanup;
+    }
+    /* Drop the possibly-privileged EGID permanently */
+    if (setresgid(gid, gid, gid) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed dropping EGID");
+        goto cleanup;
+    }
+    /* Drop the possibly-privileged EUID permanently */
+    if (setresuid(uid, uid, uid) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed dropping EUID");
+        goto cleanup;
+    }
+
+    /* Exec the shell */
+    execv(path, argv);
+    grc = TLOG_GRC_ERRNO;
+    tlog_errs_pushc(perrs, grc);
+    tlog_errs_pushf(perrs, "Failed executing %s", path);
+
+cleanup:
+
+    /* Free shell argv list */
+    if (argv != NULL) {
+        size_t i;
+        for (i = 0; argv[i] != NULL; i++) {
+            free(argv[i]);
+        }
+        free(argv);
+    }
+
+    return grc;
+}
+
 /** I/O tap state */
 struct tap {
     pid_t               pid;            /**< Shell PID */
@@ -829,20 +1101,11 @@ tap_setup(struct tlog_errs **perrs,
 {
     tlog_grc grc;
     struct tap tap = TAP_VOID;
-    const char *path;
-    char **argv = NULL;
     clockid_t clock_id;
     sem_t *sem = MAP_FAILED;
     bool sem_initialized = false;
 
     assert(ptap != NULL);
-
-    /* Prepare shell command line */
-    grc = tlog_rec_conf_get_shell(perrs, conf, &path, &argv);
-    if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed building shell command line");
-        goto cleanup;
-    }
 
     /*
      * Choose the clock: try to use coarse monotonic clock (which is faster),
@@ -959,34 +1222,6 @@ tap_setup(struct tlog_errs **perrs,
 
     /* Execute the shell in the child */
     if (tap.pid == 0) {
-        uid_t uid = getuid();
-        gid_t gid = getgid();
-
-        /*
-         * Set the SHELL environment variable to the actual shell. Otherwise
-         * programs trying to spawn the user's shell would start tlog-rec
-         * instead.
-         */
-        if (setenv("SHELL", path, /*overwrite=*/1) != 0) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed to set SHELL environment variable");
-            goto cleanup;
-        }
-        /* Drop the possibly-privileged EGID permanently */
-        if (setresgid(gid, gid, gid) < 0) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed dropping EGID");
-            goto cleanup;
-        }
-        /* Drop the possibly-privileged EUID permanently */
-        if (setresuid(uid, uid, uid) < 0) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed dropping EUID");
-            goto cleanup;
-        }
         /* Wait for the parent to lock the privileges */
         if (sem_wait(sem) < 0) {
             grc = TLOG_GRC_ERRNO;
@@ -995,11 +1230,11 @@ tap_setup(struct tlog_errs **perrs,
                             "Failed waiting for parent to lock privileges");
             goto cleanup;
         }
-        /* Exec the shell */
-        execv(path, argv);
-        grc = TLOG_GRC_ERRNO;
+
+        /* Execute the shell */
+        grc = shell_exec(perrs, conf);
         tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed executing %s", path);
+        tlog_errs_pushs(perrs, "Failed executing shell");
         goto cleanup;
     }
 
@@ -1079,15 +1314,6 @@ cleanup:
     }
     tap_teardown(perrs, &tap, NULL);
 
-    /* Free shell argv list */
-    if (argv != NULL) {
-        size_t i;
-        for (i = 0; argv[i] != NULL; i++) {
-            free(argv[i]);
-        }
-        free(argv);
-    }
-
     return grc;
 }
 
@@ -1097,6 +1323,8 @@ run(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     int in_fd, int out_fd, int err_fd)
 {
     tlog_grc grc;
+    unsigned int session_id;
+    bool lock_acquired = false;
     struct json_object *obj;
     int64_t num;
     unsigned int latency;
@@ -1124,6 +1352,31 @@ run(struct tlog_errs **perrs, uid_t euid, gid_t egid,
         }
     }
 
+    /* Get session ID */
+    grc = session_get_id(&session_id);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed retrieving session ID");
+        goto cleanup;
+    }
+
+    /* Attempt to lock the session */
+    grc = session_lock(perrs, session_id, euid, egid, &lock_acquired);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed locking session");
+        goto cleanup;
+    }
+
+    /* If the session is already locked (recorded) */
+    if (!lock_acquired) {
+        /* Exec the bare session */
+        grc = shell_exec(perrs, conf);
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed executing shell");
+        goto cleanup;
+    }
+
     /* Read the log latency */
     if (!json_object_object_get_ex(conf, "latency", &obj)) {
         tlog_errs_pushs(perrs, "Log latency is not specified");
@@ -1148,11 +1401,15 @@ run(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     }
 
     /* Create the log sink */
-    grc = create_log_sink(perrs, &log_sink, conf);
+    grc = create_log_sink(perrs, &log_sink, conf, session_id);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed creating log sink");
         goto cleanup;
     }
+
+    /* Output and discard any accumulated non-critical error messages */
+    tlog_errs_print(stderr, *perrs);
+    tlog_errs_destroy(perrs);
 
     /* Read and output the notice */
     if (json_object_object_get_ex(conf, "notice", &obj)) {
@@ -1179,6 +1436,9 @@ cleanup:
 
     tap_teardown(perrs, &tap, NULL);
     tlog_sink_destroy(log_sink);
+    if (lock_acquired) {
+        session_unlock(perrs, session_id, euid, egid);
+    }
     return grc;
 }
 

@@ -61,6 +61,7 @@ rm -r %{buildroot}/usr/include/%{name}
 %dir %{_sysconfdir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-rec.conf
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-play.conf
+%attr(0755,tlog,tlog) %{_localstatedir}/run/tlog
 
 %post
 /sbin/ldconfig

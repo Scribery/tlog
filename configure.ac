@@ -34,6 +34,7 @@ AC_PROG_CC
 AC_PROG_CC_STDC
 AC_PROG_INSTALL
 AC_PROG_SED
+AC_PROG_MKDIR_P
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PATH_PROG([M4], [m4])
 AS_IF([test x$M4 == x], [AC_MSG_ERROR([m4 not found])])

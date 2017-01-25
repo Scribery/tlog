@@ -23,3 +23,6 @@ ACLOCAL_AMFLAGS = -Im4/autotools
 SUBDIRS = m4 include lib src doc man
 dist_doc_DATA = README.md
 dist_noinst_DATA = tlog.spec
+
+install-data-local:
+	$(MKDIR_P) $(DESTDIR)@runstatedir@/tlog
