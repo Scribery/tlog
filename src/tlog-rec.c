@@ -1319,10 +1319,28 @@ cleanup:
     return grc;
 }
 
+/**
+ * Run tlog-rec with specified configuration and environment.
+ *
+ * @param perrs     Location for the error stack. Can be NULL.
+ * @param euid      The effective UID the program was started with.
+ * @param egid      The effective GID the program was started with.
+ * @param cmd_help  Command-line usage help message.
+ * @param conf      Tlog-rec configuration JSON object.
+ * @param in_fd     Stdin to connect to, or -1 if none.
+ * @param out_fd    Stdout to connect to, or -1 if none.
+ * @param err_fd    Stderr to connect to, or -1 if none.
+ * @param pstatus   Location for the shell process status as returned by
+ *                  waitpid(2), can be NULL, if not required.
+ *                  Not modified in case of error.
+ *
+ * @return Global return code.
+ */
 static tlog_grc
 run(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     const char *cmd_help, struct json_object *conf,
-    int in_fd, int out_fd, int err_fd)
+    int in_fd, int out_fd, int err_fd,
+    int *pstatus)
 {
     tlog_grc grc;
     unsigned int session_id;
@@ -1436,7 +1454,7 @@ run(struct tlog_errs **perrs, uid_t euid, gid_t egid,
 
 cleanup:
 
-    tap_teardown(perrs, &tap, NULL);
+    tap_teardown(perrs, &tap, (grc == TLOG_RC_OK ? pstatus : NULL));
     tlog_sink_destroy(log_sink);
     if (lock_acquired) {
         session_unlock(perrs, session_id, euid, egid);
@@ -1455,6 +1473,7 @@ main(int argc, char **argv)
     char *cmd_help = NULL;
     int std_fds[] = {0, 1, 2};
     const char *charset;
+    int status;
 
     /* Remember effective UID/GID so we can return to them later */
     euid = geteuid();
@@ -1517,7 +1536,8 @@ main(int argc, char **argv)
 
     /* Run */
     grc = run(&errs, euid, egid, cmd_help, conf,
-              std_fds[0], std_fds[1], std_fds[2]);
+              std_fds[0], std_fds[1], std_fds[2],
+              &status);
 
 cleanup:
 
@@ -1533,5 +1553,13 @@ cleanup:
         raise(exit_signum);
     }
 
-    return grc != TLOG_RC_OK;
+    /* Signal error if tlog error occurred */
+    if (grc != TLOG_RC_OK) {
+        return 1;
+    }
+
+    /* Mimick Bash exit status generation */
+    return WIFSIGNALED(status)
+                ? 128 + WTERMSIG(status)
+                : WEXITSTATUS(status);
 }
