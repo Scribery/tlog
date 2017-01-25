@@ -90,9 +90,8 @@ tlog_source_loc_fmt(const struct tlog_source *source, size_t loc)
     if (source->type->loc_fmt != NULL) {
         return source->type->loc_fmt(source, loc);
     } else if (source->type->loc_get != NULL) {
-        char *str = NULL;
-        asprintf(&str, "location %zu", loc);
-        return str;
+        char *str;
+        return asprintf(&str, "location %zu", loc) >= 0 ? str : NULL;
     } else {
         return strdup("unknown location");
     }

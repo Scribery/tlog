@@ -89,9 +89,8 @@ tlog_json_reader_loc_fmt(const struct tlog_json_reader *reader, size_t loc)
     if (reader->type->loc_fmt != NULL) {
         return reader->type->loc_fmt(reader, loc);
     } else if (reader->type->loc_get != NULL) {
-        char *str = NULL;
-        asprintf(&str, "location %zu", loc);
-        return str;
+        char *str;
+        return asprintf(&str, "location %zu", loc) >= 0 ? str : NULL;
     } else {
         return strdup("unknown location");
     }

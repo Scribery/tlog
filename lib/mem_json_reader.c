@@ -94,10 +94,9 @@ static char *
 tlog_mem_json_reader_loc_fmt(const struct tlog_json_reader *reader,
                              size_t loc)
 {
-    char *str = NULL;
+    char *str;
     (void)reader;
-    asprintf(&str, "line %zu", loc);
-    return str;
+    return asprintf(&str, "line %zu", loc) >= 0 ? str : NULL;
 }
 
 /**

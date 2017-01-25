@@ -281,10 +281,9 @@ static char *
 tlog_es_json_reader_loc_fmt(const struct tlog_json_reader *reader,
                             size_t loc)
 {
-    char *str = NULL;
+    char *str;
     (void)reader;
-    asprintf(&str, "message #%zu", loc);
-    return str;
+    return asprintf(&str, "message #%zu", loc) >= 0 ? str : NULL;
 }
 
 /**

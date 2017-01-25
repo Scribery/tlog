@@ -50,8 +50,18 @@ tlog_test_json_passthrough(const char *name,
     char *log_buf = NULL;
     size_t log_len = 0;
 
-    asprintf(&sink_name, "%s: sink", name);
-    asprintf(&source_name, "%s: source", name);
+    if (asprintf(&sink_name, "%s: sink", name) < 0) {
+        fprintf(stderr, "Failed formatting sink test name: %s\n",
+                strerror(errno));
+        passed = false;
+        goto exit;
+    }
+    if (asprintf(&source_name, "%s: source", name) < 0) {
+        fprintf(stderr, "Failed formatting source test name: %s\n",
+                strerror(errno));
+        passed = false;
+        goto exit;
+    }
 
     passed = tlog_test_json_sink_run(sink_name,
                                      &test.input, &log_buf, &log_len) &&
@@ -61,6 +71,7 @@ tlog_test_json_passthrough(const char *name,
                                        log_buf, log_len, &test.output) &&
              passed;
 
+exit:
     fprintf(stderr, "%s: %s\n", name, (passed ? "PASS" : "FAIL"));
     if (!passed) {
         fprintf(stderr, "%s log:\n%.*s", name, (int)log_len, log_buf);
