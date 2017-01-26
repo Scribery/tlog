@@ -25,4 +25,4 @@ dist_doc_DATA = README.md
 dist_noinst_DATA = tlog.spec
 
 install-data-local:
-	$(MKDIR_P) $(DESTDIR)@runstatedir@/tlog
+	$(MKDIR_P) $(DESTDIR)@localstatedir@/run/tlog
