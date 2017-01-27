@@ -247,9 +247,7 @@ session_lock(struct tlog_errs **perrs, unsigned int id,
      * FIXME Handle repeating session IDs.
      */
     EVAL_WITH_EUID_EGID(perrs, euid, egid,
-                        fd = open(path,
-                                  O_CREAT | O_CLOEXEC | O_EXCL,
-                                  S_IRUSR | S_IWUSR));
+                        fd = open(path, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR));
     if (fd < 0) {
         int open_errno = errno;
         tlog_grc open_grc = TLOG_GRC_ERRNO;
