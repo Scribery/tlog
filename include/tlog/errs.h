@@ -36,6 +36,7 @@
 #define _TLOG_ERRS_H
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <tlog/grc.h>
 #include <tlog/rc.h>
 
