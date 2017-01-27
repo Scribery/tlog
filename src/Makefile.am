@@ -85,7 +85,7 @@ install-data-hook:
 AM_CPPFLAGS = \
     $(JSON_CFLAGS) \
     $(LIBCURL_CPPFLAGS) \
-    -DTLOG_SESSION_LOCK_DIR='"@runstatedir@/tlog"'
+    -DTLOG_SESSION_LOCK_DIR='"@localstatedir@/run/tlog"'
 
 bin_PROGRAMS = \
     tlog-rec    \
