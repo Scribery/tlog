@@ -393,6 +393,7 @@ create_log_sink(struct tlog_errs **perrs,
     struct tlog_sink *sink = NULL;
     struct tlog_json_writer *writer = NULL;
     int fd = -1;
+    int rc;
     char *fqdn = NULL;
     struct passwd *passwd;
     const char *term;
@@ -425,12 +426,27 @@ create_log_sink(struct tlog_errs **perrs,
         str = json_object_get_string(obj);
 
         /* Open the file */
-        fd = open(str, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC,
-                  S_IRUSR | S_IWUSR);
+        fd = open(str, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
         if (fd < 0) {
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushf(perrs, "Failed opening log file \"%s\"", str);
+            goto cleanup;
+        }
+        /* Get file flags */
+        rc = fcntl(fd, F_GETFD);
+        if (rc < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed getting log file descriptor flags");
+            goto cleanup;
+        }
+        /* Add FD_CLOEXEC to file flags */
+        rc = fcntl(fd, F_SETFD, rc | FD_CLOEXEC);
+        if (rc < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed setting log file descriptor flags");
             goto cleanup;
         }
 
