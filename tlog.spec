@@ -82,7 +82,40 @@ test -e '%{_sysconfdir}/shells' &&
 
 %changelog
 * Tue Apr 12 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3-1
-- Release v3.
+- Release v3. Added features and implemented fixes follow.
+- Make each JSON message timing data start with window size.
+  This makes it possible to pick up the stream from any message and also
+  combine messages, with window size known and preserved at all times.
+- Add "term" field to JSON messages, specifying terminal type.
+- Add "ver" field to JSON messages, specifying message format version.
+- Set "SHELL" environment variable to actual user shell in tlog-rec.
+- Check for locale's charset and abort tlog-rec if it's anything but the only
+  supported UTF-8.
+- Add -v/--version option support to tlog-rec and tlog-play.
+- Fix tlog-rec and tlog-play error output by accumulating error messages and
+  outputting them only after terminal settings are restored, on exit. Output
+  startup warnings before switching to raw terminal settings.
+- Output a newline after restoring terminal settings in tlog-rec and
+  tlog-play, so that following output is not stuck to the end of the last line
+  of the raw output.
+- Add an Elasticsearch mapping to documentation directory.
+- Disable input logging by default to avoid storing passwords. Please enable
+  it explicitly in configuration, or on the command line, if necessary.
+- Close log file written by tlog-rec on executing the shell in the child to
+  prevent log modification by the recorded user.
+- Support running tlog-rec SUID/SGID to prevent recorded users from killing or
+  modifying it. Make tlog-rec SUID/SGID to user "tlog" in the RPM package.
+- Add session locking to tlog-rec. This prevents tlog-rec from recording if
+  the audit session is already recorded by creating per-audit-session lock
+  files in /var/run/tlog. This only makes sense with tlog-rec SUID/SGID.
+  When certain failures occur while creating a lock file, session is assumed
+  unlocked and is recorded anyway, as it is safer to record a session than
+  not. Add corresponding setup to the RPM package.
+- Reproduce the recorded program (shell) exit status in tlog-rec similarly to
+  how Bash reproduces the last executed command status.
+- Update and expand README.md to describe secure log message filtering with
+  rsyslog, and playback directly from Elasticsearch, among other, smaller
+  additions.
 
 * Wed Apr 6 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2-1
 - Release v2. Not ready for production. Following features are added.
