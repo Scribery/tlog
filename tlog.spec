@@ -1,5 +1,5 @@
 Name:       tlog
-Version:    3
+Version:    4
 Release:    1%{?dist}
 Summary:    Terminal I/O logger
 Group:      Applications/System
@@ -110,6 +110,9 @@ test -e '%{_sysconfdir}/shells' &&
         %{_sysconfdir}/shells
 
 %changelog
+* Sun Jan 29 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 4-1
+- Release v4.
+
 * Tue Apr 12 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3-1
 - Release v3. Added features and implemented fixes follow.
 - Make each JSON message timing data start with window size.
