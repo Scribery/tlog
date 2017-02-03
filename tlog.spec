@@ -5,7 +5,7 @@ Summary:    Terminal I/O logger
 Group:      Applications/System
 
 License:    GPLv2+
-URL:        https://github.com/Scribery/tlog
+URL:        https://github.com/Scribery/%{name}
 Source:     https://github.com/Scribery/%{name}/releases/download/v%{version}/%{name}-%{version}.tar.gz
 
 BuildRequires:  json-c-devel
@@ -35,11 +35,11 @@ make %{?_smp_mflags}
 make %{?_smp_mflags} check
 
 %pre
-getent group tlog >/dev/null ||
-    groupadd -r tlog
-getent passwd tlog >/dev/null ||
-    useradd -r -g tlog -d /var/run/tlog -s /sbin/nologin \
-            -c "Tlog terminal I/O logger" tlog
+getent group %{name} >/dev/null ||
+    groupadd -r %{name}
+getent passwd %{name} >/dev/null ||
+    useradd -r -g %{name} -d /var/run/%{name} -s /sbin/nologin \
+            -c "Tlog terminal I/O logger" %{name}
 
 %install
 make install DESTDIR=%{buildroot}
@@ -52,7 +52,7 @@ rm -r %{buildroot}/usr/include/%{name}
 %{!?_licensedir:%global license %doc}
 %license COPYING
 %doc %{_defaultdocdir}/%{name}
-%attr(6755,tlog,tlog) %{_bindir}/%{name}-rec
+%attr(6755,%{name},%{name}) %{_bindir}/%{name}-rec
 %{_bindir}/%{name}-play
 %{_libdir}/lib%{name}.so*
 %{_datadir}/%{name}
