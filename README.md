@@ -54,18 +54,26 @@ Or an RPM package:
 Installing
 ----------
 
-If you built `tlog` from source, you can install it with the usual `make
-install`:
+You can use one of the [release binary RPM packages][releases] and install
+them with your favorite tool. The RPM package does all the necessary setup for
+you.
+
+Otherwise, if you built `tlog` from source, you can install it with the usual
+`make install`:
 
     sudo make install
 
 If you are recording other users, and don't want them to be able to affect the
 recording process, make sure you make the `/usr/bin/tlog-rec` executable
-SUID/SGID to separate and dedicated user and group.
+SUID/SGID to separate and dedicated user and group. It doesn't require running
+as root and will be safer with a regular, dedicated user.
 
-Otherwise you can use the [release binary RPM packages][releases] and install
-them with your favorite tool. The RPM package of v3 release or later creates
-`tlog` user and group and makes `/usr/bin/tlog-rec` SUID/SGID for you.
+You will also need to create the session lock directory `/var/run/tlog` and
+make it writable (only) for the user(s) `tlog-rec` runs as. On systems where
+(/var)/run is a tmpfs you will also need to make sure the session lock
+directory is recreated on the next boot. In that case, on systems with systemd
+you'll need to create a tmpfiles.d configuration file, and on init.d systems -
+a startup script.
 
 Testing
 -------
