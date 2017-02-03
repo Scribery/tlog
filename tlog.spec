@@ -11,6 +11,10 @@ Source:     https://github.com/Scribery/%{name}/releases/download/v%{version}/%{
 BuildRequires:  json-c-devel
 BuildRequires:  curl-devel
 BuildRequires:  m4
+# If it's not RHEL6 and older
+%if 0%{?rhel} == 0 || 0%{?rhel} >= 7
+BuildRequires:  systemd-units
+%endif
 Requires(post):     sed
 Requires(postun):   sed
 
@@ -38,7 +42,7 @@ make %{?_smp_mflags} check
 getent group %{name} >/dev/null ||
     groupadd -r %{name}
 getent passwd %{name} >/dev/null ||
-    useradd -r -g %{name} -d /var/run/%{name} -s /sbin/nologin \
+    useradd -r -g %{name} -d %{_localstatedir}/run/%{name} -s /sbin/nologin \
             -c "Tlog terminal I/O logger" %{name}
 
 %install
@@ -47,6 +51,24 @@ rm %{buildroot}/%{_libdir}/*.la
 # Remove development files as we're not doing a devel package yet
 rm %{buildroot}/%{_libdir}/*.so
 rm -r %{buildroot}/usr/include/%{name}
+
+# If it's not RHEL6 and older
+%if 0%{?rhel} == 0 || 0%{?rhel} >= 7
+    # Create tmpfiles.d configuration for the lock dir
+    mkdir -p %{buildroot}%{_tmpfilesdir}
+    {
+        echo "# Type Path Mode UID GID Age Argument"
+        echo "d /run/%{name} 0755 %{name} %{name}"
+    } > %{buildroot}%{_tmpfilesdir}/%{name}.conf
+    # Create the lock dir
+    mkdir -p %{buildroot}/run
+    install -d -m 0755 %{buildroot}/run/%{name}
+# Else, if it's RHEL6 or older
+%else
+    # Create the lock dir
+    mkdir -p %{buildroot}%{_localstatedir}/run
+    install -d -m 0755 %{buildroot}%{_localstatedir}/run/%{name}
+%endif
 
 %files
 %{!?_licensedir:%global license %doc}
@@ -58,10 +80,17 @@ rm -r %{buildroot}/usr/include/%{name}
 %{_datadir}/%{name}
 %{_mandir}/man5/*
 %{_mandir}/man8/*
+# If it's not RHEL6 and older
+%if 0%{?rhel} == 0 || 0%{?rhel} >= 7
+%config(noreplace) %{_tmpfilesdir}/%{name}.conf
+%dir %attr(-,%{name},%{name}) /run/%{name}
+# Else if it's RHEL6 or older
+%else
+%dir %attr(-,%{name},%{name}) %{_localstatedir}/run/%{name}
+%endif
 %dir %{_sysconfdir}/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-rec.conf
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-play.conf
-%attr(0755,tlog,tlog) %{_localstatedir}/run/tlog
 
 %post
 /sbin/ldconfig
