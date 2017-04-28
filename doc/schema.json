@@ -6,12 +6,12 @@
 
     "properties":   {
         "ver":      {
-            "description":  "Format version number",
+            "description":  "Message format version number",
             "type":         "integer",
             "minimum":      1
         },
         "host":     {
-            "description":  "Recording host name",
+            "description":  "Name of the host recording was made on",
             "type":         "string"
         },
         "user":     {
@@ -19,28 +19,27 @@
             "type":         "string"
         },
         "term":     {
-            "description":  "Terminal type",
+            "description":  "Terminal type name",
             "type":         "string"
         },
         "session":  {
-            "description":  "Recorded audit session ID",
+            "description":  "Audit session ID of the recorded session",
             "type":         "integer",
             "minimum":      1
         },
-
         "id":       {
-            "description":  "ID of the message within session",
+            "description":  "ID of the message within the session",
             "type":         "integer",
             "minimum":      1
         },
         "pos":      {
-            "description":  "Message position in session, milliseconds",
+            "description":  "Message position in the session, milliseconds",
             "type":         "integer",
             "minimum":      0
         },
 
         "timing":   {
-            "description":  "Distribution of events in time",
+            "description":  "Distribution of this message's events in time",
             "type":         "string"
         },
 
