@@ -948,3 +948,16 @@ What do we do when we get an EOF on any of the FDs during operation?
     We continue the transfer until all FDs get EOF.
 
 ----
+How can we implement recording and playback to/from journal?
+
+We can add a journal sink, which, in addition to the JSON message, can log
+additional fields, duplicating the data already in JSON, letting us filter
+journal messages by them. It remains to be seen how that will perform.
+
+We can let users configure if tlog-rec should put extra fields into journal,
+or just the message. The journal source can then accept an arbitrary filter
+string, similar to what journalctl accepts to filter out the required session.
+
+One problem can be specifying the time from which we should play. The journal
+API provides sd_journal_seek_realtime_usec and sd_journal_seek_monotonic_usec,
+which we can perhaps use by taking a separate journal source option.
