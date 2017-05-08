@@ -53,26 +53,30 @@ $(TLOG_PLAY_CONF_LOCAL_NAME): $(PLAY_CONF_DEPS)
 	   -D M4_PROG_NAME=play \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
-	   --prefix-builtins $< > $@
+	   --prefix-builtins $< > $@ || \
+	{ rm $@ && false; }
 
 $(TLOG_REC_CONF_LOCAL_NAME): $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
-	   --prefix-builtins $< > $@
+	   --prefix-builtins $< > $@ || \
+	{ rm $@ && false; }
 
 $(TLOG_PLAY_CONF_DEFAULT_NAME): $(PLAY_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=play \
 	   -D M4_CONF_TYPE=default \
-	   --prefix-builtins $< > $@
+	   --prefix-builtins $< > $@ || \
+	{ rm $@ && false; }
 
 $(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_CONF_TYPE=default \
-	   --prefix-builtins $< > $@
+	   --prefix-builtins $< > $@ || \
+	{ rm $@ && false; }
 
 install-data-hook:
 	: Remove "DO NOT EDIT" warning
