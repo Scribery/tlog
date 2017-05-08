@@ -39,26 +39,34 @@ REC_MAN_DEPS = \
 
 tlog-play.8: tlog-play.8.m4 $(PLAY_MAN_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
-	   --prefix-builtins \
 	   -D M4_CONF_PATH="$(TLOG_PLAY_CONF_LOCAL_INST_PATH)" \
+	   -D M4_PROG_NAME=play \
+	   -D M4_PROG_SYM=play \
+	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
 
 tlog-rec.8: tlog-rec.8.m4 $(REC_MAN_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
-	   --prefix-builtins \
 	   -D M4_CONF_PATH="$(TLOG_REC_CONF_LOCAL_INST_PATH)" \
+	   -D M4_PROG_NAME=rec \
+	   -D M4_PROG_SYM=rec \
+	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
 
 tlog-rec.conf.5: tlog-rec.conf.5.m4 $(REC_MAN_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
+	   -D M4_PROG_NAME=rec \
+	   -D M4_PROG_SYM=rec \
 	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
 
 tlog-play.conf.5: tlog-play.conf.5.m4 $(PLAY_MAN_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
+	   -D M4_PROG_NAME=play \
+	   -D M4_PROG_SYM=play \
 	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
