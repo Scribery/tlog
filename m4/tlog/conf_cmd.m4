@@ -27,7 +27,7 @@ m4_dnl
 m4_dnl Output a short option enum member, see the *schema.m4 for parameters.
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_OPT_ENUM_PARAM_SHORT',
@@ -59,7 +59,7 @@ m4_dnl
 m4_dnl Output a long option enum member, see the *schema.m4 for parameters.
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl  M4_FIRST - `true' if this is the first invocation, `false' otherwise.
 m4_dnl
 m4_define(
@@ -97,17 +97,17 @@ m4_dnl
 m4_dnl Output an option enumeration.
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_OPT_ENUM',
     `m4_pushdef(`m4_orig_divnum', m4_divnum)m4_divert(-1)
         m4_pushdef(`M4_PARAM', m4_defn(`M4_CONF_CMD_OPT_ENUM_PARAM_SHORT'))
-        m4_include(M4_PROG_NAME()`_conf_schema.m4')
+        m4_include(M4_PROG_SYM()`_conf_schema.m4')
         m4_popdef(`M4_PARAM')
         m4_pushdef(`M4_FIRST', `true')
         m4_pushdef(`M4_PARAM', m4_defn(`M4_CONF_CMD_OPT_ENUM_PARAM_LONG'))
-        m4_include(M4_PROG_NAME()`_conf_schema.m4')
+        m4_include(M4_PROG_SYM()`_conf_schema.m4')
         m4_popdef(`M4_PARAM')
         m4_popdef(`M4_FIRST')
     m4_divert(m4_orig_divnum)m4_popdef(`m4_orig_divnum')')
@@ -142,7 +142,7 @@ m4_dnl
 m4_dnl Output a short option description string
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_SHORTOPTS',
@@ -152,7 +152,7 @@ m4_define(
         m4_pushdef(`M4_TYPE_BOOL', `::')
         m4_pushdef(`M4_TYPE_CHOICE', `:')
         m4_pushdef(`M4_PARAM', m4_defn(`M4_CONF_CMD_SHORTOPTS_PARAM'))
-        m4_include(M4_PROG_NAME()`_conf_schema.m4')
+        m4_include(M4_PROG_SYM()`_conf_schema.m4')
         m4_popdef(`M4_PARAM')
         m4_popdef(`M4_TYPE_CHOICE')
         m4_popdef(`M4_TYPE_BOOL')
@@ -165,7 +165,7 @@ m4_dnl Output a long option description initializer.
 m4_dnl See the *schema.m4 for parameters.
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_LONGOPTS_PARAM',
@@ -194,7 +194,7 @@ m4_dnl
 m4_dnl Output a long option description array.
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_LONGOPTS',
@@ -204,7 +204,7 @@ m4_define(
         m4_pushdef(`M4_TYPE_BOOL',   `optional_argument')
         m4_pushdef(`M4_TYPE_CHOICE', `required_argument')
         m4_pushdef(`M4_PARAM', m4_defn(`M4_CONF_CMD_LONGOPTS_PARAM'))
-        m4_include(M4_PROG_NAME()`_conf_schema.m4')
+        m4_include(M4_PROG_SYM()`_conf_schema.m4')
         m4_popdef(`M4_PARAM')
         m4_popdef(`M4_TYPE_CHOICE')
         m4_popdef(`M4_TYPE_BOOL')
@@ -238,7 +238,7 @@ m4_dnl Output option help string literal for a parameter.
 m4_dnl
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_HELP_OPTS_CONTAINER_PARAM',
@@ -267,7 +267,7 @@ m4_dnl Output option help string literal for a container.
 m4_dnl
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_HELP_OPTS_CONTAINER',
@@ -283,12 +283,12 @@ m4_define(
 
                 m4_pushdef(`M4_CONTAINER', `')
                 m4_pushdef(`M4_PARAM', m4_defn(`M4_CONF_CMD_HELP_OPTS_CONTAINER_PARAM'))
-                m4_include(M4_PROG_NAME()`_conf_schema.m4')
+                m4_include(M4_PROG_SYM()`_conf_schema.m4')
                 m4_popdef(`M4_PARAM')
                 m4_popdef(`M4_CONTAINER')
 
                 m4_pushdef(`M4_PARAM', `')
-                m4_include(M4_PROG_NAME()`_conf_schema.m4')
+                m4_include(M4_PROG_SYM()`_conf_schema.m4')
                 m4_popdef(`M4_PARAM')
 
                 m4_popdef(`M4_PREFIX')
@@ -302,7 +302,7 @@ m4_dnl Output option help string constant.
 m4_dnl
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_HELP_OPTS',
@@ -458,14 +458,14 @@ m4_dnl Output a command-line argument parsing function.
 m4_dnl
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_LOAD_ARGS',
     `m4_pushdef(`m4_orig_divnum', m4_divnum)m4_divert(-1)
         m4_printl(
            `static tlog_grc',
-           `tlog_'M4_PROG_NAME()`_conf_cmd_load_args(struct tlog_errs **perrs,',
+           `tlog_'M4_PROG_SYM()`_conf_cmd_load_args(struct tlog_errs **perrs,',
            `                            struct json_object *conf,',
            `                            const char *help,',
            `                            int argc, char **argv)',
@@ -525,7 +525,7 @@ m4_define(
         m4_pushdef(`M4_TYPE_BOOL',      m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_BOOL'))
         m4_pushdef(`M4_TYPE_CHOICE',    m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_CHOICE'))
         m4_pushdef(`M4_PARAM',          m4_defn(`M4_CONF_CMD_LOAD_ARGS_PARAM'))
-        m4_include(M4_PROG_NAME()`_conf_schema.m4')
+        m4_include(M4_PROG_SYM()`_conf_schema.m4')
         m4_popdef(`M4_PARAM')
         m4_popdef(`M4_TYPE_CHOICE')
         m4_popdef(`M4_TYPE_BOOL')
@@ -623,7 +623,7 @@ m4_define(
            `    args = NULL;',
            `',
            `    /* Validate the result */',
-           `    grc = tlog_'M4_PROG_NAME()`_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ARGS);',
+           `    grc = tlog_'M4_PROG_SYM()`_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ARGS);',
            `    if (grc != TLOG_RC_OK) {',
            `        tlog_errs_pushs(perrs, "Failed to validate loaded configuration");',
            `        goto cleanup;',

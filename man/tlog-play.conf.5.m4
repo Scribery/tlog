@@ -1,5 +1,4 @@
 m4_include(`man.m4')m4_dnl
-m4_define(`M4_PROG_NAME', `play')m4_dnl
 .\" Process this file with
 .\" groff -man -Tascii tlog-play.conf.5
 m4_generated_warning(`.\" ')m4_dnl

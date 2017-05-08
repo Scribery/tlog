@@ -217,11 +217,11 @@ m4_define(
 
                 m4_pushdef(`M4_CONTAINER', m4_defn(`M4_MAN_CONF_CONTAINER_DESC'))
                 m4_pushdef(`M4_PARAM', m4_defn(`M4_MAN_CONF_PARAM_DESC'))
-                m4_include(M4_PROG_NAME()`_conf_schema.m4')
+                m4_include(M4_PROG_SYM()`_conf_schema.m4')
                 m4_popdef(`M4_PARAM')
                 m4_popdef(`M4_CONTAINER')
 
-                m4_include(M4_PROG_NAME()`_conf_schema.m4')
+                m4_include(M4_PROG_SYM()`_conf_schema.m4')
 
                 m4_popdef(`M4_MAN_CONF_PREFIX')
             '
@@ -233,7 +233,7 @@ m4_dnl
 m4_dnl Output a description of configuration nodes.
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_MAN_CONF',
@@ -309,7 +309,7 @@ m4_dnl
 m4_dnl Output a description of a configuration parameter
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_MAN_OPTS_CONTAINER_PARAM',
@@ -354,11 +354,11 @@ m4_define(
 
                 m4_pushdef(`M4_CONTAINER', `')
                 m4_pushdef(`M4_PARAM', m4_defn(`M4_MAN_OPTS_CONTAINER_PARAM'))
-                m4_include(M4_PROG_NAME()`_conf_schema.m4')
+                m4_include(M4_PROG_SYM()`_conf_schema.m4')
                 m4_popdef(`M4_PARAM')
                 m4_popdef(`M4_CONTAINER')
 
-                m4_include(M4_PROG_NAME()`_conf_schema.m4')
+                m4_include(M4_PROG_SYM()`_conf_schema.m4')
 
                 m4_popdef(`M4_MAN_OPTS_PREFIX')
             '
@@ -370,7 +370,7 @@ m4_dnl
 m4_dnl Output a description of command-line options
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_NAME - program name without "tlog-" prefix.
+m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_MAN_OPTS',

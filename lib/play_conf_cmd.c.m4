@@ -1,6 +1,5 @@
 m4_include(`misc.m4')m4_dnl
 m4_include(`conf_cmd.m4')m4_dnl
-m4_define(`M4_PROG_NAME', `play')m4_dnl
 /*
  * Tlog-play command-line parsing.
  *
