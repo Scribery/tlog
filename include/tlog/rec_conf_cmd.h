@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Tlog-rec JSON configuration validation.
+ * @brief Tlog-rec command line configuration management.
  */
 /*
  *

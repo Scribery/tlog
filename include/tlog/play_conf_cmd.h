@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Tlog-play JSON configuration validation.
+ * @brief Tlog-play command line configuration management.
  */
 /*
  *
