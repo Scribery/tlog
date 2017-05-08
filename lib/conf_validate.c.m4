@@ -1,4 +1,5 @@
 m4_include(`misc.m4')m4_dnl
+m4_define(`M4_PROG_PFX', `m4_translit(M4_PROG_NAME(), `-', `_')')m4_dnl
 /*
  * Tlog-M4_PROG_NAME() JSON configuration validation.
  *
@@ -23,7 +24,7 @@ m4_generated_warning(` * ')m4_dnl
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-`#'include <tlog/M4_PROG_NAME()_conf_validate.h>
+`#'include <tlog/M4_PROG_PFX()_conf_validate.h>
 #include <tlog/grc.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>
@@ -185,7 +186,7 @@ m4_define(
                    `                                name, json_type_to_name(type));',
                    `                return TLOG_RC_FAILURE;',
                    `            }',
-                   `            grc = tlog_'M4_PROG_NAME()`_conf_validate`'m4_translit(`$1$2', `/', `_')`'(perrs, obj, origin);',
+                   `            grc = tlog_'M4_PROG_PFX()`_conf_validate`'m4_translit(`$1$2', `/', `_')`'(perrs, obj, origin);',
                    `            if (grc != TLOG_RC_OK) {',
                    `                tlog_errs_pushf(perrs, "Failed to validate \"%s\" section", name);',
                    `                return grc;',
@@ -207,7 +208,7 @@ m4_define(
                 m4_pushdef(`M4_PREFIX', M4_PREFIX()`$2')
 
                 m4_pushdef(`M4_PARAM')
-                m4_include(M4_PROG_NAME()`_conf_schema.m4')
+                m4_include(M4_PROG_PFX()`_conf_schema.m4')
                 m4_popdef(`M4_PARAM')
 
                 m4_pushdef(`M4_CONTAINER', m4_defn(`M4_CONTAINER_VALIDATE_CONTAINER'))
@@ -216,7 +217,7 @@ m4_define(
                 m4_ifelse(`$2', `', , `m4_print(`static ')')
                 m4_printl(
                    `tlog_grc',
-                   `tlog_'M4_PROG_NAME()`_conf_validate`'m4_translit(M4_PREFIX(), `/', `_')(struct tlog_errs **perrs,',
+                   `tlog_'M4_PROG_PFX()`_conf_validate`'m4_translit(M4_PREFIX(), `/', `_')(struct tlog_errs **perrs,',
                    `                                struct json_object *conf,',
                    `                                enum tlog_conf_origin origin)',
                    `{',
@@ -224,7 +225,7 @@ m4_define(
                    `',
                    `    json_object_object_foreach(conf, name, obj) {',
                    `        enum json_type type = json_object_get_type(obj);')
-                m4_include(M4_PROG_NAME()`_conf_schema.m4')
+                m4_include(M4_PROG_PFX()`_conf_schema.m4')
                 m4_printl(
                     `',
                     `        tlog_errs_pushf(perrs, "Unexpected node: \"%s\"", name);',
