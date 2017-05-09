@@ -20,10 +20,12 @@
 include $(top_srcdir)/Common.am
 
 dist_noinst_DATA = \
-    tlog-play.8.m4      \
-    tlog-play.conf.5.m4 \
-    tlog-rec.8.m4       \
-    tlog-rec.conf.5.m4
+    tlog-play.8.m4              \
+    tlog-play.conf.5.m4         \
+    tlog-rec.8.m4               \
+    tlog-rec.conf.5.m4          \
+    tlog-rec-session.8.m4       \
+    tlog-rec-session.conf.5.m4
 
 MAN_DEPS = \
     $(top_srcdir)/m4/tlog/misc.m4   \
@@ -36,6 +38,10 @@ PLAY_MAN_DEPS = \
 REC_MAN_DEPS = \
 	$(MAN_DEPS)                                    \
     $(top_srcdir)/m4/tlog/rec_conf_schema.m4
+
+REC_SESSION_MAN_DEPS = \
+	$(MAN_DEPS)                                     \
+    $(top_srcdir)/m4/tlog/rec_session_conf_schema.m4
 
 tlog-play.8: tlog-play.8.m4 $(PLAY_MAN_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
@@ -55,10 +61,27 @@ tlog-rec.8: tlog-rec.8.m4 $(REC_MAN_DEPS)
 	   $< > $@ || \
 	{ rm $@ && false; }
 
+tlog-rec-session.8: tlog-rec-session.8.m4 $(REC_SESSION_MAN_DEPS)
+	m4 -I $(top_srcdir)/m4/tlog \
+	   -D M4_CONF_PATH="$(TLOG_REC_SESSION_CONF_LOCAL_INST_PATH)" \
+	   -D M4_PROG_NAME=rec-session \
+	   -D M4_PROG_SYM=rec_session \
+	   --prefix-builtins \
+	   $< > $@ || \
+	{ rm $@ && false; }
+
 tlog-rec.conf.5: tlog-rec.conf.5.m4 $(REC_MAN_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
+	   --prefix-builtins \
+	   $< > $@ || \
+	{ rm $@ && false; }
+
+tlog-rec-session.conf.5: tlog-rec-session.conf.5.m4 $(REC_SESSION_MAN_DEPS)
+	m4 -I $(top_srcdir)/m4/tlog \
+	   -D M4_PROG_NAME=rec-session \
+	   -D M4_PROG_SYM=rec_session \
 	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
@@ -72,22 +95,28 @@ tlog-play.conf.5: tlog-play.conf.5.m4 $(PLAY_MAN_DEPS)
 	{ rm $@ && false; }
 
 dist_man_MANS = \
-    tlog-play.8         \
-    tlog-play.conf.5    \
-    tlog-rec.8          \
-    tlog-rec.conf.5
+    tlog-play.8             \
+    tlog-play.conf.5        \
+    tlog-rec.8              \
+    tlog-rec.conf.5         \
+    tlog-rec-session.8      \
+    tlog-rec-session.conf.5
 
 CLEANFILES = \
-    tlog-play.8         \
-    tlog-play.conf.5    \
-    tlog-rec.8          \
-    tlog-rec.conf.5
+    tlog-play.8             \
+    tlog-play.conf.5        \
+    tlog-rec.8              \
+    tlog-rec.conf.5         \
+    tlog-rec-session.8      \
+    tlog-rec-session.conf.5
 
 install-data-hook:
 	: Remove "DO NOT EDIT" warning
 	$(SED) -i -e '/vim:nomodifiable/,/\*\{73\}/ d' \
-	       $(DESTDIR)$(mandir)/man5/tlog-play.conf.5 \
-	       $(DESTDIR)$(mandir)/man5/tlog-rec.conf.5 \
-	       $(DESTDIR)$(mandir)/man8/tlog-play.8 \
-	       $(DESTDIR)$(mandir)/man8/tlog-rec.8
+	       $(DESTDIR)$(mandir)/man5/tlog-play.conf.5        \
+	       $(DESTDIR)$(mandir)/man5/tlog-rec.conf.5         \
+	       $(DESTDIR)$(mandir)/man5/tlog-rec-session.conf.5 \
+	       $(DESTDIR)$(mandir)/man8/tlog-play.8             \
+	       $(DESTDIR)$(mandir)/man8/tlog-rec.8              \
+	       $(DESTDIR)$(mandir)/man8/tlog-rec-session.8
 

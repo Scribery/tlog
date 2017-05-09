@@ -38,6 +38,13 @@ TLOG_REC_CONF_DEFAULT_INST_PATH = $(pkgconfdefaultdir)/$(TLOG_REC_CONF_DEFAULT_N
 # Path of the built default tlog-rec configuration, relative to tlog-rec
 TLOG_REC_CONF_DEFAULT_BUILD_PATH = ../$(TLOG_REC_CONF_DEFAULT_NAME)
 
+# Tlog-rec-session default configuration file name
+TLOG_REC_SESSION_CONF_DEFAULT_NAME = tlog-rec-session.default.conf
+# Absolute install path of the default tlog-rec-session configuration
+TLOG_REC_SESSION_CONF_DEFAULT_INST_PATH = $(pkgconfdefaultdir)/$(TLOG_REC_SESSION_CONF_DEFAULT_NAME)
+# Path of the built default tlog-rec-session configuration, relative to tlog-rec-session
+TLOG_REC_SESSION_CONF_DEFAULT_BUILD_PATH = ../$(TLOG_REC_SESSION_CONF_DEFAULT_NAME)
+
 # Tlog-play system-local configuration file name
 TLOG_PLAY_CONF_LOCAL_NAME = tlog-play.conf
 # Absolute install path of the system-local tlog-play configuration
@@ -51,3 +58,10 @@ TLOG_REC_CONF_LOCAL_NAME = tlog-rec.conf
 TLOG_REC_CONF_LOCAL_INST_PATH = $(pkgconflocaldir)/$(TLOG_REC_CONF_LOCAL_NAME)
 # Path of the built system-local tlog-rec configuration, relative to tlog-rec
 TLOG_REC_CONF_LOCAL_BUILD_PATH = ../$(TLOG_REC_CONF_LOCAL_NAME)
+
+# Tlog-rec-session system-local configuration file name
+TLOG_REC_SESSION_CONF_LOCAL_NAME = tlog-rec-session.conf
+# Absolute install path of the system-local tlog-rec-session configuration
+TLOG_REC_SESSION_CONF_LOCAL_INST_PATH = $(pkgconflocaldir)/$(TLOG_REC_SESSION_CONF_LOCAL_NAME)
+# Path of the built system-local tlog-rec-session configuration, relative to tlog-rec-session
+TLOG_REC_SESSION_CONF_LOCAL_BUILD_PATH = ../$(TLOG_REC_SESSION_CONF_LOCAL_NAME)

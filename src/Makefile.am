@@ -23,18 +23,22 @@ dist_noinst_DATA = \
     tlog-prog.conf.m4
 
 pkgconflocal_DATA = \
-    $(TLOG_PLAY_CONF_LOCAL_NAME)    \
-    $(TLOG_REC_CONF_LOCAL_NAME)
+    $(TLOG_PLAY_CONF_LOCAL_NAME)        \
+    $(TLOG_REC_CONF_LOCAL_NAME)         \
+    $(TLOG_REC_SESSION_CONF_LOCAL_NAME)
 
 pkgconfdefault_DATA = \
-    $(TLOG_PLAY_CONF_DEFAULT_NAME)  \
-    $(TLOG_REC_CONF_DEFAULT_NAME)
+    $(TLOG_PLAY_CONF_DEFAULT_NAME)          \
+    $(TLOG_REC_CONF_DEFAULT_NAME)           \
+    $(TLOG_REC_SESSION_CONF_DEFAULT_NAME)
 
 CLEANFILES = \
-    $(TLOG_PLAY_CONF_DEFAULT_NAME)  \
-    $(TLOG_PLAY_CONF_LOCAL_NAME)  \
-    $(TLOG_REC_CONF_DEFAULT_NAME)   \
-    $(TLOG_REC_CONF_LOCAL_NAME)
+    $(TLOG_PLAY_CONF_DEFAULT_NAME)          \
+    $(TLOG_PLAY_CONF_LOCAL_NAME)            \
+    $(TLOG_REC_CONF_DEFAULT_NAME)           \
+    $(TLOG_REC_CONF_LOCAL_NAME)             \
+    $(TLOG_REC_SESSION_CONF_DEFAULT_NAME)   \
+    $(TLOG_REC_SESSION_CONF_LOCAL_NAME)
 
 CONF_DEPS = \
     $(srcdir)/tlog-prog.conf.m4     \
@@ -43,6 +47,10 @@ CONF_DEPS = \
 REC_CONF_DEPS = \
     $(CONF_DEPS)                                \
     $(top_srcdir)/m4/tlog/rec_conf_schema.m4
+
+REC_SESSION_CONF_DEPS = \
+    $(CONF_DEPS)                                        \
+    $(top_srcdir)/m4/tlog/rec_session_conf_schema.m4
 
 PLAY_CONF_DEPS = \
     $(CONF_DEPS)                                \
@@ -66,6 +74,15 @@ $(TLOG_REC_CONF_LOCAL_NAME): $(REC_CONF_DEPS)
 	   --prefix-builtins $< > $@ || \
 	{ rm $@ && false; }
 
+$(TLOG_REC_SESSION_CONF_LOCAL_NAME): $(REC_SESSION_CONF_DEPS)
+	m4 -I $(top_srcdir)/m4/tlog \
+	   -D M4_PROG_NAME=rec-session \
+	   -D M4_PROG_SYM=rec_session \
+	   -D M4_CONF_TYPE=system-wide \
+	   -D M4_COMMENT_OUT=true \
+	   --prefix-builtins $< > $@ || \
+	{ rm $@ && false; }
+
 $(TLOG_PLAY_CONF_DEFAULT_NAME): $(PLAY_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=play \
@@ -82,13 +99,23 @@ $(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
 	   --prefix-builtins $< > $@ || \
 	{ rm $@ && false; }
 
+$(TLOG_REC_SESSION_CONF_DEFAULT_NAME): $(REC_SESSION_CONF_DEPS)
+	m4 -I $(top_srcdir)/m4/tlog \
+	   -D M4_PROG_NAME=rec-session \
+	   -D M4_PROG_SYM=rec_session \
+	   -D M4_CONF_TYPE=default \
+	   --prefix-builtins $< > $@ || \
+	{ rm $@ && false; }
+
 install-data-hook:
 	: Remove "DO NOT EDIT" warning
 	$(SED) -i -e '/vim:nomodifiable/,/\*\{73\}/ d' \
-	       $(DESTDIR)$(TLOG_PLAY_CONF_DEFAULT_INST_PATH) \
-	       $(DESTDIR)$(TLOG_PLAY_CONF_LOCAL_INST_PATH) \
-	       $(DESTDIR)$(TLOG_REC_CONF_DEFAULT_INST_PATH) \
-	       $(DESTDIR)$(TLOG_REC_CONF_LOCAL_INST_PATH)
+	       $(DESTDIR)$(TLOG_PLAY_CONF_DEFAULT_INST_PATH)        \
+	       $(DESTDIR)$(TLOG_PLAY_CONF_LOCAL_INST_PATH)          \
+	       $(DESTDIR)$(TLOG_REC_CONF_DEFAULT_INST_PATH)         \
+	       $(DESTDIR)$(TLOG_REC_CONF_LOCAL_INST_PATH)           \
+	       $(DESTDIR)$(TLOG_REC_SESSION_CONF_DEFAULT_INST_PATH) \
+	       $(DESTDIR)$(TLOG_REC_SESSION_CONF_LOCAL_INST_PATH)
 
 AM_CPPFLAGS = \
     $(JSON_CFLAGS) \
@@ -96,7 +123,8 @@ AM_CPPFLAGS = \
     -DTLOG_SESSION_LOCK_DIR='"@localstatedir@/run/tlog"'
 
 bin_PROGRAMS = \
-    tlog-rec    \
+    tlog-rec            \
+    tlog-rec-session    \
     tlog-play
 
 tlog_rec_SOURCES = \
@@ -108,6 +136,17 @@ tlog_rec_LDADD = \
     $(JSON_LIBS)        \
     $(PTHREAD_LIBS)     \
     -lrt                \
+    -lutil
+
+tlog_rec_session_SOURCES = \
+    tlog-rec-session.c
+tlog_rec_session_CFLAGS = \
+    $(PTHREAD_CFLAGS)
+tlog_rec_session_LDADD = \
+    ../lib/libtlog.la       \
+    $(JSON_LIBS)            \
+    $(PTHREAD_LIBS)         \
+    -lrt                    \
     -lutil
 
 tlog_play_SOURCES = \
