@@ -21,7 +21,7 @@ m4_generated_warning(`.\" ')m4_dnl
 .\" along with tlog; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 .\"
-.TH tlog-rec.conf "5" "February 2016" "Tlog"
+.TH tlog-M4_PROG_NAME().conf "5" "February 2016" "Tlog"
 .SH NAME
 tlog-rec.conf \- tlog-rec configuration file
 
@@ -76,7 +76,7 @@ A config specifying logging to a file:
 .fi
 
 .SH SEE ALSO
-tlog-rec(8), http://json.org/
+tlog-M4_PROG_NAME()(8), http://json.org/
 
 .SH AUTHOR
 Nikolai Kondrashov <spbnick@gmail.com>

@@ -21,7 +21,7 @@ m4_generated_warning(`.\" ')m4_dnl
 .\" along with tlog; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 .\"
-.TH tlog-play "8" "March 2016" "Tlog"
+.TH tlog-M4_PROG_NAME() "8" "March 2016" "Tlog"
 .SH NAME
 tlog-play \- play back terminal I/O recorded by tlog-rec(8)
 
@@ -58,7 +58,7 @@ Play back a recording from ElasticSearch:
 .B tlog-play -r es --es-baseurl=http://localhost:9200/tlog/tlog/_search --es-query=session:121
 
 .SH SEE ALSO
-tlog-play.conf(5), tlog-rec(8)
+tlog-M4_PROG_NAME().conf(5), tlog-rec(8)
 
 .SH AUTHOR
 Nikolai Kondrashov <spbnick@gmail.com>

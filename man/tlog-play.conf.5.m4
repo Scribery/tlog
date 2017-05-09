@@ -23,7 +23,7 @@ m4_generated_warning(`.\" ')m4_dnl
 .\"
 .TH tlog-play.conf "5" "March 2016" "Tlog"
 .SH NAME
-tlog-play.conf \- tlog-play configuration file
+tlog-M4_PROG_NAME().conf \- tlog-play configuration file
 
 .SH DESCRIPTION
 .B tlog-play.conf
@@ -65,7 +65,7 @@ A config specifying ElasticSearch reader, along with the base URL.
 .fi
 
 .SH SEE ALSO
-tlog-play(8), http://json.org/
+tlog-M4_PROG_NAME()(8), http://json.org/
 
 .SH AUTHOR
 Nikolai Kondrashov <spbnick@gmail.com>

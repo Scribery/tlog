@@ -1,7 +1,8 @@
 m4_include(`misc.m4')m4_dnl
 m4_include(`conf_cmd.m4')m4_dnl
+m4_changecom()
 /*
- * Tlog-rec command-line parsing.
+ * Tlog-M4_PROG_NAME() command-line parsing.
  *
 m4_generated_warning(` * ')m4_dnl
  *
@@ -25,8 +26,8 @@ m4_generated_warning(` * ')m4_dnl
  */
 
 #include <config.h>
-#include <tlog/rec_conf_validate.h>
-#include <tlog/rec_conf_cmd.h>
+#include <tlog/M4_PROG_SYM()_conf_validate.h>
+#include <tlog/M4_PROG_SYM()_conf_cmd.h>
 #include <tlog/json_misc.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>

@@ -21,7 +21,7 @@ m4_generated_warning(`.\" ')m4_dnl
 .\" along with tlog; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 .\"
-.TH tlog-rec "8" "February 2016" "Tlog"
+.TH tlog-M4_PROG_NAME() "8" "February 2016" "Tlog"
 .SH NAME
 tlog-rec \- start a shell and log terminal I/O
 
@@ -101,7 +101,7 @@ Ask the recorded shell to execute a command:
 .B tlog-rec -c whoami
 
 .SH SEE ALSO
-tlog-rec.conf(5), tlog-play(8)
+tlog-M4_PROG_NAME().conf(5), tlog-play(8)
 
 .SH AUTHOR
 Nikolai Kondrashov <spbnick@gmail.com>

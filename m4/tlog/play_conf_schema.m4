@@ -1,5 +1,5 @@
 m4_dnl
-m4_dnl Tlog-rec configuration schema
+m4_dnl Tlog-play configuration schema
 m4_dnl
 m4_dnl Copyright (C) 2016 Red Hat
 m4_dnl
