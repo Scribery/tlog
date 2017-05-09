@@ -21,7 +21,7 @@ m4_generated_warning(`.\" ')m4_dnl
 .\" along with tlog; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 .\"
-.TH tlog-play "5" "March 2016" "Tlog"
+.TH tlog-play.conf "5" "March 2016" "Tlog"
 .SH NAME
 tlog-play.conf \- tlog-play configuration file
 
