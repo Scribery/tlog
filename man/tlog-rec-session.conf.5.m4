@@ -23,12 +23,12 @@ m4_generated_warning(`.\" ')m4_dnl
 .\"
 .TH tlog-M4_PROG_NAME().conf "5" "February 2016" "Tlog"
 .SH NAME
-tlog-rec.conf \- tlog-rec configuration file
+tlog-rec-session.conf \- tlog-rec-session configuration file
 
 .SH DESCRIPTION
-.B tlog-rec.conf
+.B tlog-rec-session.conf
 is a JSON-format configuration file for
-.B tlog-rec
+.B tlog-rec-session
 program.
 Contrary to the strict JSON specification, both C and C++ style comments are
 allowed in the file.
@@ -37,7 +37,7 @@ The file must contain a single JSON object with the objects and fields
 described below.
 Almost all of them are optional and assume a default value.
 However, those that do require a value can still be omitted and specified to
-.B tlog-rec
+.B tlog-rec-session
 in other ways: through environment variables or command line.
 
 .SH OBJECTS AND FIELDS
@@ -70,7 +70,7 @@ A config specifying logging to a file:
 {
     "writer": "file"
     "file" : {
-        "path": "/var/log/tlog-rec.log"
+        "path": "/var/log/tlog-rec-session.log"
     }
 }
 .fi

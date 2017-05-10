@@ -1,5 +1,5 @@
 /*
- * Tlog-rec configuration parsing
+ * Tlog-rec-session configuration parsing
  *
  * Copyright (C) 2016 Red Hat
  *
@@ -21,10 +21,10 @@
  */
 
 #include <config.h>
-#include <tlog/rec_conf.h>
+#include <tlog/rec_session_conf.h>
 #include <tlog/conf_origin.h>
-#include <tlog/rec_conf_cmd.h>
-#include <tlog/rec_conf_validate.h>
+#include <tlog/rec_session_conf_cmd.h>
+#include <tlog/rec_session_conf_validate.h>
 #include <tlog/json_misc.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>
@@ -34,10 +34,10 @@
 #include <assert.h>
 
 static tlog_grc
-tlog_rec_conf_str_parse(struct tlog_errs **perrs,
-                        struct json_object **pconf,
-                        const char *str,
-                        enum tlog_conf_origin origin)
+tlog_rec_session_conf_str_parse(struct tlog_errs **perrs,
+                                struct json_object **pconf,
+                                const char *str,
+                                enum tlog_conf_origin origin)
 {
     struct json_object *conf = NULL;
     enum json_tokener_error jerr;
@@ -55,7 +55,7 @@ tlog_rec_conf_str_parse(struct tlog_errs **perrs,
         goto cleanup;
     }
 
-    grc = tlog_rec_conf_validate(perrs, conf, origin);
+    grc = tlog_rec_session_conf_validate(perrs, conf, origin);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs,
                         "Failed validating configuration from the string");
@@ -71,9 +71,9 @@ cleanup:
 }
 
 static tlog_grc
-tlog_rec_conf_file_load(struct tlog_errs **perrs,
-                        struct json_object **pconf,
-                        const char *path)
+tlog_rec_session_conf_file_load(struct tlog_errs **perrs,
+                                struct json_object **pconf,
+                                const char *path)
 {
     tlog_grc grc;
     struct json_object *conf = NULL;
@@ -87,7 +87,7 @@ tlog_rec_conf_file_load(struct tlog_errs **perrs,
     }
 
     /* Validate the contents */
-    grc = tlog_rec_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_FILE);
+    grc = tlog_rec_session_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_FILE);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushf(perrs,
                         "Failed validating contents of \"%s\"", path);
@@ -103,7 +103,8 @@ cleanup:
 }
 
 static tlog_grc
-tlog_rec_conf_env_load(struct tlog_errs **perrs, struct json_object **pconf)
+tlog_rec_session_conf_env_load(struct tlog_errs **perrs,
+                               struct json_object **pconf)
 {
     tlog_grc grc;
     const char *val;
@@ -122,13 +123,14 @@ tlog_rec_conf_env_load(struct tlog_errs **perrs, struct json_object **pconf)
     }
 
     /* Load the config file, if specified */
-    val = getenv("TLOG_REC_CONF_FILE");
+    val = getenv("TLOG_REC_SESSION_CONF_FILE");
     if (val != NULL) {
-        grc = tlog_rec_conf_file_load(perrs, &overlay, val);
+        grc = tlog_rec_session_conf_file_load(perrs, &overlay, val);
         if (grc != TLOG_RC_OK) {
             tlog_errs_pushs(perrs,
                             "Failed loading the file referenced by "
-                            "TLOG_REC_CONF_FILE environment variable");
+                            "TLOG_REC_SESSION_CONF_FILE environment "
+                            "variable");
             goto cleanup;
         }
         grc = tlog_json_overlay(&conf, conf, overlay);
@@ -142,13 +144,15 @@ tlog_rec_conf_env_load(struct tlog_errs **perrs, struct json_object **pconf)
     }
 
     /* Load the config text, if specified */
-    val = getenv("TLOG_REC_CONF_TEXT");
+    val = getenv("TLOG_REC_SESSION_CONF_TEXT");
     if (val != NULL) {
-        grc = tlog_rec_conf_str_parse(perrs, &overlay, val, TLOG_CONF_ORIGIN_ENV);
+        grc = tlog_rec_session_conf_str_parse(perrs, &overlay,
+                                              val, TLOG_CONF_ORIGIN_ENV);
         if (grc != TLOG_RC_OK) {
             tlog_errs_pushs(perrs,
                             "Failed parsing the contents of "
-                            "TLOG_REC_CONF_TEXT environment variable");
+                            "TLOG_REC_SESSION_CONF_TEXT environment "
+                            "variable");
             goto cleanup;
         }
         grc = tlog_json_overlay(&conf, conf, overlay);
@@ -162,7 +166,7 @@ tlog_rec_conf_env_load(struct tlog_errs **perrs, struct json_object **pconf)
     }
 
     /* Load the shell */
-    val = getenv("TLOG_REC_SHELL");
+    val = getenv("TLOG_REC_SESSION_SHELL");
     if (val != NULL) {
         overlay = json_object_new_string(val);
         if (overlay == NULL) {
@@ -186,9 +190,9 @@ cleanup:
 }
 
 tlog_grc
-tlog_rec_conf_load(struct tlog_errs **perrs,
-                   char **pcmd_help, struct json_object **pconf,
-                   int argc, char **argv)
+tlog_rec_session_conf_load(struct tlog_errs **perrs,
+                           char **pcmd_help, struct json_object **pconf,
+                           int argc, char **argv)
 {
     tlog_grc grc;
     struct json_object *conf = NULL;
@@ -211,14 +215,14 @@ tlog_rec_conf_load(struct tlog_errs **perrs,
 
     /* Overlay with default config */
     grc = tlog_build_or_inst_path(&path, argv[0],
-                                  TLOG_REC_CONF_DEFAULT_BUILD_PATH,
-                                  TLOG_REC_CONF_DEFAULT_INST_PATH);
+                                  TLOG_REC_SESSION_CONF_DEFAULT_BUILD_PATH,
+                                  TLOG_REC_SESSION_CONF_DEFAULT_INST_PATH);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushs(perrs, "Failed finding default configuration");
         goto cleanup;
     }
-    grc = tlog_rec_conf_file_load(perrs, &overlay, path);
+    grc = tlog_rec_session_conf_file_load(perrs, &overlay, path);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed loading default configuration");
         goto cleanup;
@@ -236,14 +240,14 @@ tlog_rec_conf_load(struct tlog_errs **perrs,
 
     /* Overlay with local system config */
     grc = tlog_build_or_inst_path(&path, argv[0],
-                                  TLOG_REC_CONF_LOCAL_BUILD_PATH,
-                                  TLOG_REC_CONF_LOCAL_INST_PATH);
+                                  TLOG_REC_SESSION_CONF_LOCAL_BUILD_PATH,
+                                  TLOG_REC_SESSION_CONF_LOCAL_INST_PATH);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushs(perrs, "Failed finding system configuration");
         goto cleanup;
     }
-    grc = tlog_rec_conf_file_load(perrs, &overlay, path);
+    grc = tlog_rec_session_conf_file_load(perrs, &overlay, path);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed loading system configuration");
         goto cleanup;
@@ -260,7 +264,7 @@ tlog_rec_conf_load(struct tlog_errs **perrs,
     overlay = NULL;
 
     /* Overlay with environment config */
-    grc = tlog_rec_conf_env_load(perrs, &overlay);
+    grc = tlog_rec_session_conf_env_load(perrs, &overlay);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs,
                         "Failed retrieving configuration "
@@ -279,7 +283,8 @@ tlog_rec_conf_load(struct tlog_errs **perrs,
     overlay = NULL;
 
     /* Overlay with command-line config */
-    grc = tlog_rec_conf_cmd_load(perrs, &cmd_help, &overlay, argc, argv);
+    grc = tlog_rec_session_conf_cmd_load(perrs, &cmd_help,
+                                         &overlay, argc, argv);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs,
                         "Failed retrieving configuration from command line");
@@ -309,10 +314,10 @@ cleanup:
 }
 
 tlog_grc
-tlog_rec_conf_get_shell(struct tlog_errs **perrs,
-                        struct json_object *conf,
-                        const char **ppath,
-                        char ***pargv)
+tlog_rec_session_conf_get_shell(struct tlog_errs **perrs,
+                                struct json_object *conf,
+                                const char **ppath,
+                                char ***pargv)
 {
     tlog_grc grc;
     struct json_object *obj;
@@ -397,7 +402,8 @@ tlog_rec_conf_get_shell(struct tlog_errs **perrs,
         if (arg == NULL) {
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed allocating shell argv[#%zu]", argi);
+            tlog_errs_pushf(perrs,
+                            "Failed allocating shell argv[#%zu]", argi);
             goto cleanup;
         }
         argv[argi++] = arg;

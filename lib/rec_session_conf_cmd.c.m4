@@ -39,7 +39,7 @@ m4_generated_warning(` * ')m4_dnl
 #include <inttypes.h>
 #include <assert.h>
 
-static const char *tlog_rec_conf_cmd_help_fmt =
+static const char *tlog_rec_session_conf_cmd_help_fmt =
     "Usage: %1$s [OPTION...] [CMD_FILE [CMD_ARG...]]\n"
     "   or: %1$s -c [OPTION...] CMD_STRING [CMD_NAME [CMD_ARG...]]\n"
     "Start a shell and log terminal I/O.\n"
@@ -49,9 +49,9 @@ M4_CONF_CMD_HELP_OPTS()m4_dnl
 M4_CONF_CMD_LOAD_ARGS()m4_dnl
 
 tlog_grc
-tlog_rec_conf_cmd_load(struct tlog_errs **perrs,
-                       char **phelp, struct json_object **pconf,
-                       int argc, char **argv)
+tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
+                               char **phelp, struct json_object **pconf,
+                               int argc, char **argv)
 {
     tlog_grc grc;
     char *progpath = NULL;
@@ -109,13 +109,13 @@ tlog_rec_conf_cmd_load(struct tlog_errs **perrs,
     }
 
     /* Extract options and positional arguments */
-    if (asprintf(&help, tlog_rec_conf_cmd_help_fmt, progname) < 0) {
+    if (asprintf(&help, tlog_rec_session_conf_cmd_help_fmt, progname) < 0) {
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushs(perrs, "Failed formatting help message");
         goto cleanup;
     }
-    grc = tlog_rec_conf_cmd_load_args(perrs, conf, help, argc, argv);
+    grc = tlog_rec_session_conf_cmd_load_args(perrs, conf, help, argc, argv);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs,
                         "Failed extracting configuration "
@@ -124,7 +124,7 @@ tlog_rec_conf_cmd_load(struct tlog_errs **perrs,
     }
 
     /* Validate the result */
-    grc = tlog_rec_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ARGS);
+    grc = tlog_rec_session_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ARGS);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Validation of loaded configuration failed");
         goto cleanup;

@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Tlog-rec command line configuration management.
+ * @brief Tlog-rec-session command line configuration management.
  */
 /*
  *
@@ -23,8 +23,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TLOG_REC_CONF_CMD_H
-#define _TLOG_REC_CONF_CMD_H
+#ifndef _TLOG_REC_SESSION_CONF_CMD_H
+#define _TLOG_REC_SESSION_CONF_CMD_H
 
 #include <tlog/errs.h>
 #include <tlog/grc.h>
@@ -32,21 +32,22 @@
 #include <stdio.h>
 
 /**
- * Load tlog-rec configuration from the command line and extract program name.
+ * Load tlog-rec-session configuration from the command line and extract
+ * program name.
  *
  * @param perrs     Location for the error stack. Can be NULL.
  * @param phelp     Location for the dynamically-allocated usage help message.
  *                  Cannot be NULL.
  * @param pconf     Location for the pointer to the JSON object representing
  *                  the loaded configuration. Cannot be NULL.
- * @param argc      Tlog-rec argc value.
- * @param argv      Tlog-rec argv value. Cannot be NULL.
+ * @param argc      Tlog-rec-session argc value.
+ * @param argv      Tlog-rec-session argv value. Cannot be NULL.
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_rec_conf_cmd_load(struct tlog_errs **perrs,
-                                       char **phelp,
-                                       struct json_object **pconf,
-                                       int argc, char **argv);
+extern tlog_grc tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
+                                               char **phelp,
+                                               struct json_object **pconf,
+                                               int argc, char **argv);
 
-#endif /* _TLOG_REC_CONF_CMD_H */
+#endif /* _TLOG_REC_SESSION_CONF_CMD_H */

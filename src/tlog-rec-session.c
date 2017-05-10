@@ -55,8 +55,8 @@
 #include <tlog/timespec.h>
 #include <tlog/delay.h>
 #include <tlog/rc.h>
-#include <tlog/rec_conf.h>
-#include <tlog/rec_conf_cmd.h>
+#include <tlog/rec_session_conf.h>
+#include <tlog/rec_session_conf_cmd.h>
 
 /**
  * Let GNU TLS know we don't need implicit global initialization, which opens
@@ -936,11 +936,11 @@ cleanup:
 }
 
 /**
- * Execute the shell with path and arguments specified in tlog-rec
+ * Execute the shell with path and arguments specified in tlog-rec-session
  * configuration.
  *
  * @param perrs     Location for the error stack. Can be NULL.
- * @param conf      Tlog-rec configuration JSON object.
+ * @param conf      Tlog-rec-session configuration JSON object.
  *
  * @return Global return code.
  */
@@ -955,7 +955,7 @@ shell_exec(struct tlog_errs **perrs,
     gid_t gid = getgid();
 
     /* Prepare shell command line */
-    grc = tlog_rec_conf_get_shell(perrs, conf, &path, &argv);
+    grc = tlog_rec_session_conf_get_shell(perrs, conf, &path, &argv);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed building shell command line");
         goto cleanup;
@@ -963,7 +963,7 @@ shell_exec(struct tlog_errs **perrs,
 
     /*
      * Set the SHELL environment variable to the actual shell. Otherwise
-     * programs trying to spawn the user's shell would start tlog-rec
+     * programs trying to spawn the user's shell would start tlog-rec-session
      * instead.
      */
     if (setenv("SHELL", path, /*overwrite=*/1) != 0) {
@@ -1106,7 +1106,7 @@ tap_teardown(struct tlog_errs **perrs, struct tap *tap, int *pstatus)
  * @param ptap      Location for the tap state.
  * @param euid      The effective UID the program was started with.
  * @param egid      The effective GID the program was started with.
- * @param conf      Tlog-rec configuration JSON object.
+ * @param conf      Tlog-rec-session configuration JSON object.
  * @param in_fd     Stdin to connect to, or -1 if none.
  * @param out_fd    Stdout to connect to, or -1 if none.
  * @param err_fd    Stderr to connect to, or -1 if none.
@@ -1338,13 +1338,13 @@ cleanup:
 }
 
 /**
- * Run tlog-rec with specified configuration and environment.
+ * Run tlog-rec-session with specified configuration and environment.
  *
  * @param perrs     Location for the error stack. Can be NULL.
  * @param euid      The effective UID the program was started with.
  * @param egid      The effective GID the program was started with.
  * @param cmd_help  Command-line usage help message.
- * @param conf      Tlog-rec configuration JSON object.
+ * @param conf      Tlog-rec-session configuration JSON object.
  * @param in_fd     Stdin to connect to, or -1 if none.
  * @param out_fd    Stdout to connect to, or -1 if none.
  * @param err_fd    Stderr to connect to, or -1 if none.
@@ -1538,7 +1538,7 @@ main(int argc, char **argv)
     }
 
     /* Read configuration and command-line usage message */
-    grc = tlog_rec_conf_load(&errs, &cmd_help, &conf, argc, argv);
+    grc = tlog_rec_session_conf_load(&errs, &cmd_help, &conf, argc, argv);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(&errs, "Failed retrieving configuration");
         goto cleanup;

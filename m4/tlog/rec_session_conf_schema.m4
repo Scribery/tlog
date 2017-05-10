@@ -1,5 +1,5 @@
 m4_dnl
-m4_dnl Tlog-rec configuration schema
+m4_dnl Tlog-rec-session configuration schema
 m4_dnl
 m4_dnl Copyright (C) 2016 Red Hat
 m4_dnl
@@ -101,7 +101,7 @@ m4_dnl
 M4_PARAM(`', `command', `opts',
          `M4_TYPE_BOOL()', false,
          `c', `', `Execute shell commands',
-         `M4_LINES(`If set to true, tlog-rec passes the -c option to the shell,',
+         `M4_LINES(`If set to true, tlog-rec-session passes the -c option to the shell,',
                    `followed by all the positional arguments, which specify the shell',
                    `commands to execute along with command name and its arguments.')')m4_dnl
 m4_dnl

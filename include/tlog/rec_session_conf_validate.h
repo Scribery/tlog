@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Tlog-rec JSON configuration validation.
+ * @brief Tlog-rec-session JSON configuration validation.
  */
 /*
  *
@@ -23,8 +23,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TLOG_REC_CONF_VALIDATE_H
-#define _TLOG_REC_CONF_VALIDATE_H
+#ifndef _TLOG_REC_SESSION_CONF_VALIDATE_H
+#define _TLOG_REC_SESSION_CONF_VALIDATE_H
 
 #include <json.h>
 #include <tlog/grc.h>
@@ -32,8 +32,8 @@
 #include <tlog/conf_origin.h>
 
 /**
- * Check tlog-rec JSON configuration: if there are no unkown nodes and the
- * present node types and values are valid.
+ * Check tlog-rec-session JSON configuration: if there are no unkown nodes and
+ * the present node types and values are valid.
  *
  * @param perrs     Location for the error stack. Can be NULL.
  * @param conf      The configuration JSON object to check.
@@ -41,8 +41,8 @@
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_rec_conf_validate(struct tlog_errs **perrs,
-                                       struct json_object *conf,
-                                       enum tlog_conf_origin origin);
+extern tlog_grc tlog_rec_session_conf_validate(struct tlog_errs **perrs,
+                                               struct json_object *conf,
+                                               enum tlog_conf_origin origin);
 
-#endif /* _TLOG_REC_CONF_VALIDATE_H */
+#endif /* _TLOG_REC_SESSION_CONF_VALIDATE_H */

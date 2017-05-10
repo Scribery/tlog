@@ -23,17 +23,17 @@ m4_generated_warning(`.\" ')m4_dnl
 .\"
 .TH tlog-M4_PROG_NAME() "8" "February 2016" "Tlog"
 .SH NAME
-tlog-rec \- start a shell and log terminal I/O
+tlog-rec-session \- start a shell and log terminal I/O
 
 .SH SYNOPSIS
-.B tlog-rec
+.B tlog-rec-session
 [OPTION...] [CMD_FILE [CMD_ARG...]]
 .br
-.B tlog-rec
+.B tlog-rec-session
 -c [OPTION...] CMD_STRING [CMD_NAME [CMD_ARG...]]
 
 .SH DESCRIPTION
-.B Tlog-rec
+.B Tlog-rec-session
 is a terminal I/O logging program. It starts a shell under a pseudo-TTY,
 connects it to the actual terminal and logs whatever passes between them
 including user input, program output, and terminal window size changes.
@@ -50,33 +50,34 @@ its arguments (CMD_ARG).
 If no non-option arguments are encountered, then the shell is started
 interactively.
 
-.B Tlog-rec
+.B Tlog-rec-session
 loads its parameters first from the system-wide configuration file
-M4_CONF_PATH(), then from the file pointed at by TLOG_REC_CONF_FILE
-environment variable (if set), then from the contents of the TLOG_REC_CONF_TEXT
-environment variable (if set), and then from command-line options. Parameters
-from each of these sources override the previous one in turn.
+M4_CONF_PATH(), then from the file pointed at by TLOG_REC_SESSION_CONF_FILE
+environment variable (if set), then from the contents of the
+TLOG_REC_SESSION_CONF_TEXT environment variable (if set), and then from
+command-line options. Parameters from each of these sources override the
+previous one in turn.
 
 .SH OPTIONS
 M4_MAN_OPTS()
 
 .SH ENVIRONMENT
 .TP
-TLOG_REC_CONF_FILE
+TLOG_REC_SESSION_CONF_FILE
 Specifies the location of a configuration file to be read.
 The configuration parameters in this file override the ones in the system-wide
 configuration file M4_CONF_PATH().
 
 .TP
-TLOG_REC_CONF_TEXT
+TLOG_REC_SESSION_CONF_TEXT
 Specifies the configuration text to be read.
 The configuration parameters in this variable override the ones in the file
-specified with TLOG_REC_CONF_FILE.
+specified with TLOG_REC_SESSION_CONF_FILE.
 
 .TP
-TLOG_REC_SHELL
+TLOG_REC_SESSION_SHELL
 Specifies the shell to spawn. Overrides configuration specified with
-TLOG_REC_CONF_TEXT. Can be overridden with command-line options.
+TLOG_REC_SESSION_CONF_TEXT. Can be overridden with command-line options.
 
 .SH FILES
 .TP
@@ -86,19 +87,19 @@ The system-wide configuration file
 .SH EXAMPLES
 .TP
 Start recording a login shell:
-.B tlog-rec -l
+.B tlog-rec-session -l
 
 .TP
 Start recording a zsh session:
-.B tlog-rec -s /usr/bin/zsh
+.B tlog-rec-session -s /usr/bin/zsh
 
 .TP
 Record everything but user input:
-.B tlog-rec --log-input=off --log-output=on --log-window=on
+.B tlog-rec-session --log-input=off --log-output=on --log-window=on
 
 .TP
 Ask the recorded shell to execute a command:
-.B tlog-rec -c whoami
+.B tlog-rec-session -c whoami
 
 .SH SEE ALSO
 tlog-M4_PROG_NAME().conf(5), tlog-play(8)
