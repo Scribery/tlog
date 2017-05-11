@@ -30,6 +30,7 @@ dist_noinst_DATA = \
 MAN_DEPS = \
     $(top_srcdir)/m4/tlog/misc.m4           \
     $(top_srcdir)/m4/tlog/conf_origin.m4    \
+    $(top_srcdir)/m4/tlog/conf_schema.m4    \
     $(top_srcdir)/m4/tlog/man.m4
 
 PLAY_MAN_DEPS = \
@@ -37,11 +38,13 @@ PLAY_MAN_DEPS = \
     $(top_srcdir)/m4/tlog/play_conf_schema.m4
 
 REC_MAN_DEPS = \
-	$(MAN_DEPS)                                    \
+	$(MAN_DEPS)                                 \
+    $(top_srcdir)/m4/tlog/rec_common_conf_schema.m4 \
     $(top_srcdir)/m4/tlog/rec_conf_schema.m4
 
 REC_SESSION_MAN_DEPS = \
 	$(MAN_DEPS)                                     \
+    $(top_srcdir)/m4/tlog/rec_common_conf_schema.m4     \
     $(top_srcdir)/m4/tlog/rec_session_conf_schema.m4
 
 tlog-play.8: tlog-play.8.m4 $(PLAY_MAN_DEPS)

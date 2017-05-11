@@ -48,14 +48,17 @@ dist_noinst_DATA = \
 PROG_CONF_DEPS = \
     $(top_srcdir)/m4/tlog/misc.m4           \
     $(top_srcdir)/m4/tlog/conf_origin.m4    \
+    $(top_srcdir)/m4/tlog/conf_schema.m4    \
     $(top_srcdir)/m4/tlog/conf_cmd.m4
 
 REC_CONF_DEPS = \
-    $(PROG_CONF_DEPS)                           \
+    $(PROG_CONF_DEPS)                               \
+    $(top_srcdir)/m4/tlog/rec_common_conf_schema.m4 \
     $(top_srcdir)/m4/tlog/rec_conf_schema.m4
 
 REC_SESSION_CONF_DEPS = \
     $(PROG_CONF_DEPS)                                   \
+    $(top_srcdir)/m4/tlog/rec_common_conf_schema.m4     \
     $(top_srcdir)/m4/tlog/rec_session_conf_schema.m4
 
 PLAY_CONF_DEPS = \

@@ -24,6 +24,8 @@ dist_noinst_DATA = \
     conf_origin.m4              \
     man.m4                      \
     misc.m4                     \
+    conf_schema.m4              \
     play_conf_schema.m4         \
+    rec_common_conf_schema.m4   \
     rec_conf_schema.m4          \
     rec_session_conf_schema.m4
