@@ -75,7 +75,7 @@ rec_conf_cmd.c: rec_conf_cmd.c.m4 $(REC_CONF_DEPS)
 	   --prefix-builtins $< > $@ || \
 	{ rm $@ && false; }
 
-rec_session_conf_cmd.c: rec_session_conf_cmd.c.m4 $(REC_CONF_DEPS)
+rec_session_conf_cmd.c: rec_session_conf_cmd.c.m4 $(REC_SESSION_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \
