@@ -34,16 +34,16 @@ MAN_DEPS = \
     $(top_srcdir)/m4/tlog/man.m4
 
 PLAY_MAN_DEPS = \
-	$(MAN_DEPS)                                    \
+    $(MAN_DEPS)                                 \
     $(top_srcdir)/m4/tlog/play_conf_schema.m4
 
 REC_MAN_DEPS = \
-	$(MAN_DEPS)                                 \
+    $(MAN_DEPS)                                     \
     $(top_srcdir)/m4/tlog/rec_common_conf_schema.m4 \
     $(top_srcdir)/m4/tlog/rec_conf_schema.m4
 
 REC_SESSION_MAN_DEPS = \
-	$(MAN_DEPS)                                     \
+    $(MAN_DEPS)                                         \
     $(top_srcdir)/m4/tlog/rec_common_conf_schema.m4     \
     $(top_srcdir)/m4/tlog/rec_session_conf_schema.m4
 
