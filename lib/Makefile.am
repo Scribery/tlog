@@ -45,33 +45,37 @@ dist_noinst_DATA = \
     rec_conf_cmd.c.m4           \
     rec_session_conf_cmd.c.m4
 
+PROG_CONF_DEPS = \
+    $(top_srcdir)/m4/tlog/misc.m4       \
+    $(top_srcdir)/m4/tlog/conf_cmd.m4
+
 REC_CONF_DEPS = \
-    $(top_srcdir)/m4/tlog/misc.m4               \
+    $(PROG_CONF_DEPS)                           \
     $(top_srcdir)/m4/tlog/rec_conf_schema.m4
 
 REC_SESSION_CONF_DEPS = \
-    $(top_srcdir)/m4/tlog/misc.m4                       \
+    $(PROG_CONF_DEPS)                                   \
     $(top_srcdir)/m4/tlog/rec_session_conf_schema.m4
 
 PLAY_CONF_DEPS = \
-    $(top_srcdir)/m4/tlog/misc.m4               \
+    $(PROG_CONF_DEPS)                           \
     $(top_srcdir)/m4/tlog/play_conf_schema.m4
 
-play_conf_cmd.c: play_conf_cmd.c.m4 $(top_srcdir)/m4/tlog/conf_cmd.m4 $(PLAY_CONF_DEPS)
+play_conf_cmd.c: play_conf_cmd.c.m4 $(PLAY_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=play \
 	   -D M4_PROG_SYM=play \
 	   --prefix-builtins $< > $@ || \
 	{ rm $@ && false; }
 
-rec_conf_cmd.c: rec_conf_cmd.c.m4 $(top_srcdir)/m4/tlog/conf_cmd.m4 $(REC_CONF_DEPS)
+rec_conf_cmd.c: rec_conf_cmd.c.m4 $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
 	   --prefix-builtins $< > $@ || \
 	{ rm $@ && false; }
 
-rec_session_conf_cmd.c: rec_session_conf_cmd.c.m4 $(top_srcdir)/m4/tlog/conf_cmd.m4 $(REC_CONF_DEPS)
+rec_session_conf_cmd.c: rec_session_conf_cmd.c.m4 $(REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \
