@@ -40,27 +40,7 @@ CLEANFILES = \
     $(TLOG_REC_SESSION_CONF_DEFAULT_NAME)   \
     $(TLOG_REC_SESSION_CONF_LOCAL_NAME)
 
-CONF_DEPS = \
-    $(srcdir)/tlog-prog.conf.m4             \
-    $(top_srcdir)/m4/tlog/conf_origin.m4    \
-    $(top_srcdir)/m4/tlog/conf_schema.m4    \
-    $(top_srcdir)/m4/tlog/misc.m4
-
-REC_CONF_DEPS = \
-    $(CONF_DEPS)                                    \
-    $(top_srcdir)/m4/tlog/rec_common_conf_schema.m4 \
-    $(top_srcdir)/m4/tlog/rec_conf_schema.m4
-
-REC_SESSION_CONF_DEPS = \
-    $(CONF_DEPS)                                        \
-    $(top_srcdir)/m4/tlog/rec_common_conf_schema.m4     \
-    $(top_srcdir)/m4/tlog/rec_session_conf_schema.m4
-
-PLAY_CONF_DEPS = \
-    $(CONF_DEPS)                                \
-    $(top_srcdir)/m4/tlog/play_conf_schema.m4
-
-$(TLOG_PLAY_CONF_LOCAL_NAME): $(PLAY_CONF_DEPS)
+$(TLOG_PLAY_CONF_LOCAL_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_PLAY_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=play \
 	   -D M4_PROG_SYM=play \
@@ -69,7 +49,7 @@ $(TLOG_PLAY_CONF_LOCAL_NAME): $(PLAY_CONF_DEPS)
 	   --prefix-builtins $< > $@ || \
 	{ rm $@ && false; }
 
-$(TLOG_REC_CONF_LOCAL_NAME): $(REC_CONF_DEPS)
+$(TLOG_REC_CONF_LOCAL_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
@@ -78,7 +58,7 @@ $(TLOG_REC_CONF_LOCAL_NAME): $(REC_CONF_DEPS)
 	   --prefix-builtins $< > $@ || \
 	{ rm $@ && false; }
 
-$(TLOG_REC_SESSION_CONF_LOCAL_NAME): $(REC_SESSION_CONF_DEPS)
+$(TLOG_REC_SESSION_CONF_LOCAL_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_REC_SESSION_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \
@@ -87,7 +67,7 @@ $(TLOG_REC_SESSION_CONF_LOCAL_NAME): $(REC_SESSION_CONF_DEPS)
 	   --prefix-builtins $< > $@ || \
 	{ rm $@ && false; }
 
-$(TLOG_PLAY_CONF_DEFAULT_NAME): $(PLAY_CONF_DEPS)
+$(TLOG_PLAY_CONF_DEFAULT_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_PLAY_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=play \
 	   -D M4_PROG_SYM=play \
@@ -95,7 +75,7 @@ $(TLOG_PLAY_CONF_DEFAULT_NAME): $(PLAY_CONF_DEPS)
 	   --prefix-builtins $< > $@ || \
 	{ rm $@ && false; }
 
-$(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
+$(TLOG_REC_CONF_DEFAULT_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
@@ -103,7 +83,7 @@ $(TLOG_REC_CONF_DEFAULT_NAME): $(REC_CONF_DEPS)
 	   --prefix-builtins $< > $@ || \
 	{ rm $@ && false; }
 
-$(TLOG_REC_SESSION_CONF_DEFAULT_NAME): $(REC_SESSION_CONF_DEPS)
+$(TLOG_REC_SESSION_CONF_DEFAULT_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_REC_SESSION_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \

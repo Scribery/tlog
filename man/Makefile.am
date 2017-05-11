@@ -27,27 +27,9 @@ dist_noinst_DATA = \
     tlog-rec-session.8.m4       \
     tlog-rec-session.conf.5.m4
 
-MAN_DEPS = \
-    $(top_srcdir)/m4/tlog/misc.m4           \
-    $(top_srcdir)/m4/tlog/conf_origin.m4    \
-    $(top_srcdir)/m4/tlog/conf_schema.m4    \
-    $(top_srcdir)/m4/tlog/man.m4
+TLOG_CONF_DEPS += $(top_srcdir)/m4/tlog/man.m4
 
-PLAY_MAN_DEPS = \
-    $(MAN_DEPS)                                 \
-    $(top_srcdir)/m4/tlog/play_conf_schema.m4
-
-REC_MAN_DEPS = \
-    $(MAN_DEPS)                                     \
-    $(top_srcdir)/m4/tlog/rec_common_conf_schema.m4 \
-    $(top_srcdir)/m4/tlog/rec_conf_schema.m4
-
-REC_SESSION_MAN_DEPS = \
-    $(MAN_DEPS)                                         \
-    $(top_srcdir)/m4/tlog/rec_common_conf_schema.m4     \
-    $(top_srcdir)/m4/tlog/rec_session_conf_schema.m4
-
-tlog-play.8: tlog-play.8.m4 $(PLAY_MAN_DEPS)
+tlog-play.8: tlog-play.8.m4 $(TLOG_PLAY_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_CONF_PATH="$(TLOG_PLAY_CONF_LOCAL_INST_PATH)" \
 	   -D M4_PROG_NAME=play \
@@ -56,7 +38,7 @@ tlog-play.8: tlog-play.8.m4 $(PLAY_MAN_DEPS)
 	   $< > $@ || \
 	{ rm $@ && false; }
 
-tlog-rec.8: tlog-rec.8.m4 $(REC_MAN_DEPS)
+tlog-rec.8: tlog-rec.8.m4 $(TLOG_REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_CONF_PATH="$(TLOG_REC_CONF_LOCAL_INST_PATH)" \
 	   -D M4_PROG_NAME=rec \
@@ -65,7 +47,7 @@ tlog-rec.8: tlog-rec.8.m4 $(REC_MAN_DEPS)
 	   $< > $@ || \
 	{ rm $@ && false; }
 
-tlog-rec-session.8: tlog-rec-session.8.m4 $(REC_SESSION_MAN_DEPS)
+tlog-rec-session.8: tlog-rec-session.8.m4 $(TLOG_REC_SESSION_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_CONF_PATH="$(TLOG_REC_SESSION_CONF_LOCAL_INST_PATH)" \
 	   -D M4_PROG_NAME=rec-session \
@@ -74,7 +56,7 @@ tlog-rec-session.8: tlog-rec-session.8.m4 $(REC_SESSION_MAN_DEPS)
 	   $< > $@ || \
 	{ rm $@ && false; }
 
-tlog-rec.conf.5: tlog-rec.conf.5.m4 $(REC_MAN_DEPS)
+tlog-rec.conf.5: tlog-rec.conf.5.m4 $(TLOG_REC_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
@@ -82,7 +64,7 @@ tlog-rec.conf.5: tlog-rec.conf.5.m4 $(REC_MAN_DEPS)
 	   $< > $@ || \
 	{ rm $@ && false; }
 
-tlog-rec-session.conf.5: tlog-rec-session.conf.5.m4 $(REC_SESSION_MAN_DEPS)
+tlog-rec-session.conf.5: tlog-rec-session.conf.5.m4 $(TLOG_REC_SESSION_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \
@@ -90,7 +72,7 @@ tlog-rec-session.conf.5: tlog-rec-session.conf.5.m4 $(REC_SESSION_MAN_DEPS)
 	   $< > $@ || \
 	{ rm $@ && false; }
 
-tlog-play.conf.5: tlog-play.conf.5.m4 $(PLAY_MAN_DEPS)
+tlog-play.conf.5: tlog-play.conf.5.m4 $(TLOG_PLAY_CONF_DEPS)
 	m4 -I $(top_srcdir)/m4/tlog \
 	   -D M4_PROG_NAME=play \
 	   -D M4_PROG_SYM=play \
