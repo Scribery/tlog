@@ -41,54 +41,54 @@ CLEANFILES = \
     $(TLOG_REC_SESSION_CONF_LOCAL_NAME)
 
 $(TLOG_PLAY_CONF_LOCAL_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_PLAY_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=play \
 	   -D M4_PROG_SYM=play \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 $(TLOG_REC_CONF_LOCAL_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_REC_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 $(TLOG_REC_SESSION_CONF_LOCAL_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_REC_SESSION_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \
 	   -D M4_CONF_TYPE=system-wide \
 	   -D M4_COMMENT_OUT=true \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 $(TLOG_PLAY_CONF_DEFAULT_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_PLAY_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=play \
 	   -D M4_PROG_SYM=play \
 	   -D M4_CONF_TYPE=default \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 $(TLOG_REC_CONF_DEFAULT_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_REC_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
 	   -D M4_CONF_TYPE=default \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 $(TLOG_REC_SESSION_CONF_DEFAULT_NAME): $(srcdir)/tlog-prog.conf.m4 $(TLOG_REC_SESSION_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \
 	   -D M4_CONF_TYPE=default \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 install-data-hook:

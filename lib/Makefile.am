@@ -48,45 +48,45 @@ dist_noinst_DATA = \
 TLOG_CONF_DEPS += $(top_srcdir)/m4/tlog/conf_cmd.m4
 
 play_conf_cmd.c: play_conf_cmd.c.m4 $(TLOG_PLAY_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=play \
 	   -D M4_PROG_SYM=play \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 rec_conf_cmd.c: rec_conf_cmd.c.m4 $(TLOG_REC_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 rec_session_conf_cmd.c: rec_session_conf_cmd.c.m4 $(TLOG_REC_SESSION_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 play_conf_validate.c: conf_validate.c.m4 $(TLOG_PLAY_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=play \
 	   -D M4_PROG_SYM=play \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 rec_conf_validate.c: conf_validate.c.m4 $(TLOG_REC_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 rec_session_conf_validate.c: conf_validate.c.m4 $(TLOG_REC_SESSION_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \
-	   --prefix-builtins $< > $@ || \
+	   $< > $@ || \
 	{ rm $@ && false; }
 
 BUILT_SOURCES = \

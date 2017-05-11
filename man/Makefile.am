@@ -30,53 +30,47 @@ dist_noinst_DATA = \
 TLOG_CONF_DEPS += $(top_srcdir)/m4/tlog/man.m4
 
 tlog-play.8: tlog-play.8.m4 $(TLOG_PLAY_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_CONF_PATH="$(TLOG_PLAY_CONF_LOCAL_INST_PATH)" \
 	   -D M4_PROG_NAME=play \
 	   -D M4_PROG_SYM=play \
-	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
 
 tlog-rec.8: tlog-rec.8.m4 $(TLOG_REC_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_CONF_PATH="$(TLOG_REC_CONF_LOCAL_INST_PATH)" \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
-	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
 
 tlog-rec-session.8: tlog-rec-session.8.m4 $(TLOG_REC_SESSION_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_CONF_PATH="$(TLOG_REC_SESSION_CONF_LOCAL_INST_PATH)" \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \
-	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
 
 tlog-rec.conf.5: tlog-rec.conf.5.m4 $(TLOG_REC_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=rec \
 	   -D M4_PROG_SYM=rec \
-	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
 
 tlog-rec-session.conf.5: tlog-rec-session.conf.5.m4 $(TLOG_REC_SESSION_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=rec-session \
 	   -D M4_PROG_SYM=rec_session \
-	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
 
 tlog-play.conf.5: tlog-play.conf.5.m4 $(TLOG_PLAY_CONF_DEPS)
-	m4 -I $(top_srcdir)/m4/tlog \
+	m4 $(M4FLAGS) \
 	   -D M4_PROG_NAME=play \
 	   -D M4_PROG_SYM=play \
-	   --prefix-builtins \
 	   $< > $@ || \
 	{ rm $@ && false; }
 
