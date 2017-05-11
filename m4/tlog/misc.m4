@@ -96,3 +96,30 @@ m4_dnl
 m4_dnl      $1  The text to upper-case.
 m4_dnl
 m4_define(`m4_upcase', `m4_translit(`$1', `a-z', `A-Z')')m4_dnl
+m4_dnl
+m4_dnl Shift N arguments.
+m4_dnl Arguments:
+m4_dnl
+m4_dnl      $1      Number of arguments to shift
+m4_dnl      $@      The arguments to shift
+m4_dnl
+m4_define(`m4_shiftn',
+          `m4_ifelse(`$#', `0', ,
+                     `$#', `1', ,
+                     `m4_ifelse(m4_eval(`$1'), `', `m4_shift($@)',
+                                m4_eval(`$1'), `0', `m4_shift($@)',
+                                `m4_shiftn(m4_decr(`$1'), m4_shift(m4_shift($@)))')')')m4_dnl
+m4_dnl
+m4_dnl Replace specific strings with another string, otherwise don't modify.
+m4_dnl Arguments:
+m4_dnl
+m4_dnl      $1      The string to check and replace
+m4_dnl      $N*2    The Nth string to check against
+m4_dnl      $N*2+1  The Nth string replacement
+m4_dnl
+m4_define(`m4_repl_cases',
+          `m4_ifelse(`$#', `0', ,
+                     `$#', `1', `$1',
+                     `$#', `2', `m4_ifelse(`$1', `$2', `', `$1')',
+                     `m4_ifelse(`$1', `$2', `$3',
+                                `m4_repl_cases(`$1', m4_shiftn(3, $@))')')')m4_dnl

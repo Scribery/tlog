@@ -28,7 +28,8 @@ dist_noinst_DATA = \
     tlog-rec-session.conf.5.m4
 
 MAN_DEPS = \
-    $(top_srcdir)/m4/tlog/misc.m4   \
+    $(top_srcdir)/m4/tlog/misc.m4           \
+    $(top_srcdir)/m4/tlog/conf_origin.m4    \
     $(top_srcdir)/m4/tlog/man.m4
 
 PLAY_MAN_DEPS = \

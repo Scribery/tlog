@@ -41,7 +41,8 @@ CLEANFILES = \
     $(TLOG_REC_SESSION_CONF_LOCAL_NAME)
 
 CONF_DEPS = \
-    $(srcdir)/tlog-prog.conf.m4     \
+    $(srcdir)/tlog-prog.conf.m4             \
+    $(top_srcdir)/m4/tlog/conf_origin.m4    \
     $(top_srcdir)/m4/tlog/misc.m4
 
 REC_CONF_DEPS = \

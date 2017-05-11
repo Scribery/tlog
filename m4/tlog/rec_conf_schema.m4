@@ -38,7 +38,7 @@ m4_dnl Arguments:
 m4_dnl
 m4_dnl      $1 Container prefix (`' for root)
 m4_dnl      $2 Parameter name
-m4_dnl      $3 Parameter origin, one of "file", "env", "name", "opts", or "args"
+m4_dnl      $3 Parameter origin range (see conf_origin.m4)
 m4_dnl      $4 Type, must be an invocation of M4_TYPE_*.
 m4_dnl      $5 `true' if has default value, `false' otherwise
 m4_dnl      $6 Option letter
@@ -71,41 +71,41 @@ m4_dnl Arguments:
 m4_dnl
 m4_dnl      $@ Default values
 m4_dnl
-M4_PARAM(`', `args', `args',
+M4_PARAM(`', `args', `args-',
          `M4_TYPE_STRING_ARRAY()', false,
          `', `', `',
          `M4_LINES(`Non-option positional command-line arguments.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `help', `opts',
+M4_PARAM(`', `help', `opts-',
          `M4_TYPE_BOOL(false)', true,
          `h', `', `Output a command-line usage message and exit',
          `M4_LINES(`')')m4_dnl
 m4_dnl
-M4_PARAM(`', `version', `opts',
+M4_PARAM(`', `version', `opts-',
          `M4_TYPE_BOOL(false)', true,
          `v', `', `Output version information and exit',
          `M4_LINES(`')')m4_dnl
 m4_dnl
-M4_PARAM(`', `shell', `file',
+M4_PARAM(`', `shell', `file-',
          `M4_TYPE_STRING(`/bin/bash')', true,
          `s', `=SHELL', `Spawn the specified SHELL',
          `M4_LINES(`The path to the shell executable that should be spawned.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `login', `name',
+M4_PARAM(`', `login', `name-',
          `M4_TYPE_BOOL()', false,
          `l', `', `Make the shell a login shell',
          `M4_LINES(`If set to true, the shell is signalled to act as a login shell.',
                    `This is done by prepending argv[0] of the shell',
                    `with a dash character.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `command', `opts',
+M4_PARAM(`', `command', `opts-',
          `M4_TYPE_BOOL()', false,
          `c', `', `Execute shell commands',
          `M4_LINES(`If set to true, tlog-rec passes the -c option to the shell,',
                    `followed by all the positional arguments, which specify the shell',
                    `commands to execute along with command name and its arguments.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `notice', `file',
+M4_PARAM(`', `notice', `file-',
          `M4_TYPE_STRING(`\nATTENTION! Your session is being recorded!\n\n')',
          true,
          `', `=TEXT', `Print TEXT message before starting recording',
@@ -113,14 +113,14 @@ M4_PARAM(`', `notice', `file',
                    `recording and the user shell. Can be used to warn',
                    `the user that the session is recorded.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `latency', `file',
+M4_PARAM(`', `latency', `file-',
          `M4_TYPE_INT(10, 1)', true,
          `', `=SECONDS', `Cache captured data SECONDS seconds before logging',
          `M4_LINES(`The data which does not exceed maximum payload',
                    `stays in memory and is not logged until this number of',
                    `seconds elapses.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `payload', `file',
+M4_PARAM(`', `payload', `file-',
          `M4_TYPE_INT(2048, 32)', true,
          `', `=BYTES', `Limit encoded data to BYTES bytes',
          `M4_LINES(`Maximum encoded data (payload) size per message, bytes.',
@@ -131,24 +131,24 @@ m4_dnl
 m4_dnl
 M4_CONTAINER(`', `/log', `Logged data set')m4_dnl
 m4_dnl
-M4_PARAM(`/log', `input', `file',
+M4_PARAM(`/log', `input', `file-',
          `M4_TYPE_BOOL(false)', true,
          `', `[=BOOL]', `Enable/disable logging user input',
          `M4_LINES(`If specified as true, user input is logged.')')m4_dnl
 m4_dnl
-M4_PARAM(`/log', `output', `file',
+M4_PARAM(`/log', `output', `file-',
          `M4_TYPE_BOOL(true)', true,
          `', `[=BOOL]', `Enable/disable logging program output',
          `M4_LINES(`If specified as true, terminal output is logged.')')m4_dnl
 m4_dnl
-M4_PARAM(`/log', `window', `file',
+M4_PARAM(`/log', `window', `file-',
          `M4_TYPE_BOOL(true)', true,
          `', `[=BOOL]', `Enable/disable logging terminal window size changes',
          `M4_LINES(`If specified as true, terminal window size changes are logged.')')m4_dnl
 m4_dnl
 m4_dnl
 m4_dnl
-M4_PARAM(`', `writer', `file',
+M4_PARAM(`', `writer', `file-',
          `M4_TYPE_CHOICE(`syslog', `syslog', `file')', true,
          `w', `=STRING', `Use STRING log writer (syslog/file, default syslog)',
          `M4_LINES(`The type of "log writer" to use for logging. The writer needs',
@@ -158,7 +158,7 @@ m4_dnl
 m4_dnl
 M4_CONTAINER(`', `/file', `File writer')m4_dnl
 m4_dnl
-M4_PARAM(`/file', `path', `file',
+M4_PARAM(`/file', `path', `file-',
          `M4_TYPE_STRING()', false,
          `', `=FILE', `Log to FILE file',
          `M4_LINES(`The "file" writer log file path.')')m4_dnl
@@ -167,7 +167,7 @@ m4_dnl
 m4_dnl
 M4_CONTAINER(`', `/syslog', `Syslog writer')m4_dnl
 m4_dnl
-M4_PARAM(`/syslog', `facility', `file',
+M4_PARAM(`/syslog', `facility', `file-',
          `M4_TYPE_CHOICE(`authpriv',
                          `auth',
                          `authpriv',
@@ -193,7 +193,7 @@ M4_PARAM(`/syslog', `facility', `file',
          `', `=STRING', `Log with STRING syslog facility',
          `M4_LINES(`Syslog facility the "syslog" writer should use for the messages.')')m4_dnl
 m4_dnl
-M4_PARAM(`/syslog', `priority', `file',
+M4_PARAM(`/syslog', `priority', `file-',
          `M4_TYPE_CHOICE(`info',
                          `emerg',
                          `alert',

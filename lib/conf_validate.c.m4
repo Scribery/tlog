@@ -1,4 +1,5 @@
 m4_include(`misc.m4')m4_dnl
+m4_include(`conf_origin.m4')m4_dnl
 /*
  * Tlog-M4_PROG_NAME() JSON configuration validation.
  *
@@ -158,7 +159,7 @@ m4_define(
             `
                 m4_printl(
                    `',
-                   `        if (origin >= TLOG_CONF_ORIGIN_'m4_translit(`$3', `a-z', `A-Z')` &&',
+                   `        if (origin >= 'm4_conf_origin_sym(m4_conf_origin_range_min(`$3'))` &&',
                    `            strcmp(name, "$2") == 0) {')
                 $4
                 m4_printl(

@@ -21,6 +21,7 @@ m4_dnl Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  US
 m4_dnl
 m4_dnl
 m4_include(`misc.m4')m4_dnl
+m4_include(`conf_origin.m4')m4_dnl
 m4_dnl
 m4_divert(-1)
 m4_define(
@@ -145,8 +146,8 @@ m4_define(
             M4_MAN_CONF_PREFIX(),
             `
                 m4_ifelse(
-                    `$3',
-                    `file',
+                    m4_conf_origin_is_in_range(`file', `$3'),
+                    1,
                     `
                         m4_pushdef(`M4_MAN_CONF_TYPE_EXPAND_TO', `sig')
                         m4_printl(`.TP')
@@ -319,9 +320,8 @@ m4_define(
             M4_MAN_OPTS_PREFIX(),
             `
                 m4_ifelse(
-                    `$3',
-                    `args',
-                    ,
+                    m4_conf_origin_is_in_range(`opts', `$3'),
+                    1,
                     `
                         m4_printl(`.TP')
                         m4_print(

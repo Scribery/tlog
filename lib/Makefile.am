@@ -46,7 +46,8 @@ dist_noinst_DATA = \
     rec_session_conf_cmd.c.m4
 
 PROG_CONF_DEPS = \
-    $(top_srcdir)/m4/tlog/misc.m4       \
+    $(top_srcdir)/m4/tlog/misc.m4           \
+    $(top_srcdir)/m4/tlog/conf_origin.m4    \
     $(top_srcdir)/m4/tlog/conf_cmd.m4
 
 REC_CONF_DEPS = \

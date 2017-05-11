@@ -38,7 +38,7 @@ m4_dnl Arguments:
 m4_dnl
 m4_dnl      $1 Container prefix (`' for root)
 m4_dnl      $2 Parameter name
-m4_dnl      $3 Parameter origin, one of "file", "env", "name", "opts", or "args"
+m4_dnl      $3 Parameter origin range (see conf_origin.m4)
 m4_dnl      $4 Type, must be an invocation of M4_TYPE_*.
 m4_dnl      $5 `true' if has default value, `false' otherwise
 m4_dnl      $6 Option letter
@@ -71,28 +71,28 @@ m4_dnl Arguments:
 m4_dnl
 m4_dnl      $@ Default values
 m4_dnl
-M4_PARAM(`', `args', `args',
+M4_PARAM(`', `args', `args-',
          `M4_TYPE_STRING_ARRAY()', false,
          `', `', `',
          `M4_LINES(`Non-option positional command-line arguments.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `help', `opts',
+M4_PARAM(`', `help', `opts-',
          `M4_TYPE_BOOL(false)', true,
          `h', `', `Output a command-line usage message and exit',
          `M4_LINES(`')')m4_dnl
 m4_dnl
-M4_PARAM(`', `version', `opts',
+M4_PARAM(`', `version', `opts-',
          `M4_TYPE_BOOL(false)', true,
          `v', `', `Output version information and exit',
          `M4_LINES(`')')m4_dnl
 m4_dnl
-M4_PARAM(`', `follow', `opts',
+M4_PARAM(`', `follow', `opts-',
          `M4_TYPE_BOOL(false)', true,
          `f', `', `Wait for and play back new messages',
          `M4_LINES(`If true, then when the end of the recorded session is reached, wait',
                    `for new messages to be added and play them back when they appear.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `reader', `file',
+M4_PARAM(`', `reader', `file-',
          `M4_TYPE_CHOICE(`file', `file', `es')', true,
          `r', `=STRING', `Use STRING log reader (file/es, default file)',
          `M4_LINES(`The type of "log reader" to use for retrieving log messages. The chosen',
@@ -102,7 +102,7 @@ m4_dnl
 m4_dnl
 M4_CONTAINER(`', `/file', `File reader')m4_dnl
 m4_dnl
-M4_PARAM(`/file', `path', `file',
+M4_PARAM(`/file', `path', `file-',
          `M4_TYPE_STRING()', false,
          `', `=FILE', `Read log from FILE file',
          `M4_LINES(`The "file" reader log file path.')')m4_dnl
@@ -111,13 +111,13 @@ m4_dnl
 m4_dnl
 M4_CONTAINER(`', `/es', `ElasticSearch reader')m4_dnl
 m4_dnl
-M4_PARAM(`/es', `baseurl', `file',
+M4_PARAM(`/es', `baseurl', `file-',
          `M4_TYPE_STRING()', false,
          `', `=STRING', `ElasticSearch URL without query or fragment parts',
          `M4_LINES(`The base URL to request ElasticSearch through. Should not',
                    `contain the query (?...) or fragment (#...) parts.')')m4_dnl
 m4_dnl
-M4_PARAM(`/es', `query', `file',
+M4_PARAM(`/es', `query', `file-',
          `M4_TYPE_STRING()', false,
          `', `=STRING', `ElasticSearch query',
          `M4_LINES(`The query string to send to ElasticSearch')')m4_dnl

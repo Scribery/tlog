@@ -21,6 +21,7 @@ m4_dnl Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  US
 m4_dnl
 m4_dnl
 m4_include(`misc.m4')m4_dnl
+m4_include(`conf_origin.m4')m4_dnl
 m4_divert(-1)
 
 m4_dnl
@@ -38,9 +39,8 @@ m4_define(
             ,
             `
                 m4_ifelse(
-                    `$3',
-                    `args',
-                    ,
+                    m4_conf_origin_is_in_range(`opts', `$3'),
+                    1,
                     `
                         m4_print(
                             `        OPT',
@@ -70,9 +70,8 @@ m4_define(
             `',
             `
                 m4_ifelse(
-                    `$3',
-                    `args',
-                    ,
+                    m4_conf_origin_is_in_range(`opts', `$3'),
+                    1,
                     `
                         m4_print(
                             `        OPT',
@@ -121,9 +120,8 @@ m4_define(
     `M4_CONF_CMD_SHORTOPTS_PARAM',
     `
         m4_ifelse(
-            `$3',
-            `args',
-            ,
+            m4_conf_origin_is_in_range(`opts', `$3'),
+            1,
             `
                 m4_ifelse(
                     `$6',
@@ -171,9 +169,8 @@ m4_define(
     `M4_CONF_CMD_LONGOPTS_PARAM',
     `
         m4_ifelse(
-            `$3',
-            `args',
-            ,
+            m4_conf_origin_is_in_range(`opts', `$3'),
+            1,
             `
                 m4_printl(
                    `        {',
@@ -248,9 +245,8 @@ m4_define(
             M4_PREFIX(),
             `
                 m4_ifelse(
-                    `$3',
-                    `args',
-                    ,
+                    m4_conf_origin_is_in_range(`opts', `$3'),
+                    1,
                     `
                         M4_CONF_CMD_HELP_OPTS_CONTAINER_PARAM_OPT(
                             m4_ifelse(`$6',,, `-$6`,' ')--m4_substr(m4_translit(`$1/$2', `/', `-'), 1)`$7',
@@ -422,9 +418,8 @@ m4_define(
     `M4_CONF_CMD_LOAD_ARGS_PARAM',
     `
         m4_ifelse(
-            `$3',
-            `args',
-            ,
+            m4_conf_origin_is_in_range(`opts', `$3'),
+            1,
             `
                 m4_print(
                    `        case OPT',
