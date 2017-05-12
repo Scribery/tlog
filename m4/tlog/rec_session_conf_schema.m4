@@ -21,9 +21,10 @@ m4_dnl You should have received a copy of the GNU General Public License
 m4_dnl along with tlog; if not, write to the Free Software
 m4_dnl Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 m4_dnl
+m4_include(`misc.m4')m4_dnl
 m4_include(`conf_schema.m4')m4_dnl
 m4_dnl
-M4_PARAM(`', `shell', `file-',
+M4_PARAM(`', `shell', `file-env',
          `M4_TYPE_STRING(`/bin/bash')', true,
          `s', `=SHELL', `Spawn the specified SHELL',
          `M4_LINES(`The path to the shell executable that should be spawned.')')m4_dnl
@@ -42,7 +43,7 @@ M4_PARAM(`', `command', `opts',
                    `followed by all the positional arguments, which specify the shell',
                    `commands to execute along with command name and its arguments.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `notice', `file-',
+M4_PARAM(`', `notice', `file-env',
          `M4_TYPE_STRING(`\nATTENTION! Your session is being recorded!\n\n')',
          true,
          `', `=TEXT', `Print TEXT message before starting recording',
@@ -50,5 +51,7 @@ M4_PARAM(`', `notice', `file-',
                    `recording and the user shell. Can be used to warn',
                    `the user that the session is recorded.')')m4_dnl
 m4_dnl
+m4_pushdef(`_M4_PARAM', `M4_PARAM(`$1', `$2', `$3env', m4_shiftn(3, $@))')m4_dnl
 m4_include(`rec_common_conf_schema.m4')m4_dnl
+m4_popdef(`_M4_PARAM')m4_dnl
 m4_dnl
