@@ -32,6 +32,7 @@ AM_CPPFLAGS = \
     -DTLOG_REC_SESSION_CONF_DEFAULT_INST_PATH='"$(TLOG_REC_SESSION_CONF_DEFAULT_INST_PATH)"'    \
     -DTLOG_REC_SESSION_CONF_LOCAL_BUILD_PATH='"$(TLOG_REC_SESSION_CONF_LOCAL_BUILD_PATH)"'      \
     -DTLOG_REC_SESSION_CONF_LOCAL_INST_PATH='"$(TLOG_REC_SESSION_CONF_LOCAL_INST_PATH)"'        \
+    -DTLOG_SESSION_LOCK_DIR='"@localstatedir@/run/tlog"'                                        \
     $(JSON_CFLAGS)                                                                              \
     $(LIBCURL_CPPFLAGS)
 
@@ -129,6 +130,7 @@ libtlog_la_SOURCES = \
     rec_session_conf.c          \
     rec_session_conf_cmd.c      \
     rec_session_conf_validate.c \
+    session.c                   \
     sink.c                      \
     source.c                    \
     syslog_json_writer.c        \
