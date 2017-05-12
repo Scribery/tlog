@@ -21,7 +21,7 @@ m4_dnl You should have received a copy of the GNU General Public License
 m4_dnl along with tlog; if not, write to the Free Software
 m4_dnl Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 m4_dnl
-m4_include(`conf_schema.m4')
+m4_include(`conf_schema.m4')m4_dnl
 m4_dnl
 M4_PARAM(`', `shell', `file-',
          `M4_TYPE_STRING(`/bin/bash')', true,
@@ -50,5 +50,5 @@ M4_PARAM(`', `notice', `file-',
                    `recording and the user shell. Can be used to warn',
                    `the user that the session is recorded.')')m4_dnl
 m4_dnl
-m4_include(`rec_common_conf_schema.m4')
+m4_include(`rec_common_conf_schema.m4')m4_dnl
 m4_dnl
