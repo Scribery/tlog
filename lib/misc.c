@@ -23,6 +23,8 @@
 #include <config.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <libgen.h>
 #include <string.h>
 #include <stdlib.h>
@@ -119,5 +121,38 @@ cleanup:
     free(prog_dir_copy);
     free(prog_dir);
     free(abs_prog_path);
+    return grc;
+}
+
+tlog_grc
+tlog_unpriv_execv(struct tlog_errs **perrs, const char *path, char **argv)
+{
+    tlog_grc grc;
+    uid_t uid = getuid();
+    gid_t gid = getgid();
+
+    /* Drop the possibly-privileged EGID permanently */
+    if (setresgid(gid, gid, gid) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed dropping EGID");
+        goto cleanup;
+    }
+
+    /* Drop the possibly-privileged EUID permanently */
+    if (setresuid(uid, uid, uid) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed dropping EUID");
+        goto cleanup;
+    }
+
+    /* Exec the program */
+    execv(path, argv);
+    grc = TLOG_GRC_ERRNO;
+    tlog_errs_pushc(perrs, grc);
+    tlog_errs_pushf(perrs, "Failed executing %s", path);
+
+cleanup:
     return grc;
 }

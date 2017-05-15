@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <tlog/errs.h>
 #include <tlog/grc.h>
 
 /** Tlog version and license information */
@@ -94,8 +95,9 @@ tlog_size_digits(size_t n)
  * and if running from the build tree, or at the installed location.
  *
  * @param ppath             Location for the retrieved absolute path.
- * @param prog_path         Path to a program relative to which the build_rel_path
- *                          is specified, to use if running from the build tree.
+ * @param prog_path         Path to a program relative to which the
+ *                          build_rel_path is specified, to use if running
+ *                          from the build tree.
  * @param build_rel_path    Build tree path relative to prog_path, to use if
  *                          running from the build tree.
  * @param inst_abs_path     Absolute installation path to use if not running
@@ -108,5 +110,17 @@ extern tlog_grc tlog_build_or_inst_path(char          **ppath,
                                         const char     *prog_path,
                                         const char     *build_rel_path,
                                         const char     *inst_abs_path);
+
+/**
+ * Execute a file after dropping the effective UID/GID.
+ *
+ * @param perrs     Location for the error stack. Can be NULL.
+ * @param path      Path to the program to execute.
+ * @param argv      ARGV array for the executed program.
+ *
+ * @return Global return code.
+ */
+extern tlog_grc tlog_unpriv_execv(struct tlog_errs **perrs,
+                                  const char *path, char **argv);
 
 #endif /* _TLOG_MISC_H */
