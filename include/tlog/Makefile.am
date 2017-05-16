@@ -48,9 +48,11 @@ tlog_HEADERS = \
     play_conf_cmd.h             \
     play_conf_validate.h        \
     rc.h                        \
+    rec.h                       \
     rec_conf.h                  \
     rec_conf_cmd.h              \
     rec_conf_validate.h         \
+    rec_item.h                  \
     rec_session_conf.h          \
     rec_session_conf_cmd.h      \
     rec_session_conf_validate.h \

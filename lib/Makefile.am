@@ -124,9 +124,11 @@ libtlog_la_SOURCES = \
     play_conf_cmd.c             \
     play_conf_validate.c        \
     rc.c                        \
+    rec.c                       \
     rec_conf.c                  \
     rec_conf_cmd.c              \
     rec_conf_validate.c         \
+    rec_item.c                  \
     rec_session_conf.c          \
     rec_session_conf_cmd.c      \
     rec_session_conf_validate.c \
