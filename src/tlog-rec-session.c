@@ -19,46 +19,21 @@
  */
 
 #include <config.h>
-#include <pty.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <signal.h>
 #include <unistd.h>
 #include <limits.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <sys/mman.h>
-#include <semaphore.h>
-#include <pwd.h>
-#include <grp.h>
-#include <netdb.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
-#include <termios.h>
-#include <stdbool.h>
-#include <poll.h>
-#include <libgen.h>
 #include <stdio.h>
-#include <syslog.h>
-#include <time.h>
 #include <locale.h>
 #include <langinfo.h>
-#include <tlog/syslog_json_writer.h>
-#include <tlog/fd_json_writer.h>
-#include <tlog/json_sink.h>
-#include <tlog/source.h>
-#include <tlog/syslog_misc.h>
-#include <tlog/timespec.h>
-#include <tlog/delay.h>
 #include <tlog/rc.h>
-#include <tlog/session.h>
-#include <tlog/tap.h>
 #include <tlog/rec.h>
 #include <tlog/rec_session_conf.h>
-#include <tlog/rec_session_conf_cmd.h>
+#include <tlog/misc.h>
 
 /**
  * Let GNU TLS know we don't need implicit global initialization, which opens
