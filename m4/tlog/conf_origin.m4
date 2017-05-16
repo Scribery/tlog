@@ -41,17 +41,17 @@ m4_dnl
 m4_define(`m4_conf_origin_max', `args')
 
 m4_dnl
-m4_dnl Expand to the origin value, or -1 for invalid origin.
+m4_dnl Expand to the origin value, or 0 for invalid origin.
 m4_dnl
 m4_dnl      $1 An origin
 m4_dnl
 m4_define(`m4_conf_origin_val',
-          `m4_ifelse(`$1', `file',  0,
-                     `$1', `env',   1,
-                     `$1', `name',  2,
-                     `$1', `opts',  3,
-                     `$1', `args',  4,
-                     -1)')
+          `m4_ifelse(`$1', `file',  1,
+                     `$1', `env',   2,
+                     `$1', `name',  3,
+                     `$1', `opts',  4,
+                     `$1', `args',  5,
+                     0)')
 
 m4_dnl
 m4_dnl Expand to the origin C symbol, or to TLOG_CONF_ORIGIN_UNKNOWN for
