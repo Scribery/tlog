@@ -647,7 +647,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     tlog_errs_print(stderr, *perrs);
     tlog_errs_destroy(perrs);
 
-    /* Read and output the notice */
+    /* Read and output the notice, if any */
     if (json_object_object_get_ex(conf, "notice", &obj)) {
         fprintf(stderr, "%s", json_object_get_string(obj));
     }

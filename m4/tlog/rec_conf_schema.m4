@@ -42,14 +42,6 @@ M4_PARAM(`', `command', `opts-',
                    `followed by all the positional arguments, which specify the shell',
                    `commands to execute along with command name and its arguments.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `notice', `file-',
-         `M4_TYPE_STRING(`\nATTENTION! Your session is being recorded!\n\n')',
-         true,
-         `', `=TEXT', `Print TEXT message before starting recording',
-         `M4_LINES(`A message which will be printed before starting',
-                   `recording and the user shell. Can be used to warn',
-                   `the user that the session is recorded.')')m4_dnl
-m4_dnl
 m4_pushdef(`_M4_PARAM', `M4_PARAM($@)')m4_dnl
 m4_include(`rec_common_conf_schema.m4')m4_dnl
 m4_popdef(`_M4_PARAM')m4_dnl
