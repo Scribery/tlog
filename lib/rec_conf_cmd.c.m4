@@ -41,8 +41,7 @@ m4_generated_warning(` * ')m4_dnl
 
 static const char *tlog_rec_conf_cmd_help_fmt =
     "Usage: %1$s [OPTION...] [CMD_FILE [CMD_ARG...]]\n"
-    "   or: %1$s -c [OPTION...] CMD_STRING [CMD_NAME [CMD_ARG...]]\n"
-    "Start a shell and log terminal I/O.\n"
+    "Record terminal I/O of a program or a user shell.\n"
 M4_CONF_CMD_HELP_OPTS()m4_dnl
     "";
 
@@ -55,11 +54,9 @@ tlog_rec_conf_cmd_load(struct tlog_errs **perrs,
 {
     tlog_grc grc;
     char *progpath = NULL;
-    const char *p;
     char *progname = NULL;
     char *help = NULL;
     struct json_object *conf = NULL;
-    struct json_object *val = NULL;
 
     assert(phelp != NULL);
     assert(pconf != NULL);
@@ -74,7 +71,7 @@ tlog_rec_conf_cmd_load(struct tlog_errs **perrs,
         goto cleanup;
     }
 
-    /* Extract program name, noting login dash prefix */
+    /* Extract program name */
     progpath = strdup(argv[0]);
     if (progpath == NULL) {
         grc = TLOG_GRC_ERRNO;
@@ -82,25 +79,7 @@ tlog_rec_conf_cmd_load(struct tlog_errs **perrs,
         tlog_errs_pushs(perrs, "Failed allocating a copy of program path");
         goto cleanup;
     }
-    p = basename(progpath);
-    if (p[0] == m4_singlequote(-)) {
-        p++;
-        val = json_object_new_boolean(true);
-        if (val == NULL) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating login flag");
-            goto cleanup;
-        }
-        grc = tlog_json_object_object_add_path(conf, "login", val);
-        if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed storing login flag");
-            goto cleanup;
-        }
-        val = NULL;
-    }
-    progname = strdup(p);
+    progname = strdup(basename(progpath));
     if (progname == NULL) {
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(perrs, grc);
@@ -140,7 +119,6 @@ cleanup:
     free(help);
     free(progname);
     free(progpath);
-    json_object_put(val);
     json_object_put(conf);
     return grc;
 }

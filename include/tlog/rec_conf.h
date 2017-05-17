@@ -49,20 +49,21 @@ extern tlog_grc tlog_rec_conf_load(struct tlog_errs **perrs,
                                    int argc, char **argv);
 
 /**
- * Get shell parameters from a loaded tlog-rec configuration JSON object.
+ * Get the path and the ARGV array of a program to record from a loaded
+ * tlog-rec configuration JSON object.
  *
  * @param perrs Location for the error stack. Can be NULL.
  * @param conf  Tlog-rec configuration JSON object.
- * @param ppath Location for the shell path pointer, references the
+ * @param ppath Location for the program path pointer, references the
  *              configuration object.
- * @param pargv Location for the NULL-terminated shell argv array, to be
+ * @param pargv Location for the NULL-terminated program ARGV array, to be
  *              freed, both the array and the elements.
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_rec_conf_get_shell(struct tlog_errs **perrs,
-                                        struct json_object *conf,
-                                        const char **ppath,
-                                        char ***pargv);
+extern tlog_grc tlog_rec_conf_get_prog(struct tlog_errs **perrs,
+                                       struct json_object *conf,
+                                       const char **ppath,
+                                       char ***pargv);
 
 #endif /* _TLOG_REC_CONF_H */

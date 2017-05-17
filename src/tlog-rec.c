@@ -56,8 +56,8 @@ main(int argc, char **argv)
     char *cmd_help = NULL;
     int std_fds[] = {0, 1, 2};
     const char *charset;
-    const char *shell_path;
-    char **shell_argv = NULL;
+    const char *prog_path;
+    char **prog_argv = NULL;
     int status = 1;
     int signal = 0;
 
@@ -120,28 +120,16 @@ main(int argc, char **argv)
         goto cleanup;
     }
 
-    /* Prepare shell command line */
-    grc = tlog_rec_conf_get_shell(&errs, conf,
-                                  &shell_path, &shell_argv);
+    /* Get the program to record */
+    grc = tlog_rec_conf_get_prog(&errs, conf,
+                                  &prog_path, &prog_argv);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(&errs, "Failed building shell command line");
-        goto cleanup;
-    }
-
-    /*
-     * Set the SHELL environment variable to the actual shell. Otherwise
-     * programs trying to spawn the user's shell would start tlog-rec-session
-     * instead.
-     */
-    if (setenv("SHELL", shell_path, /*overwrite=*/1) != 0) {
-        grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(&errs, grc);
-        tlog_errs_pushs(&errs, "Failed to set SHELL environment variable");
+        tlog_errs_pushs(&errs, "Failed retrieving recorded program command line");
         goto cleanup;
     }
 
     /* Run */
-    grc = tlog_rec(&errs, euid, egid, cmd_help, conf, shell_path, shell_argv,
+    grc = tlog_rec(&errs, euid, egid, cmd_help, conf, prog_path, prog_argv,
                    std_fds[0], std_fds[1], std_fds[2],
                    &status, &signal);
 
@@ -150,13 +138,13 @@ cleanup:
     /* Print error stack, if any */
     tlog_errs_print(stderr, errs);
 
-    /* Free shell argv list */
-    if (shell_argv != NULL) {
+    /* Free recorded program argv list */
+    if (prog_argv != NULL) {
         size_t i;
-        for (i = 0; shell_argv[i] != NULL; i++) {
-            free(shell_argv[i]);
+        for (i = 0; prog_argv[i] != NULL; i++) {
+            free(prog_argv[i]);
         }
-        free(shell_argv);
+        free(prog_argv);
     }
 
     json_object_put(conf);

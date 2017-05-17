@@ -28,6 +28,9 @@
 #include <tlog/json_misc.h>
 #include <tlog/rc.h>
 #include <tlog/misc.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <unistd.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <string.h>
@@ -158,21 +161,6 @@ tlog_rec_conf_env_load(struct tlog_errs **perrs, struct json_object **pconf)
             goto cleanup;
         }
         json_object_put(overlay);
-        overlay = NULL;
-    }
-
-    /* Load the shell */
-    val = getenv("TLOG_REC_SHELL");
-    if (val != NULL) {
-        overlay = json_object_new_string(val);
-        if (overlay == NULL) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating shell path object");
-            goto cleanup;
-        }
-        /* TODO Handle failure with newer JSON-C */
-        json_object_object_add(conf, "shell", overlay);
         overlay = NULL;
     }
 
@@ -317,112 +305,90 @@ cleanup:
 }
 
 tlog_grc
-tlog_rec_conf_get_shell(struct tlog_errs **perrs,
-                        struct json_object *conf,
-                        const char **ppath,
-                        char ***pargv)
+tlog_rec_conf_get_prog(struct tlog_errs **perrs,
+                       struct json_object *conf,
+                       const char **ppath,
+                       char ***pargv)
 {
     tlog_grc grc;
-    struct json_object *obj;
     struct json_object *args;
-    bool login;
-    bool command;
+    size_t argc;
     const char *path;
-    char *name = NULL;
-    char *buf = NULL;
     char **argv = NULL;
-    size_t argi;
-    char *arg = NULL;
-    int i;
+    size_t argi = 0;
+    struct json_object *obj;
+    const char *arg;
+    char *arg_copy = NULL;
 
-    /* Read the login flag */
-    login = json_object_object_get_ex(conf, "login", &obj) &&
-            json_object_get_boolean(obj);
-
-    /* Read the shell path */
-    if (!json_object_object_get_ex(conf, "shell", &obj)) {
-        tlog_errs_pushs(perrs, "Shell is not specified");
-        grc = TLOG_RC_FAILURE;
-        goto cleanup;
-    }
-    path = json_object_get_string(obj);
-
-    /* Format shell name */
-    buf = strdup(path);
-    if (buf == NULL) {
-        grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed duplicating shell path");
-        goto cleanup;
-    }
-    if (login) {
-        const char *str = basename(buf);
-        name = malloc(strlen(str) + 2);
-        if (name == NULL) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed allocating shell name");
-            goto cleanup;
-        }
-        name[0] = '-';
-        strcpy(name + 1, str);
-        free(buf);
-    } else {
-        name = buf;
-    }
-    buf = NULL;
-
-    /* Read the command flag */
-    command = json_object_object_get_ex(conf, "command", &obj) &&
-              json_object_get_boolean(obj);
-
-    /* Read and check the positional arguments */
+    /* Read the positional arguments */
     if (!json_object_object_get_ex(conf, "args", &args)) {
         tlog_errs_pushs(perrs, "Positional arguments are not specified");
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
-    if (command && json_object_array_length(args) == 0) {
-        tlog_errs_pushs(perrs, "Command string is not specified");
-        grc = TLOG_RC_FAILURE;
-        goto cleanup;
+    argc = json_object_array_length(args);
+
+    /* If we have positional arguments */
+    if (argc > 0) {
+        /* Extract the first argument */
+        obj = json_object_array_get_idx(args, argi);
+        arg = json_object_get_string(obj);
+    } else {
+        /* Try to use shell from environment as the first argument */
+        arg = getenv("SHELL");
+        /* If it's not set */
+        if (arg == NULL) {
+            struct passwd *passwd;
+            /* Use user shell from libc as the first argument */
+            passwd = getpwuid(getuid());
+            if (passwd == NULL) {
+                if (errno == 0) {
+                    grc = TLOG_RC_FAILURE;
+                    tlog_errs_pushs(perrs, "User entry not found");
+                } else {
+                    grc = TLOG_GRC_ERRNO;
+                    tlog_errs_pushc(perrs, grc);
+                    tlog_errs_pushs(perrs, "Failed retrieving user entry");
+                }
+                goto cleanup;
+            }
+            arg = passwd->pw_shell;
+        }
+        argc = 1;
     }
 
-    /* Create and fill argv list */
-    argv = calloc(1 + (command ? 1 : 0) + json_object_array_length(args) + 1,
-                  sizeof(*argv));
+    /* Set first argument as the program path */
+    path = arg;
+
+    /* Allocate ARGV array */
+    argv = calloc(argc + 1, sizeof(*argv));
     if (argv == NULL) {
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed allocating argv list");
+        tlog_errs_pushs(perrs,
+                        "Failed allocating recorded program ARGV array");
         goto cleanup;
     }
-    argi = 0;
-    argv[argi++] = name;
-    name = NULL;
-    if (command) {
-        arg = strdup("-c");
-        if (arg == NULL) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed allocating shell argv[#%zu]", argi);
-            goto cleanup;
-        }
-        argv[argi++] = arg;
-        arg = NULL;
-    }
-    for (i = 0; i < json_object_array_length(args); i++, argi++) {
-        obj = json_object_array_get_idx(args, i);
-        arg = strdup(json_object_get_string(obj));
-        if (arg == NULL) {
+
+    /* Copy the arguments to the ARGV array */
+    while (true) {
+        arg_copy = strdup(arg);
+        if (arg_copy == NULL) {
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushf(perrs,
-                            "Failed allocating shell argv[#%zu]", argi);
+                            "Failed allocating recorded program argv[#%zu]",
+                            argi);
             goto cleanup;
         }
-        argv[argi] = arg;
-        arg = NULL;
+        argv[argi] = arg_copy;
+        arg_copy = NULL;
+        argi++;
+        if (argi >= argc) {
+            break;
+        }
+        obj = json_object_array_get_idx(args, argi);
+        arg = json_object_get_string(obj);
     }
 
     /* Output results */
@@ -431,15 +397,12 @@ tlog_rec_conf_get_shell(struct tlog_errs **perrs,
     argv = NULL;
     grc = TLOG_RC_OK;
 cleanup:
-
-    free(arg);
+    free(arg_copy);
     if (argv != NULL) {
         for (argi = 0; argv[argi] != NULL; argi++) {
             free(argv[argi]);
         }
         free(argv);
     }
-    free(name);
-    free(buf);
     return grc;
 }
