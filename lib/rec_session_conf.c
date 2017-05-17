@@ -180,6 +180,14 @@ tlog_rec_session_conf_env_load(struct tlog_errs **perrs,
         overlay = NULL;
     }
 
+    /* Validate the config */
+    grc = tlog_rec_session_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ENV);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushf(perrs,
+                        "Failed validating environment configuration");
+        goto cleanup;
+    }
+
     *pconf = conf;
     conf = NULL;
     grc = TLOG_RC_OK;
