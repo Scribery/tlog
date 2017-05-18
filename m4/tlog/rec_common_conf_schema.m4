@@ -59,12 +59,6 @@ _M4_PARAM(`/log', `window', `file-',
 m4_dnl
 m4_dnl
 m4_dnl
-_M4_PARAM(`', `writer', `file-',
-          `M4_TYPE_CHOICE(`syslog', `syslog', `file')', true,
-          `w', `=STRING', `Use STRING log writer (syslog/file, default syslog)',
-          `M4_LINES(`The type of "log writer" to use for logging. The writer needs',
-                    `to be configured using its dedicated parameters.')')m4_dnl
-m4_dnl
 m4_dnl
 m4_dnl
 M4_CONTAINER(`', `/file', `File writer')m4_dnl

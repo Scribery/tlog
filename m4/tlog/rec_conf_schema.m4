@@ -27,3 +27,9 @@ m4_pushdef(`_M4_PARAM', `M4_PARAM($@)')m4_dnl
 m4_include(`rec_common_conf_schema.m4')m4_dnl
 m4_popdef(`_M4_PARAM')m4_dnl
 m4_dnl
+M4_PARAM(`', `writer', `file-',
+         `M4_TYPE_CHOICE(`file', `syslog', `file')', true,
+         `w', `=STRING', `Use STRING log writer (syslog/file, default file)',
+         `M4_LINES(`The type of "log writer" to use for logging. The writer needs',
+                   `to be configured using its dedicated parameters.')')m4_dnl
+m4_dnl
