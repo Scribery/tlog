@@ -22,6 +22,7 @@ m4_dnl
 m4_dnl
 m4_include(`misc.m4')m4_dnl
 m4_include(`conf_origin.m4')m4_dnl
+m4_include(`conf_misc.m4')m4_dnl
 m4_divert(-1)
 
 m4_dnl
@@ -272,22 +273,31 @@ m4_define(
             `$1',
             M4_PREFIX(),
             `
-                m4_printl(
-                   `    "\n"',
-                   `    "$3 options:\n"')
-                m4_pushdef(`M4_PREFIX', M4_PREFIX()`$2')
+                m4_ifelse(
+                    M4_CONF_CONTAINER_SIZE(M4_PROG_SYM()`_conf_schema.m4',
+                                           M4_PREFIX()`$2',
+                                           `opts'),
+                    0,
+                    ,
+                    `
+                        m4_printl(
+                           `    "\n"',
+                           `    "$3 options:\n"')
+                        m4_pushdef(`M4_PREFIX', M4_PREFIX()`$2')
 
-                m4_pushdef(`M4_CONTAINER', `')
-                m4_pushdef(`M4_PARAM', m4_defn(`M4_CONF_CMD_HELP_OPTS_CONTAINER_PARAM'))
-                m4_include(M4_PROG_SYM()`_conf_schema.m4')
-                m4_popdef(`M4_PARAM')
-                m4_popdef(`M4_CONTAINER')
+                        m4_pushdef(`M4_CONTAINER', `')
+                        m4_pushdef(`M4_PARAM', m4_defn(`M4_CONF_CMD_HELP_OPTS_CONTAINER_PARAM'))
+                        m4_include(M4_PROG_SYM()`_conf_schema.m4')
+                        m4_popdef(`M4_PARAM')
+                        m4_popdef(`M4_CONTAINER')
 
-                m4_pushdef(`M4_PARAM', `')
-                m4_include(M4_PROG_SYM()`_conf_schema.m4')
-                m4_popdef(`M4_PARAM')
+                        m4_pushdef(`M4_PARAM', `')
+                        m4_include(M4_PROG_SYM()`_conf_schema.m4')
+                        m4_popdef(`M4_PARAM')
 
-                m4_popdef(`M4_PREFIX')
+                        m4_popdef(`M4_PREFIX')
+                    '
+                )
             '
         )
     '
