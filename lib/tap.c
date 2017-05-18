@@ -424,6 +424,10 @@ tlog_tap_teardown(struct tlog_errs **perrs,
             return grc;
         }
         tap->pid = 0;
+    } else {
+        if (pstatus != NULL) {
+            *pstatus = 0;
+        }
     }
 
     return TLOG_RC_OK;

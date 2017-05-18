@@ -84,7 +84,8 @@ extern tlog_grc tlog_tap_setup(struct tlog_errs **perrs,
  * @param perrs     Location for the error stack. Can be NULL.
  * @param tap       The tap state to teardown.
  * @param pstatus   Location for the program process status as returned by
- *                  waitpid(2), can be NULL, if not required.
+ *                  waitpid(2), or for zero if the tap had no child.
+ *                  Can be NULL, if not required.
  *
  * @return Global return code.
  */
