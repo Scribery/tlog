@@ -61,21 +61,19 @@ main(int argc, char **argv)
     int status = 1;
     int signal = 0;
 
-    /* Remember effective UID/GID so we can return to them later */
-    euid = geteuid();
+    /* Lock any elevated privileges we received */
     egid = getegid();
-
-    /* Drop the privileges temporarily in case we're SUID/SGID */
-    if (seteuid(getuid()) < 0) {
+    if (setresgid(egid, egid, egid) < 0) {
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(&errs, grc);
-        tlog_errs_pushs(&errs, "Failed setting EUID");
+        tlog_errs_pushf(&errs, "Failed locking GID");
         goto cleanup;
     }
-    if (setegid(getgid()) < 0) {
+    euid = geteuid();
+    if (setresuid(euid, euid, euid) < 0) {
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(&errs, grc);
-        tlog_errs_pushs(&errs, "Failed setting EGID");
+        tlog_errs_pushf(&errs, "Failed locking UID");
         goto cleanup;
     }
 
@@ -130,8 +128,7 @@ main(int argc, char **argv)
 
     /* Run */
     grc = tlog_rec(&errs, euid, egid, cmd_help, conf,
-                   TLOG_REC_OPT_LOCK_SESS | TLOG_REC_OPT_DROP_PRIVS,
-                   prog_path, prog_argv,
+                   0, prog_path, prog_argv,
                    std_fds[0], std_fds[1], std_fds[2],
                    &status, &signal);
 

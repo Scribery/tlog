@@ -74,7 +74,7 @@ rm -r %{buildroot}/usr/include/%{name}
 %{!?_licensedir:%global license %doc}
 %license COPYING
 %doc %{_defaultdocdir}/%{name}
-%attr(6755,%{name},%{name}) %{_bindir}/%{name}-rec
+%{_bindir}/%{name}-rec
 %attr(6755,%{name},%{name}) %{_bindir}/%{name}-rec-session
 %{_bindir}/%{name}-play
 %{_libdir}/lib%{name}.so*
