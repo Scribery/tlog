@@ -565,6 +565,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     int64_t num;
     unsigned int latency;
     unsigned int item_mask;
+    int signal = 0;
     struct tlog_sink *log_sink = NULL;
     struct tlog_tap tap = TLOG_TAP_VOID;
 
@@ -574,8 +575,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     if (json_object_object_get_ex(conf, "help", &obj)) {
         if (json_object_get_boolean(obj)) {
             fprintf(stdout, "%s\n", cmd_help);
-            grc = TLOG_RC_OK;
-            goto cleanup;
+            goto exit;
         }
     }
 
@@ -583,8 +583,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     if (json_object_object_get_ex(conf, "version", &obj)) {
         if (json_object_get_boolean(obj)) {
             printf("%s", tlog_version);;
-            grc = TLOG_RC_OK;
-            goto cleanup;
+            goto exit;
         }
     }
 
@@ -665,12 +664,16 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
 
     /* Transfer and log the data until interrupted or either end is closed */
     grc = tlog_rec_transfer(perrs, tap.source, log_sink, tap.sink,
-                            latency, item_mask, psignal);
+                            latency, item_mask, &signal);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed transferring TTY data");
         goto cleanup;
     }
 
+exit:
+    if (psignal != NULL) {
+        *psignal = signal;
+    }
     grc = TLOG_RC_OK;
 
 cleanup:
