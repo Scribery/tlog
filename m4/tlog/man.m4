@@ -22,6 +22,7 @@ m4_dnl
 m4_dnl
 m4_include(`misc.m4')m4_dnl
 m4_include(`conf_origin.m4')m4_dnl
+m4_include(`conf_misc.m4')m4_dnl
 m4_dnl
 m4_divert(-1)
 m4_define(
@@ -342,52 +343,6 @@ m4_define(
     '
 )
 
-m4_dnl
-m4_dnl Increment the global macro M4_MAN_OPTS_CONTAINER_SIZE_VAL, if a
-m4_dnl parameter belongs to the current container specified with
-m4_dnl M4_MAN_OPTS_PREFIX and is an option.
-m4_dnl
-m4_dnl Macros:
-m4_dnl
-m4_dnl  M4_MAN_OPTS_PREFIX - container prefix (`' for root)
-m4_dnl  M4_MAN_OPTS_CONTAINER_SIZE_VAL - the macro to increment
-m4_dnl
-m4_define(
-`M4_MAN_OPTS_CONTAINER_SIZE_ADD_PARAM',
-`m4_ifelse(`$1', M4_MAN_OPTS_PREFIX(),
-`m4_ifelse(m4_conf_origin_is_in_range(`opts', `$3'), 1,
-`m4_define(`M4_MAN_OPTS_CONTAINER_SIZE_VAL',
-m4_incr(M4_MAN_OPTS_CONTAINER_SIZE_VAL)m4_dnl
-)'m4_dnl
-)'m4_dnl
-)'m4_dnl
-)
-
-m4_dnl
-m4_dnl Expand to the number of parameter options to be output for a parameter
-m4_dnl container.
-m4_dnl Arguments:
-m4_dnl
-m4_dnl  $1 Name of a container in M4_MAN_OPTS_PREFIX to calculate the size of
-m4_dnl
-m4_dnl Macros:
-m4_dnl
-m4_dnl  M4_MAN_OPTS_PREFIX - container prefix (`' for root)
-m4_dnl
-m4_define(
-`M4_MAN_OPTS_CONTAINER_SIZE',
-`m4_pushdef(`M4_MAN_OPTS_CONTAINER_SIZE_VAL', `0')m4_dnl
-m4_pushdef(`M4_CONTAINER', `')m4_dnl
-m4_pushdef(`M4_PARAM', m4_defn(`M4_MAN_OPTS_CONTAINER_SIZE_ADD_PARAM'))m4_dnl
-m4_pushdef(`M4_MAN_OPTS_PREFIX', M4_MAN_OPTS_PREFIX()`$1')m4_dnl
-m4_include(M4_PROG_SYM()`_conf_schema.m4')m4_dnl
-m4_popdef(`M4_MAN_OPTS_PREFIX')m4_dnl
-m4_popdef(`M4_PARAM')m4_dnl
-m4_popdef(`M4_CONTAINER')m4_dnl
-M4_MAN_OPTS_CONTAINER_SIZE_VAL()m4_dnl
-m4_popdef(`M4_MAN_OPTS_CONTAINER_SIZE_VAL')'m4_dnl
-)
-
 m4_define(
     `M4_MAN_OPTS_CONTAINER',
     `
@@ -396,7 +351,9 @@ m4_define(
             M4_MAN_OPTS_PREFIX(),
             `
                 m4_ifelse(
-                    M4_MAN_OPTS_CONTAINER_SIZE(`$2'),
+                    M4_CONF_CONTAINER_SIZE(M4_PROG_SYM()`_conf_schema.m4',
+                                           M4_MAN_OPTS_PREFIX()`$2',
+                                           `opts'),
                     0,
                     ,
                     `

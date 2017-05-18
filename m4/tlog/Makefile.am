@@ -21,6 +21,7 @@ include $(top_srcdir)/Common.am
 
 dist_noinst_DATA = \
     conf_cmd.m4                 \
+    conf_misc.m4                \
     conf_origin.m4              \
     man.m4                      \
     misc.m4                     \
