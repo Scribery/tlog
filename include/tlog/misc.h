@@ -111,16 +111,31 @@ extern tlog_grc tlog_build_or_inst_path(char          **ppath,
                                         const char     *build_rel_path,
                                         const char     *inst_abs_path);
 
+
+/** tlog_exec option bits (must be ascending powers of two) */
+enum tlog_exec_opt {
+    /** Search the PATH for the program to execute */
+    TLOG_EXEC_OPT_SEARCH_PATH   = 0x01,
+    /** Drop effective UID/GID before execution */
+    TLOG_EXEC_OPT_DROP_PRIVS    = 0x02,
+    /** Maximum option bit value plus one (not a valid bit) */
+    TLOG_EXEC_OPT_MAX_PLUS_ONE
+};
+
+/** Bitmask with all tlog_exec_opt bits on */
+#define TLOG_EXEC_OPT_MASK  (((TLOG_EXEC_OPT_MAX_PLUS_ONE - 1) << 1) - 1)
+
 /**
- * Execute a file after dropping the effective UID/GID.
+ * Execute a file.
  *
  * @param perrs     Location for the error stack. Can be NULL.
+ * @param opts      Options: a bitmask of TLOG_EXECT_OPT_* bits.
  * @param path      Path to the program to execute.
  * @param argv      ARGV array for the executed program.
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_unpriv_execv(struct tlog_errs **perrs,
-                                  const char *path, char **argv);
+extern tlog_grc tlog_exec(struct tlog_errs **perrs, unsigned int opts,
+                          const char *path, char **argv);
 
 #endif /* _TLOG_MISC_H */

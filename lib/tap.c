@@ -282,7 +282,7 @@ tlog_tap_setup(struct tlog_errs **perrs,
         }
 
         /* Execute the program to record, dropping the EUID/EGID */
-        grc = tlog_unpriv_execv(perrs, path, argv);
+        grc = tlog_exec(perrs, TLOG_EXEC_OPT_DROP_PRIVS, path, argv);
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushf(perrs,
                         "Failed executing the program to record (%s) "

@@ -607,7 +607,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     /* If the session is already locked (recorded) */
     if (!lock_acquired) {
         /* Exec the bare session */
-        grc = tlog_unpriv_execv(perrs, path, argv);
+        grc = tlog_exec(perrs, TLOG_EXEC_OPT_DROP_PRIVS, path, argv);
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushs(perrs, "Failed executing shell");
         goto cleanup;

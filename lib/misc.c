@@ -125,30 +125,39 @@ cleanup:
 }
 
 tlog_grc
-tlog_unpriv_execv(struct tlog_errs **perrs, const char *path, char **argv)
+tlog_exec(struct tlog_errs **perrs, unsigned int opts,
+          const char *path, char **argv)
 {
     tlog_grc grc;
-    uid_t uid = getuid();
-    gid_t gid = getgid();
 
-    /* Drop the possibly-privileged EGID permanently */
-    if (setresgid(gid, gid, gid) < 0) {
-        grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed dropping EGID");
-        goto cleanup;
-    }
+    /* If requested to drop privileges */
+    if (opts & TLOG_EXEC_OPT_DROP_PRIVS) {
+        uid_t uid = getuid();
+        gid_t gid = getgid();
 
-    /* Drop the possibly-privileged EUID permanently */
-    if (setresuid(uid, uid, uid) < 0) {
-        grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed dropping EUID");
-        goto cleanup;
+        /* Drop the possibly-privileged EGID permanently */
+        if (setresgid(gid, gid, gid) < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed dropping EGID");
+            goto cleanup;
+        }
+
+        /* Drop the possibly-privileged EUID permanently */
+        if (setresuid(uid, uid, uid) < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed dropping EUID");
+            goto cleanup;
+        }
     }
 
     /* Exec the program */
-    execv(path, argv);
+    if (opts & TLOG_EXEC_OPT_SEARCH_PATH) {
+        execvp(path, argv);
+    } else {
+        execv(path, argv);
+    }
     grc = TLOG_GRC_ERRNO;
     tlog_errs_pushc(perrs, grc);
     tlog_errs_pushf(perrs, "Failed executing %s", path);
