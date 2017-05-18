@@ -27,8 +27,24 @@
 
 #include <tlog/grc.h>
 #include <tlog/errs.h>
+#include <tlog/misc.h>
 #include <json.h>
 #include <sys/types.h>
+
+/** tlog_rec option bits (must be ascending powers of two) */
+enum tlog_rec_opt {
+    /** Recording option bit: drop privileges */
+    TLOG_REC_OPT_DROP_PRIVS     = TLOG_EXEC_OPT_DROP_PRIVS,
+    /** Recording option bit: search for program in PATH */
+    TLOG_REC_OPT_SEARCH_PATH    = TLOG_EXEC_OPT_SEARCH_PATH,
+    /** Recording option bit: enable session locking */
+    TLOG_REC_OPT_LOCK_SESS      = 0x04,
+    /** Maximum option bit value plus one (not a valid bit) */
+    TLOG_REC_OPT_MAX_PLUS_ONE
+};
+
+/** Bitmask with all tlog_rec_opt bits on */
+#define TLOG_REC_OPT_MASK   (((TLOG_REC_OPT_MAX_PLUS_ONE - 1) << 1) - 1)
 
 /**
  * Run recording with specified configuration and environment.
@@ -38,6 +54,7 @@
  * @param egid      The effective GID the program was started with.
  * @param cmd_help  Command-line usage help message.
  * @param conf      Recording program configuration JSON object.
+ * @param opts      A bitmask of TLOG_REC_OPT_* bits.
  * @param path      Path to the recorded program to execute.
  * @param argv      ARGV array for the recorded program.
  * @param in_fd     Stdin to connect to, or -1 if none.
@@ -53,7 +70,8 @@
  * @return Global return code.
  */
 extern tlog_grc tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
-                         const char *cmd_help, struct json_object *conf,
+                         const char *cmd_help,
+                         struct json_object *conf, unsigned int opts,
                          const char *path, char **argv,
                          int in_fd, int out_fd, int err_fd,
                          int *pstatus, int *psignal);

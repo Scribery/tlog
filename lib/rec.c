@@ -554,7 +554,7 @@ tlog_rec_get_item_mask(struct tlog_errs **perrs,
 tlog_grc
 tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
          const char *cmd_help, struct json_object *conf,
-         const char *path, char **argv,
+         unsigned int opts, const char *path, char **argv,
          int in_fd, int out_fd, int err_fd,
          int *pstatus, int *psignal)
 {
@@ -596,21 +596,23 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
         goto cleanup;
     }
 
-    /* Attempt to lock the session */
-    grc = tlog_session_lock(perrs, session_id, euid, egid, &lock_acquired);
-    if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed locking session");
-        goto cleanup;
-    }
+    if (opts & TLOG_REC_OPT_LOCK_SESS) {
+        /* Attempt to lock the session */
+        grc = tlog_session_lock(perrs, session_id, euid, egid, &lock_acquired);
+        if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed locking session");
+            goto cleanup;
+        }
 
-    /* If the session is already locked (recorded) */
-    if (!lock_acquired) {
-        /* Exec the bare session */
-        grc = tlog_exec(perrs, TLOG_EXEC_OPT_DROP_PRIVS, path, argv);
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed executing the program to record");
-        goto cleanup;
+        /* If the session is already locked (recorded) */
+        if (!lock_acquired) {
+            /* Exec the bare session */
+            grc = tlog_exec(perrs, opts & TLOG_EXEC_OPT_MASK, path, argv);
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed executing the program to record");
+            goto cleanup;
+        }
     }
 
     /* Read the log latency */
@@ -654,7 +656,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
 
     /* Setup the tap */
     grc = tlog_tap_setup(perrs, &tap, euid, egid,
-                         TLOG_EXEC_OPT_DROP_PRIVS, path, argv,
+                         opts & TLOG_EXEC_OPT_MASK, path, argv,
                          in_fd, out_fd, err_fd);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed setting up the I/O tap");

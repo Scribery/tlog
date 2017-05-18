@@ -129,7 +129,9 @@ main(int argc, char **argv)
     }
 
     /* Run */
-    grc = tlog_rec(&errs, euid, egid, cmd_help, conf, prog_path, prog_argv,
+    grc = tlog_rec(&errs, euid, egid, cmd_help, conf,
+                   TLOG_REC_OPT_LOCK_SESS | TLOG_REC_OPT_DROP_PRIVS,
+                   prog_path, prog_argv,
                    std_fds[0], std_fds[1], std_fds[2],
                    &status, &signal);
 
