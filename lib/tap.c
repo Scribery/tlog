@@ -146,7 +146,7 @@ tlog_grc
 tlog_tap_setup(struct tlog_errs **perrs,
                struct tlog_tap *ptap,
                uid_t euid, gid_t egid,
-               const char *path, char **argv,
+               unsigned int opts, const char *path, char **argv,
                int in_fd, int out_fd, int err_fd)
 {
     tlog_grc grc;
@@ -281,13 +281,11 @@ tlog_tap_setup(struct tlog_errs **perrs,
             goto cleanup;
         }
 
-        /* Execute the program to record, dropping the EUID/EGID */
-        grc = tlog_exec(perrs, TLOG_EXEC_OPT_DROP_PRIVS, path, argv);
+        /* Execute the program to record */
+        grc = tlog_exec(perrs, opts, path, argv);
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushf(perrs,
-                        "Failed executing the program to record (%s) "
-                        "with dropped privileges",
-                        path);
+                        "Failed executing the program to record (%s)", path);
         goto cleanup;
     }
 

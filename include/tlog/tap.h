@@ -62,6 +62,7 @@ struct tlog_tap {
  * @param ptap      Location for the tap state.
  * @param euid      The effective UID the program was started with.
  * @param egid      The effective GID the program was started with.
+ * @param opts      Execution options: a bitmask of TLOG_EXEC_OPT_* bits.
  * @param path      Path to the recorded program to execute.
  * @param argv      ARGV array for the recorded program.
  * @param in_fd     Stdin to connect to, or -1 if none.
@@ -73,6 +74,7 @@ struct tlog_tap {
 extern tlog_grc tlog_tap_setup(struct tlog_errs **perrs,
                                struct tlog_tap *ptap,
                                uid_t euid, gid_t egid,
+                               unsigned int opts,
                                const char *path, char **argv,
                                int in_fd, int out_fd, int err_fd);
 

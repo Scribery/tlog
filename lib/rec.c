@@ -653,7 +653,8 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     }
 
     /* Setup the tap */
-    grc = tlog_tap_setup(perrs, &tap, euid, egid, path, argv,
+    grc = tlog_tap_setup(perrs, &tap, euid, egid,
+                         TLOG_EXEC_OPT_DROP_PRIVS, path, argv,
                          in_fd, out_fd, err_fd);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed setting up the I/O tap");
