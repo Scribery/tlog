@@ -96,19 +96,19 @@ rm -r %{buildroot}/usr/include/%{name}
 
 %post
 /sbin/ldconfig
-# Add tlog-rec to /etc/shells if it exists
+# Add tlog-rec-session to /etc/shells if it exists
 test -e '%{_sysconfdir}/shells' &&
     sed -i \
-        -e '\%^%{_bindir}/%{name}-rec$% q' \
-        -e '$ s%$%\n%{_bindir}/%{name}-rec%' \
+        -e '\%^%{_bindir}/%{name}-rec-session$% q' \
+        -e '$ s%$%\n%{_bindir}/%{name}-rec-session%' \
         %{_sysconfdir}/shells
 
 %postun
 /sbin/ldconfig
-# Remove tlog-rec from /etc/shells if it exists
+# Remove tlog-rec-session from /etc/shells if it exists
 test -e '%{_sysconfdir}/shells' &&
     sed -i \
-        -e '\%^%{_bindir}/%{name}-rec$% d' \
+        -e '\%^%{_bindir}/%{name}-rec-session$% d' \
         %{_sysconfdir}/shells
 
 %changelog
