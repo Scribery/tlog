@@ -3,7 +3,7 @@ m4_include(`man.m4')m4_dnl
 .\" groff -man -Tascii
 m4_generated_warning(`.\" ')m4_dnl
 .\"
-.\" Copyright (C) 2016 Red Hat
+.\" Copyright (C) 2016-2017 Red Hat
 .\"
 .\" This file is part of tlog.
 .\"
@@ -21,34 +21,34 @@ m4_generated_warning(`.\" ')m4_dnl
 .\" along with tlog; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 .\"
-.TH tlog-M4_PROG_NAME() "8" "February 2016" "Tlog"
+.TH tlog-M4_PROG_NAME() "8" "May 2017" "Tlog"
 .SH NAME
-tlog-rec \- start a shell and log terminal I/O
+tlog-rec \- record terminal I/O of a program or a user shell
 
 .SH SYNOPSIS
 .B tlog-rec
 [OPTION...] [CMD_FILE [CMD_ARG...]]
-.br
-.B tlog-rec
--c [OPTION...] CMD_STRING [CMD_NAME [CMD_ARG...]]
 
 .SH DESCRIPTION
 .B Tlog-rec
-is a terminal I/O logging program. It starts a shell under a pseudo-TTY,
+is a terminal I/O logging program. It starts a program under a pseudo-TTY,
 connects it to the actual terminal and logs whatever passes between them
 including user input, program output, and terminal window size changes.
 
-If no "-c" option is specified, then the first non-option argument CMD_FILE
-specifies the location of a shell script the shell should read and the
-following arguments (CMD_ARG) specify its arguments.
+CMD_FILE argument specifies the program to run and record. If CMD_FILE
+contains a slash (/) character, then it is assumed to contain a path to the
+program to run. Otherwise a program file with CMD_FILE name is searched for in
+directories specified with the PATH environment variable. If this variable is
+not set, then the current directory is searched, followed by the
+system-default directories output by "getconf CS_PATH", which is usually
+"/bin:/usr/bin".
 
-If the "-c" option is specified, then a non-option argument CMD_STRING is
-required and should contain shell commands to execute, the following
-arguments can specify first the script name (CMD_NAME, i.e. argv[0]) and then
-its arguments (CMD_ARG).
+CMD_ARG arguments are used as arguments to the program to run and record.
 
-If no non-option arguments are encountered, then the shell is started
-interactively.
+If no non-option arguments are specified, then tlog-rec starts and records a
+user shell specified with the SHELL environment variable, or if that is not
+set, it starts the shell specified in the NSS database for the user tlog-rec
+runs as.
 
 .B Tlog-rec
 loads its parameters first from the system-wide configuration file
@@ -74,9 +74,9 @@ The configuration parameters in this variable override the ones in the file
 specified with TLOG_REC_CONF_FILE.
 
 .TP
-TLOG_REC_SHELL
-Specifies the shell to spawn. Overrides configuration specified with
-TLOG_REC_CONF_TEXT. Can be overridden with command-line options.
+SHELL
+Specifies the shell to run, if no positional arguments are found on the
+command line.
 
 .SH FILES
 .TP
@@ -85,23 +85,19 @@ The system-wide configuration file
 
 .SH EXAMPLES
 .TP
-Start recording a login shell:
-.B tlog-rec -l
+Record a vim session to a file:
+.B tlog-rec -o vim.log vim
 
 .TP
-Start recording a zsh session:
-.B tlog-rec -s /usr/bin/zsh
+Record user input only:
+.B tlog-rec --log-input=on --log-output=off --log-window=off
 
 .TP
-Record everything but user input:
-.B tlog-rec --log-input=off --log-output=on --log-window=on
-
-.TP
-Ask the recorded shell to execute a command:
-.B tlog-rec -c whoami
+Record with minimal latency:
+.B tlog-rec --latency=1
 
 .SH SEE ALSO
-tlog-M4_PROG_NAME().conf(5), tlog-play(8)
+tlog-M4_PROG_NAME().conf(5), tlog-rec-session(8), tlog-play(8)
 
 .SH AUTHOR
 Nikolai Kondrashov <spbnick@gmail.com>
