@@ -3,7 +3,7 @@ m4_include(`man.m4')m4_dnl
 .\" groff -man -Tascii
 m4_generated_warning(`.\" ')m4_dnl
 .\"
-.\" Copyright (C) 2016 Red Hat
+.\" Copyright (C) 2016-2017 Red Hat
 .\"
 .\" This file is part of tlog.
 .\"
@@ -21,7 +21,7 @@ m4_generated_warning(`.\" ')m4_dnl
 .\" along with tlog; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 .\"
-.TH tlog-M4_PROG_NAME() "8" "February 2016" "Tlog"
+.TH tlog-M4_PROG_NAME() "8" "May 2017" "Tlog"
 .SH NAME
 tlog-rec-session \- start a shell and log terminal I/O
 
@@ -34,9 +34,15 @@ tlog-rec-session \- start a shell and log terminal I/O
 
 .SH DESCRIPTION
 .B Tlog-rec-session
-is a terminal I/O logging program. It starts a shell under a pseudo-TTY,
+is a terminal session I/O logging program, intended for use as the login shell
+for a user. The actual user shell to start is retrieved from configuration or
+environment. Tlog-rec-session starts the actual shell under a pseudo-TTY,
 connects it to the actual terminal and logs whatever passes between them
 including user input, program output, and terminal window size changes.
+
+Tlog-rec-session will not start recording if another process with the same
+audit session ID (as seen in /proc/PID/sessionid) is already being recorded.
+Instead, it will simply start the shell.
 
 If no "-c" option is specified, then the first non-option argument CMD_FILE
 specifies the location of a shell script the shell should read and the
@@ -90,19 +96,11 @@ Start recording a login shell:
 .B tlog-rec-session -l
 
 .TP
-Start recording a zsh session:
-.B tlog-rec-session -s /usr/bin/zsh
-
-.TP
-Record everything but user input:
-.B tlog-rec-session --log-input=off --log-output=on --log-window=on
-
-.TP
 Ask the recorded shell to execute a command:
 .B tlog-rec-session -c whoami
 
 .SH SEE ALSO
-tlog-M4_PROG_NAME().conf(5), tlog-play(8)
+tlog-M4_PROG_NAME().conf(5), tlog-rec(8), tlog-play(8)
 
 .SH AUTHOR
 Nikolai Kondrashov <spbnick@gmail.com>
