@@ -19,12 +19,17 @@ The primary purpose of logging in JSON format is to eventually deliver the
 recorded data to a storage service such as [Elasticsearch][elasticsearch],
 where it can be searched and queried, and from where it can be played back.
 
-`Tlog` is naturally split into two tools: `tlog-rec` and `tlog-play` - for
-recording and playback respectively. `Tlog-rec` is intended to be the user's
-login shell. It puts itself between the actual user's shell and the terminal
-upon user login, logging everything that passes through. At the moment,
-`tlog-play` can playback recordings from Elasticsearch or from a file written
-by `tlog-rec` with `file` writer selected.
+`Tlog` contains three tools: `tlog-rec` for recording terminal I/O of programs
+or shells in general, `tlog-rec-session` for recording I/O of whole terminal
+sessions, with protection from recorded users, and `tlog-play` for playing
+back the recordings. You can run `tlog-rec` for testing or recording specific
+commands or shell sessions for yourself, or you can integrate it into another
+solution. `Tlog-rec-session` is intended to be a user's login shell. It puts
+itself between the actual user's shell and the terminal upon user login,
+logging everything that passes through. Lastly, `tlog-play` can playback
+recordings from Elasticsearch or from a file, made with either `tlog-rec` or
+`tlog-rec-session`. There is no difference in log format between `tlog-rec`
+and `tlog-rec-session`.
 
 Building
 --------
@@ -63,60 +68,78 @@ Otherwise, if you built `tlog` from source, you can install it with the usual
 
     sudo make install
 
-If you are recording other users, and don't want them to be able to affect the
-recording process, make sure you make the `/usr/bin/tlog-rec` executable
-SUID/SGID to separate and dedicated user and group. It doesn't require running
-as root and will be safer with a regular, dedicated user.
+If you are recording other user sessions, and don't want them to be able to
+affect the recording process, make sure you use `tlog-rec-session` and its
+executable is SUID/SGID to separate and dedicated user and group. It doesn't
+require running as root and will be safer with a regular, dedicated user.
 
 You will also need to create the session lock directory `/var/run/tlog` and
-make it writable (only) for the user(s) `tlog-rec` runs as. On systems where
-(/var)/run is a tmpfs you will also need to make sure the session lock
+make it writable (only) for the user(s) `tlog-rec-session` runs as. On systems
+where (/var)/run is a tmpfs you will also need to make sure the session lock
 directory is recreated on the next boot. In that case, on systems with systemd
 you'll need to create a tmpfiles.d configuration file, and on init.d systems -
-a startup script.
+a startup script, creating the directory for you.
 
 Testing
 -------
 
 You can test if session recording and playback work in general with a freshly
-installed tlog, by recording a session into a file and then playing it back.
+installed tlog, by recording a session into a file with `tlog-rec` and then
+playing it back with `tlog-play`.
 
 Usage
 -----
 
 ### Recording to a file
 
-To record into a file execute `tlog-rec` on the command line as such:
+To record into a file, execute `tlog-rec` on the command line as such:
 
     tlog-rec --writer=file --file-path=tlog.log
 
 ### Playing back from a file
 
-Both during and after the recording you can play the session back with
+Both during, and after the recording you can play the session back with
 `tlog-play`:
 
     tlog-play --reader=file --file-path=tlog.log
 
-### Recording a user
+### Recording sessions of a user
 
-Change the shell of the user to be recorded to `tlog-rec`:
+Change the shell of the user to be recorded to `tlog-rec-session`:
 
-    sudo usermod -s /usr/bin/tlog-rec <user>
+    sudo usermod -s /usr/bin/tlog-rec-session <user>
 
 Login as the user on a text terminal. By default the recorded terminal data
-will be delivered to syslog with facility "authpriv" and priority "info", and
+will be delivered to syslog with facility "authpriv" and priority "info". It
 will appear in journal, if you use journald, in `/var/log/auth.log` on
 Debian-based systems, or in `/var/log/secure` on Fedora and derived systems.
 
-Customize `tlog-rec` configuration in `/etc/tlog/tlog-rec.conf` as necessary
-(see `tlog-rec.conf(5)` for details).
+Customize `tlog-rec-session` configuration in
+`/etc/tlog/tlog-rec-session.conf` as necessary (see `tlog-rec-session.conf(5)`
+for details).
 
-### Recording to Elasticsearch
+Fedora and RHEL (and some other distros) use an approach for configuring
+system locale, where the login shell is responsible for reading the locale
+configuration from a file (`/etc/locale.conf`) itself, instead of receiving it
+through the environment variables as most programs do. Since
+`tlog-rec-session` is not an actual shell and cannot read that file itself, it
+will fail determining the terminal character encoding and abort, when started
+as a login shell on such distros.
+
+To work that around, you can implement the approach Debian and derived distros
+use. I.e. use PAM's pam_env.so module to read and set the locale environment
+variables before shell or `tlog-rec-session` starts. To accomplish that on
+Fedora or RHEL, put this into the `/etc/pam.d/system-auth` file, along with
+all other `session` lines:
+
+    session     required      pam_env.so readenv=1 envfile=/etc/locale.conf
+
+### Recording sessions to Elasticsearch
 
 Rsyslog can be set up to deliver tlog messages to Elasticsearch. First of
-all increase the maximum message size to be 1k more than the `tlog-rec` payload.
-The default payload is 2kB, so the `rsyslog` maximum message size needs to be
-"3k" if the defaults are used:
+all, increase the maximum message size to be 1k more than the
+`tlog-rec-session` payload. The default payload is 2kB, so the `rsyslog`
+maximum message size needs to be "3k" if the defaults are used:
 
     $MaxMessageSize 3k
 
@@ -149,9 +172,9 @@ and real time timestamp needs to be added, which can be done with this
 #### Filtering out tlog messages
 
 Then, a rule routing messages originating from tlog to Elasticsearch
-needs to be added. If you installed v3 or later tlog RPM package, or set up
-`tlog-rec` as SUID/SGID to a dedicated user yourself, then the rule can use
-that user ID to filter genuine tlog messages securely.
+needs to be added. If you installed v4 or later tlog RPM package, or set up
+`tlog-rec-session` as SUID/SGID to a dedicated user yourself, then the rule
+can use that user ID to filter genuine tlog messages securely.
 
 If your rsyslog receives messages from journald, with the `imjournal` module,
 then the rule condition should be:
@@ -175,8 +198,8 @@ And then the rule condition should be:
         # ... actions ...
     }
 
-The `<TLOG_UID>` above should be replaced with the UID your `tlog-rec` runs
-as.
+The `<TLOG_UID>` above should be replaced with the UID your `tlog-rec-session`
+runs as.
 
 Otherwise you'll need to filter by something else. For example the program
 name (`ident` argument to syslog(3)), which tlog specifies as `tlog`. In that
@@ -224,11 +247,11 @@ the discard action (`~`) after both of those:
 If you'd like to exclude tlog messages from *any* other logs remember to put
 its rule before any other rules in `rsyslog.conf`.
 
-Here is a complete example of a rule matching messages arriving from `tlog-rec`
-running as user with UID 123, delivered from journald. It sends them to
-Elasticsearch running on localhost with default port, puts them into
-`tlog-rsyslog` index with type `tlog`, using bulk interface, stores them in
-`/var/log/tlog.log` file, and then stops processing, not letting them get
+Here is a complete example of a rule matching messages arriving from
+`tlog-rec-session` running as user with UID 123, delivered from journald. It
+sends them to Elasticsearch running on localhost with default port, puts them
+into `tlog-rsyslog` index with type `tlog`, using bulk interface, stores them
+in `/var/log/tlog.log` file, and then stops processing, not letting them get
 anywhere else.
 
 	if $!_UID == "123" then {
