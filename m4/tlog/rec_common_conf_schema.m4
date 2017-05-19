@@ -65,7 +65,7 @@ M4_CONTAINER(`', `/file', `File writer')m4_dnl
 m4_dnl
 _M4_PARAM(`/file', `path', `file-',
           `M4_TYPE_STRING()', false,
-          `', `=FILE', `Log to FILE file',
+          `o', `=FILE', `Log to FILE file',
           `M4_LINES(`The "file" writer log file path.')')m4_dnl
 m4_dnl
 m4_dnl
