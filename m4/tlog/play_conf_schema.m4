@@ -41,7 +41,7 @@ M4_CONTAINER(`', `/file', `File reader')m4_dnl
 m4_dnl
 M4_PARAM(`/file', `path', `file-',
          `M4_TYPE_STRING()', false,
-         `', `=FILE', `Read log from FILE file',
+         `i', `=FILE', `Read log from FILE file',
          `M4_LINES(`The "file" reader log file path.')')m4_dnl
 m4_dnl
 m4_dnl
