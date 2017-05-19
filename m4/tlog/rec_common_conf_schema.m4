@@ -27,7 +27,7 @@ m4_dnl
 _M4_PARAM(`', `latency', `file-',
           `M4_TYPE_INT(10, 1)', true,
           `', `=SECONDS', `Cache captured data SECONDS seconds before logging',
-          `M4_LINES(`The data which does not exceed maximum payload',
+          `M4_LINES(`The encoded data which does not reach payload size',
                     `stays in memory and is not logged until this number of',
                     `seconds elapses.')')m4_dnl
 m4_dnl
