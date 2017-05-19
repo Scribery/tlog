@@ -3,7 +3,7 @@ m4_include(`man.m4')m4_dnl
 .\" groff -man -Tascii
 m4_generated_warning(`.\" ')m4_dnl
 .\"
-.\" Copyright (C) 2016 Red Hat
+.\" Copyright (C) 2016-2017 Red Hat
 .\"
 .\" This file is part of tlog.
 .\"
@@ -21,7 +21,7 @@ m4_generated_warning(`.\" ')m4_dnl
 .\" along with tlog; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 .\"
-.TH tlog-M4_PROG_NAME().conf "5" "February 2016" "Tlog"
+.TH tlog-M4_PROG_NAME().conf "5" "May 2017" "Tlog"
 .SH NAME
 tlog-rec.conf \- tlog-rec configuration file
 
@@ -44,11 +44,11 @@ in other ways: through environment variables or command line.
 M4_MAN_CONF()
 .SH EXAMPLES
 .TP
-A config specifying only a shell:
+A config specifying only a reduced latency:
 .nf
 
 {
-    "shell": "/usr/bin/zsh"
+    "latency": 3
 }
 .fi
 
