@@ -280,6 +280,10 @@ run(struct tlog_errs **perrs,
         goto cleanup;
     }
 
+    /* Output and discard any accumulated non-critical error messages */
+    tlog_errs_print(stderr, *perrs);
+    tlog_errs_destroy(perrs);
+
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
         sigaction(exit_sig[i], NULL, &sa);
