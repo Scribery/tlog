@@ -121,10 +121,17 @@ for details).
 Fedora and RHEL (and some other distros) use an approach for configuring
 system locale, where the login shell is responsible for reading the locale
 configuration from a file (`/etc/locale.conf`) itself, instead of receiving it
-through the environment variables as most programs do. Since
-`tlog-rec-session` is not an actual shell and cannot read that file itself, it
-will fail determining the terminal character encoding and abort, when started
-as a login shell on such distros.
+through the environment variables as most programs do. Since `su` clears
+environment when asked for imitation of a login shell (`su -', or `su -l'),
+the shell can only retrieve locale configuration from that file, in that case,
+on these distros.
+
+Because `tlog-rec-session` is not an actual shell and cannot read
+`/etc/locale.conf` file itself, it will use libc routines to read the
+environment, which will fall back to `ANSI_X3.4-1968` (ASCII) in these cases.
+Since nowadays pure ASCII is rarely used, `tlog-rec-session` assumes that
+locale environment was lost, assumes the actual encoding is UTF-8, and prints
+a warning.
 
 To work that around, you can implement the approach Debian and derived distros
 use. I.e. use PAM's pam_env.so module to read and set the locale environment
@@ -133,6 +140,9 @@ Fedora or RHEL, put this into the `/etc/pam.d/system-auth` file, along with
 all other `session` lines:
 
     session     required      pam_env.so readenv=1 envfile=/etc/locale.conf
+
+However, tlog only supports UTF-8 so far, so the above workaround only serves
+to silent the fallback warning.
 
 ### Recording sessions to Elasticsearch
 

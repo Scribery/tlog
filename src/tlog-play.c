@@ -467,9 +467,15 @@ main(int argc, char **argv)
     /* Check that the character encoding is supported */
     charset = nl_langinfo(CODESET);
     if (strcmp(charset, "UTF-8") != 0) {
-        grc = TLOG_RC_FAILURE;
-        tlog_errs_pushf(&errs, "Unsupported locale charset: %s", charset);
-        goto cleanup;
+        if (strcmp(charset, "ANSI_X3.4-1968") == 0) {
+            tlog_errs_pushf(&errs, "Locale charset is ANSI_X3.4-1968 (ASCII)");
+            tlog_errs_pushf(&errs, "Assuming locale environment is lost "
+                                   "and charset is UTF-8");
+        } else {
+            grc = TLOG_RC_FAILURE;
+            tlog_errs_pushf(&errs, "Unsupported locale charset: %s", charset);
+            goto cleanup;
+        }
     }
 
     /* Run */
