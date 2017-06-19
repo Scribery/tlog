@@ -28,8 +28,9 @@
 #ifndef _TLOG_SYSLOG_JSON_WRITER_H
 #define _TLOG_SYSLOG_JSON_WRITER_H
 
-#include <assert.h>
 #include <tlog/json_writer.h>
+#include <tlog/syslog_misc.h>
+#include <assert.h>
 
 /**
  * Syslog message writer type
@@ -54,6 +55,7 @@ tlog_syslog_json_writer_create(struct tlog_json_writer **pwriter,
                                int priority)
 {
     assert(pwriter != NULL);
+    assert(tlog_syslog_priority_is_valid(priority));
     return tlog_json_writer_create(pwriter, &tlog_syslog_json_writer_type,
                                    priority);
 }
