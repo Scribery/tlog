@@ -309,9 +309,6 @@ m4_define(
 
 m4_dnl
 m4_dnl Output a description of a configuration parameter
-m4_dnl Macros:
-m4_dnl
-m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_MAN_OPTS_CONTAINER_PARAM',

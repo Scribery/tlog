@@ -27,9 +27,6 @@ m4_divert(-1)
 
 m4_dnl
 m4_dnl Output a short option enum member, see the *schema.m4 for parameters.
-m4_dnl Macros:
-m4_dnl
-m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_OPT_ENUM_PARAM_SHORT',
@@ -60,7 +57,6 @@ m4_dnl
 m4_dnl Output a long option enum member, see the *schema.m4 for parameters.
 m4_dnl Macros:
 m4_dnl
-m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl  M4_FIRST - `true' if this is the first invocation, `false' otherwise.
 m4_dnl
 m4_define(
@@ -162,9 +158,6 @@ m4_define(
 m4_dnl
 m4_dnl Output a long option description initializer.
 m4_dnl See the *schema.m4 for parameters.
-m4_dnl Macros:
-m4_dnl
-m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_LONGOPTS_PARAM',
@@ -233,10 +226,6 @@ m4_define(
 
 m4_dnl
 m4_dnl Output option help string literal for a parameter.
-m4_dnl
-m4_dnl Macros:
-m4_dnl
-m4_dnl  M4_PROG_SYM - program-identifying symbol fragment.
 m4_dnl
 m4_define(
     `M4_CONF_CMD_HELP_OPTS_CONTAINER_PARAM',
