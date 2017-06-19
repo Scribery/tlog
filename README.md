@@ -122,7 +122,7 @@ Fedora and RHEL (and some other distros) use an approach for configuring
 system locale, where the login shell is responsible for reading the locale
 configuration from a file (`/etc/locale.conf`) itself, instead of receiving it
 through the environment variables as most programs do. Since `su` clears
-environment when asked for imitation of a login shell (`su -', or `su -l'),
+environment when asked for imitation of a login shell (`su -`, or `su -l`),
 the shell can only retrieve locale configuration from that file, in that case,
 on these distros.
 
