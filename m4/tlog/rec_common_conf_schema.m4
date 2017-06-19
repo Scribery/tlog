@@ -59,8 +59,6 @@ _M4_PARAM(`/log', `window', `file-',
 m4_dnl
 m4_dnl
 m4_dnl
-m4_dnl
-m4_dnl
 M4_CONTAINER(`', `/file', `File writer')m4_dnl
 m4_dnl
 _M4_PARAM(`/file', `path', `file-',
