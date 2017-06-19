@@ -56,6 +56,11 @@ its arguments (CMD_ARG).
 If no non-option arguments are encountered, then the shell is started
 interactively.
 
+If tlog-rec-session is invoked under a name beginning with a dash (i.e.
+argv[0] beginning with '-'), then the executed shell name is also prepended
+with a dash. This passes the "login shell" status to the recorded shell and is
+equivalent to using the "-l" option.
+
 .B Tlog-rec-session
 loads its parameters first from the system-wide configuration file
 M4_CONF_PATH(), then from the file pointed at by TLOG_REC_SESSION_CONF_FILE
