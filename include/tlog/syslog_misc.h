@@ -27,6 +27,30 @@
 #ifndef _TLOG_SYSLOG_MISC_H
 #define _TLOG_SYSLOG_MISC_H
 
+#include <stdbool.h>
+#include <stdlib.h>
+
+/**
+ * Convert syslog facility value to string.
+ *
+ * @param facility  The facility value to convert.
+ *
+ * @return The facility name, or NULL, if the value was invalid.
+ */
+extern const char *tlog_syslog_facility_to_str(int facility);
+
+/**
+ * Check if a syslog facility value is valid.
+ *
+ * @param facility  The facility value to check.
+ *
+ * @return True if the facility value is valid, false otherwise.
+ */
+static inline bool tlog_syslog_facility_is_valid(int facility)
+{
+    return tlog_syslog_facility_to_str(facility) != NULL;
+}
+
 /**
  * Convert syslog facility string to integer value.
  *
@@ -36,6 +60,27 @@
  *         syslog(3), or a negative number, if the string was unrecognized.
  */
 extern int tlog_syslog_facility_from_str(const char *str);
+
+/**
+ * Convert syslog priority value to string.
+ *
+ * @param priority  The priority value to convert.
+ *
+ * @return The priority name, or NULL, if the value was invalid.
+ */
+extern const char *tlog_syslog_priority_to_str(int priority);
+
+/**
+ * Check if a syslog priority value is valid.
+ *
+ * @param priority  The priority value to check.
+ *
+ * @return True if the priority value is valid, false otherwise.
+ */
+static inline bool tlog_syslog_priority_is_valid(int priority)
+{
+    return tlog_syslog_priority_to_str(priority) != NULL;
+}
 
 /**
  * Convert syslog priority string to integer value.
