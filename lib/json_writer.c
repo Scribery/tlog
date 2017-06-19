@@ -72,12 +72,14 @@ tlog_json_writer_is_valid(const struct tlog_json_writer *writer)
 
 tlog_grc
 tlog_json_writer_write(struct tlog_json_writer *writer,
+                       size_t id,
                        const uint8_t *buf, size_t len)
 {
     assert(tlog_json_writer_is_valid(writer));
+    assert(id > 0);
     assert(buf != NULL || len == 0);
 
-    return writer->type->write(writer, buf, len);
+    return writer->type->write(writer, id, buf, len);
 }
 
 void

@@ -53,12 +53,13 @@ tlog_mem_json_writer_init(struct tlog_json_writer *writer, va_list ap)
 
 static tlog_grc
 tlog_mem_json_writer_write(struct tlog_json_writer *writer,
-                           const uint8_t *buf,
-                           size_t len)
+                           size_t id, const uint8_t *buf, size_t len)
 {
     struct tlog_mem_json_writer *mem_json_writer =
                                     (struct tlog_mem_json_writer*)writer;
     size_t new_len = *mem_json_writer->plen + len;
+
+    (void)id;
 
     if (new_len > mem_json_writer->size) {
         size_t new_size;

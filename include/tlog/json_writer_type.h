@@ -63,6 +63,7 @@ typedef bool (*tlog_json_writer_type_is_valid_fn)(
  * Message writing function prototype.
  *
  * @param writer    The writer to operate on.
+ * @param id        ID of the message in the buffer. Cannot be zero.
  * @param buf       The pointer to the message buffer to write.
  * @param len       The length of the message buffer to write.
  *
@@ -70,6 +71,7 @@ typedef bool (*tlog_json_writer_type_is_valid_fn)(
  */
 typedef tlog_grc (*tlog_json_writer_type_write_fn)(
                                 struct tlog_json_writer *writer,
+                                size_t id,
                                 const uint8_t *buf,
                                 size_t len);
 

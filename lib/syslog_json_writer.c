@@ -41,11 +41,11 @@ tlog_syslog_json_writer_init(struct tlog_json_writer *writer, va_list ap)
 
 static tlog_grc
 tlog_syslog_json_writer_write(struct tlog_json_writer *writer,
-                              const uint8_t *buf,
-                              size_t len)
+                              size_t id, const uint8_t *buf, size_t len)
 {
     struct tlog_syslog_json_writer *syslog_json_writer =
                                     (struct tlog_syslog_json_writer*)writer;
+    (void)id;
     syslog(syslog_json_writer->priority, "%.*s",
            (int)len, (const char *)buf);
     return TLOG_RC_OK;

@@ -64,12 +64,14 @@ extern bool tlog_json_writer_is_valid(const struct tlog_json_writer *writer);
  * Write with a writer.
  *
  * @param writer    The writer to write with.
+ * @param id        ID of the message in the buffer. Cannot be zero.
  * @param buf       The pointer to the message buffer to write.
  * @param len       The length of the message buffer to write.
  *
  * @return Global return code.
  */
 extern tlog_grc tlog_json_writer_write(struct tlog_json_writer *writer,
+                                       size_t id,
                                        const uint8_t *buf, size_t len);
 
 /**

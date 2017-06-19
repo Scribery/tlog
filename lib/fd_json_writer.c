@@ -55,12 +55,13 @@ tlog_fd_json_writer_cleanup(struct tlog_json_writer *writer)
 
 static tlog_grc
 tlog_fd_json_writer_write(struct tlog_json_writer *writer,
-                          const uint8_t *buf,
-                          size_t len)
+                          size_t id, const uint8_t *buf, size_t len)
 {
     struct tlog_fd_json_writer *fd_json_writer =
                                     (struct tlog_fd_json_writer*)writer;
     ssize_t rc;
+
+    (void)id;
 
     while (true) {
         rc = write(fd_json_writer->fd, buf, len);

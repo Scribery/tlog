@@ -222,6 +222,7 @@ tlog_json_sink_flush(struct tlog_sink *sink)
     }
 
     grc = tlog_json_writer_write(json_sink->writer,
+                                 json_sink->message_id,
                                  json_sink->message_buf, len);
     if (grc != TLOG_RC_OK) {
         return grc;
