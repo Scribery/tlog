@@ -58,6 +58,8 @@ fi
 
 # Check for libraries
 PKG_CHECK_MODULES(JSON, json-c)
+PKG_CHECK_MODULES(SYSTEMD_JOURNAL, libsystemd, ,
+                  [PKG_CHECK_MODULES(SYSTEMD_JOURNAL, libsystemd-journal)])
 
 LIBCURL_CHECK_CONFIG([yes], [7.15.4], ,
                      AC_MSG_ERROR([libcurl not found]))

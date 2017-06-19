@@ -110,3 +110,21 @@ _M4_PARAM(`/syslog', `priority', `file-',
           `', `=STRING', `Log with STRING syslog priority',
           `M4_LINES(`Syslog priority the "syslog" writer should use for the messages.')')m4_dnl
 m4_dnl
+m4_dnl
+m4_dnl
+M4_CONTAINER(`', `/journal', `Journal writer')m4_dnl
+m4_dnl
+_M4_PARAM(`/journal', `priority', `file-',
+          `M4_TYPE_CHOICE(`info',
+                          `emerg',
+                          `alert',
+                          `crit',
+                          `err',
+                          `warning',
+                          `notice',
+                          `info',
+                          `debug')',
+          true,
+          `', `=STRING', `Log with STRING syslog-style priority',
+          `M4_LINES(`Syslog-style priority the "journal" writer should use for the messages.')')m4_dnl
+m4_dnl

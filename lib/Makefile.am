@@ -34,6 +34,7 @@ AM_CPPFLAGS = \
     -DTLOG_REC_SESSION_CONF_LOCAL_INST_PATH='"$(TLOG_REC_SESSION_CONF_LOCAL_INST_PATH)"'        \
     -DTLOG_SESSION_LOCK_DIR='"@localstatedir@/run/tlog"'                                        \
     $(JSON_CFLAGS)                                                                              \
+    $(SYSTEMD_JOURNAL_CFLAGS)                                                                   \
     $(LIBCURL_CPPFLAGS)
 
 lib_LTLIBRARIES = libtlog.la
@@ -107,6 +108,7 @@ libtlog_la_SOURCES = \
     fd_json_reader.c            \
     fd_json_writer.c            \
     grc.c                       \
+    journal_json_writer.c       \
     json_chunk.c                \
     json_dispatcher.c           \
     json_misc.c                 \
@@ -143,7 +145,7 @@ libtlog_la_SOURCES = \
     tty_source.c                \
     utf8.c
 
-libtlog_la_LIBADD = $(JSON_LIBS) $(LIBCURL) -lutil -lrt
+libtlog_la_LIBADD = $(JSON_LIBS) $(SYSTEMD_JOURNAL_LIBS) $(LIBCURL) -lutil -lrt
 
 libtlog_test_la_SOURCES = \
     test_json_sink.c        \

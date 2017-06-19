@@ -10,6 +10,7 @@ Source:     https://github.com/Scribery/%{name}/releases/download/v%{version}/%{
 
 BuildRequires:  json-c-devel
 BuildRequires:  curl-devel
+BuildRequires:  systemd-devel
 BuildRequires:  m4
 # If it's not RHEL6 and older
 %if 0%{?rhel} == 0 || 0%{?rhel} >= 7

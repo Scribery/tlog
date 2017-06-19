@@ -29,6 +29,7 @@ tlog_HEADERS = \
     fd_json_reader.h            \
     fd_json_writer.h            \
     grc.h                       \
+    journal_json_writer.h       \
     json_chunk.h                \
     json_dispatcher.h           \
     json_misc.h                 \

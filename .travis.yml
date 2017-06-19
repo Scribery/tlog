@@ -13,7 +13,7 @@ compiler:
 os: linux
 before_install:
 - sudo apt-get -qq update
-- sudo apt-get install -y libjson-c-dev libcurl4-gnutls-dev
+- sudo apt-get install -y libjson-c-dev libcurl4-gnutls-dev libsystemd-journal-dev
 - sudo apt-get install -y clang
 - sudo apt-get install -y lcov
 - gem install coveralls-lcov

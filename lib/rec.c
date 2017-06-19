@@ -24,6 +24,7 @@
 #include <tlog/rec_item.h>
 #include <tlog/json_sink.h>
 #include <tlog/syslog_json_writer.h>
+#include <tlog/journal_json_writer.h>
 #include <tlog/fd_json_writer.h>
 #include <tlog/source.h>
 #include <tlog/syslog_misc.h>
@@ -128,6 +129,27 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     char *fqdn = NULL;
     struct passwd *passwd;
     const char *term;
+
+    /* Get real user entry */
+    errno = 0;
+    passwd = getpwuid(getuid());
+    if (passwd == NULL) {
+        if (errno == 0) {
+            grc = TLOG_RC_FAILURE;
+            tlog_errs_pushs(perrs, "User entry not found");
+        } else {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed retrieving user entry");
+        }
+        goto cleanup;
+    }
+    if (!tlog_utf8_str_is_valid(passwd->pw_name)) {
+        tlog_errs_pushf(perrs, "User name is not valid UTF-8: %s",
+                        passwd->pw_name);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
 
     /*
      * Create the writer
@@ -237,6 +259,39 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
             tlog_errs_pushs(perrs, "Failed creating syslog writer");
             goto cleanup;
         }
+    } else if (strcmp(str, "journal") == 0) {
+        struct json_object *conf_journal;
+        int priority;
+
+        /* Get journal writer conf container */
+        if (!json_object_object_get_ex(conf, "journal", &conf_journal)) {
+            tlog_errs_pushs(perrs, "Jouranl writer parameters are not specified");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+
+        /* Get priority */
+        if (!json_object_object_get_ex(conf_journal, "priority", &obj)) {
+            tlog_errs_pushs(perrs, "Journal priority is not specified");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+        str = json_object_get_string(obj);
+        priority = tlog_syslog_priority_from_str(str);
+        if (priority < 0) {
+            tlog_errs_pushf(perrs, "Unknown journal priority: %s", str);
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+
+        /* Create the writer */
+        grc = tlog_journal_json_writer_create(&writer, priority,
+                                              passwd->pw_name, session_id);
+        if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating journal writer");
+            goto cleanup;
+        }
     } else {
         tlog_errs_pushf(perrs, "Unknown writer type: %s", str);
         grc = TLOG_RC_FAILURE;
@@ -255,27 +310,6 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     }
     if (!tlog_utf8_str_is_valid(fqdn)) {
         tlog_errs_pushf(perrs, "Host FQDN is not valid UTF-8: %s", fqdn);
-        grc = TLOG_RC_FAILURE;
-        goto cleanup;
-    }
-
-    /* Get real user entry */
-    errno = 0;
-    passwd = getpwuid(getuid());
-    if (passwd == NULL) {
-        if (errno == 0) {
-            grc = TLOG_RC_FAILURE;
-            tlog_errs_pushs(perrs, "User entry not found");
-        } else {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed retrieving user entry");
-        }
-        goto cleanup;
-    }
-    if (!tlog_utf8_str_is_valid(passwd->pw_name)) {
-        tlog_errs_pushf(perrs, "User name is not valid UTF-8: %s",
-                        passwd->pw_name);
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
