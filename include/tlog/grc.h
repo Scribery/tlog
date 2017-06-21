@@ -71,7 +71,7 @@ extern bool tlog_grc_range_is_valid(const struct tlog_grc_range *range);
 
 /** Tlog-native return code range (no conversion) */
 extern const struct tlog_grc_range tlog_grc_range_native;
-/** Errno value range (negated) */
+/** Errno value range (negated and shifted) */
 extern const struct tlog_grc_range tlog_grc_range_errno;
 /** getaddrinfo return code value range (negated and shifted) */
 extern const struct tlog_grc_range tlog_grc_range_gai;
