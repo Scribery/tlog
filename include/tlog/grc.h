@@ -73,6 +73,8 @@ extern bool tlog_grc_range_is_valid(const struct tlog_grc_range *range);
 extern const struct tlog_grc_range tlog_grc_range_native;
 /** Errno value range (negated and shifted) */
 extern const struct tlog_grc_range tlog_grc_range_errno;
+/** Systemd return value range (shifted to match errno) */
+extern const struct tlog_grc_range tlog_grc_range_systemd;
 /** getaddrinfo return code value range (negated and shifted) */
 extern const struct tlog_grc_range tlog_grc_range_gai;
 /** JSON return code value range (shifted) */

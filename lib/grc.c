@@ -59,6 +59,20 @@ const struct tlog_grc_range tlog_grc_range_errno = {
 };
 
 static const char *
+tlog_grc_range_systemd_strerror(int rc)
+{
+    return strerror(-rc);
+}
+
+const struct tlog_grc_range tlog_grc_range_systemd = {
+    .min        = INT_MIN,
+    .max        = -10000,
+    .add        = -10000,
+    .mul        = 1,
+    .strerror   = tlog_grc_range_systemd_strerror
+};
+
+static const char *
 tlog_grc_range_gai_strerror(int rc)
 {
     return gai_strerror(rc);
