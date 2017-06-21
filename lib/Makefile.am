@@ -108,6 +108,7 @@ libtlog_la_SOURCES = \
     fd_json_reader.c            \
     fd_json_writer.c            \
     grc.c                       \
+    journal_json_reader.c       \
     journal_json_writer.c       \
     journal_misc.c              \
     json_chunk.c                \
