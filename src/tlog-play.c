@@ -36,6 +36,8 @@
 #include <tlog/play_conf_cmd.h>
 #include <tlog/fd_json_reader.h>
 #include <tlog/es_json_reader.h>
+#include <tlog/journal_json_reader.h>
+#include <tlog/journal_misc.h>
 #include <tlog/json_source.h>
 #include <tlog/rc.h>
 #include <tlog/timespec.h>
@@ -72,6 +74,8 @@ create_log_source(struct tlog_errs **perrs,
     struct json_object *obj;
     const char *str;
     int fd = -1;
+    size_t i;
+    const char **str_list = NULL;
     struct tlog_json_reader *reader = NULL;
     struct tlog_source *source = NULL;
 
@@ -129,6 +133,81 @@ create_log_source(struct tlog_errs **perrs,
             tlog_errs_pushs(perrs, "Failed creating the ElasticSearch reader");
             goto cleanup;
         }
+    } else if (strcmp(str, "journal") == 0) {
+        struct json_object *conf_journal;
+        int64_t since;
+        int64_t until;
+
+        /* Get journal reader conf container */
+        if (!json_object_object_get_ex(conf, "journal", &conf_journal)) {
+            tlog_errs_pushs(perrs,
+                            "Systemd journal reader parameters "
+                            "are not specified");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+
+        /* Get the "since" timestamp */
+        if (json_object_object_get_ex(conf_journal, "since", &obj)) {
+            since = json_object_get_int64(obj);
+            if (since < 0) {
+                since = 0;
+            } else if ((uint64_t)since > UINT64_MAX/1000000) {
+                since = UINT64_MAX/1000000;
+            }
+        } else {
+            since = 0;
+        }
+
+        /* Get the "until" timestamp */
+        if (json_object_object_get_ex(conf_journal, "until", &obj)) {
+            until = json_object_get_int64(obj);
+            if (until < 0) {
+                until = 0;
+            } else if ((uint64_t)until > UINT64_MAX/1000000) {
+                until = UINT64_MAX/1000000;
+            }
+        } else {
+            until = INT64_MAX;
+        }
+
+        /* Get the match array, if any */
+        if (json_object_object_get_ex(conf_journal, "match", &obj)) {
+            str_list = calloc(json_object_array_length(obj) + 1,
+                              sizeof(*str_list));
+            if (str_list == NULL) {
+                grc = TLOG_GRC_ERRNO;
+                tlog_errs_pushc(perrs, grc);
+                tlog_errs_pushs(perrs,
+                                "Failed allocating systemd journal match list");
+                goto cleanup;
+            }
+            for (i = 0; (int)i < (int)json_object_array_length(obj); i++) {
+                str_list[i] = json_object_get_string(
+                                json_object_array_get_idx(obj, i));
+                if (!tlog_journal_match_sym_is_valid(str_list[i])) {
+                    grc = TLOG_RC_FAILURE;
+                    tlog_errs_pushc(perrs, grc);
+                    tlog_errs_pushf(
+                        perrs,
+                        "Systemd journal match symbol #%zu \"%s\" is invalid",
+                        i + 1, str_list[i]);
+                }
+            }
+        }
+
+        /* Create the reader */
+        grc = tlog_journal_json_reader_create(&reader,
+                                              (uint64_t)since * 1000000,
+                                              (uint64_t)until * 1000000,
+                                              str_list);
+        if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs,
+                            "Failed creating the systemd journal reader");
+            goto cleanup;
+        }
+
     } else if (strcmp(str, "file") == 0) {
         struct json_object *conf_file;
 
@@ -190,6 +269,7 @@ cleanup:
     if (fd >= 0) {
         close(fd);
     }
+    free(str_list);
     tlog_json_reader_destroy(reader);
     tlog_source_destroy(source);
     return grc;
