@@ -52,12 +52,12 @@ extern tlog_grc tlog_json_overlay(struct json_object    **presult,
  *
  * @param obj   The object to begin lookup from.
  * @param path  The dot-separated path to add the object at.
- * @param val   The json_object or NULL member to associate with the give
+ * @param val   The json_object or NULL member to associate with the given
  *              field.
  *
  * @return Global return code.
  */
-extern tlog_grc tlog_json_object_object_add_path(struct json_object* obj,
+extern tlog_grc tlog_json_object_object_add_path(struct json_object *obj,
                                                  const char *path,
                                                  struct json_object *val);
 
