@@ -144,6 +144,7 @@ m4_define(
     `m4_pushdef(`m4_orig_divnum', m4_divnum)m4_divert(-1)
         m4_pushdef(`M4_TYPE_INT', `:')
         m4_pushdef(`M4_TYPE_STRING', `:')
+        m4_pushdef(`M4_TYPE_STRING_ARRAY', `:')
         m4_pushdef(`M4_TYPE_BOOL', `::')
         m4_pushdef(`M4_TYPE_CHOICE', `:')
         m4_pushdef(`M4_PARAM', m4_defn(`M4_CONF_CMD_SHORTOPTS_PARAM'))
@@ -151,6 +152,7 @@ m4_define(
         m4_popdef(`M4_PARAM')
         m4_popdef(`M4_TYPE_CHOICE')
         m4_popdef(`M4_TYPE_BOOL')
+        m4_popdef(`M4_TYPE_STRING_ARRAY')
         m4_popdef(`M4_TYPE_STRING')
         m4_popdef(`M4_TYPE_INT')
     m4_divert(m4_orig_divnum)m4_popdef(`m4_orig_divnum')')
@@ -190,15 +192,17 @@ m4_dnl
 m4_define(
     `M4_CONF_CMD_LONGOPTS',
     `m4_pushdef(`m4_orig_divnum', m4_divnum)m4_divert(-1)
-        m4_pushdef(`M4_TYPE_INT',    `required_argument')
-        m4_pushdef(`M4_TYPE_STRING', `required_argument')
-        m4_pushdef(`M4_TYPE_BOOL',   `optional_argument')
-        m4_pushdef(`M4_TYPE_CHOICE', `required_argument')
+        m4_pushdef(`M4_TYPE_INT',           `required_argument')
+        m4_pushdef(`M4_TYPE_STRING',        `required_argument')
+        m4_pushdef(`M4_TYPE_STRING_ARRAY',  `required_argument')
+        m4_pushdef(`M4_TYPE_BOOL',          `optional_argument')
+        m4_pushdef(`M4_TYPE_CHOICE',        `required_argument')
         m4_pushdef(`M4_PARAM', m4_defn(`M4_CONF_CMD_LONGOPTS_PARAM'))
         m4_include(M4_PROG_SYM()`_conf_schema.m4')
         m4_popdef(`M4_PARAM')
         m4_popdef(`M4_TYPE_CHOICE')
         m4_popdef(`M4_TYPE_BOOL')
+        m4_popdef(`M4_TYPE_STRING_ARRAY')
         m4_popdef(`M4_TYPE_STRING')
         m4_popdef(`M4_TYPE_INT')
     m4_divert(m4_orig_divnum)m4_popdef(`m4_orig_divnum')')
@@ -345,6 +349,44 @@ m4_define(
 )
 
 m4_define(
+    `M4_CONF_CMD_LOAD_ARGS_TYPE_STRING_ARRAY',
+    `
+        m4_printl(
+           `            assert(optarg != NULL);',
+           `            if (optarg == NULL) {',
+           `                tlog_errs_pushf(perrs, "Option %s has no value", optname);',
+           `                grc = TLOG_RC_FAILURE;',
+           `                goto cleanup;',
+           `            }',
+           `            entry_val = json_object_new_string(optarg);',
+           `            if (entry_val == NULL) {',
+           `                grc = TLOG_GRC_ERRNO;',
+           `                tlog_errs_pushc(perrs, grc);',
+           `                tlog_errs_pushf(perrs, "Failed creating %s option value", optname);',
+           `                goto cleanup;',
+           `            }',
+           `            if (prev_val == NULL) {',
+           `                val = json_object_new_array();',
+           `                if (val == NULL) {',
+           `                    grc = TLOG_GRC_ERRNO;',
+           `                    tlog_errs_pushc(perrs, grc);',
+           `                    tlog_errs_pushf(perrs, "Failed creating %s option value", optname);',
+           `                    goto cleanup;',
+           `                }',
+           `            } else {',
+           `                val = prev_val;',
+           `            }',
+           `            if (json_object_array_add(val, entry_val) != 0) {',
+           `                grc = TLOG_GRC_ERRNO;',
+           `                tlog_errs_pushc(perrs, grc);',
+           `                tlog_errs_pushf(perrs, "Failed adding %s option value entry", optname);',
+           `                goto cleanup;',
+           `            }',
+           `            entry_val = NULL;')
+    '
+)
+
+m4_define(
     `M4_CONF_CMD_LOAD_ARGS_TYPE_BOOL',
     `
         m4_printl(
@@ -438,6 +480,14 @@ m4_define(
                    `"')
                 m4_printl(
                    `;')
+                m4_printl(
+                   `            grc = tlog_json_object_object_get_path(conf, optpath, &prev_val, NULL);',
+                   `            if (grc != TLOG_RC_OK) {',
+                   `                tlog_errs_pushc(perrs, grc);',
+                   `                tlog_errs_pushf(perrs,',
+                   `                                "Failed retrieving %s option value", optname);',
+                   `                goto cleanup;',
+                   `            }')
                 $4
                 m4_printl(
                    `            break;',
@@ -493,7 +543,9 @@ m4_define(
            `    const char *optname;',
            `    const char *optpath;',
            `    int64_t val_int;',
+           `    struct json_object *prev_val;',
            `    struct json_object *val = NULL;',
+           `    struct json_object *entry_val = NULL;',
            `    struct json_object *args = NULL;',
            `    int end;',
            `    int i;',
@@ -514,15 +566,17 @@ m4_define(
            `    while ((optcode = getopt_long(argc, argv, ',
            `                                  shortopts, longopts, NULL)) >= 0) {',
            `        switch (optcode) {')
-        m4_pushdef(`M4_TYPE_INT',       m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_INT'))
-        m4_pushdef(`M4_TYPE_STRING',    m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_STRING'))
-        m4_pushdef(`M4_TYPE_BOOL',      m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_BOOL'))
-        m4_pushdef(`M4_TYPE_CHOICE',    m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_CHOICE'))
-        m4_pushdef(`M4_PARAM',          m4_defn(`M4_CONF_CMD_LOAD_ARGS_PARAM'))
+        m4_pushdef(`M4_TYPE_INT',           m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_INT'))
+        m4_pushdef(`M4_TYPE_STRING',        m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_STRING'))
+        m4_pushdef(`M4_TYPE_STRING_ARRAY',  m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_STRING_ARRAY'))
+        m4_pushdef(`M4_TYPE_BOOL',          m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_BOOL'))
+        m4_pushdef(`M4_TYPE_CHOICE',        m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_CHOICE'))
+        m4_pushdef(`M4_PARAM',              m4_defn(`M4_CONF_CMD_LOAD_ARGS_PARAM'))
         m4_include(M4_PROG_SYM()`_conf_schema.m4')
         m4_popdef(`M4_PARAM')
         m4_popdef(`M4_TYPE_CHOICE')
         m4_popdef(`M4_TYPE_BOOL')
+        m4_popdef(`M4_TYPE_STRING_ARRAY')
         m4_popdef(`M4_TYPE_STRING')
         m4_popdef(`M4_TYPE_INT')
         m4_printl(
@@ -575,11 +629,13 @@ m4_define(
            `            tlog_errs_pushf(perrs, "Failed creating %s option value", optname);',
            `            goto cleanup;',
            `        }',
-           `        grc = tlog_json_object_object_add_path(conf, optpath, val);',
-           `        if (grc != TLOG_RC_OK) {',
-           `            tlog_errs_pushc(perrs, grc);',
-           `            tlog_errs_pushf(perrs, "Failed storing %s option value", optname);',
-           `            goto cleanup;',
+           `        if (val != prev_val) {',
+           `            grc = tlog_json_object_object_add_path(conf, optpath, val);',
+           `            if (grc != TLOG_RC_OK) {',
+           `                tlog_errs_pushc(perrs, grc);',
+           `                tlog_errs_pushf(perrs, "Failed storing %s option value", optname);',
+           `                goto cleanup;',
+           `            }',
            `        }',
            `        val = NULL;',
            `    }',
@@ -627,6 +683,7 @@ m4_define(
            `',
            `cleanup:',
            `    json_object_put(args);',
+           `    json_object_put(entry_val);',
            `    json_object_put(val);',
            `    optind = optind_orig;',
            `    opterr = opterr_orig;',
