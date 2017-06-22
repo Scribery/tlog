@@ -188,6 +188,58 @@ cleanup:
 }
 
 tlog_grc
+tlog_json_object_object_get_path(struct json_object *obj,
+                                 const char *path,
+                                 struct json_object **pval,
+                                 bool *pfound)
+{
+    tlog_grc grc;
+    struct json_object *val = NULL;
+    bool found = false;
+    char *buf = NULL;
+    char *name_start;
+    char *name_end;
+    struct json_object *sub_obj;
+
+    assert(path != NULL);
+
+    buf = strdup(path);
+    if (buf == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        goto cleanup;
+    }
+
+    for (name_start = buf;
+         *(name_end = strchrnul(name_start, '.')) != '\0';
+         name_start = name_end + 1) {
+        *name_end = '\0';
+        if (json_object_get_type(obj) == json_type_object &&
+            json_object_object_get_ex(obj, name_start, &sub_obj)) {
+            obj = sub_obj;
+        } else {
+            goto exit;
+        }
+    }
+
+    if (json_object_get_type(obj) == json_type_object) {
+        found = json_object_object_get_ex(obj, name_start, &val);
+    }
+
+exit:
+    if (pval != NULL) {
+        *pval = val;
+    }
+    if (pfound != NULL) {
+        *pfound = found;
+    }
+
+    grc = TLOG_RC_OK;
+cleanup:
+    free(buf);
+    return grc;
+}
+
+tlog_grc
 tlog_json_object_from_file(struct json_object **pconf, const char *path)
 {
     tlog_grc grc;

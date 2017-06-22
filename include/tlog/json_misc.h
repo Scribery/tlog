@@ -62,6 +62,25 @@ extern tlog_grc tlog_json_object_object_add_path(struct json_object *obj,
                                                  struct json_object *val);
 
 /**
+ * Get an object field from a json_object of type json_type_object, located at
+ * the specified dot-separated path. Intermediate objects will be searched as
+ * necessary. Does not change the returned object's reference counter.
+ *
+ * @param obj       The object to begin lookup from.
+ * @param path      The dot-separated path to get the object from.
+ * @param pval      Location for the located json_object or for NULL member.
+ *                  Set to NULL if not found. Can be NULL.
+ * @param pfound    Location for the "found" flag. Set to true if the object
+ *                  was found and to false otherwise. Can be NULL.
+ *
+ * @return Global return code.
+ */
+extern tlog_grc tlog_json_object_object_get_path(struct json_object *obj,
+                                                 const char *path,
+                                                 struct json_object **pval,
+                                                 bool *pfound);
+
+/**
  * Read JSON from file, returning an error code, as opposed to
  * json_object_from_file which doesn't.
  *
