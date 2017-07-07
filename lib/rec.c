@@ -336,13 +336,22 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     num = json_object_get_int64(obj);
 
     /* Create the sink, letting it take over the writer */
-    grc = tlog_json_sink_create(&sink, writer, true,
-                                fqdn, passwd->pw_name, term,
-                                session_id, (size_t)num);
-    if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating log sink");
-        goto cleanup;
+    {
+        struct tlog_json_sink_params params = {
+            .writer = writer,
+            .writer_owned = true,
+            .hostname = fqdn,
+            .username = passwd->pw_name,
+            .terminal = term,
+            .session_id = session_id,
+            .chunk_size = num,
+        };
+        grc = tlog_json_sink_create(&sink, &params);
+        if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating log sink");
+            goto cleanup;
+        }
     }
     writer = NULL;
 

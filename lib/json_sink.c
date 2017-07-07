@@ -35,6 +35,21 @@
 #include <tlog/delay.h>
 #include <tlog/misc.h>
 
+bool
+tlog_json_sink_params_is_valid(const struct tlog_json_sink_params *params)
+{
+    return params != NULL &&
+           tlog_json_writer_is_valid(params->writer) &&
+           params->hostname != NULL &&
+           tlog_utf8_str_is_valid(params->hostname) &&
+           params->username != NULL &&
+           tlog_utf8_str_is_valid(params->username) &&
+           params->terminal != NULL &&
+           tlog_utf8_str_is_valid(params->terminal) &&
+           params->session_id != 0 &&
+           params->chunk_size >= TLOG_JSON_SINK_CHUNK_SIZE_MIN;
+}
+
 /** JSON sink instance */
 struct tlog_json_sink {
     struct tlog_sink            sink;           /**< Abstract sink instance */
@@ -78,63 +93,50 @@ static tlog_grc
 tlog_json_sink_init(struct tlog_sink *sink, va_list ap)
 {
     struct tlog_json_sink *json_sink = (struct tlog_json_sink *)sink;
-    struct tlog_json_writer *writer = va_arg(ap, struct tlog_json_writer *);
-    bool writer_owned = (bool)va_arg(ap, int);
-    const char *hostname = va_arg(ap, const char *);
-    const char *username = va_arg(ap, const char *);
-    const char *terminal = va_arg(ap, const char *);
-    unsigned int session_id = va_arg(ap, unsigned int);
-    size_t chunk_size = va_arg(ap, size_t);
+    const struct tlog_json_sink_params *params =
+                        va_arg(ap, const struct tlog_json_sink_params *);
     tlog_grc grc;
 
     assert(json_sink != NULL);
-    assert(tlog_json_writer_is_valid(writer));
-    assert(hostname != NULL);
-    assert(tlog_utf8_str_is_valid(hostname));
-    assert(username != NULL);
-    assert(tlog_utf8_str_is_valid(username));
-    assert(terminal != NULL);
-    assert(tlog_utf8_str_is_valid(terminal));
-    assert(session_id != 0);
-    assert(chunk_size >= TLOG_JSON_SINK_CHUNK_SIZE_MIN);
+    assert(tlog_json_sink_params_is_valid(params));
 
-    json_sink->hostname = tlog_json_aesc_str(hostname);
+    json_sink->hostname = tlog_json_aesc_str(params->hostname);
     if (json_sink->hostname == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
-    json_sink->username = tlog_json_aesc_str(username);
+    json_sink->username = tlog_json_aesc_str(params->username);
     if (json_sink->username == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
-    json_sink->terminal = tlog_json_aesc_str(terminal);
+    json_sink->terminal = tlog_json_aesc_str(params->terminal);
     if (json_sink->terminal == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
-    json_sink->session_id = session_id;
+    json_sink->session_id = params->session_id;
 
     json_sink->message_id = 1;
 
     /* NOTE: approximate size */
-    json_sink->message_len = chunk_size + 1024;
+    json_sink->message_len = params->chunk_size + 1024;
     json_sink->message_buf = malloc(json_sink->message_len);
     if (json_sink->message_buf == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
-    grc = tlog_json_chunk_init(&json_sink->chunk, chunk_size);
+    grc = tlog_json_chunk_init(&json_sink->chunk, params->chunk_size);
     if (grc != TLOG_RC_OK) {
         goto error;
     }
 
-    json_sink->writer = writer;
-    json_sink->writer_owned = writer_owned;
+    json_sink->writer = params->writer;
+    json_sink->writer_owned = params->writer_owned;
 
     return TLOG_RC_OK;
 

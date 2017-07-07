@@ -65,15 +65,23 @@ tlog_test_json_sink_run(
         exit(1);
     }
 
-    grc = tlog_json_sink_create(&sink, writer, false,
-                                input->hostname, input->username,
-                                input->terminal, input->session_id,
-                                input->chunk_size);
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed initializing the sink: %s\n",
-                tlog_grc_strerror(grc));
-        exit(1);
-    };
+    {
+        struct tlog_json_sink_params params = {
+            .writer = writer,
+            .writer_owned = false,
+            .hostname = input->hostname,
+            .username = input->username,
+            .terminal = input->terminal,
+            .session_id = input->session_id,
+            .chunk_size = input->chunk_size,
+        };
+        grc = tlog_json_sink_create(&sink, &params);
+        if (grc != TLOG_RC_OK) {
+            fprintf(stderr, "Failed initializing the sink: %s\n",
+                    tlog_grc_strerror(grc));
+            exit(1);
+        };
+    }
 
 #define FAIL(_fmt, _args...) \
     do {                                                    \

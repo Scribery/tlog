@@ -118,10 +118,18 @@ tlog_test_json_passthrough_buf(const char *name,
 
     GUARD("create a memory writer",
           tlog_mem_json_writer_create(&writer, &log_buf, &log_len));
-    GUARD("create a sink",
-          tlog_json_sink_create(&sink, writer, false,
-                                "localhost", "user", "xterm", 1,
-                                sink_chunk_size));
+    {
+        struct tlog_json_sink_params params = {
+            .writer = writer,
+            .writer_owned = false,
+            .hostname = "localhost",
+            .username = "user",
+            .terminal = "xterm",
+            .session_id = 1,
+            .chunk_size = sink_chunk_size,
+        };
+        GUARD("create a sink", tlog_json_sink_create(&sink, &params));
+    }
 
     pkt = TLOG_PKT_IO(0, 0, true, data_buf, data_len);
 

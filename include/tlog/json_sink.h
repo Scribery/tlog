@@ -35,50 +35,57 @@
 /** Minimum value of data chunk size */
 #define TLOG_JSON_SINK_CHUNK_SIZE_MIN   TLOG_JSON_CHUNK_SIZE_MIN
 
+/** JSON sink creation parameters */
+struct tlog_json_sink_params {
+    /** JSON log message writer */
+    struct tlog_json_writer    *writer;
+    /**
+     * True if the writer should be destroyed upon destruction of the sink,
+     * false otherwise
+     */
+    bool                        writer_owned;
+    /** Hostname to use in log messages, must be valid UTF-8 */
+    const char                 *hostname;
+    /** Username to use in log messages, must be valid UTF-8 */
+    const char                 *username;
+    /** Terminal type string to use in log messages, must be valid UTF-8 */
+    const char                 *terminal;
+    /** Session ID to use in log messages */
+    unsigned int                session_id;
+    /** Maximum data chunk length */
+    size_t                      chunk_size;
+};
+
+/**
+ * Check if JSON sink creation parameters structure is valid.
+ *
+ * @param params    The parameters structure to check.
+ *
+ * @return True if the parameters structure is valid, false otherwise.
+ */
+extern bool tlog_json_sink_params_is_valid(
+                            const struct tlog_json_sink_params *params);
+
 /** JSON sink type */
 extern const struct tlog_sink_type tlog_json_sink_type;
 
 /**
  * Create (allocate and initialize) a JSON log sink.
  *
- * @param psink             Location for created sink pointer, set to NULL in
- *                          case of error.
- * @param writer            JSON log message writer.
- * @param writer_owned      True if the writer should be destroyed upon
- *                          destruction of the sink, false otherwise.
- * @param hostname          Hostname to use in log messages,
- *                          must be valid UTF-8.
- * @param username          Username to use in log messages,
- *                          must be valid UTF-8.
- * @param terminal          Terminal type string to use in log messages,
- *                          must be valid UTF-8.
- * @param session_id        Session ID to use in log messages.
- * @param chunk_size        Maximum data chunk length.
+ * @param psink     Location for created sink pointer,
+ *                  set to NULL in case of error.
+ * @param params    Creation parameters structure.
  *
  * @return Global return code.
  */
 static inline tlog_grc
 tlog_json_sink_create(struct tlog_sink **psink,
-                      struct tlog_json_writer *writer,
-                      bool writer_owned,
-                      const char *hostname,
-                      const char *username,
-                      const char *terminal,
-                      unsigned int session_id,
-                      size_t chunk_size)
+                      const struct tlog_json_sink_params *params)
 {
     assert(psink != NULL);
-    assert(tlog_json_writer_is_valid(writer));
-    assert(hostname != NULL);
-    assert(username != NULL);
-    assert(terminal != NULL);
-    assert(session_id != 0);
-    assert(chunk_size >= TLOG_JSON_SINK_CHUNK_SIZE_MIN);
+    assert(tlog_json_sink_params_is_valid(params));
 
-    return tlog_sink_create(psink, &tlog_json_sink_type,
-                            writer, writer_owned,
-                            hostname, username, terminal,
-                            session_id, chunk_size);
+    return tlog_sink_create(psink, &tlog_json_sink_type, params);
 }
 
 #endif /* _TLOG_JSON_SINK_H */
