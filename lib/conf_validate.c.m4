@@ -128,6 +128,31 @@ m4_define(
 )
 
 m4_define(
+    `M4_TYPE_DOUBLE',
+    `
+        m4_printl(
+           `            if (type != json_type_double) {',
+           `                tlog_errs_pushf(perrs, "Invalid \"%s\" type: %s",',
+           `                                name, json_type_to_name(type));',
+           `                return TLOG_RC_FAILURE;',
+           `            }')
+        m4_ifelse(
+            `$1', , ,
+            `
+                m4_printl(
+                   `            double value = json_object_get_double(obj);',
+                   `            if (value < $2 || value > $3) {',
+                   `                tlog_errs_pushf(perrs, "Invalid \"%s\" value: %" PRId64,',
+                   `                                name, value);',
+                   `                return TLOG_RC_FAILURE;',
+                   `            }')
+            '
+        )
+    '
+)
+
+
+m4_define(
     `M4_TYPE_STRING_ARRAY',
     `
         m4_printl(

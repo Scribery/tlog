@@ -52,6 +52,15 @@ m4_dnl
 m4_dnl      $1 Default value
 m4_dnl      $2 Minimum value
 m4_dnl
+m4_dnl
+m4_dnl M4_TYPE_DOUBLE - describe double type
+m4_dnl Arguments:
+m4_dnl
+m4_dnl      $1 Default value
+m4_dnl      $2 Minimum value
+m4_dnl      $3 Maximum value
+m4_dnl
+m4_dnl
 m4_dnl M4_TYPE_STRING - describe string type
 m4_dnl
 m4_dnl      $1 Default value

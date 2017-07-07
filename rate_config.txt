@@ -1,0 +1,13 @@
+These are the lines of information in the configuration files. This information should also be in the man page for recording.
+If this is too long for the configuration files, use all of the comments in the man page and only keep the purpose and information
+about parameters in the configuration files.
+
+    // Rate-limiting collection if desired, prevents output that occurs
+    // at a rate larger than the one provided to not be added to the log.
+    // If the provided rate is 0, then the rate-limiting is disabled.
+    // If the provided number is greater than 0, then that is used
+    // as the cut-off rate. Can be used to keep unnessarily large
+    // computer output out of the log. Parameter MUST be in decimal form.
+    // Recommended rates are between 0.1 and 1.0 but may vary based on machine, 
+    // max is 20.0
+    "rate" : 0.0,
