@@ -78,6 +78,7 @@ The example message below captures a user pasting a "date" command into their
 terminal, the command output, and a fresh shell prompt:
 
     {
+        "ver":      1,
         "host":     "server.example.com",
         "user":     "johndoe",
         "term":     "xterm",
