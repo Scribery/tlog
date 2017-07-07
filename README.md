@@ -34,9 +34,10 @@ and `tlog-rec-session`.
 Building
 --------
 
-Build dependencies are cURL and json-c, which development packages are
-`json-c-devel` and `libcurl-devel` on RPM-based distros, and `libjson-c-dev`
-and any of `libcurl-*-dev` on Debian-based distros.
+Build dependencies are systemd, cURL, and json-c, which development packages are
+`systemd-devel`, `json-c-devel`, and `libcurl-devel` on RPM-based distros, and
+`libjson-c-dev` and `libsystemd-journal-dev` and `libcurl-*-dev` on
+Debian-based distros.
 
 If you'd like to build `tlog` from the Git source tree, you need to first
 generate the build system files:
