@@ -46,6 +46,8 @@ struct tlog_json_sink_params {
     bool                        writer_owned;
     /** Hostname to use in log messages, must be valid UTF-8 */
     const char                 *hostname;
+    /** Recording ID to use in log messages, must be valid UTF-8 */
+    const char                 *recording;
     /** Username to use in log messages, must be valid UTF-8 */
     const char                 *username;
     /** Terminal type string to use in log messages, must be valid UTF-8 */

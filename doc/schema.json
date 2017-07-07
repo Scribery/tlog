@@ -14,6 +14,10 @@
             "description":  "Name of the host recording was made on",
             "type":         "string"
         },
+        "rec":     {
+            "description":  "ID of the recording on the host",
+            "type":         "string"
+        },
         "user":     {
             "description":  "Recorded user name",
             "type":         "string"
@@ -23,17 +27,17 @@
             "type":         "string"
         },
         "session":  {
-            "description":  "Audit session ID of the recorded session",
+            "description":  "Audit session ID",
             "type":         "integer",
             "minimum":      1
         },
         "id":       {
-            "description":  "ID of the message within the session",
+            "description":  "ID of the message within the recording",
             "type":         "integer",
             "minimum":      1
         },
         "pos":      {
-            "description":  "Message position in the session, milliseconds",
+            "description":  "Message position in the recording, milliseconds",
             "type":         "integer",
             "minimum":      0
         },
@@ -75,6 +79,7 @@
     "required":     [
         "ver",
         "host",
+        "rec",
         "user",
         "term",
         "session",

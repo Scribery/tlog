@@ -42,6 +42,8 @@ tlog_json_sink_params_is_valid(const struct tlog_json_sink_params *params)
            tlog_json_writer_is_valid(params->writer) &&
            params->hostname != NULL &&
            tlog_utf8_str_is_valid(params->hostname) &&
+           params->recording != NULL &&
+           tlog_utf8_str_is_valid(params->recording) &&
            params->username != NULL &&
            tlog_utf8_str_is_valid(params->username) &&
            params->terminal != NULL &&
@@ -56,6 +58,8 @@ struct tlog_json_sink {
     struct tlog_json_writer    *writer;         /**< Log message writer */
     bool                        writer_owned;   /**< True if writer is owned */
     char                       *hostname;       /**< Hostname, JSON-escaped */
+    char                       *recording;      /**< Recording ID,
+                                                     JSON-escaped */
     char                       *username;       /**< Username, JSON-escaped */
     char                       *terminal;       /**< Terminal type,
                                                      JSON-escaped */
@@ -81,6 +85,8 @@ tlog_json_sink_cleanup(struct tlog_sink *sink)
     json_sink->terminal = NULL;
     free(json_sink->username);
     json_sink->username = NULL;
+    free(json_sink->recording);
+    json_sink->recording = NULL;
     free(json_sink->hostname);
     json_sink->hostname = NULL;
     if (json_sink->writer_owned) {
@@ -102,6 +108,12 @@ tlog_json_sink_init(struct tlog_sink *sink, va_list ap)
 
     json_sink->hostname = tlog_json_aesc_str(params->hostname);
     if (json_sink->hostname == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        goto error;
+    }
+
+    json_sink->recording = tlog_json_aesc_str(params->recording);
+    if (json_sink->recording == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;
     }
@@ -152,6 +164,7 @@ tlog_json_sink_is_valid(const struct tlog_sink *sink)
     return json_sink != NULL &&
            tlog_json_writer_is_valid(json_sink->writer) &&
            json_sink->hostname != NULL &&
+           json_sink->recording != NULL &&
            json_sink->username != NULL &&
            json_sink->terminal != NULL &&
            json_sink->message_buf != NULL &&
@@ -193,6 +206,7 @@ tlog_json_sink_flush(struct tlog_sink *sink)
         "{"
             "\"ver\":"      "\"2.1\","
             "\"host\":"     "\"%s\","
+            "\"rec\":"      "\"%s\","
             "\"user\":"     "\"%s\","
             "\"term\":"     "\"%s\","
             "\"session\":"  "%u,"
@@ -205,6 +219,7 @@ tlog_json_sink_flush(struct tlog_sink *sink)
             "\"out_bin\":"  "[%.*s]"
         "}\n",
         json_sink->hostname,
+        json_sink->recording,
         json_sink->username,
         json_sink->terminal,
         json_sink->session_id,

@@ -40,6 +40,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 #include <assert.h>
 
 /**< Number of the signal causing exit */
@@ -103,6 +104,162 @@ tlog_rec_get_fqdn(char **pfqdn)
 }
 
 /**
+ * Get the ID of the recording.
+ *
+ * @param perrs Location for the error stack. Can be NULL.
+ * @param pid   Location for the dynamically-allocated recording ID.
+ *              Can be NULL.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_rec_get_id(struct tlog_errs **perrs, char **pid)
+{
+    tlog_grc grc;
+    char buf[256];
+    char *p = buf;
+    ssize_t l = sizeof(buf);
+    const char *s;
+    ssize_t rc;
+    const char *boot_id_path = "/proc/sys/kernel/random/boot_id";
+    const char *self_stat_path = "/proc/self/stat";
+    FILE *file = NULL;
+    unsigned long long int starttime;
+
+    /*
+     * Append boot ID
+     */
+
+    /* Open boot ID file */
+    file = fopen(boot_id_path, "r");
+    if (file == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed opening boot ID file %s",
+                        boot_id_path);
+        goto cleanup;
+    }
+
+    /* Read the boot ID file */
+    rc = fread(p, 1, l, file);
+    if (rc == 0) {
+        if (ferror(file)) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed reading boot ID file %s",
+                            boot_id_path);
+        } else {
+            grc = TLOG_RC_FAILURE;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Boot ID file %s is empty",
+                            boot_id_path);
+        }
+        goto cleanup;
+    }
+
+    /* Close the boot ID file */
+    fclose(file);
+    file = NULL;
+
+    /* Compress boot ID to just numbers */
+    for (s = p; rc > 0 && l > 1; s++, rc--) {
+        if (isxdigit(*s)) {
+            *p = *s;
+            p++;
+            l--;
+        } else if (*s != '-') {
+            break;
+        }
+    }
+
+    /*
+     * Append separating dash and PID
+     */
+    rc = snprintf(p, l, "-%x", (unsigned int)getpid());
+    if (rc >= l) {
+        grc = TLOG_RC_FAILURE;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Generated recording ID is too long");
+    }
+    p += rc;
+    l -= rc;
+
+    /*
+     * Append separating dash and process start time (in jiffies since boot)
+     */
+    /* Open the process stat file */
+    file = fopen(self_stat_path, "r");
+    if (file == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed opening process status file %s",
+                        self_stat_path);
+        goto cleanup;
+    }
+
+    /* Read the process start time in jiffies since boot */
+    /* Format specifiers are taken from proc(5) */
+    rc = fscanf(file,
+                "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u "
+                "%*u %*u %*d %*d %*d %*d %*d %*d %llu", &starttime);
+    if (rc == EOF) {
+        if (ferror(file)) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed reading process status file %s",
+                            self_stat_path);
+        } else {
+            grc = TLOG_RC_FAILURE;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Process status file %s is empty",
+                            self_stat_path);
+        }
+        goto cleanup;
+    } else if (rc < 1) {
+        grc = TLOG_RC_FAILURE;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Invalid format of process status file %s",
+                        self_stat_path);
+        goto cleanup;
+    }
+
+    /* Close the process stat file */
+    fclose(file);
+    file = NULL;
+
+    /* Append a separating dash and the start time */
+    rc = snprintf(p, l, "-%llx", starttime);
+    if (rc >= l) {
+        grc = TLOG_RC_FAILURE;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Generated recording ID is too long");
+    }
+    p += rc;
+
+    /*
+     * Output, if requested.
+     */
+    if (pid != NULL) {
+        *pid = strndup(buf, p - buf);
+        if (*pid == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed allocating recording ID");
+        }
+    }
+
+    /* Success! */
+    grc = TLOG_RC_OK;
+
+cleanup:
+    if (file != NULL) {
+        fclose(file);
+    }
+
+    return grc;
+}
+
+/**
  * Create the log sink according to configuration.
  *
  * @param perrs         Location for the error stack. Can be NULL.
@@ -127,6 +284,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     int fd = -1;
     int rc;
     char *fqdn = NULL;
+    char *id = NULL;
     struct passwd *passwd;
     const char *term;
 
@@ -314,6 +472,13 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
         goto cleanup;
     }
 
+    /* Get recording ID */
+    grc = tlog_rec_get_id(perrs, &id);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs, "Failed generating recording ID");
+        goto cleanup;
+    }
+
     /* Get the terminal type */
     term = getenv("TERM");
     if (term == NULL) {
@@ -341,6 +506,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
             .writer = writer,
             .writer_owned = true,
             .hostname = fqdn,
+            .recording = id,
             .username = passwd->pw_name,
             .terminal = term,
             .session_id = session_id,
@@ -364,6 +530,7 @@ cleanup:
         close(fd);
     }
     tlog_json_writer_destroy(writer);
+    free(id);
     free(fqdn);
     tlog_sink_destroy(sink);
     return grc;

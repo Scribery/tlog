@@ -41,19 +41,20 @@ main(void)
     OP_WRITE(TLOG_PKT_IO(_pkt_io_args))
 
 #define MSG(_id_tkn, _pos, _timing, \
-            _in_txt, _in_bin, _out_txt, _out_bin)               \
-    "{\"ver\":\"2.1\",\"host\":\"localhost\","                  \
-      "\"user\":\"user\",\"term\":\"xterm\",\"session\":1,"     \
-      "\"id\":" #_id_tkn ",\"pos\":" _pos ","                   \
-      "\"timing\":\"" _timing "\","                             \
-      "\"in_txt\":\"" _in_txt "\",\"in_bin\":[" _in_bin "],"    \
-      "\"out_txt\":\"" _out_txt "\",\"out_bin\":[" _out_bin "]" \
+            _in_txt, _in_bin, _out_txt, _out_bin)                   \
+    "{\"ver\":\"2.1\",\"host\":\"localhost\",\"rec\":\"rec-1\","    \
+      "\"user\":\"user\",\"term\":\"xterm\",\"session\":1,"         \
+      "\"id\":" #_id_tkn ",\"pos\":" _pos ","                       \
+      "\"timing\":\"" _timing "\","                                 \
+      "\"in_txt\":\"" _in_txt "\",\"in_bin\":[" _in_bin "],"        \
+      "\"out_txt\":\"" _out_txt "\",\"out_bin\":[" _out_bin "]"     \
     "}\n"
 
 #define INPUT(_struct_init_args...) \
     .input = {                      \
         .chunk_size = 64,           \
         .hostname = "localhost",    \
+        .recording = "rec-1",       \
         .username = "user",         \
         .terminal = "xterm",        \
         .session_id = 1,            \

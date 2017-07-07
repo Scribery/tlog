@@ -50,6 +50,16 @@ struct tlog_json_source_params {
     bool                        reader_owned;
     /** Hostname to filter log messages by, NULL for unfiltered */
     const char                 *hostname;
+    /**
+     * True if messages should be filtered by recording ID,
+     * false otherwise
+     */
+    bool                        filter_recording;
+    /**
+     * Recording ID to filter log messages by,
+     * NULL for missing field in v1 format
+     */
+    const char                 *recording;
     /** Username to filter log messages by, NULL for unfiltered */
     const char                 *username;
     /** Terminal type string to require in log messages, NULL for any */

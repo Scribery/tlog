@@ -47,6 +47,10 @@ struct tlog_json_source {
 
     char               *hostname;       /**< Hostname to filter messages by,
                                              NULL for unfiltered */
+    bool                filter_recording;   /**< True if messages should be
+                                                 filtered by recording ID */
+    char               *recording;      /**< Recording ID to filter messages
+                                             by, NULL for no field */
     char               *username;       /**< Username to filter messages by,
                                              NULL for unfiltered */
     char               *terminal;       /**< Terminal type to require in
@@ -88,6 +92,8 @@ tlog_json_source_cleanup(struct tlog_source *source)
     tlog_json_msg_cleanup(&json_source->msg);
     free(json_source->hostname);
     json_source->hostname = NULL;
+    free(json_source->recording);
+    json_source->recording = NULL;
     free(json_source->username);
     json_source->username = NULL;
     free(json_source->io_buf);
@@ -112,6 +118,14 @@ tlog_json_source_init(struct tlog_source *source, va_list ap)
     if (params->hostname != NULL) {
         json_source->hostname = strdup(params->hostname);
         if (json_source->hostname == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            goto error;
+        }
+    }
+    json_source->filter_recording = params->filter_recording;
+    if (json_source->filter_recording && params->recording != NULL) {
+        json_source->recording = strdup(params->recording);
+        if (json_source->recording == NULL) {
             grc = TLOG_GRC_ERRNO;
             goto error;
         }
@@ -201,6 +215,13 @@ tlog_json_source_read_msg(struct tlog_source *source)
 
         if (json_source->hostname != NULL &&
             strcmp(json_source->msg.host, json_source->hostname) != 0) {
+            continue;
+        }
+        if (json_source->filter_recording &&
+            ((json_source->recording != NULL) !=
+                (json_source->msg.rec != NULL) ||
+             (json_source->recording != NULL &&
+              strcmp(json_source->msg.rec, json_source->recording) != 0))) {
             continue;
         }
         if (json_source->username != NULL &&

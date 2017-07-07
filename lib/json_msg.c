@@ -102,6 +102,14 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
         }                                                               \
     } while (0)
 
+#define GET_OPTIONAL_FIELD(_name_token, _type_token) \
+    do {                                                            \
+        if (json_object_object_get_ex(obj, #_name_token, &o) &&     \
+            json_object_get_type(o) != json_type_##_type_token) {   \
+            return TLOG_RC_JSON_MSG_FIELD_INVALID_TYPE;             \
+        }                                                           \
+    } while (0)
+
     GET_FIELD_ALT_TYPE2(ver, string, int);
     /* NOTE: Converting number to string can fail */
     str = json_object_get_string(o);
@@ -117,6 +125,9 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
 
     GET_FIELD(host, string);
     msg->host = json_object_get_string(o);
+
+    GET_OPTIONAL_FIELD(rec, string);
+    msg->rec = json_object_get_string(o);
 
     GET_FIELD(user, string);
     msg->user = json_object_get_string(o);
@@ -169,6 +180,7 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
     msg->out_bin_obj = o;
     msg->out_bin_pos = 0;
 
+#undef GET_OPTIONAL_FIELD
 #undef GET_FIELD_ALT_TYPE2
 #undef GET_FIELD
 

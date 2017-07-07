@@ -67,6 +67,7 @@ struct tlog_test_json_sink_op {
 
 struct tlog_test_json_sink_input {
     const char                     *hostname;
+    const char                     *recording;
     const char                     *username;
     const char                     *terminal;
     unsigned int                    session_id;

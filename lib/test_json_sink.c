@@ -70,6 +70,7 @@ tlog_test_json_sink_run(
             .writer = writer,
             .writer_owned = false,
             .hostname = input->hostname,
+            .recording = input->recording,
             .username = input->username,
             .terminal = input->terminal,
             .session_id = input->session_id,

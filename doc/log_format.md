@@ -11,11 +11,13 @@ properties:
 | --------- | ------------------------- | ----------------------
 | ver       | String                    | Format version ("2.1")
 | host      | String                    | Recording host name
+| rec       | String                    | String uniquely identifying
+|           |                           | the recording on the host
 | user      | String                    | Recorded user name
 | term      | String                    | Terminal type
-| session   | Unsigned integer > 0      | Recorded audit session ID
-| id        | Unsigned integer > 0      | ID of the message within session
-| pos       | Unsigned integer          | Message position in session,
+| session   | Unsigned integer > 0      | Audit session ID
+| id        | Unsigned integer > 0      | ID of the message within recording
+| pos       | Unsigned integer          | Message position in recording,
 |           |                           | milliseconds
 | timing    | String                    | Distribution of events in time
 | in_txt    | String                    | Input text with invalid characters
@@ -38,11 +40,13 @@ which existing software versions cannot handle. Increases in minor version
 number represent changes which are forward-compatible, such as adding a new
 field, which would be ignored by existing software versions.
 
-Each message in a single session has the same `host`, `user`, `term`, and
-`session` property values. The `id` value starts with one for the first
-message and is incremented for each new message. The `pos` value is the
-message temporal position in a session, in milliseconds. No assumption should
-be made about the time origin at this moment.
+Each message in a single recording has the same `host`, `rec`, `user`, `term`,
+and `session` property values. The `rec` value is an opaque string uniquely
+identifying a particular recording on the recording host. The `id` value
+starts with one for the first message in the recording and is incremented for
+each new message. The `pos` value is the message temporal position in the
+recording, in milliseconds. No assumption should be made about the time origin
+at this moment.
 
 The `in_txt`/`out_txt` properties store input and output text respectively.
 Any byte sequences which don't constitute a valid character are represented by
@@ -91,6 +95,7 @@ terminal, the command output, and a fresh shell prompt:
     {
         "ver":      "2.1",
         "host":     "server.example.com",
+        "rec":      "e843f15839e54e7d83bdc8c128978586-22c2-5d24f15",
         "user":     "johndoe",
         "term":     "xterm",
         "session":  324,

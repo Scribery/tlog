@@ -49,6 +49,8 @@ struct tlog_json_msg {
     unsigned int        ver_major;      /**< Major version number */
     unsigned int        ver_minor;      /**< Minor version number */
     const char         *host;           /**< Hostname */
+    const char         *rec;            /**< Recording ID,
+                                             or NULL if missing */
     const char         *user;           /**< Username */
     const char         *term;           /**< Terminal type */
     unsigned int        session;        /**< Audit session ID */

@@ -123,6 +123,7 @@ tlog_test_json_passthrough_buf(const char *name,
             .writer = writer,
             .writer_owned = false,
             .hostname = "localhost",
+            .recording = "rec-1",
             .username = "user",
             .terminal = "xterm",
             .session_id = 1,
@@ -253,6 +254,7 @@ main(void)
 #define INPUT(_struct_init_args...) \
     .input = {                      \
         .hostname = "localhost",    \
+        .recording = "rec-1",       \
         .username = "user",         \
         .terminal = "xterm",        \
         .session_id = 1,            \
