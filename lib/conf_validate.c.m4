@@ -142,7 +142,7 @@ m4_define(
                 m4_printl(
                    `            double value = json_object_get_double(obj);',
                    `            if (value < $2 || value > $3) {',
-                   `                tlog_errs_pushf(perrs, "Invalid \"%s\" value: %" PRId64,',
+                   `                tlog_errs_pushf(perrs, "Invalid \"%s\" value: %f",',
                    `                                name, value);',
                    `                return TLOG_RC_FAILURE;',
                    `            }')
