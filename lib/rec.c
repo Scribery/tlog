@@ -68,7 +68,7 @@ tlog_rec_alarm_sighandler(int signum)
  *
  * @param pfqdn     Location for the dynamically-allocated name.
  *
- * @return Status code.
+ * @return Global return code.
  */
 static tlog_grc
 tlog_rec_get_fqdn(char **pfqdn)
