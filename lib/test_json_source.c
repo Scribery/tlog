@@ -127,14 +127,22 @@ tlog_test_json_source_run(
                 tlog_grc_strerror(grc));
         exit(1);
     }
-    grc = tlog_json_source_create(&source, reader, false,
-                                  output->hostname, output->username,
-                                  output->terminal, output->session_id,
-                                  output->io_size);
-    if (grc != TLOG_RC_OK) {
-        fprintf(stderr, "Failed creating source: %s\n",
-                tlog_grc_strerror(grc));
-        exit(1);
+    {
+        struct tlog_json_source_params params = {
+            .reader         = reader,
+            .reader_owned   = false,
+            .hostname       = output->hostname,
+            .username       = output->username,
+            .terminal       = output->terminal,
+            .session_id     = output->session_id,
+            .io_size        = output->io_size,
+        };
+        grc = tlog_json_source_create(&source, &params);
+        if (grc != TLOG_RC_OK) {
+            fprintf(stderr, "Failed creating source: %s\n",
+                    tlog_grc_strerror(grc));
+            exit(1);
+        }
     }
 
 #define FAIL(_fmt, _args...) \

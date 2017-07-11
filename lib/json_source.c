@@ -29,6 +29,14 @@
 #include <tlog/json_msg.h>
 #include <tlog/json_source.h>
 
+bool
+tlog_json_source_params_is_valid(const struct tlog_json_source_params *params)
+{
+    return params != NULL &&
+           tlog_json_reader_is_valid(params->reader) &&
+           params->io_size >= TLOG_JSON_SOURCE_IO_SIZE_MIN;
+}
+
 /** JSON source instance */
 struct tlog_json_source {
     struct tlog_source          source; /**< Abstract source instance */
@@ -96,51 +104,45 @@ tlog_json_source_init(struct tlog_source *source, va_list ap)
     struct tlog_json_source *json_source =
                                 (struct tlog_json_source *)source;
     tlog_grc grc;
-    struct tlog_json_reader *reader = va_arg(ap, struct tlog_json_reader *);
-    bool reader_owned = (bool)va_arg(ap, int);
-    const char *hostname = va_arg(ap, const char *);
-    const char *username = va_arg(ap, const char *);
-    const char *terminal = va_arg(ap, const char *);
-    unsigned int session_id = va_arg(ap, unsigned int);
-    size_t io_size = va_arg(ap, size_t);
+    const struct tlog_json_source_params *params =
+                        va_arg(ap, const struct tlog_json_source_params *);
 
-    assert(tlog_json_reader_is_valid(reader));
-    assert(io_size >= TLOG_JSON_SOURCE_IO_SIZE_MIN);
+    assert(tlog_json_source_params_is_valid(params));
 
-    if (hostname != NULL) {
-        json_source->hostname = strdup(hostname);
+    if (params->hostname != NULL) {
+        json_source->hostname = strdup(params->hostname);
         if (json_source->hostname == NULL) {
             grc = TLOG_GRC_ERRNO;
             goto error;
         }
     }
-    if (username != NULL) {
-        json_source->username = strdup(username);
+    if (params->username != NULL) {
+        json_source->username = strdup(params->username);
         if (json_source->username == NULL) {
             grc = TLOG_GRC_ERRNO;
             goto error;
         }
     }
-    if (terminal != NULL) {
-        json_source->terminal = strdup(terminal);
+    if (params->terminal != NULL) {
+        json_source->terminal = strdup(params->terminal);
         if (json_source->terminal == NULL) {
             grc = TLOG_GRC_ERRNO;
             goto error;
         }
     }
-    json_source->session_id = session_id;
+    json_source->session_id = params->session_id;
 
     tlog_json_msg_init(&json_source->msg, NULL);
 
-    json_source->io_size = io_size;
-    json_source->io_buf = malloc(io_size);
+    json_source->io_size = params->io_size;
+    json_source->io_buf = malloc(params->io_size);
     if (json_source->io_buf == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;
     }
 
-    json_source->reader = reader;
-    json_source->reader_owned = reader_owned;
+    json_source->reader = params->reader;
+    json_source->reader_owned = params->reader_owned;
 
     return TLOG_RC_OK;
 error:

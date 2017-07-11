@@ -39,44 +39,54 @@
 /** JSON source type */
 extern const struct tlog_source_type tlog_json_source_type;
 
+/** JSON source creation parameters */
+struct tlog_json_source_params {
+    /** Log message reader */
+    struct tlog_json_reader    *reader;
+    /**
+     * True if the reader should be destroyed upon destruction of the sink,
+     * false otherwise
+     */
+    bool                        reader_owned;
+    /** Hostname to filter log messages by, NULL for unfiltered */
+    const char                 *hostname;
+    /** Username to filter log messages by, NULL for unfiltered */
+    const char                 *username;
+    /** Terminal type string to require in log messages, NULL for any */
+    const char                 *terminal;
+    /** Session ID to filter log messages by, 0 for unfiltered */
+    unsigned int                session_id;
+    /** Size of I/O data buffer used in packets */
+    size_t                      io_size;
+};
+
+/**
+ * Check if JSON source creation parameters structure is valid.
+ *
+ * @param params    The parameters structure to check.
+ *
+ * @return True if the parameters structure is valid, false otherwise.
+ */
+extern bool tlog_json_source_params_is_valid(
+                            const struct tlog_json_source_params *params);
+
 /**
  * Create (allocate and initialize) a log source.
  *
- * @param psource           Location for created source pointer, set to NULL
- *                          in case of error.
- * @param reader            Log message reader.
- * @param reader_owned      True if the reader should be destroyed upon
- *                          destruction of the sink, false otherwise.
- * @param hostname          Hostname to filter log messages by, NULL for
- *                          unfiltered.
- * @param username          Username to filter log messages by, NULL for
- *                          unfiltered.
- * @param terminal          Terminal type string to require in log messages,
- *                          NULL for any.
- * @param session_id        Session ID to filter log messages by, 0 for
- *                          unfiltered.
- * @param io_size           Size of I/O data buffer used in packets.
+ * @param psource   Location for created source pointer,
+ *                  set to NULL in case of error.
+ * @param params    Creation parameters structure.
  *
  * @return Global return code.
  */
 static inline tlog_grc
 tlog_json_source_create(struct tlog_source **psource,
-                        struct tlog_json_reader *reader,
-                        bool reader_owned,
-                        const char *hostname,
-                        const char *username,
-                        const char *terminal,
-                        unsigned int session_id,
-                        size_t io_size)
+                        const struct tlog_json_source_params *params)
 {
     assert(psource != NULL);
-    assert(tlog_json_reader_is_valid(reader));
-    assert(io_size >= TLOG_JSON_SOURCE_IO_SIZE_MIN);
+    assert(tlog_json_source_params_is_valid(params));
 
-    return tlog_source_create(psource, &tlog_json_source_type,
-                              reader, reader_owned,
-                              hostname, username, terminal, session_id,
-                              io_size);
+    return tlog_source_create(psource, &tlog_json_source_type, params);
 }
 
 #endif /* _TLOG_JSON_SOURCE_H */

@@ -251,12 +251,18 @@ create_log_source(struct tlog_errs **perrs,
     }
 
     /* Create the source */
-    grc = tlog_json_source_create(&source, reader, true,
-                                  NULL, NULL, NULL, 0, 4096);
-    if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating the source");
-        goto cleanup;
+    {
+        struct tlog_json_source_params params = {
+            .reader = reader,
+            .reader_owned = true,
+            .io_size = 4096,
+        };
+        grc = tlog_json_source_create(&source, &params);
+        if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating the source");
+            goto cleanup;
+        }
     }
     reader = NULL;
 

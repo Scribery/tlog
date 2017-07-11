@@ -140,10 +140,15 @@ tlog_test_json_passthrough_buf(const char *name,
 
     GUARD("create a memory reader",
           tlog_mem_json_reader_create(&reader, log_buf, log_len));
-    GUARD("create a source",
-          tlog_json_source_create(&source, reader, false,
-                                  NULL, NULL, NULL, 0,
-                                  source_io_size));
+    {
+        struct tlog_json_source_params params = {
+            .reader = reader,
+            .reader_owned = false,
+            .io_size = source_io_size,
+        };
+        GUARD("create a source",
+              tlog_json_source_create(&source, &params));
+    }
 
     mismatch = false;
     data_pos = 0;
