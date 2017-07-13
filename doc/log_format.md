@@ -9,7 +9,7 @@ properties:
 
 | Name      | Type                      | Description
 | --------- | ------------------------- | ----------------------
-| ver       | Unsigned integer > 0      | Format version number (1)
+| ver       | String                    | Format version ("2")
 | host      | String                    | Recording host name
 | user      | String                    | Recorded user name
 | term      | String                    | Terminal type
@@ -26,6 +26,17 @@ properties:
 |           |                           | scrubbed
 | out_bin   | Array of unsigned bytes   | Scrubbed invalid output characters
 |           |                           | as an array of bytes
+
+The `ver` field stores the version of the message format as a string
+representing two unsigned integer numbers: major and minor, separated by a
+dot. If both the dot and the minor number are omitted, the minor number is
+assumed to be zero.
+
+Increases in major version number represent changes which are not
+forward-compatible, such as renaming a field, or changing a field format,
+which existing software versions cannot handle. Increases in minor version
+number represent changes which are forward-compatible, such as adding a new
+field, which would be ignored by existing software versions.
 
 Each message in a single session has the same `host`, `user`, `term`, and
 `session` property values. The `id` value starts with one for the first
@@ -78,7 +89,7 @@ The example message below captures a user pasting a "date" command into their
 terminal, the command output, and a fresh shell prompt:
 
     {
-        "ver":      1,
+        "ver":      "2",
         "host":     "server.example.com",
         "user":     "johndoe",
         "term":     "xterm",

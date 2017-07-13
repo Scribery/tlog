@@ -6,9 +6,9 @@
 
     "properties":   {
         "ver":      {
-            "description":  "Message format version number",
-            "type":         "integer",
-            "minimum":      1
+            "description":  "Message format version",
+            "type":         "string",
+            "pattern":      "^[0-9]+(\\.[0-9]+)?$"
         },
         "host":     {
             "description":  "Name of the host recording was made on",

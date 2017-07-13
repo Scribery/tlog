@@ -1,7 +1,7 @@
 {
     "properties": {
         "ver": {
-            "type": "long"
+            "type": "string"
         },
         "host": {
             "type": "string",

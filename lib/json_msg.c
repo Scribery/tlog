@@ -65,7 +65,9 @@ tlog_grc
 tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
 {
     struct json_object *o;
-    int64_t ver;
+    int rc;
+    const char *str;
+    int end;
     int64_t session;
     int64_t id;
     int64_t pos;
@@ -89,12 +91,29 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
         }                                                           \
     } while (0)
 
-    GET_FIELD(ver, int);
-    ver = json_object_get_int(o);
-    if (ver != 1) {
+#define GET_FIELD_ALT_TYPE2(_name_token, _type_token1, _type_token2) \
+    do {                                                                \
+        if (!json_object_object_get_ex(obj, #_name_token, &o)) {        \
+            return TLOG_RC_JSON_MSG_FIELD_MISSING;                      \
+        }                                                               \
+        if (json_object_get_type(o) != json_type_##_type_token1 &&      \
+            json_object_get_type(o) != json_type_##_type_token2) {      \
+            return TLOG_RC_JSON_MSG_FIELD_INVALID_TYPE;                 \
+        }                                                               \
+    } while (0)
+
+    GET_FIELD_ALT_TYPE2(ver, string, int);
+    /* NOTE: Converting number to string can fail */
+    str = json_object_get_string(o);
+    if (str == NULL) {
+        return TLOG_GRC_ERRNO;
+    }
+    end = 0;
+    rc = sscanf(str, "%u%n.%u%n",
+                &msg->ver_major, &end, &msg->ver_minor, &end);
+    if (rc < 1 || str[end] != '\0' || msg->ver_major > 2) {
         return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_VER;
     }
-    msg->ver = (unsigned int)ver;
 
     GET_FIELD(host, string);
     msg->host = json_object_get_string(o);
@@ -149,6 +168,8 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
     GET_FIELD(out_bin, array);
     msg->out_bin_obj = o;
     msg->out_bin_pos = 0;
+
+#undef GET_FIELD_ALT_TYPE2
 #undef GET_FIELD
 
     msg->obj = json_object_get(obj);
