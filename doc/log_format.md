@@ -9,7 +9,7 @@ properties:
 
 | Name      | Type                      | Description
 | --------- | ------------------------- | ----------------------
-| ver       | String                    | Format version ("2")
+| ver       | String                    | Format version ("2.1")
 | host      | String                    | Recording host name
 | user      | String                    | Recorded user name
 | term      | String                    | Terminal type
@@ -89,7 +89,7 @@ The example message below captures a user pasting a "date" command into their
 terminal, the command output, and a fresh shell prompt:
 
     {
-        "ver":      "2",
+        "ver":      "2.1",
         "host":     "server.example.com",
         "user":     "johndoe",
         "term":     "xterm",
