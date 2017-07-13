@@ -89,6 +89,9 @@ terminal window size changed at which time offset since the time stored in
                                         ; number) and height (rows, second
                                         ; number).
 
+Example
+-------
+
 The example message below captures a user pasting a "date" command into their
 terminal, the command output, and a fresh shell prompt:
 
@@ -107,6 +110,24 @@ terminal, the command output, and a fresh shell prompt:
         "out_txt":  "date\r\nMon Nov 30 11:52:45 UTC 2015\r\n[johndoe@server ~]$ ",
         "out_bin":  []
     }
+
+Changelog
+---------
+
+### 2.1 - 2017-07-13
+#### Added
+- Added record ID field - "rec".
+
+### 2 - 2017-07-13
+#### Changed
+- Changed "ver" field type to string.
+
+### 1 - 2015-11-30
+#### Added
+- Added this documentation.
+- Implemented logging.
+#### Changed
+- Changed the format many times during initial development.
 
 [replacement_character]: https://en.wikipedia.org/wiki/Specials_%28Unicode_block%29#Replacement_character
 [ABNF]: https://tools.ietf.org/html/rfc5234
