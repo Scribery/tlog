@@ -33,18 +33,44 @@ struct tlog_journal_json_writer {
     unsigned int                session_id; /**< Session ID */
 };
 
+static void
+tlog_journal_json_writer_cleanup(struct tlog_json_writer *writer)
+{
+    struct tlog_journal_json_writer *journal_json_writer =
+                                    (struct tlog_journal_json_writer*)writer;
+    free(journal_json_writer->username);
+}
+
 static tlog_grc
 tlog_journal_json_writer_init(struct tlog_json_writer *writer, va_list ap)
 {
     struct tlog_journal_json_writer *journal_json_writer =
                                     (struct tlog_journal_json_writer*)writer;
-    journal_json_writer->priority = va_arg(ap, int);
-    journal_json_writer->username = strdup(va_arg(ap, const char *));
+    tlog_grc grc;
+    int priority = va_arg(ap, int);
+    const char *username = va_arg(ap, const char *);
+    unsigned int session_id = va_arg(ap, unsigned int);
+
+    assert(tlog_syslog_priority_is_valid(priority));
+    assert(username != NULL);
+    assert(session_id != 0);
+
+    journal_json_writer->priority = priority;
+
+    journal_json_writer->username = strdup(username);
     if (journal_json_writer->username == NULL) {
-        return TLOG_GRC_ERRNO;
+        grc = TLOG_GRC_ERRNO;
+        goto cleanup;
     }
-    journal_json_writer->session_id = va_arg(ap, unsigned int);
-    return TLOG_RC_OK;
+
+    journal_json_writer->session_id = session_id;
+
+    grc = TLOG_RC_OK;
+cleanup:
+    if (grc != TLOG_RC_OK) {
+        tlog_journal_json_writer_cleanup(writer);
+    }
+    return grc;
 }
 
 static bool
@@ -55,14 +81,6 @@ tlog_journal_json_writer_is_valid(const struct tlog_json_writer *writer)
     return tlog_syslog_priority_is_valid(journal_json_writer->priority) &&
            journal_json_writer->username != NULL &&
            journal_json_writer->session_id != 0;
-}
-
-static void
-tlog_journal_json_writer_cleanup(struct tlog_json_writer *writer)
-{
-    struct tlog_journal_json_writer *journal_json_writer =
-                                    (struct tlog_journal_json_writer*)writer;
-    free(journal_json_writer->username);
 }
 
 static tlog_grc
