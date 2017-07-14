@@ -288,6 +288,13 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     struct passwd *passwd;
     const char *term;
 
+    /* Get recording ID */
+    grc = tlog_rec_get_id(perrs, &id);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs, "Failed generating recording ID");
+        goto cleanup;
+    }
+
     /* Get real user entry */
     errno = 0;
     passwd = getpwuid(getuid());
@@ -443,7 +450,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
         }
 
         /* Create the writer */
-        grc = tlog_journal_json_writer_create(&writer, priority,
+        grc = tlog_journal_json_writer_create(&writer, priority, id,
                                               passwd->pw_name, session_id);
         if (grc != TLOG_RC_OK) {
             tlog_errs_pushc(perrs, grc);
@@ -469,13 +476,6 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     if (!tlog_utf8_str_is_valid(fqdn)) {
         tlog_errs_pushf(perrs, "Host FQDN is not valid UTF-8: %s", fqdn);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
-    }
-
-    /* Get recording ID */
-    grc = tlog_rec_get_id(perrs, &id);
-    if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed generating recording ID");
         goto cleanup;
     }
 

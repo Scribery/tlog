@@ -29,6 +29,7 @@
 struct tlog_journal_json_writer {
     struct tlog_json_writer     writer;     /**< Abstract writer instance */
     int                         priority;   /**< Logging priority */
+    char                       *recording;  /**< Recording ID */
     char                       *username;   /**< Session user name */
     unsigned int                session_id; /**< Session ID */
 };
@@ -39,6 +40,7 @@ tlog_journal_json_writer_cleanup(struct tlog_json_writer *writer)
     struct tlog_journal_json_writer *journal_json_writer =
                                     (struct tlog_journal_json_writer*)writer;
     free(journal_json_writer->username);
+    free(journal_json_writer->recording);
 }
 
 static tlog_grc
@@ -48,14 +50,22 @@ tlog_journal_json_writer_init(struct tlog_json_writer *writer, va_list ap)
                                     (struct tlog_journal_json_writer*)writer;
     tlog_grc grc;
     int priority = va_arg(ap, int);
+    const char *recording = va_arg(ap, const char *);
     const char *username = va_arg(ap, const char *);
     unsigned int session_id = va_arg(ap, unsigned int);
 
     assert(tlog_syslog_priority_is_valid(priority));
+    assert(recording != NULL);
     assert(username != NULL);
     assert(session_id != 0);
 
     journal_json_writer->priority = priority;
+
+    journal_json_writer->recording = strdup(recording);
+    if (journal_json_writer->recording == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        goto cleanup;
+    }
 
     journal_json_writer->username = strdup(username);
     if (journal_json_writer->username == NULL) {
@@ -91,6 +101,7 @@ tlog_journal_json_writer_write(struct tlog_json_writer *writer,
                                     (struct tlog_journal_json_writer*)writer;
     int sd_rc;
     sd_rc = sd_journal_send("PRIORITY=%d", journal_json_writer->priority,
+                            "TLOG_REC=%s", journal_json_writer->recording,
                             "TLOG_USER=%s", journal_json_writer->username,
                             "TLOG_SESSION=%u", journal_json_writer->session_id,
                             "TLOG_ID=%zu", id,
