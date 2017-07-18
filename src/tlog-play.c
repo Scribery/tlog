@@ -307,6 +307,7 @@ run(struct tlog_errs **perrs,
     struct tlog_pkt pkt = TLOG_PKT_VOID;
     size_t loc_num;
     char *loc_str = NULL;
+    unsigned int read_wait = 0;
 
     assert(cmd_help != NULL);
 
@@ -406,32 +407,40 @@ run(struct tlog_errs **perrs,
      * Reproduce the logged output
      */
     while (exit_signum == 0) {
-        /* Read a packet */
-        tlog_pkt_cleanup(&pkt);
-        loc_num = tlog_source_loc_get(source);
-        grc = tlog_source_read(source, &pkt);
-        if (grc == TLOG_GRC_FROM(errno, EINTR)) {
-            break;
-        } else if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            loc_str = tlog_source_loc_fmt(source, loc_num);
-            tlog_errs_pushf(perrs, "Failed reading the source at %s", loc_str);
-            goto cleanup;
-        }
-        /* If hit the end of stream */
+        /* If there is no data in the packet */
         if (tlog_pkt_is_void(&pkt)) {
-            if (follow) {
-                if (sleep(POLL_PERIOD) != 0) {
+            /* Wait for next read, if necessary */
+            if (read_wait > 0) {
+                read_wait = sleep(read_wait);
+                if (read_wait > 0) {
+                    continue;
+                }
+            }
+            /* Read a packet */
+            loc_num = tlog_source_loc_get(source);
+            grc = tlog_source_read(source, &pkt);
+            if (grc == TLOG_GRC_FROM(errno, EINTR)) {
+                continue;
+            } else if (grc != TLOG_RC_OK) {
+                tlog_errs_pushc(perrs, grc);
+                loc_str = tlog_source_loc_fmt(source, loc_num);
+                tlog_errs_pushf(perrs, "Failed reading the source at %s", loc_str);
+                goto cleanup;
+            }
+            /* If hit the end of stream */
+            if (tlog_pkt_is_void(&pkt)) {
+                if (follow) {
+                    read_wait = POLL_PERIOD;
+                    continue;
+                } else {
                     break;
                 }
-                continue;
-            } else {
-                break;
             }
-        }
-        /* If it's not the output */
-        if (pkt.type != TLOG_PKT_TYPE_IO || !pkt.data.io.output) {
-            continue;
+            /* If it's not the output */
+            if (pkt.type != TLOG_PKT_TYPE_IO || !pkt.data.io.output) {
+                tlog_pkt_cleanup(&pkt);
+                continue;
+            }
         }
 
         /* Get current time */
@@ -455,10 +464,11 @@ run(struct tlog_errs **perrs,
                 /* Stretch the time */
                 local_last_ts = local_this_ts;
             } else {
+                /* Advance the time */
                 rc = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
                                      &local_next_ts, NULL);
                 if (rc == EINTR) {
-                    break;
+                    continue;
                 } else if (rc != 0) {
                     grc = TLOG_GRC_ERRNO;
                     tlog_errs_pushc(perrs, grc);
@@ -473,7 +483,7 @@ run(struct tlog_errs **perrs,
         if (write(STDOUT_FILENO, pkt.data.io.buf, pkt.data.io.len) !=
                 (ssize_t)pkt.data.io.len) {
             if (errno == EINTR) {
-                break;
+                continue;
             } else if (rc != 0) {
                 grc = TLOG_GRC_ERRNO;
                 tlog_errs_pushc(perrs, grc);
@@ -483,6 +493,7 @@ run(struct tlog_errs **perrs,
         }
 
         pkt_last_ts = pkt.timestamp;
+        tlog_pkt_cleanup(&pkt);
     }
 
     grc = TLOG_RC_OK;
