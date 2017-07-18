@@ -35,7 +35,6 @@
 #include <tlog/misc.h>
 #include <tlog/tty_source.h>
 
-
 /** Number of WINCH signals caught */
 static volatile sig_atomic_t tlog_tty_source_sig = 0;
 
@@ -261,24 +260,6 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
      * which can block.
      */
     assert(TLOG_TTY_SOURCE_FD_IDX_OUT == 0);
-
-    /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-    FILE *f;
-    f = fopen("/var/lib/tlog/trace_test.txt", "a");
-    if(f == NULL){
-        printf("problem opening file10\n");
-        exit(1);
-    }
-    time_t t;
-    time(&t);
-    struct tm *timer;
-    timer = localtime(&t);
-    char buf[20];
-    strftime(buf, sizeof(buf), "%b %d %T", timer);
-    fprintf(f, "in tty-source.c, about to read; [%s]\n", buf);
-    fclose(f);
-    //END TRACING CODE*/
-
     for (i = 0; i < TLOG_ARRAY_SIZE(tty_source->fd_list); i++) {
         if (tty_source->fd_list[i].revents & (POLLIN | POLLHUP | POLLERR)) {
             ssize_t rc;
@@ -292,26 +273,6 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
                 if (clock_gettime(tty_source->clock_id, &ts) < 0) {
                     return TLOG_GRC_ERRNO;
                 }
-
-                /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-                FILE *f;
-                f = fopen("/var/lib/tlog/trace_test.txt", "a");
-                if(f == NULL){
-                    printf("problem opening file11\n");
-                    exit(1);
-                }
-                time_t t;
-                time(&t);
-                struct tm *timer;
-                timer = localtime(&t);
-                char buf[20];
-                strftime(buf, sizeof(buf), "%b %d %T", timer);
-                fprintf(f, "in tty-source.c (i = %d), read %d bytes: %s; [%s]\n", i, rc, tty_source->io_buf, buf);
-                fflush(stdout);
-                fclose(f);
-                //END TRACING CODE*/
-
-                /*ORIGINAL CODE*/
                 tlog_pkt_init_io(pkt, &ts,
                                  i == TLOG_TTY_SOURCE_FD_IDX_OUT,
                                  tty_source->io_buf, false, rc);
@@ -320,9 +281,7 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
         }
     }
 
-
 success:
-
     if (!tlog_pkt_is_void(pkt)) {
         if (!tty_source->started) {
             tty_source->start_ts = pkt->timestamp;

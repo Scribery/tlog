@@ -40,16 +40,16 @@ _M4_PARAM(`', `payload', `file-',
 m4_dnl
 m4_dnl
 _M4_PARAM(`', `rate', `file-',
-          `M4_TYPE_DOUBLE(0.0, -20.0, 20.0)', true,
+          `M4_TYPE_UPPER_INT(0, 20000000)', true,
           `', `=RATE', `Cutoff rate is RATE',
           `M4_LINES(`Rate-limiting collection if desired, prevents output that occurs',
                     `at a rate larger than the one provided to from being added to the log.',
                     `If the provided rate is 0, then the rate-limiting is disabled.',
                     `If the provided number is greater than 0, then that is used',
                     `as the cut-off rate. Can be used to keep unnessarily large',
-                    `computer output out of the log. Parameter MUST be in decimal form.',
-                    `Recommended rates are between 0.1 and 1.0 but may vary based on machine',
-                    `max is 20.0')')m4_dnl
+                    `computer output out of the log.',
+                    `Recommended rates are between 100000 and 1000000 bytes per second',
+                    `but may vary based on machine. Max rate is 20000000.')')m4_dnl
 m4_dnl
 m4_dnl
 m4_dnl

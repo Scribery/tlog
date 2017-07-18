@@ -28,9 +28,6 @@
 #include <tlog/rc.h>
 #include <tlog/misc.h>
 #include <tlog/source.h>
-#include <time.h>   //added by bec-f for debugging
-
-
 
 tlog_grc
 tlog_source_create(struct tlog_source **psource,
@@ -103,24 +100,6 @@ tlog_source_loc_fmt(const struct tlog_source *source, size_t loc)
 tlog_grc
 tlog_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
 {
-
-    /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-    FILE *f;
-    f = fopen("/var/lib/tlog/trace_test.txt", "a");
-    if(f == NULL){
-        printf("problem opening file9\n");
-        exit(1);
-    }
-    time_t ti;
-    time(&ti);
-    struct tm *timer;
-    timer = localtime(&ti);
-    char buf[20];
-    strftime(buf, sizeof(buf), "%b %d %T", timer);
-    fprintf(f, "in source.c; [%s]\n", buf);
-    fclose(f);
-    //END TRACING CODE*/
-
     tlog_grc grc;
     assert(tlog_source_is_valid(source));
     assert(tlog_pkt_is_valid(pkt));

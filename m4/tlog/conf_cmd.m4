@@ -143,7 +143,7 @@ m4_define(
     `M4_CONF_CMD_SHORTOPTS',
     `m4_pushdef(`m4_orig_divnum', m4_divnum)m4_divert(-1)
         m4_pushdef(`M4_TYPE_INT', `:')
-        m4_pushdef(`M4_TYPE_DOUBLE', `::')
+        m4_pushdef(`M4_TYPE_UPPER_INT', `:')
         m4_pushdef(`M4_TYPE_STRING', `:')
         m4_pushdef(`M4_TYPE_STRING_ARRAY', `:')
         m4_pushdef(`M4_TYPE_BOOL', `::')
@@ -155,7 +155,7 @@ m4_define(
         m4_popdef(`M4_TYPE_BOOL')
         m4_popdef(`M4_TYPE_STRING_ARRAY')
         m4_popdef(`M4_TYPE_STRING')
-        m4_popdef(`M4_TYPE_DOUBLE')
+        m4_popdef(`M4_TYPE_UPPER_INT')
         m4_popdef(`M4_TYPE_INT')
     m4_divert(m4_orig_divnum)m4_popdef(`m4_orig_divnum')')
 
@@ -195,7 +195,7 @@ m4_define(
     `M4_CONF_CMD_LONGOPTS',
     `m4_pushdef(`m4_orig_divnum', m4_divnum)m4_divert(-1)
         m4_pushdef(`M4_TYPE_INT',           `required_argument')
-        m4_pushdef(`M4_TYPE_DOUBLE',    `required_argument', `required_argument')
+        m4_pushdef(`M4_TYPE_UPPER_INT',     `required_argument')
         m4_pushdef(`M4_TYPE_STRING',        `required_argument')
         m4_pushdef(`M4_TYPE_STRING_ARRAY',  `required_argument')
         m4_pushdef(`M4_TYPE_BOOL',          `optional_argument')
@@ -207,7 +207,7 @@ m4_define(
         m4_popdef(`M4_TYPE_BOOL')
         m4_popdef(`M4_TYPE_STRING_ARRAY')
         m4_popdef(`M4_TYPE_STRING')
-        m4_popdef(`M4_TYPE_DOUBLE')
+        m4_popdef(`M4_TYPE_UPPER_INT')
         m4_popdef(`M4_TYPE_INT')
     m4_divert(m4_orig_divnum)m4_popdef(`m4_orig_divnum')')
 

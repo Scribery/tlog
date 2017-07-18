@@ -41,12 +41,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
-#include <tlog/pkt.h>  //added for use in rate calculations
-
-/**Added change for rate calculations and tracing through code*/
-static int Bytes_read = 0;
-static int Bytes_written = 0;
-
+#include <tlog/pkt.h>
 
 /**< Number of the signal causing exit */
 static volatile sig_atomic_t tlog_rec_exit_signum;
@@ -271,7 +266,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
 
         /* Get journal writer conf container */
         if (!json_object_object_get_ex(conf, "journal", &conf_journal)) {
-            tlog_errs_pushs(perrs, "Jouranl writer parameters are not specified");
+            tlog_errs_pushs(perrs, "Journal writer parameters are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -379,11 +374,7 @@ cleanup:
  *                      transfer termination, or for zero, if terminated for
  *                      other reason. Not modified in case of error.
  *                      Can be NULL, if not needed.
- * @param use_rate      If true, then use the rate-limiting feature to not
- *          log certain data if it is output at a rate faster than
- *          cutoff_rate.
- * @param cutoff_rate   Rate for how fast
- *
+ * @param cutoff_rate   Maximum rate accepted if use_rate is true; 0 disables feature.
  *
  * @return Global return code.
  */
@@ -395,8 +386,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                   unsigned int          latency,
                   unsigned              item_mask,
                   int                  *psignal,
-                  bool                  use_rate,
-                  double                cutoff_rate)
+                  uint64_t              cutoff_rate)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     tlog_grc return_grc = TLOG_RC_OK;
@@ -410,13 +400,10 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
     struct tlog_pkt pkt = TLOG_PKT_VOID;
     struct tlog_pkt_pos tty_pos = TLOG_PKT_POS_VOID;
     struct tlog_pkt_pos log_pos = TLOG_PKT_POS_VOID;
-
-
-    /*CALCULATING RATE*/
     struct timespec prev_time, cur_time;
-    double cur_rate= -1.0;
+    double d_rate= -1.0;
+    uint64_t cur_rate = 0;
     uint64_t time_change;
-
 
     tlog_rec_exit_signum = 0;
     tlog_rec_alarm_caught = 0;
@@ -452,37 +439,14 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         if (new_alarm_caught != last_alarm_caught) {
             alarm_set = false;
             grc = tlog_sink_flush(log_sink);
-
-        /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-        FILE *f;
-        f= fopen("/var/lib/tlog/trace_test.txt", "a");
-        if(f == NULL){
-            printf("problem opening file3\n");
-            exit(1);
-        }
-        time_t t;
-        struct tm *timer;
-        char buf[20];
-        time(&t);
-        timer = localtime(&t);
-        strftime(buf, sizeof(buf), "%b %d %T", timer);
-        fprintf(f, "FLUSHED LOG;  wrote %d bytes out of %d bytes total; [%s]\n",  Bytes_written, Bytes_read, buf);
-        fclose(f);
-        //END TRACING CODE*/
-
-        if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed flushing log");
-            return_grc = grc;
-            goto cleanup;
-        }
-        last_alarm_caught = new_alarm_caught;
-        log_pending = false;
-
-        //RESET NUM OF BYTES WRITTEN
-        Bytes_written = 0;
-
-
+            if (grc != TLOG_RC_OK) {
+                tlog_errs_pushc(perrs, grc);
+                tlog_errs_pushs(perrs, "Failed flushing log");
+                return_grc = grc;
+                goto cleanup;
+            }
+            last_alarm_caught = new_alarm_caught;
+            log_pending = false;
         } else if (log_pending && !alarm_set) {
             alarm(latency);
             alarm_set = true;
@@ -491,15 +455,14 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         /* Deliver logged data if any */
         if (tlog_pkt_pos_cmp(&tty_pos, &log_pos) < 0) {
             grc = tlog_sink_write(tty_sink, &pkt, &tty_pos, &log_pos);
-
-        if (grc != TLOG_RC_OK) {
-            if (grc == TLOG_GRC_FROM(errno, EINTR)) {
-                continue;
-            } else if (grc != TLOG_GRC_FROM(errno, EBADF) &&
-                      grc != TLOG_GRC_FROM(errno, EINVAL)) {
-                tlog_errs_pushc(perrs, grc);
-                tlog_errs_pushs(perrs, "Failed writing terminal data");
-                return_grc = grc;
+            if (grc != TLOG_RC_OK) {
+                if (grc == TLOG_GRC_FROM(errno, EINTR)) {
+                    continue;
+                } else if (grc != TLOG_GRC_FROM(errno, EBADF) &&
+                           grc != TLOG_GRC_FROM(errno, EINVAL)) {
+                    tlog_errs_pushc(perrs, grc);
+                    tlog_errs_pushs(perrs, "Failed writing terminal data");
+                    return_grc = grc;
                 }
                 break;
             }
@@ -510,15 +473,13 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         if (tlog_pkt_pos_is_in(&log_pos, &pkt)) {
             /* If asked to log this type of packet */
             if (item_mask & (1 << tlog_rec_item_from_pkt(&pkt))) {
+                if(pkt.type == TLOG_PKT_TYPE_IO && cutoff_rate != 0){
 
-                /*ADDED: Attempt at rate determining and limiting*/
-                /*UPDATED: added the parameter of whether to check it or not*/
-                if(use_rate && pkt.type == TLOG_PKT_TYPE_IO){
+                    /* Get the rate as an integer with decimal precision */
+                    d_rate = (double)(pkt.data.io.len)/(double)(time_change);
+                    cur_rate = d_rate * 1000000;
 
-                    cur_rate = (double)(pkt.data.io.len)/(double)(time_change);
-
-                    /**UPDATED: "configurable" rate variables used here*/
-                    if(cur_rate < cutoff_rate && cur_rate > 0.0){
+                    if(cur_rate < cutoff_rate && d_rate > 0.0){
                         grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
                         if (grc != TLOG_RC_OK &&
                             grc != TLOG_GRC_FROM(errno, EINTR)) {
@@ -529,50 +490,11 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                             goto cleanup;
                         }
                         log_pending = true;
-                        Bytes_written += pkt.data.io.len;
-
-                        /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-                        FILE *f;
-                        f= fopen("/var/lib/tlog/trace_test.txt", "a");
-                        if(f == NULL){
-                            printf("problem opening file4\n");
-                            exit(1);
-                        }
-                        time_t t;
-                        struct tm *timer;
-                        char buf[20];
-                        time(&t);
-                        timer = localtime(&t);
-                        strftime(buf, sizeof(buf), "%b %d %T", timer);
-                        fprintf(f, "in \'transfer\' (io part; rate = %f), writing to sink; [%s]\n", cur_rate, buf);
-                        fprintf(f, "Bytes written so far: %d, Total bytes read so far: %d\n", Bytes_written, Bytes_read);
-                        fclose(f);
-                        //END TRACING CODE*/
                     } else {
                         tlog_pkt_pos_move_past(&log_pos, &pkt);
-
-                        /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-                        FILE *f;
-                        f= fopen("/var/lib/tlog/trace_test.txt", "a");
-                        if(f == NULL){
-                           printf("problem opening file5\n");
-                           exit(1);
-                        }
-                        time_t t;
-                        struct tm *timer;
-                        char buf[20];
-                        time(&t);
-                        timer = localtime(&t);
-                        strftime(buf, sizeof(buf), "%b %d %T", timer);
-                        fprintf(f, "in \'transfer\' (io part; rate = %f), skipped write; [%s]\n", cur_rate, buf);
-                        fclose(f);
-                        //END TRACING CODE*/
                     }
                     continue;
-
-                /*ORIGINAL CODE*/
                 } else{
-
                     grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
 
                     if (grc != TLOG_RC_OK &&
@@ -583,85 +505,28 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                         goto cleanup;
                     }
                     log_pending = true;
-                    /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-                    FILE *f;
-                    f= fopen("/var/lib/tlog/trace_test.txt", "a");
-                    if(f == NULL){
-                        printf("problem opening file6\n");
-                        exit(1);
-                    }
-                    time_t t;
-                    struct tm *timer;
-                    char buf[20];
-                    time(&t);
-                    timer = localtime(&t);
-                    strftime(buf, sizeof(buf), "%b %d %T", timer);
-                    fprintf(f, "in \'transfer\', saved %d bytes total so far; [%s]\n", Bytes_read, buf);
-                    fclose(f);
-                    //END TRACING CODE*/
-
                 }
-
             } else {
-
                 tlog_pkt_pos_move_past(&log_pos, &pkt);
-
-                //Since it "collects" things twice, and only want to keep a count of what was actaully recorded
-                Bytes_read -= pkt.data.io.len;
-
-                /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-                FILE *f;
-                f= fopen("/var/lib/tlog/trace_test.txt", "a");
-                if(f == NULL){
-                      printf("problem opening file7\n");
-                      exit(1);
-                }
-                time_t t;
-                struct tm *timer;
-                char buf[20];
-                time(&t);
-                timer = localtime(&t);
-                strftime(buf, sizeof(buf), "%b %d %T", timer);
-                fprintf(f, "in \'transfer\', skipped write; [%s]\n", buf);
-                fclose(f);
-                //END TRACING CODE*/
-
             }
             continue;
         }
-
-
-        /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-        FILE *f;
-        f= fopen("/var/lib/tlog/trace_test.txt", "a");
-        if(f == NULL){
-            printf("problem opening file8\n");
-            exit(1);
-        }
-        time_t t;
-        struct tm *timer;
-        char buf[20];
-        time(&t);
-        timer = localtime(&t);
-        strftime(buf, sizeof(buf), "%b %d %T", timer);
-        fprintf(f, "in \'transfer\', about to read; [%s]\n", buf);
-        fclose(f);
-        //END TRACING CODE*/
 
         /* Read new data */
         tlog_pkt_cleanup(&pkt);
         log_pos = TLOG_PKT_POS_VOID;
         tty_pos = TLOG_PKT_POS_VOID;
 
-        /*ADDED: used for calculating rate of reading*/
+        /*Start timer for timing read*/
         clock_gettime(CLOCK_MONOTONIC, &prev_time);
 
         grc = tlog_source_read(tty_source, &pkt);
 
-        /*ADDED: used for calculating rate of reading*/
+        /*End timer for timing read*/
         clock_gettime(CLOCK_MONOTONIC, &cur_time);
-        /*ADDED: calculating rate*/
-        time_change = (cur_time.tv_sec - prev_time.tv_sec) * 1000000 + (cur_time.tv_nsec - prev_time.tv_nsec) / 1000;
+
+        /*Time elapsed in micro-seconds*/
+        time_change = (cur_time.tv_sec - prev_time.tv_sec) * 1000000 + (cur_time.tv_nsec - prev_time.tv_nsec)/1000;
 
         if (grc != TLOG_RC_OK) {
             if (grc == TLOG_GRC_FROM(errno, EINTR)) {
@@ -676,35 +541,6 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         } else if (tlog_pkt_is_void(&pkt)) {
             break;
         }
-
-
-        /*Calculates total bytes read*/
-        if(pkt.type == TLOG_PKT_TYPE_IO){
-        Bytes_read += pkt.data.io.len;
-        /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-        FILE *f;
-        f= fopen("/var/lib/tlog/trace_test.txt", "a");
-        if(f == NULL){
-            printf("problem opening file12\n");
-            exit(1);
-        }
-        time_t t;
-        struct tm *timer;
-        char buf[20];
-        time(&t);
-        timer = localtime(&t);
-        strftime(buf, sizeof(buf), "%b %d %T", timer);
-        if(pkt.data.io.output){
-            fprintf(f, "in \'transfer\', read %d bytes of input in %u ms; [%s]\n", pkt.data.io.len, time_change, buf);
-            fclose(f);
-        }
-        else {
-            fprintf(f, "in \'transfer\', read %d bytes of output in %u ms; [%s]\n", pkt.data.io.len, time_change, buf);
-            fclose(f);
-        }
-        //END TRACING CODE*/
-        }
-
     }
 
     /* Cut the log (write incomplete characters as binary) */
@@ -720,7 +556,6 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
 
     /* Flush the log */
     grc = tlog_sink_flush(log_sink);
-
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushs(perrs, "Failed flushing the log");
@@ -747,7 +582,6 @@ cleanup:
             signal(exit_sig[i], SIG_DFL);
         }
     }
-
 
     return return_grc;
 }
@@ -786,6 +620,7 @@ tlog_rec_get_item_mask(struct tlog_errs **perrs,
     READ_ITEM(INPUT, Input, input);
     READ_ITEM(OUTPUT, Output, output);
     READ_ITEM(WINDOW, Window, window);
+
 #undef READ_ITEM
 
     *pmask = mask;
@@ -805,8 +640,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     struct json_object *obj;
     int64_t num;
     unsigned int latency;
-    double check_rate;  //ADDED: configure rate
-    bool use_rate = false;  //ADDED: configure rate
+    uint64_t check_rate;
     unsigned int item_mask;
     int signal = 0;
     struct tlog_sink *log_sink = NULL;
@@ -866,17 +700,13 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     num = json_object_get_int64(obj);
     latency = (unsigned int)num;
 
-    /*ADDED: Attempt at making rate-limiting configurable*/
     /* Read the rate limit*/
     if (!json_object_object_get_ex(conf, "rate", &obj)) {
         tlog_errs_pushs(perrs, "Rate is not specified");
         grc = TLOG_RC_FAILURE;
         goto cleanup;
     }
-    check_rate = json_object_get_double(obj);
-    if(check_rate > 0){
-    use_rate = true;
-    }
+    check_rate = json_object_get_int64(obj);
 
     /* Read item mask */
     if (!json_object_object_get_ex(conf, "log", &obj)) {
@@ -917,42 +747,9 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
         goto cleanup;
     }
 
-
-    /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-    FILE *f;
-    f= fopen("/var/lib/tlog/trace_test.txt", "a");
-    if(f == NULL){
-        printf("problem opening file2\n");
-        exit(1);
-    }
-    time_t t;
-    time(&t);
-    struct tm *timer;
-    timer = localtime(&t);
-    char buf[20];
-    strftime(buf, sizeof(buf), "%b %d %T", timer);
-    fprintf(f, "in rec.c, starting transfer; [%s]\n", buf);
-    fclose(f);
-    //END TRACING CODE*/
-
     /* Transfer and log the data until interrupted or either end is closed */
-    /** EDITED: Added last two parameters for determining if (and how) to use rate in tlog_rec_transfer*/
     grc = tlog_rec_transfer(perrs, tap.source, log_sink, tap.sink,
-                            latency, item_mask, &signal, use_rate, check_rate);
-
-    /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-    f= fopen("/var/lib/tlog/trace_test.txt", "a");
-    if(f == NULL){
-        printf("problem opening file13\n");
-        exit(1);
-    }
-    time(&t);
-    timer = localtime(&t);
-    strftime(buf, sizeof(buf), "%b %d %T", timer);
-    fprintf(f, "in rec.c, finished transfer; [%s]\n", buf);
-    fclose(f);
-    //END TRACING CODE*/
-
+                            latency, item_mask, &signal, check_rate);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed transferring TTY data");
         goto cleanup;

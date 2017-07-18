@@ -34,7 +34,6 @@
 #include <tlog/rec.h>
 #include <tlog/rec_session_conf.h>
 #include <tlog/misc.h>
-#include <time.h>  //added for tracing
 
 /**
  * Let GNU TLS know we don't need implicit global initialization, which opens
@@ -147,46 +146,12 @@ main(int argc, char **argv)
         goto cleanup;
     }
 
-
-
-    /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-    FILE *f;
-    f= fopen("/var/lib/tlog/trace_test.txt", "a");
-    if(f == NULL){
-        printf("problem opening file1\n");
-        exit(1);
-    }
-    time_t t;
-    time(&t);
-    struct tm *timer;
-    timer = localtime(&t);
-    char buf[20];
-    strftime(buf, sizeof(buf), "%b %d %T", timer);
-    fprintf(f, "in main method, about to run; [%s]\n", buf);
-    fclose(f);
-    //END TRACING CODE*/
-
-
     /* Run */
     grc = tlog_rec(&errs, euid, egid, cmd_help, conf,
                    TLOG_REC_OPT_LOCK_SESS | TLOG_REC_OPT_DROP_PRIVS,
                    shell_path, shell_argv,
                    std_fds[0], std_fds[1], std_fds[2],
                    &status, &signal);
-
-    /*TRACING/DEBUGGING CODE: uncomment for a "program trace" file
-    f= fopen("/var/lib/tlog/trace_test.txt", "a");
-    if(f == NULL){
-        printf("problem opening file14\n");
-        exit(1);
-    }
-    time(&t);
-    timer = localtime(&t);
-    strftime(buf, sizeof(buf), "%b %d %T", timer);
-    fprintf(f, "in main method, finished running; [%s]\n", buf);
-    fclose(f);
-    //END TRACING CODE*/
-
 
 cleanup:
 
