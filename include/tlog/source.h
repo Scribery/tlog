@@ -86,7 +86,7 @@ extern char *tlog_source_loc_fmt(const struct tlog_source *source,
  *
  * @param source    The source to read from.
  * @param pkt       The packet to write the received data into, must be void,
- *                  will be void on end-of-stream.
+ *                  will be void on end-of-stream, or in case of error.
  *
  * @return Global return code.
  */

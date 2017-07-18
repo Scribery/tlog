@@ -86,7 +86,7 @@ typedef char * (*tlog_source_type_loc_fmt_fn)(
  *
  * @param source    The source to operate on.
  * @param pkt       The packet to write the received data into, must be void,
- *                  will be void on end-of-stream.
+ *                  will be void on end-of-stream, or in case of error.
  *
  * @return Global return code.
  */

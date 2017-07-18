@@ -121,7 +121,8 @@ extern bool tlog_json_msg_is_void(const struct tlog_json_msg *msg);
  *
  * @param msg       The message to read a packet from.
  * @param pkt       The packet to read into, must be void, will be void if
- *                  there are no more packets in the message.
+ *                  there are no more packets in the message, or in case of
+ *                  error.
  * @param io_buf    Pointer to buffer for writing I/O data to, which will be
  *                  referred to from the I/O packets as "not owned".
  * @param io_size   Size of the I/O buffer io_buf.

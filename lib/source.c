@@ -107,6 +107,7 @@ tlog_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
 
     grc = source->type->read(source, pkt);
 
+    assert(grc == TLOG_RC_OK || tlog_pkt_is_void(pkt));
     assert(tlog_source_is_valid(source));
     return grc;
 }

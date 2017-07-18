@@ -87,7 +87,7 @@ typedef char * (*tlog_json_reader_type_loc_fmt_fn)(
  * @param reader    The reader to operate on.
  * @param pobject   Location for a JSON object, set to NULL on end of stream;
  *                  call json_object_put after the returned object is no
- *                  longer needed.
+ *                  longer needed. Not modified on error.
  *
  * @return Global return code.
  */

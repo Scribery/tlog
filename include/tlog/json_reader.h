@@ -89,7 +89,7 @@ extern char *tlog_json_reader_loc_fmt(const struct tlog_json_reader *reader,
  * @param reader    The reader to operate on.
  * @param pobject   Location for a JSON object, set to NULL on error or end of
  *                  stream; call json_object_put after the returned object is
- *                  no longer needed.
+ *                  no longer needed. Not modified on error.
  *
  * @return Global return code.
  */

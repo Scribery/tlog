@@ -101,12 +101,19 @@ tlog_json_reader_read(struct tlog_json_reader *reader,
                       struct json_object **pobject)
 {
     tlog_grc grc;
+#ifndef NDEBUG
+    struct json_object *orig_object;
+#endif
     assert(tlog_json_reader_is_valid(reader));
     assert(pobject != NULL);
+#ifndef NDEBUG
+    orig_object = *pobject;
+#endif
     grc = reader->type->read(reader, pobject);
     if (grc != TLOG_RC_OK) {
         *pobject = NULL;
     }
+    assert(grc == TLOG_RC_OK || *pobject == orig_object);
     assert(tlog_json_reader_is_valid(reader));
     return grc;
 }
