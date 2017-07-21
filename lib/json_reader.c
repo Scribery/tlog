@@ -110,9 +110,6 @@ tlog_json_reader_read(struct tlog_json_reader *reader,
     orig_object = *pobject;
 #endif
     grc = reader->type->read(reader, pobject);
-    if (grc != TLOG_RC_OK) {
-        *pobject = NULL;
-    }
     assert(grc == TLOG_RC_OK || *pobject == orig_object);
     assert(tlog_json_reader_is_valid(reader));
     return grc;
