@@ -22,6 +22,7 @@
 
 #include <tlog/rec.h>
 #include <tlog/rec_item.h>
+#include <tlog/rate_limit_sink.h>
 #include <tlog/json_sink.h>
 #include <tlog/syslog_json_writer.h>
 #include <tlog/journal_json_writer.h>
@@ -117,13 +118,15 @@ static tlog_grc
 tlog_rec_create_log_sink(struct tlog_errs **perrs,
                          struct tlog_sink **psink,
                          struct json_object *conf,
-                         unsigned int session_id)
+                         unsigned int session_id,
+                         uint64_t            rate)
 {
     tlog_grc grc;
     int64_t num;
     const char *str;
     struct json_object *obj;
     struct tlog_sink *sink = NULL;
+    struct tlog_sink *r_sink = NULL;
     struct tlog_json_writer *writer = NULL;
     int fd = -1;
     int rc;
@@ -347,9 +350,25 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     }
     writer = NULL;
 
-    *psink = sink;
-    sink = NULL;
-    grc = TLOG_RC_OK;
+    if(rate == 0){
+        *psink = sink;
+        sink = NULL;
+        grc = TLOG_RC_OK;
+    } else {
+
+        //Create the rate-limit sink with the `sink` variable being the log sink
+        grc = tlog_rate_limit_sink_create(&r_sink, sink, true, rate, NULL);
+        if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating log sink");
+            goto cleanup;
+        }
+        *psink = r_sink;
+        sink = NULL;
+        r_sink = NULL;
+        grc = TLOG_RC_OK;
+    }
+
 cleanup:
 
     if (fd >= 0) {
@@ -473,39 +492,17 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         if (tlog_pkt_pos_is_in(&log_pos, &pkt)) {
             /* If asked to log this type of packet */
             if (item_mask & (1 << tlog_rec_item_from_pkt(&pkt))) {
-                if(pkt.type == TLOG_PKT_TYPE_IO && cutoff_rate != 0){
 
-                    /* Get the rate as an integer with decimal precision */
-                    d_rate = (double)(pkt.data.io.len)/(double)(time_change);
-                    cur_rate = d_rate * 1000000;
+                grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
 
-                    if(cur_rate < cutoff_rate && d_rate > 0.0){
-                        grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
-                        if (grc != TLOG_RC_OK &&
-                            grc != TLOG_GRC_FROM(errno, EINTR)) {
-
-                            tlog_errs_pushc(perrs, grc);
-                            tlog_errs_pushs(perrs, "Failed logging terminal data");
-                            return_grc = grc;
-                            goto cleanup;
-                        }
-                        log_pending = true;
-                    } else {
-                        tlog_pkt_pos_move_past(&log_pos, &pkt);
-                    }
-                    continue;
-                } else{
-                    grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
-
-                    if (grc != TLOG_RC_OK &&
-                        grc != TLOG_GRC_FROM(errno, EINTR)) {
-                        tlog_errs_pushc(perrs, grc);
-                        tlog_errs_pushs(perrs, "Failed logging terminal data");
-                        return_grc = grc;
-                        goto cleanup;
+                if (grc != TLOG_RC_OK &&
+                    grc != TLOG_GRC_FROM(errno, EINTR)) {
+                    tlog_errs_pushc(perrs, grc);
+                    tlog_errs_pushs(perrs, "Failed logging terminal data");
+                    return_grc = grc;
+                    goto cleanup;
                     }
                     log_pending = true;
-                }
             } else {
                 tlog_pkt_pos_move_past(&log_pos, &pkt);
             }
@@ -517,17 +514,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         log_pos = TLOG_PKT_POS_VOID;
         tty_pos = TLOG_PKT_POS_VOID;
 
-        /*Start timer for timing read*/
-        clock_gettime(CLOCK_MONOTONIC, &prev_time);
-
         grc = tlog_source_read(tty_source, &pkt);
-
-        /*End timer for timing read*/
-        clock_gettime(CLOCK_MONOTONIC, &cur_time);
-
-        /*Time elapsed in micro-seconds*/
-        time_change = (cur_time.tv_sec - prev_time.tv_sec) * 1000000 + (cur_time.tv_nsec - prev_time.tv_nsec)/1000;
-
         if (grc != TLOG_RC_OK) {
             if (grc == TLOG_GRC_FROM(errno, EINTR)) {
                 continue;
@@ -620,7 +607,6 @@ tlog_rec_get_item_mask(struct tlog_errs **perrs,
     READ_ITEM(INPUT, Input, input);
     READ_ITEM(OUTPUT, Output, output);
     READ_ITEM(WINDOW, Window, window);
-
 #undef READ_ITEM
 
     *pmask = mask;
@@ -723,7 +709,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     }
 
     /* Create the log sink */
-    grc = tlog_rec_create_log_sink(perrs, &log_sink, conf, session_id);
+    grc = tlog_rec_create_log_sink(perrs, &log_sink, conf, session_id, check_rate);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed creating log sink");
         goto cleanup;

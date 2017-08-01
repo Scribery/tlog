@@ -110,7 +110,10 @@ struct tlog_pkt {
 /** Constant buffer I/O packet initializer */
 #define TLOG_PKT_IO(_tv_sec, _tv_nsec, _output, _buf, _len) \
     ((struct tlog_pkt){                                     \
-        .timestamp  = {_tv_sec, _tv_nsec},                  \
+        .timestamp  = {                                     \
+                .tv_sec  = _tv_sec,                         \
+                .tv_nsec = _tv_nsec                         \
+        },                                                  \
         .type       = TLOG_PKT_TYPE_IO,                     \
         .data       = {                                     \
             .io = {                                         \
