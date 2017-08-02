@@ -118,11 +118,11 @@ static tlog_grc
 tlog_rec_create_log_sink(struct tlog_errs **perrs,
                          struct tlog_sink **psink,
                          struct json_object *conf,
-                         unsigned int session_id,
-                         uint64_t            rate)
+                         unsigned int session_id)
 {
     tlog_grc grc;
     int64_t num;
+    uint64_t check_rate;
     const char *str;
     struct json_object *obj;
     struct tlog_sink *sink = NULL;
@@ -339,6 +339,14 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     }
     num = json_object_get_int64(obj);
 
+    /* Read the rate limit*/
+    if (!json_object_object_get_ex(conf, "rate", &obj)) {
+        tlog_errs_pushs(perrs, "Rate is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    check_rate = json_object_get_int64(obj);
+
     /* Create the sink, letting it take over the writer */
     grc = tlog_json_sink_create(&sink, writer, true,
                                 fqdn, passwd->pw_name, term,
@@ -350,14 +358,14 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     }
     writer = NULL;
 
-    if(rate == 0){
+    if(check_rate == 0){
         *psink = sink;
         sink = NULL;
         grc = TLOG_RC_OK;
     } else {
 
         //Create the rate-limit sink with the `sink` variable being the log sink
-        grc = tlog_rate_limit_sink_create(&r_sink, sink, true, rate, NULL);
+        grc = tlog_rate_limit_sink_create(&r_sink, sink, true, check_rate, NULL);
         if (grc != TLOG_RC_OK) {
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed creating log sink");
@@ -393,7 +401,6 @@ cleanup:
  *                      transfer termination, or for zero, if terminated for
  *                      other reason. Not modified in case of error.
  *                      Can be NULL, if not needed.
- * @param cutoff_rate   Maximum rate accepted if use_rate is true; 0 disables feature.
  *
  * @return Global return code.
  */
@@ -404,8 +411,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                   struct tlog_sink     *tty_sink,
                   unsigned int          latency,
                   unsigned              item_mask,
-                  int                  *psignal,
-                  uint64_t              cutoff_rate)
+                  int                  *psignal)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     tlog_grc return_grc = TLOG_RC_OK;
@@ -419,10 +425,6 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
     struct tlog_pkt pkt = TLOG_PKT_VOID;
     struct tlog_pkt_pos tty_pos = TLOG_PKT_POS_VOID;
     struct tlog_pkt_pos log_pos = TLOG_PKT_POS_VOID;
-    struct timespec prev_time, cur_time;
-    double d_rate= -1.0;
-    uint64_t cur_rate = 0;
-    uint64_t time_change;
 
     tlog_rec_exit_signum = 0;
     tlog_rec_alarm_caught = 0;
@@ -626,7 +628,6 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     struct json_object *obj;
     int64_t num;
     unsigned int latency;
-    uint64_t check_rate;
     unsigned int item_mask;
     int signal = 0;
     struct tlog_sink *log_sink = NULL;
@@ -686,14 +687,6 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     num = json_object_get_int64(obj);
     latency = (unsigned int)num;
 
-    /* Read the rate limit*/
-    if (!json_object_object_get_ex(conf, "rate", &obj)) {
-        tlog_errs_pushs(perrs, "Rate is not specified");
-        grc = TLOG_RC_FAILURE;
-        goto cleanup;
-    }
-    check_rate = json_object_get_int64(obj);
-
     /* Read item mask */
     if (!json_object_object_get_ex(conf, "log", &obj)) {
         tlog_errs_pushs(perrs,
@@ -709,7 +702,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     }
 
     /* Create the log sink */
-    grc = tlog_rec_create_log_sink(perrs, &log_sink, conf, session_id, check_rate);
+    grc = tlog_rec_create_log_sink(perrs, &log_sink, conf, session_id);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed creating log sink");
         goto cleanup;
@@ -735,7 +728,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
 
     /* Transfer and log the data until interrupted or either end is closed */
     grc = tlog_rec_transfer(perrs, tap.source, log_sink, tap.sink,
-                            latency, item_mask, &signal, check_rate);
+                            latency, item_mask, &signal);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed transferring TTY data");
         goto cleanup;
