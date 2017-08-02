@@ -16,9 +16,9 @@ struct tlog_rate_limit_sink {
     bool                    dsink_owned;    /**< True if dsink is owned */
     uint64_t                rate;           /**< Cutoff rate */
 
-    struct tlog_pkt       *prev_pkt;       /**< Previous packet to check */
-    struct tlog_pkt_pos   *prev_ppos;      /**< Previous position for writing */
-    struct tlog_pkt_pos   *prev_end;       /**< Previous end pos for writing */
+    const struct tlog_pkt       *prev_pkt;  /**< Previous packet to check */
+    struct tlog_pkt_pos   *prev_ppos;       /**< Previous position for writing */
+    const struct tlog_pkt_pos   *prev_end;  /**< Previous end pos for writing */
 
     struct timespec        prev_ts;       /**< Previous timestamp for time elapsed */
 };
