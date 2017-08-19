@@ -43,6 +43,25 @@ which can be overridden with command-line options described below.
 .SH OPTIONS
 M4_MAN_OPTS()
 
+.SH CONTROLS
+Playback can be controlled using the following keys:
+
+.TP
+.B Space
+Pause/resume playback.
+
+.TP
+.B }
+Double the playback speed. Maximum is 16x.
+
+.TP
+.B {
+Halve the playback speed. Minimum is 1/16x.
+
+.TP
+.B BACKSPACE
+Reset playback to normal, 1x speed.
+
 .SH FILES
 .TP
 M4_CONF_PATH()

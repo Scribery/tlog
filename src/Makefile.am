@@ -138,7 +138,8 @@ tlog_play_LDADD = \
     ../lib/libtlog.la   \
     $(JSON_LIBS)        \
     $(LIBCURL)          \
-    -lrt
+    -lrt                \
+    -lm
 
 TESTS = \
     tlog-test-fd-json-reader        \

@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <termios.h>
@@ -29,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <curl/curl.h>
 #include <locale.h>
 #include <langinfo.h>
@@ -54,6 +56,16 @@ exit_sighandler(int signum)
     if (exit_signum == 0) {
         exit_signum = signum;
     }
+}
+
+/* Number of IO signals caught */
+static volatile sig_atomic_t io_caught;
+
+static void
+io_sighandler(int signum)
+{
+    (void)signum;
+    io_caught++;
 }
 
 /**
@@ -302,14 +314,31 @@ run(struct tlog_errs **perrs,
     struct termios orig_termios;
     struct termios raw_termios;
     struct sigaction sa;
+    int stdin_flags = -1;
     struct tlog_source *source = NULL;
     bool got_pkt = false;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
+    struct tlog_pkt_pos pos = TLOG_PKT_POS_VOID;
     size_t loc_num;
     char *loc_str = NULL;
-    unsigned int read_wait = 0;
+    struct timespec read_wait = TLOG_TIMESPEC_ZERO;
+    sig_atomic_t last_io_caught = 0;
+    sig_atomic_t new_io_caught;
+    char key;
+    struct pollfd std_pollfds[2] = {[STDIN_FILENO] = {.fd = STDIN_FILENO,
+                                                      .events = POLLIN},
+                                    [STDOUT_FILENO] = {.fd = STDOUT_FILENO,
+                                                       .events = POLLOUT}};
+    struct timespec speed = {1, 0};
+    struct timespec new_speed;
+    const struct timespec max_speed = {16, 0};
+    const struct timespec min_speed = {0, 62500000};
+    const struct timespec accel = {2, 0};
+    bool paused = false;
 
     assert(cmd_help != NULL);
+
+    io_caught = 0;
 
     /* Check if arguments are provided */
     if (json_object_object_get_ex(conf, "args", &obj) &&
@@ -386,6 +415,35 @@ run(struct tlog_errs **perrs,
         }
     }
 
+    /* Setup IO signal handler */
+    sa.sa_handler = io_sighandler;
+    sigemptyset(&sa.sa_mask);
+    sigaddset(&sa.sa_mask, SIGIO);
+    /* NOTE: no SA_RESTART on purpose */
+    sa.sa_flags = 0;
+    sigaction(SIGIO, &sa, NULL);
+
+    /* Setup signal-driven IO on stdin (and stdout) */
+    if (fcntl(STDIN_FILENO, F_SETOWN, getpid()) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed taking over stdin signals");
+        goto cleanup;
+    }
+    stdin_flags = fcntl(STDIN_FILENO, F_GETFL);
+    if (stdin_flags < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed getting stdin flags");
+        goto cleanup;
+    }
+    if (fcntl(STDIN_FILENO, F_SETFL, stdin_flags | O_ASYNC | O_NONBLOCK) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed setting stdin flags");
+        goto cleanup;
+    }
+
     /* Switch the terminal to raw mode, but keep signal generation */
     raw_termios = orig_termios;
     raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO);
@@ -407,13 +465,82 @@ run(struct tlog_errs **perrs,
      * Reproduce the logged output
      */
     while (exit_signum == 0) {
+        /* React to input */
+        new_io_caught = io_caught;
+        if (new_io_caught != last_io_caught) {
+            while (true) {
+                rc = read(STDIN_FILENO, &key, sizeof(key));
+                if (rc < 0) {
+                    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                        last_io_caught = new_io_caught;
+                        break;
+                    } else {
+                        grc = TLOG_GRC_ERRNO;
+                        tlog_errs_pushc(perrs, grc);
+                        tlog_errs_pushs(perrs, "Failed reading stdin");
+                        goto cleanup;
+                    }
+                } else if (rc == 0) {
+                    last_io_caught = new_io_caught;
+                    break;
+                } else {
+                    switch (key) {
+                        case ' ':
+                            paused = !paused;
+                            break;
+                        case '\x7f':
+                            speed = (struct timespec){1, 0};
+                            break;
+                        case '}':
+                            tlog_timespec_mul(&speed, &accel, &new_speed);
+                            if (tlog_timespec_cmp(&new_speed, &max_speed) <= 0) {
+                                speed = new_speed;
+                            }
+                            break;
+                        case '{':
+                            tlog_timespec_div(&speed, &accel, &new_speed);
+                            if (tlog_timespec_cmp(&new_speed, &min_speed) >= 0) {
+                                speed = new_speed;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
+        /* Handle pausing */
+        if (paused) {
+            do {
+                rc = clock_nanosleep(CLOCK_MONOTONIC, 0,
+                                     &tlog_timespec_max, NULL);
+            } while (rc == 0);
+            if (rc == EINTR) {
+                continue;
+            } else {
+                grc = TLOG_GRC_FROM(errno, rc);
+                tlog_errs_pushc(perrs, grc);
+                tlog_errs_pushs(perrs, "Failed sleeping");
+                goto cleanup;
+            }
+        }
+
         /* If there is no data in the packet */
         if (tlog_pkt_is_void(&pkt)) {
             /* Wait for next read, if necessary */
-            if (read_wait > 0) {
-                read_wait = sleep(read_wait);
-                if (read_wait > 0) {
+            if (!tlog_timespec_is_zero(&read_wait)) {
+                rc = clock_nanosleep(CLOCK_MONOTONIC, 0,
+                                     &read_wait, &read_wait);
+                if (rc == 0) {
+                    read_wait = TLOG_TIMESPEC_ZERO;
+                } if (rc == EINTR) {
                     continue;
+                } else if (rc != 0) {
+                    grc = TLOG_GRC_FROM(errno, rc);
+                    tlog_errs_pushc(perrs, grc);
+                    tlog_errs_pushs(perrs, "Failed sleeping");
+                    goto cleanup;
                 }
             }
             /* Read a packet */
@@ -430,7 +557,7 @@ run(struct tlog_errs **perrs,
             /* If hit the end of stream */
             if (tlog_pkt_is_void(&pkt)) {
                 if (follow) {
-                    read_wait = POLL_PERIOD;
+                    read_wait = (struct timespec){POLL_PERIOD, 0};
                     continue;
                 } else {
                     break;
@@ -458,6 +585,7 @@ run(struct tlog_errs **perrs,
             local_last_ts = local_this_ts;
         } else {
             tlog_timespec_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
+            tlog_timespec_div(&pkt_delay_ts, &speed, &pkt_delay_ts);
             tlog_timespec_add(&local_last_ts, &pkt_delay_ts, &local_next_ts);
             /* If we don't need a delay for the next packet (it's overdue) */
             if (tlog_timespec_cmp(&local_next_ts, &local_this_ts) <= 0) {
@@ -468,9 +596,24 @@ run(struct tlog_errs **perrs,
                 rc = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
                                      &local_next_ts, NULL);
                 if (rc == EINTR) {
+                    local_last_ts = local_this_ts;
+                    /* Get current time */
+                    if (clock_gettime(CLOCK_MONOTONIC, &local_this_ts) != 0) {
+                        grc = TLOG_GRC_ERRNO;
+                        tlog_errs_pushc(perrs, grc);
+                        tlog_errs_pushs(perrs,
+                                        "Failed retrieving current time");
+                        goto cleanup;
+                    }
+                    tlog_timespec_sub(&local_this_ts, &local_last_ts,
+                                      &pkt_delay_ts);
+                    tlog_timespec_mul(&pkt_delay_ts, &speed, &pkt_delay_ts);
+                    tlog_timespec_add(&pkt_last_ts, &pkt_delay_ts,
+                                      &pkt_last_ts);
+                    local_last_ts = local_this_ts;
                     continue;
                 } else if (rc != 0) {
-                    grc = TLOG_GRC_ERRNO;
+                    grc = TLOG_GRC_FROM(errno, rc);
                     tlog_errs_pushc(perrs, grc);
                     tlog_errs_pushs(perrs, "Failed sleeping");
                     goto cleanup;
@@ -479,21 +622,48 @@ run(struct tlog_errs **perrs,
             }
         }
 
-        /* Output the packet */
-        if (write(STDOUT_FILENO, pkt.data.io.buf, pkt.data.io.len) !=
-                (ssize_t)pkt.data.io.len) {
+        /*
+         * Output the packet emulating synchronous I/O.
+         * Otherwise we would get EAGAIN/EWOULDBLOCK.
+         */
+        /* Wait for I/O on the terminal */
+        do {
+            rc = ppoll(std_pollfds, TLOG_ARRAY_SIZE(std_pollfds),
+                       &tlog_timespec_max, NULL);
+        } while (rc == 0);
+        if (rc < 0) {
             if (errno == EINTR) {
                 continue;
-            } else if (rc != 0) {
+            } else {
+                grc = TLOG_GRC_ERRNO;
+                tlog_errs_pushc(perrs, grc);
+                tlog_errs_pushs(perrs, "Failed waiting for terminal I/O");
+                goto cleanup;
+            }
+        } else if (std_pollfds[STDIN_FILENO].revents != 0) {
+            /* Prioritize input handling */
+            continue;
+        }
+        /* Output the packet */
+        rc = write(STDOUT_FILENO,
+                   pkt.data.io.buf + pos.val, pkt.data.io.len - pos.val);
+        if (rc < 0) {
+            if (errno == EINTR) {
+                continue;
+            } else {
                 grc = TLOG_GRC_ERRNO;
                 tlog_errs_pushc(perrs, grc);
                 tlog_errs_pushs(perrs, "Failed writing output");
                 goto cleanup;
             }
         }
-
         pkt_last_ts = pkt.timestamp;
-        tlog_pkt_cleanup(&pkt);
+        /* Consume the output part (or the whole) of the packet */
+        tlog_pkt_pos_move(&pos, &pkt, rc);
+        if (tlog_pkt_pos_is_past(&pos, &pkt)) {
+            pos = TLOG_PKT_POS_VOID;
+            tlog_pkt_cleanup(&pkt);
+        }
     }
 
     grc = TLOG_RC_OK;
@@ -505,6 +675,15 @@ cleanup:
     tlog_source_destroy(source);
     curl_global_cleanup();
 
+    /* Restore stdin flags, if changed */
+    if (stdin_flags >= 0) {
+        if (fcntl(STDIN_FILENO, F_SETFL, stdin_flags) < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed setting stdin flags");
+        }
+    }
+
     /* Restore signal handlers */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
         sigaction(exit_sig[i], NULL, &sa);
@@ -512,6 +691,7 @@ cleanup:
             signal(exit_sig[i], SIG_DFL);
         }
     }
+    signal(SIGIO, SIG_DFL);
 
     /* Restore terminal attributes */
     if (term_attrs_set) {
