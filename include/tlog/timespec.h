@@ -27,6 +27,25 @@
 
 #include <time.h>
 #include <stdbool.h>
+#include <assert.h>
+
+/**
+ * Check that a timespec is valid.
+ *
+ * @param ts    The timespec to check.
+ *
+ * @return True if the timespec is valid, false otherwise.
+ */
+static inline bool
+tlog_timespec_is_valid(const struct timespec *ts)
+{
+    return ts != NULL &&
+           ts->tv_nsec < 1000000000 &&
+           ts->tv_nsec > -1000000000 &&
+           ((ts->tv_sec < 0)
+                ? (ts->tv_nsec <= 0)
+                : (ts->tv_sec == 0 || ts->tv_nsec >= 0));
+}
 
 /**
  * Subtract timespec b from timespec a and put the result in res.
@@ -40,6 +59,10 @@ tlog_timespec_sub(const struct timespec *a,
                   const struct timespec *b,
                   struct timespec *res)
 {
+    assert(tlog_timespec_is_valid(a));
+    assert(tlog_timespec_is_valid(b));
+    assert(res != NULL);
+
     res->tv_sec = a->tv_sec - b->tv_sec;
     res->tv_nsec = a->tv_nsec - b->tv_nsec;
     if (res->tv_nsec < 0) {
@@ -60,6 +83,10 @@ tlog_timespec_add(const struct timespec *a,
                   const struct timespec *b,
                   struct timespec *res)
 {
+    assert(tlog_timespec_is_valid(a));
+    assert(tlog_timespec_is_valid(b));
+    assert(res != NULL);
+
     res->tv_sec = a->tv_sec + b->tv_sec;
     res->tv_nsec = a->tv_nsec + b->tv_nsec;
     if (res->tv_nsec > 1000000000) {
