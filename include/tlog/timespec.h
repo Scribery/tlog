@@ -104,6 +104,28 @@ tlog_timespec_add(const struct timespec *a,
 }
 
 /**
+ * Multiply timespec a by timespec b and put result into res.
+ *
+ * @param a     Timespec structure to multiply.
+ * @param b     Timespec structure to multiply by.
+ * @param res   Location for result, can be a or b as well.
+ */
+extern void tlog_timespec_mul(const struct timespec *a,
+                              const struct timespec *b,
+                              struct timespec *res);
+
+/**
+ * Divide timespec a by timespec b and put result into res.
+ *
+ * @param a     Timespec structure to divide.
+ * @param b     Timespec structure to divide by.
+ * @param res   Location for result, can be a or b as well.
+ */
+extern void tlog_timespec_div(const struct timespec *a,
+                              const struct timespec *b,
+                              struct timespec *res);
+
+/**
  * Check if a timespec is zero.
  *
  * @param t     Timespec to check.
