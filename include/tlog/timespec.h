@@ -65,7 +65,9 @@ tlog_timespec_sub(const struct timespec *a,
 
     res->tv_sec = a->tv_sec - b->tv_sec;
     res->tv_nsec = a->tv_nsec - b->tv_nsec;
-    if (res->tv_nsec < 0) {
+    if (res->tv_sec > 0
+            ? res->tv_nsec < 0
+            : res->tv_nsec <= -1000000000) {
         res->tv_sec--;
         res->tv_nsec += 1000000000;
     }
@@ -89,7 +91,9 @@ tlog_timespec_add(const struct timespec *a,
 
     res->tv_sec = a->tv_sec + b->tv_sec;
     res->tv_nsec = a->tv_nsec + b->tv_nsec;
-    if (res->tv_nsec > 1000000000) {
+    if (res->tv_sec >= 0
+            ? res->tv_nsec >= 1000000000
+            : res->tv_nsec > 0) {
         res->tv_sec++;
         res->tv_nsec -= 1000000000;
     }
