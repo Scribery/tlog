@@ -33,7 +33,7 @@
  *
  * @param a     Timespec structure to subtract from.
  * @param b     Timespec structure to subtract.
- * @param res   Location for result.
+ * @param res   Location for result, can be a or b as well.
  */
 static inline void
 tlog_timespec_sub(const struct timespec *a,
@@ -53,7 +53,7 @@ tlog_timespec_sub(const struct timespec *a,
  *
  * @param a     Timespec structure to subtract from.
  * @param b     Timespec structure to subtract.
- * @param res   Location for result.
+ * @param res   Location for result, can be a or b as well.
  */
 static inline void
 tlog_timespec_add(const struct timespec *a,
