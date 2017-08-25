@@ -71,6 +71,8 @@ tlog_timespec_sub(const struct timespec *a,
         res->tv_sec--;
         res->tv_nsec += 1000000000;
     }
+
+    assert(tlog_timespec_is_valid(res));
 }
 
 /**
@@ -97,6 +99,8 @@ tlog_timespec_add(const struct timespec *a,
         res->tv_sec++;
         res->tv_nsec -= 1000000000;
     }
+
+    assert(tlog_timespec_is_valid(res));
 }
 
 /**
