@@ -307,6 +307,24 @@ m4_define(
     '
 )
 
+m4_define(
+    `M4_MAN_OPTS_CONTAINER_LINES',
+    `
+        m4_ifelse(
+            `$#', `0',
+            `',
+            `$#', `1',
+            `
+                m4_printl(`$1')
+            ',
+            `
+                m4_printl(`$1')
+                M4_MAN_OPTS_CONTAINER_LINES(m4_shift($@))
+            '
+        )
+    '
+)
+
 m4_dnl
 m4_dnl Output a description of a configuration parameter
 m4_dnl
@@ -330,8 +348,10 @@ m4_define(
                             `$7')
                         m4_printl(
                             `',
-                            `$8',
+                            `$8.',
                             `')
+                        $9
+                        m4_printl(`')
                         $4
                     '
                 )
@@ -358,9 +378,11 @@ m4_define(
                         m4_pushdef(`M4_MAN_OPTS_PREFIX', M4_MAN_OPTS_PREFIX()`$2')
 
                         m4_pushdef(`M4_CONTAINER', `')
+                        m4_pushdef(`M4_LINES', m4_defn(`M4_MAN_OPTS_CONTAINER_LINES'))
                         m4_pushdef(`M4_PARAM', m4_defn(`M4_MAN_OPTS_CONTAINER_PARAM'))
                         m4_include(M4_PROG_SYM()`_conf_schema.m4')
                         m4_popdef(`M4_PARAM')
+                        m4_popdef(`M4_LINES')
                         m4_popdef(`M4_CONTAINER')
 
                         m4_include(M4_PROG_SYM()`_conf_schema.m4')
