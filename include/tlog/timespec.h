@@ -144,6 +144,12 @@ tlog_timespec_is_zero(const struct timespec *t)
 /** Zero timespec constant */
 extern const struct timespec tlog_timespec_zero;
 
+/** Minimum timespec constant */
+extern const struct timespec tlog_timespec_min;
+
+/** Maximum timespec constant */
+extern const struct timespec tlog_timespec_max;
+
 /**
  * Compare two timespec's.
  *

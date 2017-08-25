@@ -28,6 +28,10 @@
 /* NOTE: Not using the macro from the header to workaround a gcc 4.8 bug */
 const struct timespec tlog_timespec_zero = {0, 0};
 
+const struct timespec tlog_timespec_min = {LONG_MIN, -999999999};
+
+const struct timespec tlog_timespec_max = {LONG_MAX, 999999999};
+
 #define TLOG_TIMESPEC_FP_MAX \
             nextafter((double)LONG_MAX + (double)0.999999999, 0)
 #define TLOG_TIMESPEC_FP_MIN \
