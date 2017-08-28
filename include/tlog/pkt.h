@@ -214,7 +214,13 @@ extern void tlog_pkt_cleanup(struct tlog_pkt *pkt);
 /** Position inside a packet */
 struct tlog_pkt_pos {
     enum tlog_pkt_type  type;   /**< Type of packet */
-    size_t              val;    /**< Position value */
+    /**
+     * Position value.
+     * Zero if type is TLOG_PKT_TYPE_VOID.
+     * Zero or one if type is TLOG_PKT_TYPE_WINDOW.
+     * Any value if type is TLOG_PKT_TYPE_IO.
+     */
+    size_t              val;
 };
 
 /** Void (zero) position initializer */
