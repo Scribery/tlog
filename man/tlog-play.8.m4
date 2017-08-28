@@ -78,6 +78,10 @@ Play back contents of a file written with tlog-rec's "file" writer:
 .B tlog-play -r file --file-path=recording.log
 
 .TP
+Play back a recording from Journal:
+.B tlog-play -r journal -M TLOG_REC=6071524bb44d403991a00413ab7c8596-53bd-378c5d9
+
+.TP
 Play back a recording from ElasticSearch:
 .B tlog-play -r es --es-baseurl=http://localhost:9200/tlog/tlog/_search --es-query=session:121
 
