@@ -63,6 +63,13 @@ Halve the playback speed. Minimum is 1/16x.
 Reset playback to normal, 1x speed.
 
 .TP
+.B .
+Output the next packet immediately, without delay, regardless if paused or
+not. Press when paused to step through recording. Press once to skip a long
+pause. Hold to skip through recording at constant speed (the keyboard repeat
+rate).
+
+.TP
 .B F
 Play recording to the end at once, regardless if paused or not.
 Useful with following enabled.

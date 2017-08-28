@@ -344,6 +344,7 @@ run(struct tlog_errs **perrs,
     bool paused = false;
     bool quit = false;
     bool persist = false;
+    bool skip = false;
 
     assert(cmd_help != NULL);
 
@@ -527,6 +528,9 @@ run(struct tlog_errs **perrs,
                                 speed = new_speed;
                             }
                             break;
+                        case '.':
+                            skip = true;
+                            break;
                         case 'F':
                             forward = true;
                             break;
@@ -544,7 +548,7 @@ run(struct tlog_errs **perrs,
         }
 
         /* Handle pausing, unless ignoring timing */
-        if (paused && !forward) {
+        if (paused && !(forward || skip)) {
             do {
                 rc = clock_nanosleep(CLOCK_MONOTONIC, 0,
                                      &tlog_timespec_max, NULL);
@@ -615,10 +619,15 @@ run(struct tlog_errs **perrs,
         }
 
         /* If this is the first packet or we're ignoring timing */
-        if (!got_pkt || forward) {
+        if (!got_pkt) {
             got_pkt = true;
             /* Start the time */
             local_last_ts = local_this_ts;
+        /* Else, if we're ignoring timing */
+        } else if (forward || skip) {
+            /* Skip the time */
+            local_last_ts = local_this_ts;
+            skip = false;
         } else {
             tlog_timespec_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
             tlog_timespec_div(&pkt_delay_ts, &speed, &pkt_delay_ts);
