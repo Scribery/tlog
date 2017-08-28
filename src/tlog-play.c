@@ -336,6 +336,7 @@ run(struct tlog_errs **perrs,
     const struct timespec accel = {2, 0};
     bool forward = false;
     bool paused = false;
+    bool quit = false;
 
     assert(cmd_help != NULL);
 
@@ -477,7 +478,7 @@ run(struct tlog_errs **perrs,
         /* React to input */
         new_io_caught = io_caught;
         if (new_io_caught != last_io_caught) {
-            while (true) {
+            while (!quit) {
                 rc = read(STDIN_FILENO, &key, sizeof(key));
                 if (rc < 0) {
                     if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -515,10 +516,16 @@ run(struct tlog_errs **perrs,
                         case 'F':
                             forward = true;
                             break;
+                        case 'q':
+                            quit = true;
+                            break;
                         default:
                             break;
                     }
                 }
+            }
+            if (quit) {
+                break;
             }
         }
 

@@ -67,6 +67,10 @@ Reset playback to normal, 1x speed.
 Play recording to the end at once, regardless if paused or not.
 Useful with following enabled.
 
+.TP
+.B q
+Stop playing and quit.
+
 .SH FILES
 .TP
 M4_CONF_PATH()
