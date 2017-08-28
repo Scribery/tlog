@@ -95,3 +95,8 @@ M4_PARAM(`/journal', `match', `opts-',
                    `string signifying disjunction or conjunction, as with',
                    `sd_journal_add_disjunction and sd_journal_add_conjunction(3)')')m4_dnl
 m4_dnl
+M4_PARAM(`', `persist', `file-',
+         `M4_TYPE_BOOL(false)', true,
+         `', `', `Ignore quit key and signals from keyboard',
+         `M4_LINES(`If true, ignore any keyboard-generated signals and the quit key.')')m4_dnl
+m4_dnl

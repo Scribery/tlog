@@ -337,6 +337,7 @@ run(struct tlog_errs **perrs,
     bool forward = false;
     bool paused = false;
     bool quit = false;
+    bool persist = false;
 
     assert(cmd_help != NULL);
 
@@ -380,6 +381,10 @@ run(struct tlog_errs **perrs,
 
     /* Get the "forward" flag */
     forward = json_object_object_get_ex(conf, "forward", &obj) &&
+              json_object_get_boolean(obj);
+
+    /* Get the "persist" flag */
+    persist = json_object_object_get_ex(conf, "persist", &obj) &&
               json_object_get_boolean(obj);
 
     /* Initialize libcurl */
@@ -454,9 +459,12 @@ run(struct tlog_errs **perrs,
         goto cleanup;
     }
 
-    /* Switch the terminal to raw mode, but keep signal generation */
+    /*
+     * Switch the terminal to raw mode,
+     * but keep signal generation, if not persistent
+     */
     raw_termios = orig_termios;
-    raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO);
+    raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO | (persist ? ISIG : 0));
     raw_termios.c_iflag &= ~(BRKINT | ICRNL | IGNBRK | IGNCR | INLCR |
                              INPCK | ISTRIP | IXON | PARMRK);
     raw_termios.c_oflag &= ~OPOST;
@@ -517,7 +525,7 @@ run(struct tlog_errs **perrs,
                             forward = true;
                             break;
                         case 'q':
-                            quit = true;
+                            quit = !persist;
                             break;
                         default:
                             break;
