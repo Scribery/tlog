@@ -62,6 +62,11 @@ Halve the playback speed. Minimum is 1/16x.
 .B BACKSPACE
 Reset playback to normal, 1x speed.
 
+.TP
+.B F
+Play recording to the end at once, regardless if paused or not.
+Useful with following enabled.
+
 .SH FILES
 .TP
 M4_CONF_PATH()

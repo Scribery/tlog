@@ -334,6 +334,7 @@ run(struct tlog_errs **perrs,
     const struct timespec max_speed = {16, 0};
     const struct timespec min_speed = {0, 62500000};
     const struct timespec accel = {2, 0};
+    bool forward = false;
     bool paused = false;
 
     assert(cmd_help != NULL);
@@ -503,6 +504,9 @@ run(struct tlog_errs **perrs,
                                 speed = new_speed;
                             }
                             break;
+                        case 'F':
+                            forward = true;
+                            break;
                         default:
                             break;
                     }
@@ -510,8 +514,8 @@ run(struct tlog_errs **perrs,
             }
         }
 
-        /* Handle pausing */
-        if (paused) {
+        /* Handle pausing, unless ignoring timing */
+        if (paused && !forward) {
             do {
                 rc = clock_nanosleep(CLOCK_MONOTONIC, 0,
                                      &tlog_timespec_max, NULL);
@@ -556,6 +560,9 @@ run(struct tlog_errs **perrs,
             }
             /* If hit the end of stream */
             if (tlog_pkt_is_void(&pkt)) {
+                if (forward) {
+                    forward = false;
+                }
                 if (follow) {
                     read_wait = (struct timespec){POLL_PERIOD, 0};
                     continue;
@@ -578,8 +585,8 @@ run(struct tlog_errs **perrs,
             goto cleanup;
         }
 
-        /* If this is the first packet */
-        if (!got_pkt) {
+        /* If this is the first packet or we're ignoring timing */
+        if (!got_pkt || forward) {
             got_pkt = true;
             /* Start the time */
             local_last_ts = local_this_ts;
