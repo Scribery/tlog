@@ -301,11 +301,17 @@ run(struct tlog_errs **perrs,
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     tlog_grc grc;
     struct json_object *obj;
+    /* True, if we should poll after EOF */
     bool follow;
+    /* Local time of packet output last */
     struct timespec local_last_ts;
+    /* Local time now */
     struct timespec local_this_ts;
+    /* Local time of packet output next */
     struct timespec local_next_ts;
+    /* Recording time of the packet output last */
     struct timespec pkt_last_ts;
+    /* Delay to the packet output next */
     struct timespec pkt_delay_ts;
     ssize_t rc;
     size_t i;
