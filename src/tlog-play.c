@@ -373,6 +373,14 @@ run(struct tlog_errs **perrs,
     follow = json_object_object_get_ex(conf, "follow", &obj) &&
              json_object_get_boolean(obj);
 
+    /* Get the "paused" flag */
+    paused = json_object_object_get_ex(conf, "paused", &obj) &&
+             json_object_get_boolean(obj);
+
+    /* Get the "forward" flag */
+    forward = json_object_object_get_ex(conf, "forward", &obj) &&
+              json_object_get_boolean(obj);
+
     /* Initialize libcurl */
     grc = TLOG_GRC_FROM(curl, curl_global_init(CURL_GLOBAL_NOTHING));
     if (grc != TLOG_GRC_FROM(curl, CURLE_OK)) {

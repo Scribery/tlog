@@ -29,6 +29,18 @@ M4_PARAM(`', `follow', `opts-',
          `M4_LINES(`If true, then when the end of the recorded session is reached, wait',
                    `for new messages to be added and play them back when they appear.')')m4_dnl
 m4_dnl
+M4_PARAM(`', `forward', `opts-',
+         `M4_TYPE_BOOL(false)', true,
+         `F', `', `Play recording to the end at once',
+         `M4_LINES(`If true, then play recording ignoring timing, as fast as possible,',
+                   `until the end, then resume respecting timing. Useful when following.')')m4_dnl
+m4_dnl
+M4_PARAM(`', `paused', `opts-',
+         `M4_TYPE_BOOL(false)', true,
+         `p', `', `Start playback paused',
+         `M4_LINES(`If true, then playback is started in a paused state,',
+                   `but after forwarding, if enabled.')')m4_dnl
+m4_dnl
 M4_PARAM(`', `reader', `file-',
          `M4_TYPE_CHOICE(`file', `file', `journal', `es')', true,
          `r', `=STRING', `Use STRING log reader (file/journal/es, default file)',
