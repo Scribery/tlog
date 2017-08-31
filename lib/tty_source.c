@@ -28,6 +28,7 @@
 #include <poll.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <time.h> //added for tracing
 #include <sys/ioctl.h>
 #include <tlog/rc.h>
 #include <tlog/timespec.h>

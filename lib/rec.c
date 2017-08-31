@@ -22,6 +22,7 @@
 
 #include <tlog/rec.h>
 #include <tlog/rec_item.h>
+#include <tlog/rate_limit_sink.h>
 #include <tlog/json_sink.h>
 #include <tlog/syslog_json_writer.h>
 #include <tlog/journal_json_writer.h>
@@ -42,6 +43,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <tlog/pkt.h>
 
 /**< Number of the signal causing exit */
 static volatile sig_atomic_t tlog_rec_exit_signum;
@@ -277,9 +279,11 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
 {
     tlog_grc grc;
     int64_t num;
+    uint64_t check_rate;
     const char *str;
     struct json_object *obj;
     struct tlog_sink *sink = NULL;
+    struct tlog_sink *r_sink = NULL;
     struct tlog_json_writer *writer = NULL;
     int fd = -1;
     int rc;
@@ -430,7 +434,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
 
         /* Get journal writer conf container */
         if (!json_object_object_get_ex(conf, "journal", &conf_journal)) {
-            tlog_errs_pushs(perrs, "Jouranl writer parameters are not specified");
+            tlog_errs_pushs(perrs, "Journal writer parameters are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -500,6 +504,14 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     }
     num = json_object_get_int64(obj);
 
+    /* Read the rate limit*/
+    if (!json_object_object_get_ex(conf, "rate", &obj)) {
+        tlog_errs_pushs(perrs, "Rate is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    check_rate = json_object_get_int64(obj);
+
     /* Create the sink, letting it take over the writer */
     {
         struct tlog_json_sink_params params = {
@@ -521,9 +533,25 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     }
     writer = NULL;
 
-    *psink = sink;
-    sink = NULL;
-    grc = TLOG_RC_OK;
+    if(check_rate == 0){
+        *psink = sink;
+        sink = NULL;
+        grc = TLOG_RC_OK;
+    } else {
+
+        //Create the rate-limit sink with the `sink` variable being the log sink
+        grc = tlog_rate_limit_sink_create(&r_sink, sink, true, check_rate, NULL);
+        if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating log sink");
+            goto cleanup;
+        }
+        *psink = r_sink;
+        sink = NULL;
+        r_sink = NULL;
+        grc = TLOG_RC_OK;
+    }
+
 cleanup:
 
     if (fd >= 0) {
@@ -642,15 +670,17 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         if (tlog_pkt_pos_is_in(&log_pos, &pkt)) {
             /* If asked to log this type of packet */
             if (item_mask & (1 << tlog_rec_item_from_pkt(&pkt))) {
+
                 grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
+
                 if (grc != TLOG_RC_OK &&
                     grc != TLOG_GRC_FROM(errno, EINTR)) {
                     tlog_errs_pushc(perrs, grc);
                     tlog_errs_pushs(perrs, "Failed logging terminal data");
                     return_grc = grc;
                     goto cleanup;
-                }
-                log_pending = true;
+                    }
+                    log_pending = true;
             } else {
                 tlog_pkt_pos_move_past(&log_pos, &pkt);
             }
@@ -661,6 +691,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         tlog_pkt_cleanup(&pkt);
         log_pos = TLOG_PKT_POS_VOID;
         tty_pos = TLOG_PKT_POS_VOID;
+
         grc = tlog_source_read(tty_source, &pkt);
         if (grc != TLOG_RC_OK) {
             if (grc == TLOG_GRC_FROM(errno, EINTR)) {
@@ -754,7 +785,6 @@ tlog_rec_get_item_mask(struct tlog_errs **perrs,
     READ_ITEM(INPUT, Input, input);
     READ_ITEM(OUTPUT, Output, output);
     READ_ITEM(WINDOW, Window, window);
-
 #undef READ_ITEM
 
     *pmask = mask;

@@ -127,6 +127,7 @@ libtlog_la_SOURCES = \
     play_conf.c                 \
     play_conf_cmd.c             \
     play_conf_validate.c        \
+    rate_limit_sink.c           \
     rc.c                        \
     rec.c                       \
     rec_conf.c                  \

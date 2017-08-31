@@ -50,6 +50,7 @@ tlog_HEADERS = \
     play_conf.h                 \
     play_conf_cmd.h             \
     play_conf_validate.h        \
+    rate_limit_sink.h           \
     rc.h                        \
     rec.h                       \
     rec_conf.h                  \
