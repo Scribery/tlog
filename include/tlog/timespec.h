@@ -151,6 +151,30 @@ tlog_timespec_add(const struct timespec *a,
 }
 
 /**
+ * Add timespec b to timespec a and put the result in res, using
+ * double-precision floating point arithmetic.
+ *
+ * @param a     Timespec structure to subtract from.
+ * @param b     Timespec structure to subtract.
+ * @param res   Location for result, can be a or b as well.
+ */
+extern void tlog_timespec_fp_add(const struct timespec *a,
+                                 const struct timespec *b,
+                                 struct timespec *res);
+
+/**
+ * Subtract timespec b from timespec a and put the result in res, using
+ * double-precision floating point arithmetic.
+ *
+ * @param a     Timespec structure to subtract from.
+ * @param b     Timespec structure to subtract.
+ * @param res   Location for result, can be a or b as well.
+ */
+extern void tlog_timespec_fp_sub(const struct timespec *a,
+                                 const struct timespec *b,
+                                 struct timespec *res);
+
+/**
  * Multiply timespec a by timespec b and put result into res, using
  * double-precision floating point arithmetic.
  *

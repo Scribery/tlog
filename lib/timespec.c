@@ -38,6 +38,8 @@ const struct timespec tlog_timespec_max = {LONG_MAX, 999999999};
 #define TLOG_TIMESPEC_FP_CAP(_x) \
             TLOG_MAX(TLOG_MIN(_x, TLOG_TIMESPEC_FP_MAX), TLOG_TIMESPEC_FP_MIN)
 
+#define TLOG_TIMESPEC_FP_OP_ADD +
+#define TLOG_TIMESPEC_FP_OP_SUB -
 #define TLOG_TIMESPEC_FP_OP_MUL *
 #define TLOG_TIMESPEC_FP_OP_DIV /
 
@@ -52,6 +54,30 @@ const struct timespec tlog_timespec_max = {LONG_MAX, 999999999};
         tlog_timespec_from_double(_ts, _res);       \
     } while (0)
 
+
+void
+tlog_timespec_fp_add(const struct timespec *a,
+                     const struct timespec *b,
+                     struct timespec *res)
+{
+    assert(tlog_timespec_is_valid(a));
+    assert(tlog_timespec_is_valid(b));
+    assert(res != NULL);
+    TLOG_TIMESPEC_FP_CALC(a, ADD, b, res);
+    assert(tlog_timespec_is_valid(res));
+}
+
+void
+tlog_timespec_fp_sub(const struct timespec *a,
+                     const struct timespec *b,
+                     struct timespec *res)
+{
+    assert(tlog_timespec_is_valid(a));
+    assert(tlog_timespec_is_valid(b));
+    assert(res != NULL);
+    TLOG_TIMESPEC_FP_CALC(a, SUB, b, res);
+    assert(tlog_timespec_is_valid(res));
+}
 
 void
 tlog_timespec_fp_mul(const struct timespec *a,
