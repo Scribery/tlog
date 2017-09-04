@@ -23,7 +23,6 @@
 #include <tlog/timespec.h>
 #include <tlog/misc.h>
 #include <limits.h>
-#include <math.h>
 
 /* NOTE: Not using the macro from the header to workaround a gcc 4.8 bug */
 const struct timespec tlog_timespec_zero = {0, 0};
@@ -43,18 +42,14 @@ const struct timespec tlog_timespec_max = {LONG_MAX, 999999999};
 #define TLOG_TIMESPEC_FP_OP_DIV /
 
 #define TLOG_TIMESPEC_FP_CALC(_a, _op, _b, _res) \
-    do {                                                                    \
-        double _ts;                                                         \
-        double _i;                                                          \
-        double _f;                                                          \
-                                                                            \
-        _ts = ((double)_a->tv_sec + (double)_a->tv_nsec / 1000000000)       \
-              TLOG_TIMESPEC_FP_OP_##_op                                     \
-              ((double)_b->tv_sec + (double)_b->tv_nsec / 1000000000);      \
-        _ts = TLOG_TIMESPEC_FP_CAP(_ts);                                    \
-        _f = modf(_ts, &_i);                                                \
-        _res->tv_sec = (long)_i;                                            \
-        _res->tv_nsec = (long)(_f * 1000000000);                            \
+    do {                                            \
+        double _ts;                                 \
+                                                    \
+        _ts = tlog_timespec_to_double(a)            \
+              TLOG_TIMESPEC_FP_OP_##_op             \
+              tlog_timespec_to_double(b);           \
+        _ts = TLOG_TIMESPEC_FP_CAP(_ts);            \
+        tlog_timespec_from_double(_ts, _res);       \
     } while (0)
 
 

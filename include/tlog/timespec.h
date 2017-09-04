@@ -26,6 +26,7 @@
 #define _TLOG_TIMESPEC_H
 
 #include <time.h>
+#include <math.h>
 #include <stdbool.h>
 #include <assert.h>
 
@@ -45,6 +46,40 @@ tlog_timespec_is_valid(const struct timespec *ts)
            ((ts->tv_sec < 0)
                 ? (ts->tv_nsec <= 0)
                 : (ts->tv_sec == 0 || ts->tv_nsec >= 0));
+}
+
+/**
+ * Convert a double-precision floating point number of seconds to timespec.
+ *
+ * @param n     Number of seconds.
+ * @param res   Location for the conversion result.
+ */
+static inline void
+tlog_timespec_from_double(double n, struct timespec *res)
+{
+    double i, f;
+
+    assert(res != NULL);
+
+    f = modf(n, &i);
+    res->tv_sec = i;
+    res->tv_nsec = f * 1000000000;
+
+    assert(tlog_timespec_is_valid(res));
+}
+
+/**
+ * Convert a timespec to double-precision floating point number of seconds.
+ *
+ * @param ts    The timespec to convert.
+ *
+ * @return The resulting number of seconds.
+ */
+static inline double
+tlog_timespec_to_double(const struct timespec *ts)
+{
+    assert(tlog_timespec_is_valid(ts));
+    return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000;
 }
 
 /**
