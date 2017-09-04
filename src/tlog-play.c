@@ -517,13 +517,13 @@ run(struct tlog_errs **perrs,
                             speed = (struct timespec){1, 0};
                             break;
                         case '}':
-                            tlog_timespec_mul(&speed, &accel, &new_speed);
+                            tlog_timespec_fp_mul(&speed, &accel, &new_speed);
                             if (tlog_timespec_cmp(&new_speed, &max_speed) <= 0) {
                                 speed = new_speed;
                             }
                             break;
                         case '{':
-                            tlog_timespec_div(&speed, &accel, &new_speed);
+                            tlog_timespec_fp_div(&speed, &accel, &new_speed);
                             if (tlog_timespec_cmp(&new_speed, &min_speed) >= 0) {
                                 speed = new_speed;
                             }
@@ -630,7 +630,7 @@ run(struct tlog_errs **perrs,
             skip = false;
         } else {
             tlog_timespec_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
-            tlog_timespec_div(&pkt_delay_ts, &speed, &pkt_delay_ts);
+            tlog_timespec_fp_div(&pkt_delay_ts, &speed, &pkt_delay_ts);
             tlog_timespec_add(&local_last_ts, &pkt_delay_ts, &local_next_ts);
             /* If we don't need a delay for the next packet (it's overdue) */
             if (tlog_timespec_cmp(&local_next_ts, &local_this_ts) <= 0) {
@@ -652,7 +652,7 @@ run(struct tlog_errs **perrs,
                     }
                     tlog_timespec_sub(&local_this_ts, &local_last_ts,
                                       &pkt_delay_ts);
-                    tlog_timespec_mul(&pkt_delay_ts, &speed, &pkt_delay_ts);
+                    tlog_timespec_fp_mul(&pkt_delay_ts, &speed, &pkt_delay_ts);
                     tlog_timespec_add(&pkt_last_ts, &pkt_delay_ts,
                                       &pkt_last_ts);
                     local_last_ts = local_this_ts;

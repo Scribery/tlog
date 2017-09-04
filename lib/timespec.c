@@ -54,9 +54,9 @@ const struct timespec tlog_timespec_max = {LONG_MAX, 999999999};
 
 
 void
-tlog_timespec_mul(const struct timespec *a,
-                  const struct timespec *b,
-                  struct timespec *res)
+tlog_timespec_fp_mul(const struct timespec *a,
+                     const struct timespec *b,
+                     struct timespec *res)
 {
     assert(tlog_timespec_is_valid(a));
     assert(tlog_timespec_is_valid(b));
@@ -66,9 +66,9 @@ tlog_timespec_mul(const struct timespec *a,
 }
 
 void
-tlog_timespec_div(const struct timespec *a,
-                  const struct timespec *b,
-                  struct timespec *res)
+tlog_timespec_fp_div(const struct timespec *a,
+                     const struct timespec *b,
+                     struct timespec *res)
 {
     assert(tlog_timespec_is_valid(a));
     assert(tlog_timespec_is_valid(b));

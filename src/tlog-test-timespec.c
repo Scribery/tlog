@@ -52,8 +52,8 @@ main(void)
 
 #define SYMBOL_add '+'
 #define SYMBOL_sub '-'
-#define SYMBOL_mul '*'
-#define SYMBOL_div '/'
+#define SYMBOL_fp_mul '*'
+#define SYMBOL_fp_div '/'
 
 #define EXPAND_TS(_sec, _nsec) ("(" #_sec ", " #_nsec ")")
 #define TS(_sec, _nsec) {_sec, _nsec}
@@ -149,81 +149,81 @@ main(void)
     /*
      * Multiplication
      */
-    TEST(mul, TS(0, 0), TS(0, 0), TS(0, 0));
-    TEST(mul, TS(0, 0), TS(1, 0), TS(0, 0));
-    TEST(mul, TS(0, 0), TS(1, 100000000), TS(0, 0));
-    TEST(mul, TS(1, 0), TS(1, 0), TS(1, 0));
-    TEST(mul, TS(1, 0), TS(1, 1), TS(1, 1));
-    TEST(mul, TS(1, 1), TS(1, 0), TS(1, 1));
-    TEST(mul, TS(1, 0), TS(1, 100000000), TS(1, 100000000));
-    TEST(mul, TS(1, 100000000), TS(1, 100000000), TS(1, 210000000));
-    TEST(mul, TS(1, 0), TS(2, 0), TS(2, 0));
-    TEST(mul, TS(2, 0), TS(2, 0), TS(4, 0));
-    TEST(mul, TS(2, 0), TS(0, 500000000), TS(1, 0));
-    TEST(mul, TS(2, 0), TS(1, 500000000), TS(3, 0));
-    TEST(mul, TS(10, 0), TS(0, 100000000), TS(1, 0));
+    TEST(fp_mul, TS(0, 0), TS(0, 0), TS(0, 0));
+    TEST(fp_mul, TS(0, 0), TS(1, 0), TS(0, 0));
+    TEST(fp_mul, TS(0, 0), TS(1, 100000000), TS(0, 0));
+    TEST(fp_mul, TS(1, 0), TS(1, 0), TS(1, 0));
+    TEST(fp_mul, TS(1, 0), TS(1, 1), TS(1, 1));
+    TEST(fp_mul, TS(1, 1), TS(1, 0), TS(1, 1));
+    TEST(fp_mul, TS(1, 0), TS(1, 100000000), TS(1, 100000000));
+    TEST(fp_mul, TS(1, 100000000), TS(1, 100000000), TS(1, 210000000));
+    TEST(fp_mul, TS(1, 0), TS(2, 0), TS(2, 0));
+    TEST(fp_mul, TS(2, 0), TS(2, 0), TS(4, 0));
+    TEST(fp_mul, TS(2, 0), TS(0, 500000000), TS(1, 0));
+    TEST(fp_mul, TS(2, 0), TS(1, 500000000), TS(3, 0));
+    TEST(fp_mul, TS(10, 0), TS(0, 100000000), TS(1, 0));
 
-    TEST(mul, TS(LONG_MAX / 2, 0), TS(2, 0), TS(fp_max_s, fp_max_ns));
-    TEST(mul, TS(LONG_MIN / 2, 0), TS(2, 0), TS(fp_min_s, fp_min_ns));
-    TEST(mul, TS(LONG_MAX, 0), TS(0, 500000000), TS(LONG_MAX / 2 + 1, 0));
-    TEST(mul, TS(LONG_MIN, 0), TS(0, 500000000), TS(LONG_MIN / 2, 0));
+    TEST(fp_mul, TS(LONG_MAX / 2, 0), TS(2, 0), TS(fp_max_s, fp_max_ns));
+    TEST(fp_mul, TS(LONG_MIN / 2, 0), TS(2, 0), TS(fp_min_s, fp_min_ns));
+    TEST(fp_mul, TS(LONG_MAX, 0), TS(0, 500000000), TS(LONG_MAX / 2 + 1, 0));
+    TEST(fp_mul, TS(LONG_MIN, 0), TS(0, 500000000), TS(LONG_MIN / 2, 0));
 
-    TEST(mul, TS(LONG_MAX, 999999999), TS(LONG_MAX, 999999999),
-              TS(fp_max_s, fp_max_ns));
-    TEST(mul, TS(LONG_MAX, 999999999), TS(LONG_MIN, -999999999),
-              TS(fp_min_s, fp_min_ns));
-    TEST(mul, TS(LONG_MIN, -999999999), TS(LONG_MIN, -999999999),
-              TS(fp_max_s, fp_max_ns));
+    TEST(fp_mul, TS(LONG_MAX, 999999999), TS(LONG_MAX, 999999999),
+                 TS(fp_max_s, fp_max_ns));
+    TEST(fp_mul, TS(LONG_MAX, 999999999), TS(LONG_MIN, -999999999),
+                 TS(fp_min_s, fp_min_ns));
+    TEST(fp_mul, TS(LONG_MIN, -999999999), TS(LONG_MIN, -999999999),
+                 TS(fp_max_s, fp_max_ns));
 
     /* Time scaling values */
-    TEST(mul, TS(0, 62500000), TS(2, 0), TS(0, 125000000));
-    TEST(mul, TS(0, 125000000), TS(2, 0), TS(0, 250000000));
-    TEST(mul, TS(0, 250000000), TS(2, 0), TS(0, 500000000));
-    TEST(mul, TS(0, 500000000), TS(2, 0), TS(1, 0));
-    TEST(mul, TS(1, 0), TS(2, 0), TS(2, 0));
-    TEST(mul, TS(2, 0), TS(2, 0), TS(4, 0));
-    TEST(mul, TS(4, 0), TS(2, 0), TS(8, 0));
-    TEST(mul, TS(8, 0), TS(2, 0), TS(16, 0));
+    TEST(fp_mul, TS(0, 62500000), TS(2, 0), TS(0, 125000000));
+    TEST(fp_mul, TS(0, 125000000), TS(2, 0), TS(0, 250000000));
+    TEST(fp_mul, TS(0, 250000000), TS(2, 0), TS(0, 500000000));
+    TEST(fp_mul, TS(0, 500000000), TS(2, 0), TS(1, 0));
+    TEST(fp_mul, TS(1, 0), TS(2, 0), TS(2, 0));
+    TEST(fp_mul, TS(2, 0), TS(2, 0), TS(4, 0));
+    TEST(fp_mul, TS(4, 0), TS(2, 0), TS(8, 0));
+    TEST(fp_mul, TS(8, 0), TS(2, 0), TS(16, 0));
 
     /*
      * Division
      */
-    TEST(div, TS(0, 0), TS(1, 0), TS(0, 0));
-    TEST(div, TS(0, 0), TS(0, 1), TS(0, 0));
-    TEST(div, TS(0, 0), TS(1, 1), TS(0, 0));
-    TEST(div, TS(1, 0), TS(1, 0), TS(1, 0));
-    TEST(div, TS(1, 1), TS(1, 0), TS(1, 1));
-    TEST(div, TS(0, 1), TS(1, 0), TS(0, 1));
-    TEST(div, TS(0, 999999999), TS(1, 0), TS(0, 999999999));
-    TEST(div, TS(0, 1), TS(0, 500000000), TS(0, 2));
+    TEST(fp_div, TS(0, 0), TS(1, 0), TS(0, 0));
+    TEST(fp_div, TS(0, 0), TS(0, 1), TS(0, 0));
+    TEST(fp_div, TS(0, 0), TS(1, 1), TS(0, 0));
+    TEST(fp_div, TS(1, 0), TS(1, 0), TS(1, 0));
+    TEST(fp_div, TS(1, 1), TS(1, 0), TS(1, 1));
+    TEST(fp_div, TS(0, 1), TS(1, 0), TS(0, 1));
+    TEST(fp_div, TS(0, 999999999), TS(1, 0), TS(0, 999999999));
+    TEST(fp_div, TS(0, 1), TS(0, 500000000), TS(0, 2));
 
-    TEST(div, TS(1000000000, 0), TS(1000000000, 0), TS(1, 0));
-    TEST(div, TS(-1000000000, 0), TS(1000000000, 0), TS(-1, 0));
-    TEST(div, TS(1000000000, 0), TS(-1000000000, 0), TS(-1, 0));
-    TEST(div, TS(-1000000000, 0), TS(-1000000000, 0), TS(1, 0));
+    TEST(fp_div, TS(1000000000, 0), TS(1000000000, 0), TS(1, 0));
+    TEST(fp_div, TS(-1000000000, 0), TS(1000000000, 0), TS(-1, 0));
+    TEST(fp_div, TS(1000000000, 0), TS(-1000000000, 0), TS(-1, 0));
+    TEST(fp_div, TS(-1000000000, 0), TS(-1000000000, 0), TS(1, 0));
 
-    TEST(div, TS(1000000000, 0), TS(1, 0), TS(1000000000, 0));
-    TEST(div, TS(-1000000000, 0), TS(1, 0), TS(-1000000000, 0));
-    TEST(div, TS(1000000000, 0), TS(-1, 0), TS(-1000000000, 0));
-    TEST(div, TS(-1000000000, 0), TS(-1, 0), TS(1000000000, 0));
+    TEST(fp_div, TS(1000000000, 0), TS(1, 0), TS(1000000000, 0));
+    TEST(fp_div, TS(-1000000000, 0), TS(1, 0), TS(-1000000000, 0));
+    TEST(fp_div, TS(1000000000, 0), TS(-1, 0), TS(-1000000000, 0));
+    TEST(fp_div, TS(-1000000000, 0), TS(-1, 0), TS(1000000000, 0));
 
-    TEST(div, TS(LONG_MAX, 999999999), TS(LONG_MAX, 999999999), TS(1, 0));
-    TEST(div, TS(LONG_MIN, -999999999), TS(LONG_MIN, -999999999), TS(1, 0));
-    TEST(div, TS(LONG_MAX, 999999999), TS(LONG_MIN+1, -999999999), TS(-1, 0));
-    TEST(div, TS(LONG_MIN+1, -999999999), TS(LONG_MAX, 999999999), TS(-1, 0));
+    TEST(fp_div, TS(LONG_MAX, 999999999), TS(LONG_MAX, 999999999), TS(1, 0));
+    TEST(fp_div, TS(LONG_MIN, -999999999), TS(LONG_MIN, -999999999), TS(1, 0));
+    TEST(fp_div, TS(LONG_MAX, 999999999), TS(LONG_MIN+1, -999999999), TS(-1, 0));
+    TEST(fp_div, TS(LONG_MIN+1, -999999999), TS(LONG_MAX, 999999999), TS(-1, 0));
 
-    TEST(div, TS(LONG_MAX, 999999999), TS(1, 0), TS(fp_max_s, fp_max_ns));
-    TEST(div, TS(LONG_MIN, -999999999), TS(1, 0), TS(fp_min_s, fp_min_ns));
+    TEST(fp_div, TS(LONG_MAX, 999999999), TS(1, 0), TS(fp_max_s, fp_max_ns));
+    TEST(fp_div, TS(LONG_MIN, -999999999), TS(1, 0), TS(fp_min_s, fp_min_ns));
 
     /* Time scaling values */
-    TEST(div, TS(16, 0), TS(2, 0), TS(8, 0));
-    TEST(div, TS(8, 0), TS(2, 0), TS(4, 0));
-    TEST(div, TS(4, 0), TS(2, 0), TS(2, 0));
-    TEST(div, TS(2, 0), TS(2, 0), TS(1, 0));
-    TEST(div, TS(1, 0), TS(2, 0), TS(0, 500000000));
-    TEST(div, TS(0, 500000000), TS(2, 0), TS(0, 250000000));
-    TEST(div, TS(0, 250000000), TS(2, 0), TS(0, 125000000));
-    TEST(div, TS(0, 125000000), TS(2, 0), TS(0, 62500000));
+    TEST(fp_div, TS(16, 0), TS(2, 0), TS(8, 0));
+    TEST(fp_div, TS(8, 0), TS(2, 0), TS(4, 0));
+    TEST(fp_div, TS(4, 0), TS(2, 0), TS(2, 0));
+    TEST(fp_div, TS(2, 0), TS(2, 0), TS(1, 0));
+    TEST(fp_div, TS(1, 0), TS(2, 0), TS(0, 500000000));
+    TEST(fp_div, TS(0, 500000000), TS(2, 0), TS(0, 250000000));
+    TEST(fp_div, TS(0, 250000000), TS(2, 0), TS(0, 125000000));
+    TEST(fp_div, TS(0, 125000000), TS(2, 0), TS(0, 62500000));
 
     return !passed;
 }
