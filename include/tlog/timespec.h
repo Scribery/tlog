@@ -114,60 +114,26 @@ tlog_timespec_to_double(const struct timespec *ts)
 }
 
 /**
- * Subtract timespec b from timespec a and put the result in res.
- *
- * @param a     Timespec structure to subtract from.
- * @param b     Timespec structure to subtract.
- * @param res   Location for result, can be a or b as well.
- */
-static inline void
-tlog_timespec_sub(const struct timespec *a,
-                  const struct timespec *b,
-                  struct timespec *res)
-{
-    assert(tlog_timespec_is_valid(a));
-    assert(tlog_timespec_is_valid(b));
-    assert(res != NULL);
-
-    res->tv_sec = a->tv_sec - b->tv_sec;
-    res->tv_nsec = a->tv_nsec - b->tv_nsec;
-    if (res->tv_sec > 0
-            ? res->tv_nsec < 0
-            : res->tv_nsec <= -1000000000) {
-        res->tv_sec--;
-        res->tv_nsec += 1000000000;
-    }
-
-    assert(tlog_timespec_is_valid(res));
-}
-
-/**
  * Add timespec b to timespec a and put the result in res.
  *
  * @param a     Timespec structure to subtract from.
  * @param b     Timespec structure to subtract.
  * @param res   Location for result, can be a or b as well.
  */
-static inline void
-tlog_timespec_add(const struct timespec *a,
-                  const struct timespec *b,
-                  struct timespec *res)
-{
-    assert(tlog_timespec_is_valid(a));
-    assert(tlog_timespec_is_valid(b));
-    assert(res != NULL);
+extern void tlog_timespec_add(const struct timespec *a,
+                              const struct timespec *b,
+                              struct timespec *res);
 
-    res->tv_sec = a->tv_sec + b->tv_sec;
-    res->tv_nsec = a->tv_nsec + b->tv_nsec;
-    if (res->tv_sec >= 0
-            ? res->tv_nsec >= 1000000000
-            : res->tv_nsec > 0) {
-        res->tv_sec++;
-        res->tv_nsec -= 1000000000;
-    }
-
-    assert(tlog_timespec_is_valid(res));
-}
+/**
+ * Subtract timespec b from timespec a and put the result in res.
+ *
+ * @param a     Timespec structure to subtract from.
+ * @param b     Timespec structure to subtract.
+ * @param res   Location for result, can be a or b as well.
+ */
+extern void tlog_timespec_sub(const struct timespec *a,
+                              const struct timespec *b,
+                              struct timespec *res);
 
 /**
  * Add timespec b to timespec a and put the result in res, using
