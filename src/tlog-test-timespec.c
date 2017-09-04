@@ -29,10 +29,8 @@
 int
 main(void)
 {
-    const double fp_ts_max =
-                    nextafter((double)LONG_MAX + (double)0.999999999, 0);
-    const double fp_ts_min =
-                    nextafter((double)LONG_MIN - (double)0.999999999, 0);
+    const double fp_ts_max = TLOG_TIMESPEC_FP_MAX;
+    const double fp_ts_min = TLOG_TIMESPEC_FP_MIN;
     double fp_ts_max_i;
     double fp_ts_max_f;
     double fp_ts_min_i;

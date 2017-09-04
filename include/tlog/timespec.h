@@ -25,8 +25,10 @@
 #ifndef _TLOG_TIMESPEC_H
 #define _TLOG_TIMESPEC_H
 
+#include <tlog/misc.h>
 #include <time.h>
 #include <math.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <assert.h>
 
@@ -41,6 +43,23 @@ extern const struct timespec tlog_timespec_min;
 
 /** Maximum timespec constant */
 extern const struct timespec tlog_timespec_max;
+
+/** Maximum value a double-precision floating point timespec can be */
+#define TLOG_TIMESPEC_FP_MAX \
+            nextafter((double)LONG_MAX + (double)0.999999999, 0)
+
+/** Minimum value a double-precision floating point timespec can be */
+#define TLOG_TIMESPEC_FP_MIN \
+            nextafter((double)LONG_MIN - (double)0.999999999, 0)
+
+/**
+ * Cap a double-precision floating point to timespec range
+ */
+static inline double
+tlog_timespec_fp_cap(double n)
+{
+    return TLOG_MAX(TLOG_MIN(n, TLOG_TIMESPEC_FP_MAX), TLOG_TIMESPEC_FP_MIN);
+}
 
 /**
  * Check that a timespec is valid.
