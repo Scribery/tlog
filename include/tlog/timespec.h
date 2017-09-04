@@ -30,6 +30,18 @@
 #include <stdbool.h>
 #include <assert.h>
 
+/** Zero timespec initializer */
+#define TLOG_TIMESPEC_ZERO  ((struct timespec){0, 0})
+
+/** Zero timespec constant */
+extern const struct timespec tlog_timespec_zero;
+
+/** Minimum timespec constant */
+extern const struct timespec tlog_timespec_min;
+
+/** Maximum timespec constant */
+extern const struct timespec tlog_timespec_max;
+
 /**
  * Check that a timespec is valid.
  *
@@ -172,18 +184,6 @@ tlog_timespec_is_zero(const struct timespec *t)
 {
     return t->tv_sec == 0 && t->tv_nsec == 0;
 }
-
-/** Zero timespec initializer */
-#define TLOG_TIMESPEC_ZERO  ((struct timespec){0, 0})
-
-/** Zero timespec constant */
-extern const struct timespec tlog_timespec_zero;
-
-/** Minimum timespec constant */
-extern const struct timespec tlog_timespec_min;
-
-/** Maximum timespec constant */
-extern const struct timespec tlog_timespec_max;
 
 /**
  * Compare two timespec's.
