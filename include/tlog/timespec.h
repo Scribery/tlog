@@ -136,6 +136,30 @@ extern void tlog_timespec_sub(const struct timespec *a,
                               struct timespec *res);
 
 /**
+ * Add timespec b to timespec a and put the result in res, capping overflows
+ * to minimum/maximum.
+ *
+ * @param a     Timespec structure to subtract from.
+ * @param b     Timespec structure to subtract.
+ * @param res   Location for result, can be a or b as well.
+ */
+extern void tlog_timespec_cap_add(const struct timespec *a,
+                                  const struct timespec *b,
+                                  struct timespec *res);
+
+/**
+ * Subtract timespec b from timespec a and put the result in res, capping
+ * overflows to minimum/maximum.
+ *
+ * @param a     Timespec structure to subtract from.
+ * @param b     Timespec structure to subtract.
+ * @param res   Location for result, can be a or b as well.
+ */
+extern void tlog_timespec_cap_sub(const struct timespec *a,
+                                  const struct timespec *b,
+                                  struct timespec *res);
+
+/**
  * Add timespec b to timespec a and put the result in res, using
  * double-precision floating point arithmetic.
  *

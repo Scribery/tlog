@@ -112,6 +112,110 @@ tlog_timespec_sub(const struct timespec *a,
 }
 
 void
+tlog_timespec_cap_add(const struct timespec *a,
+                      const struct timespec *b,
+                      struct timespec *res)
+{
+    struct timespec tmp;
+
+    assert(tlog_timespec_is_valid(a));
+    assert(tlog_timespec_is_valid(b));
+    assert(res != NULL);
+
+    tmp.tv_sec = a->tv_sec + b->tv_sec;
+
+    /* If overflow */
+    if ((a->tv_sec >= 0) == (b->tv_sec >= 0) &&
+        (a->tv_sec >= 0) != (tmp.tv_sec >= 0)) {
+        *res = (tmp.tv_sec >= 0) ? tlog_timespec_min : tlog_timespec_max;
+        goto exit;
+    }
+
+    tmp.tv_nsec = a->tv_nsec + b->tv_nsec;
+
+    /* Carry from nsec */
+    if (b->tv_sec >= 0 && b->tv_nsec >= 0) {
+        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= 1000000000
+                            : tmp.tv_nsec > 0) {
+            /* If overflow */
+            if (tmp.tv_sec == LONG_MAX) {
+                *res = tlog_timespec_max;
+                goto exit;
+            }
+            tmp.tv_sec++;
+            tmp.tv_nsec -= 1000000000;
+        }
+    } else {
+        if (tmp.tv_sec > 0 ? tmp.tv_nsec < 0
+                           : tmp.tv_nsec <= -1000000000) {
+            /* If overflow */
+            if (tmp.tv_sec == LONG_MIN) {
+                *res = tlog_timespec_min;
+                goto exit;
+            }
+            tmp.tv_sec--;
+            tmp.tv_nsec += 1000000000;
+        }
+    }
+
+    *res = tmp;
+exit:
+    assert(tlog_timespec_is_valid(res));
+}
+
+void
+tlog_timespec_cap_sub(const struct timespec *a,
+                      const struct timespec *b,
+                      struct timespec *res)
+{
+    struct timespec tmp;
+
+    assert(tlog_timespec_is_valid(a));
+    assert(tlog_timespec_is_valid(b));
+    assert(res != NULL);
+
+    tmp.tv_sec = a->tv_sec - b->tv_sec;
+
+    /* If overflow */
+    if ((a->tv_sec >= 0) != (b->tv_sec >= 0) &&
+        (a->tv_sec >= 0) != (tmp.tv_sec >= 0)) {
+        *res = (tmp.tv_sec >= 0) ? tlog_timespec_min : tlog_timespec_max;
+        goto exit;
+    }
+
+    tmp.tv_nsec = a->tv_nsec - b->tv_nsec;
+
+    /* Carry from nsec */
+    if (b->tv_sec < 0 || b->tv_nsec < 0) {
+        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= 1000000000
+                            : tmp.tv_nsec > 0) {
+            /* If overflow */
+            if (tmp.tv_sec == LONG_MAX) {
+                *res = tlog_timespec_max;
+                goto exit;
+            }
+            tmp.tv_sec++;
+            tmp.tv_nsec -= 1000000000;
+        }
+    } else {
+        if (tmp.tv_sec > 0 ? tmp.tv_nsec < 0
+                           : tmp.tv_nsec <= -1000000000) {
+            /* If overflow */
+            if (tmp.tv_sec == LONG_MIN) {
+                *res = tlog_timespec_min;
+                goto exit;
+            }
+            tmp.tv_sec--;
+            tmp.tv_nsec += 1000000000;
+        }
+    }
+
+    *res = tmp;
+exit:
+    assert(tlog_timespec_is_valid(res));
+}
+
+void
 tlog_timespec_fp_add(const struct timespec *a,
                      const struct timespec *b,
                      struct timespec *res)
