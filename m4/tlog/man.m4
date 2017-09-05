@@ -52,6 +52,32 @@ m4_define(
 )
 
 m4_define(
+    `M4_MAN_CONF_TYPE_DOUBLE',
+    `
+        m4_ifelse(
+            M4_MAN_CONF_TYPE_EXPAND_TO(),
+            `sig',
+            `m4_print(`floating point')',
+            M4_MAN_CONF_TYPE_EXPAND_TO(),
+            `def',
+            `m4_print(`$1')',
+            M4_MAN_CONF_TYPE_EXPAND_TO(),
+            `desc',
+            `
+                m4_ifelse(
+                    `$2',
+                    `',
+                    ,
+                    `
+                        m4_printl(`Minimum: $2', `.br')
+                    '
+                )
+            ',
+        )
+    '
+)
+
+m4_define(
     `M4_MAN_CONF_TYPE_STRING',
     `
         m4_ifelse(
@@ -243,6 +269,7 @@ m4_define(
         m4_pushdef(`M4_MAN_CONF_PREFIX', `')
         m4_pushdef(`M4_MAN_CONF_TYPE_EXPAND_TO', `')
         m4_pushdef(`M4_TYPE_INT',       m4_defn(`M4_MAN_CONF_TYPE_INT'))
+        m4_pushdef(`M4_TYPE_DOUBLE',    m4_defn(`M4_MAN_CONF_TYPE_DOUBLE'))
         m4_pushdef(`M4_TYPE_STRING',    m4_defn(`M4_MAN_CONF_TYPE_STRING'))
         m4_pushdef(`M4_TYPE_BOOL',      m4_defn(`M4_MAN_CONF_TYPE_BOOL'))
         m4_pushdef(`M4_TYPE_CHOICE',    m4_defn(`M4_MAN_CONF_TYPE_CHOICE'))
@@ -254,6 +281,7 @@ m4_define(
         m4_popdef(`M4_TYPE_CHOICE')
         m4_popdef(`M4_TYPE_BOOL')
         m4_popdef(`M4_TYPE_STRING')
+        m4_popdef(`M4_TYPE_DOUBLE')
         m4_popdef(`M4_TYPE_INT')
         m4_popdef(`M4_MAN_CONF_TYPE_EXPAND_TO')
         m4_popdef(`M4_MAN_CONF_PREFIX')
@@ -261,6 +289,20 @@ m4_define(
 
 m4_define(
     `M4_MAN_OPTS_TYPE_INT',
+    `
+        m4_ifelse(
+            `$2',
+            `',
+            ,
+            `
+                m4_printl(`Value minimum: $2', `.br')
+            '
+        )
+    '
+)
+
+m4_define(
+    `M4_MAN_OPTS_TYPE_DOUBLE',
     `
         m4_ifelse(
             `$2',
@@ -407,6 +449,7 @@ m4_define(
         m4_pushdef(`M4_MAN_OPTS_PREFIX', `')
         m4_pushdef(`M4_MAN_OPTS_TYPE_EXPAND_TO', `')
         m4_pushdef(`M4_TYPE_INT',       m4_defn(`M4_MAN_OPTS_TYPE_INT'))
+        m4_pushdef(`M4_TYPE_DOUBLE',    m4_defn(`M4_MAN_OPTS_TYPE_DOUBLE'))
         m4_pushdef(`M4_TYPE_STRING',    m4_defn(`M4_MAN_OPTS_TYPE_STRING'))
         m4_pushdef(`M4_TYPE_BOOL',      m4_defn(`M4_MAN_OPTS_TYPE_BOOL'))
         m4_pushdef(`M4_TYPE_CHOICE',    m4_defn(`M4_MAN_OPTS_TYPE_CHOICE'))
@@ -415,6 +458,7 @@ m4_define(
         m4_popdef(`M4_TYPE_CHOICE')
         m4_popdef(`M4_TYPE_BOOL')
         m4_popdef(`M4_TYPE_STRING')
+        m4_popdef(`M4_TYPE_DOUBLE')
         m4_popdef(`M4_TYPE_INT')
         m4_popdef(`M4_MAN_OPTS_TYPE_EXPAND_TO')
         m4_popdef(`M4_MAN_OPTS_PREFIX')

@@ -143,6 +143,7 @@ m4_define(
     `M4_CONF_CMD_SHORTOPTS',
     `m4_pushdef(`m4_orig_divnum', m4_divnum)m4_divert(-1)
         m4_pushdef(`M4_TYPE_INT', `:')
+        m4_pushdef(`M4_TYPE_DOUBLE', `:')
         m4_pushdef(`M4_TYPE_STRING', `:')
         m4_pushdef(`M4_TYPE_STRING_ARRAY', `:')
         m4_pushdef(`M4_TYPE_BOOL', `::')
@@ -154,6 +155,7 @@ m4_define(
         m4_popdef(`M4_TYPE_BOOL')
         m4_popdef(`M4_TYPE_STRING_ARRAY')
         m4_popdef(`M4_TYPE_STRING')
+        m4_popdef(`M4_TYPE_DOUBLE')
         m4_popdef(`M4_TYPE_INT')
     m4_divert(m4_orig_divnum)m4_popdef(`m4_orig_divnum')')
 
@@ -193,6 +195,7 @@ m4_define(
     `M4_CONF_CMD_LONGOPTS',
     `m4_pushdef(`m4_orig_divnum', m4_divnum)m4_divert(-1)
         m4_pushdef(`M4_TYPE_INT',           `required_argument')
+        m4_pushdef(`M4_TYPE_DOUBLE',        `required_argument')
         m4_pushdef(`M4_TYPE_STRING',        `required_argument')
         m4_pushdef(`M4_TYPE_STRING_ARRAY',  `required_argument')
         m4_pushdef(`M4_TYPE_BOOL',          `optional_argument')
@@ -204,6 +207,7 @@ m4_define(
         m4_popdef(`M4_TYPE_BOOL')
         m4_popdef(`M4_TYPE_STRING_ARRAY')
         m4_popdef(`M4_TYPE_STRING')
+        m4_popdef(`M4_TYPE_DOUBLE')
         m4_popdef(`M4_TYPE_INT')
     m4_divert(m4_orig_divnum)m4_popdef(`m4_orig_divnum')')
 
@@ -331,6 +335,27 @@ m4_define(
            `                goto cleanup;',
            `            }',
            `            val = json_object_new_int64(val_int);')
+    '
+)
+
+m4_define(
+    `M4_CONF_CMD_LOAD_ARGS_TYPE_DOUBLE',
+    `
+        m4_printl(
+           `            assert(optarg != NULL);',
+           `            if (optarg == NULL) {',
+           `                tlog_errs_pushf(perrs, "Option %s has no value", optname);',
+           `                grc = TLOG_RC_FAILURE;',
+           `                goto cleanup;',
+           `            }',
+           `            if (sscanf(optarg, "%lf %n", &val_double, &end) < 1 ||',
+           `                optarg[end] != 0 || val_double < $2) {',
+           `                tlog_errs_pushf(perrs, "Invalid %s option value: %s\n%s",',
+           `                                optname, optarg, help);',
+           `                grc = TLOG_RC_FAILURE;',
+           `                goto cleanup;',
+           `            }',
+           `            val = json_object_new_double(val_double);')
     '
 )
 
@@ -543,6 +568,7 @@ m4_define(
            `    const char *optname;',
            `    const char *optpath;',
            `    int64_t val_int;',
+           `    double val_double;',
            `    struct json_object *prev_val;',
            `    struct json_object *val = NULL;',
            `    struct json_object *entry_val = NULL;',
@@ -550,8 +576,9 @@ m4_define(
            `    int end;',
            `    int i;',
            `',
-           `    /* May be unused if there are no INT parameters */',
+           `    /* May be unused if there are no corresponding parameters */',
            `    (void)val_int;',
+           `    (void)val_double;',
            `    (void)end;',
            `',
            `    /* Ask getopt_long to not print an error message */',
@@ -567,6 +594,7 @@ m4_define(
            `                                  shortopts, longopts, NULL)) >= 0) {',
            `        switch (optcode) {')
         m4_pushdef(`M4_TYPE_INT',           m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_INT'))
+        m4_pushdef(`M4_TYPE_DOUBLE',        m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_DOUBLE'))
         m4_pushdef(`M4_TYPE_STRING',        m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_STRING'))
         m4_pushdef(`M4_TYPE_STRING_ARRAY',  m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_STRING_ARRAY'))
         m4_pushdef(`M4_TYPE_BOOL',          m4_defn(`M4_CONF_CMD_LOAD_ARGS_TYPE_BOOL'))
@@ -578,6 +606,7 @@ m4_define(
         m4_popdef(`M4_TYPE_BOOL')
         m4_popdef(`M4_TYPE_STRING_ARRAY')
         m4_popdef(`M4_TYPE_STRING')
+        m4_popdef(`M4_TYPE_DOUBLE')
         m4_popdef(`M4_TYPE_INT')
         m4_printl(
            `        case m4_singlequote(`:'):',

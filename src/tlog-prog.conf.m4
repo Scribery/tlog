@@ -17,6 +17,11 @@ m4_define(
 )
 
 m4_define(
+    `M4_TYPE_DOUBLE',
+    `m4_print(`$1')'
+)
+
+m4_define(
     `M4_TYPE_STRING',
     `m4_print(`"$1"')'
 )
