@@ -23,6 +23,12 @@ m4_dnl Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  US
 m4_dnl
 m4_include(`conf_schema.m4')m4_dnl
 m4_dnl
+M4_PARAM(`', `speed', `opts-',
+         `M4_TYPE_DOUBLE(1, 0)', true,
+         `s', `=NUMBER', `Playback speed multiplier',
+         `M4_LINES(`A floating-point number to multiply playback speed by.',
+                   `Can be adjusted during playback.')')m4_dnl
+m4_dnl
 M4_PARAM(`', `follow', `opts-',
          `M4_TYPE_BOOL(false)', true,
          `f', `', `Wait for and play back new messages',

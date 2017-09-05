@@ -378,6 +378,11 @@ run(struct tlog_errs **perrs,
         }
     }
 
+    /* Get the "speed" option */
+    if (json_object_object_get_ex(conf, "speed", &obj)) {
+        tlog_timespec_from_fp(json_object_get_double(obj), &speed);
+    }
+
     /* Get the "follow" flag */
     follow = json_object_object_get_ex(conf, "follow", &obj) &&
              json_object_get_boolean(obj);
@@ -629,9 +634,9 @@ run(struct tlog_errs **perrs,
             local_last_ts = local_this_ts;
             skip = false;
         } else {
-            tlog_timespec_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
+            tlog_timespec_cap_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
             tlog_timespec_fp_div(&pkt_delay_ts, &speed, &pkt_delay_ts);
-            tlog_timespec_add(&local_last_ts, &pkt_delay_ts, &local_next_ts);
+            tlog_timespec_cap_add(&local_last_ts, &pkt_delay_ts, &local_next_ts);
             /* If we don't need a delay for the next packet (it's overdue) */
             if (tlog_timespec_cmp(&local_next_ts, &local_this_ts) <= 0) {
                 /* Stretch the time */
@@ -650,11 +655,11 @@ run(struct tlog_errs **perrs,
                                         "Failed retrieving current time");
                         goto cleanup;
                     }
-                    tlog_timespec_sub(&local_this_ts, &local_last_ts,
-                                      &pkt_delay_ts);
+                    tlog_timespec_cap_sub(&local_this_ts, &local_last_ts,
+                                          &pkt_delay_ts);
                     tlog_timespec_fp_mul(&pkt_delay_ts, &speed, &pkt_delay_ts);
-                    tlog_timespec_add(&pkt_last_ts, &pkt_delay_ts,
-                                      &pkt_last_ts);
+                    tlog_timespec_cap_add(&pkt_last_ts, &pkt_delay_ts,
+                                          &pkt_last_ts);
                     local_last_ts = local_this_ts;
                     continue;
                 } else if (rc != 0) {
