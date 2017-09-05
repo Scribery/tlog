@@ -118,8 +118,8 @@ main(void)
     struct timespec min_fp;
     bool passed = true;
 
-    tlog_timespec_from_double(TLOG_TIMESPEC_FP_MAX, &max_fp);
-    tlog_timespec_from_double(TLOG_TIMESPEC_FP_MIN, &min_fp);
+    tlog_timespec_from_fp(TLOG_TIMESPEC_FP_MAX, &max_fp);
+    tlog_timespec_from_fp(TLOG_TIMESPEC_FP_MIN, &min_fp);
 
 #define TS(_sec, _nsec) (struct timespec){_sec, _nsec}
 

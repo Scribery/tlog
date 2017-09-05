@@ -38,11 +38,11 @@ const struct timespec tlog_timespec_max = {LONG_MAX, 999999999};
     do {                                            \
         double _ts;                                 \
                                                     \
-        _ts = tlog_timespec_to_double(a)            \
+        _ts = tlog_timespec_to_fp(a)                \
               TLOG_TIMESPEC_FP_OP_##_op             \
-              tlog_timespec_to_double(b);           \
+              tlog_timespec_to_fp(b);               \
         _ts = tlog_timespec_fp_cap(_ts);            \
-        tlog_timespec_from_double(_ts, _res);       \
+        tlog_timespec_from_fp(_ts, _res);           \
     } while (0)
 
 void

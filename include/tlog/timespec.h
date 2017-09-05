@@ -86,7 +86,7 @@ tlog_timespec_is_valid(const struct timespec *ts)
  * @param res   Location for the conversion result.
  */
 static inline void
-tlog_timespec_from_double(double n, struct timespec *res)
+tlog_timespec_from_fp(double n, struct timespec *res)
 {
     double i, f;
 
@@ -107,7 +107,7 @@ tlog_timespec_from_double(double n, struct timespec *res)
  * @return The resulting number of seconds.
  */
 static inline double
-tlog_timespec_to_double(const struct timespec *ts)
+tlog_timespec_to_fp(const struct timespec *ts)
 {
     assert(tlog_timespec_is_valid(ts));
     return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000;
