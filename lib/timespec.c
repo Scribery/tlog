@@ -50,19 +50,31 @@ tlog_timespec_add(const struct timespec *a,
                   const struct timespec *b,
                   struct timespec *res)
 {
+    struct timespec tmp;
+
     assert(tlog_timespec_is_valid(a));
     assert(tlog_timespec_is_valid(b));
     assert(res != NULL);
 
-    res->tv_sec = a->tv_sec + b->tv_sec;
-    res->tv_nsec = a->tv_nsec + b->tv_nsec;
-    if (res->tv_sec >= 0
-            ? res->tv_nsec >= 1000000000
-            : res->tv_nsec > 0) {
-        res->tv_sec++;
-        res->tv_nsec -= 1000000000;
+    tmp.tv_sec = a->tv_sec + b->tv_sec;
+    tmp.tv_nsec = a->tv_nsec + b->tv_nsec;
+
+    /* Carry from nsec */
+    if (b->tv_sec >= 0 && b->tv_nsec >= 0) {
+        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= 1000000000
+                            : tmp.tv_nsec > 0) {
+            tmp.tv_sec++;
+            tmp.tv_nsec -= 1000000000;
+        }
+    } else {
+        if (tmp.tv_sec > 0 ? tmp.tv_nsec < 0
+                           : tmp.tv_nsec <= -1000000000) {
+            tmp.tv_sec--;
+            tmp.tv_nsec += 1000000000;
+        }
     }
 
+    *res = tmp;
     assert(tlog_timespec_is_valid(res));
 }
 
@@ -71,19 +83,31 @@ tlog_timespec_sub(const struct timespec *a,
                   const struct timespec *b,
                   struct timespec *res)
 {
+    struct timespec tmp;
+
     assert(tlog_timespec_is_valid(a));
     assert(tlog_timespec_is_valid(b));
     assert(res != NULL);
 
-    res->tv_sec = a->tv_sec - b->tv_sec;
-    res->tv_nsec = a->tv_nsec - b->tv_nsec;
-    if (res->tv_sec > 0
-            ? res->tv_nsec < 0
-            : res->tv_nsec <= -1000000000) {
-        res->tv_sec--;
-        res->tv_nsec += 1000000000;
+    tmp.tv_sec = a->tv_sec - b->tv_sec;
+    tmp.tv_nsec = a->tv_nsec - b->tv_nsec;
+
+    /* Carry from nsec */
+    if (b->tv_sec < 0 || b->tv_nsec < 0) {
+        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= 1000000000
+                            : tmp.tv_nsec > 0) {
+            tmp.tv_sec++;
+            tmp.tv_nsec -= 1000000000;
+        }
+    } else {
+        if (tmp.tv_sec > 0 ? tmp.tv_nsec < 0
+                           : tmp.tv_nsec <= -1000000000) {
+            tmp.tv_sec--;
+            tmp.tv_nsec += 1000000000;
+        }
     }
 
+    *res = tmp;
     assert(tlog_timespec_is_valid(res));
 }
 
