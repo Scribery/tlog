@@ -26,123 +26,213 @@
 #include <math.h>
 #include <limits.h>
 
+typedef void (*op_fn)(const struct timespec *a,
+                      const struct timespec *b,
+                      struct timespec *res);
+struct op {
+    const char *sym;
+    op_fn       fn;
+};
+
+static const char *
+ts_fmt_arg_sign(const struct timespec *ts)
+{
+    return (ts->tv_sec == 0 && ts->tv_nsec < 0) ? "-" : "";
+}
+
+static long
+ts_fmt_arg_sec(const struct timespec *ts)
+{
+    return ts->tv_sec;
+}
+
+static long
+ts_fmt_arg_nsec(const struct timespec *ts)
+{
+    return ts->tv_nsec < 0 ? -ts->tv_nsec : ts->tv_nsec;
+}
+
+static bool
+op_list_test(const struct op *op_list, size_t op_num,
+             struct timespec a, struct timespec b, struct timespec exp_res)
+{
+    bool all_passed = true;
+    size_t i;
+    bool passed;
+    struct timespec res;
+
+#define TS_FMT "%s%ld.%09ld"
+#define TS_ARG(_x) \
+    ts_fmt_arg_sign(&_x),   \
+    ts_fmt_arg_sec(&_x),    \
+    ts_fmt_arg_nsec(&_x)
+
+    for (i = 0; i < op_num; i++) {
+        op_list[i].fn(&a, &b, &res);
+        passed = (res.tv_sec == exp_res.tv_sec && res.tv_nsec == exp_res.tv_nsec);
+        if (passed) {
+            fprintf(stderr,
+                    "PASS " TS_FMT " %s " TS_FMT
+                    " == " TS_FMT "\n",
+                    TS_ARG(a), op_list[i].sym, TS_ARG(b),
+                    TS_ARG(exp_res));
+        } else {
+            fprintf(stderr,
+                    "FAIL " TS_FMT " %s " TS_FMT
+                    " = " TS_FMT " != " TS_FMT "\n",
+                    TS_ARG(a), op_list[i].sym, TS_ARG(b),
+                    TS_ARG(res), TS_ARG(exp_res));
+        }
+        all_passed = all_passed && passed;
+    }
+
+#undef TS_ARG
+#undef TS_FMT
+
+    return all_passed;
+}
+
 int
 main(void)
 {
-    const double fp_ts_max = TLOG_TIMESPEC_FP_MAX;
-    const double fp_ts_min = TLOG_TIMESPEC_FP_MIN;
-    double fp_ts_max_i;
-    double fp_ts_max_f;
-    double fp_ts_min_i;
-    double fp_ts_min_f;
-    long fp_max_s;
-    long fp_max_ns;
-    long fp_min_s;
-    long fp_min_ns;
+    const struct op add[]       = {{"   +", tlog_timespec_add}};
+    const struct op sub[]       = {{"   -", tlog_timespec_sub}};
+    const struct op cap_add[]   = {{"cap+", tlog_timespec_cap_add}};
+    const struct op cap_sub[]   = {{"cap-", tlog_timespec_cap_sub}};
+    const struct op fp_add[]    = {{" fp+", tlog_timespec_fp_add}};
+    const struct op fp_sub[]    = {{" fp-", tlog_timespec_fp_sub}};
+    const struct op fp_mul[]    = {{" fp*", tlog_timespec_fp_mul}};
+    const struct op fp_div[]    = {{" fp/", tlog_timespec_fp_div}};
+    const struct op int_add[]   = {{"   +", tlog_timespec_add},
+                                   {"cap+", tlog_timespec_cap_add}};
+    const struct op int_sub[]   = {{"   -", tlog_timespec_sub},
+                                   {"cap-", tlog_timespec_cap_sub}};
+    const struct op all_add[]   = {{"   +", tlog_timespec_add},
+                                   {"cap+", tlog_timespec_cap_add},
+                                   {" fp+", tlog_timespec_fp_add}};
+    const struct op all_sub[]   = {{"   -", tlog_timespec_sub},
+                                   {"cap-", tlog_timespec_cap_sub},
+                                   {" fp-", tlog_timespec_fp_sub}};
+
+    struct timespec max_fp;
+    struct timespec min_fp;
     bool passed = true;
 
-    fp_ts_max_f = modf(fp_ts_max, &fp_ts_max_i);
-    fp_max_s = (long)fp_ts_max_i;
-    fp_max_ns = (long)(fp_ts_max_f * 1000000000);
-    fp_ts_min_f = modf(fp_ts_min, &fp_ts_min_i);
-    fp_min_s = (long)fp_ts_min_i;
-    fp_min_ns = (long)(fp_ts_min_f * 1000000000);
+    tlog_timespec_from_double(TLOG_TIMESPEC_FP_MAX, &max_fp);
+    tlog_timespec_from_double(TLOG_TIMESPEC_FP_MIN, &min_fp);
 
-#define SYMBOL_add '+'
-#define SYMBOL_sub '-'
-#define SYMBOL_fp_mul '*'
-#define SYMBOL_fp_div '/'
+#define TS(_sec, _nsec) (struct timespec){_sec, _nsec}
 
-#define EXPAND_TS(_sec, _nsec) ("(" #_sec ", " #_nsec ")")
-#define TS(_sec, _nsec) {_sec, _nsec}
-
-#define TEST(_func, _a, _b, _exp_res) \
-    do {                                                        \
-        bool __test_passed;                                     \
-        const struct timespec __a = _a;                         \
-        const struct timespec __b = _b;                         \
-        const struct timespec __exp_res = _exp_res;             \
-        struct timespec __res;                                  \
-        tlog_timespec_##_func(&__a, &__b, &__res);              \
-        __test_passed = (__res.tv_sec == __exp_res.tv_sec &&    \
-                         __res.tv_nsec == __exp_res.tv_nsec);   \
-        if (__test_passed) {                                    \
-            fprintf(stderr,                                     \
-                    "PASS %s %c %s == %s\n",                    \
-                    EXPAND_##_a, SYMBOL_##_func, EXPAND_##_b,   \
-                    EXPAND_##_exp_res);                         \
-        } else {                                                \
-            fprintf(stderr,                                     \
-                    "FAIL %s %c %s = (%ld, %ld) != %s\n",       \
-                    EXPAND_##_a, SYMBOL_##_func, EXPAND_##_b,   \
-                    __res.tv_sec, __res.tv_nsec,                \
-                    EXPAND_##_exp_res);                         \
-        }                                                       \
-        passed = __test_passed && passed;                       \
+#define TEST(_op_list, _a, _b, _exp_res) \
+    do {                                                                \
+        passed = op_list_test((_op_list), TLOG_ARRAY_SIZE(_op_list),    \
+                              _a, _b, _exp_res) && passed;              \
     } while (0)
 
     /*
      * Subtraction
      */
-    TEST(sub, TS(0, 0), TS(0, 0), TS(0, 0));
+    TEST(all_sub, TS(0, 0), TS(0, 0), TS(0, 0));
 
-    TEST(sub, TS(1, 0), TS(0, 0), TS(1, 0));
-    TEST(sub, TS(1, 0), TS(1, 0), TS(0, 0));
+    TEST(all_sub, TS(1, 0), TS(0, 0), TS(1, 0));
+    TEST(all_sub, TS(1, 0), TS(1, 0), TS(0, 0));
 
-    TEST(sub, TS(1, 1), TS(0, 0), TS(1, 1));
-    TEST(sub, TS(1, 1), TS(1, 0), TS(0, 1));
-    TEST(sub, TS(1, 1), TS(0, 1), TS(1, 0));
-    TEST(sub, TS(1, 1), TS(1, 1), TS(0, 0));
+    TEST(all_sub, TS(1, 1), TS(0, 0), TS(1, 1));
+    TEST(all_sub, TS(1, 1), TS(1, 0), TS(0, 1));
+    TEST(all_sub, TS(1, 1), TS(0, 1), TS(1, 0));
+    TEST(all_sub, TS(1, 1), TS(1, 1), TS(0, 0));
 
-    TEST(sub, TS(1, 0), TS(0, 500000000), TS(0, 500000000));
-    TEST(sub, TS(1, 500000000), TS(1, 0), TS(0, 500000000));
-    TEST(sub, TS(LONG_MAX, 999999999), TS(LONG_MAX, 999999999), TS(0, 0));
-    TEST(sub, TS(1, 0), TS(0, 1), TS(0, 999999999));
-    TEST(sub, TS(0, 0), TS(0, 1), TS(0, -1));
-    TEST(sub, TS(0, 0), TS(1, 0), TS(-1, 0));
-    TEST(sub, TS(1, 0), TS(1, 1), TS(0, -1));
-    TEST(sub, TS(0, 0), TS(1, 1), TS(-1, -1));
-    TEST(sub, TS(1, 0), TS(2, 1), TS(-1, -1));
-    TEST(sub, TS(1, 1), TS(2, 2), TS(-1, -1));
-    TEST(sub, TS(-1, 0), TS(0, 1), TS(-1, -1));
-    TEST(sub, TS(-1, 0), TS(-1, 0), TS(0, 0));
-    TEST(sub, TS(-1, 0), TS(-1, -1), TS(0, 1));
-    TEST(sub, TS(-1, -1), TS(-1, -1), TS(0, 0));
-    TEST(sub, TS(0, -1), TS(0, -1), TS(0, 0));
-    TEST(sub, TS(0, 0), TS(LONG_MAX, 999999999),
-              TS(LONG_MIN + 1, -999999999));
-    TEST(sub, TS(LONG_MIN, -999999999), TS(0, 1), TS(LONG_MAX, 0));
+    TEST(all_sub, TS(1, 0), TS(0, 500000000), TS(0, 500000000));
+    TEST(all_sub, TS(1, 500000000), TS(1, 0), TS(0, 500000000));
+    TEST(all_sub, tlog_timespec_max, tlog_timespec_max, TS(0, 0));
+    TEST(all_sub, TS(1, 0), TS(0, 1), TS(0, 999999999));
+    TEST(all_sub, TS(0, 0), TS(0, 1), TS(0, -1));
+    TEST(all_sub, TS(0, 0), TS(1, 0), TS(-1, 0));
+    TEST(all_sub, TS(1, 0), TS(1, 1), TS(0, -1));
+    TEST(all_sub, TS(0, 0), TS(1, 1), TS(-1, -1));
+    TEST(all_sub, TS(1, 0), TS(2, 1), TS(-1, -1));
+    TEST(all_sub, TS(1, 1), TS(2, 2), TS(-1, -1));
+    TEST(all_sub, TS(-1, 0), TS(0, 1), TS(-1, -1));
+    TEST(all_sub, TS(-1, 0), TS(-1, 0), TS(0, 0));
+    TEST(all_sub, TS(-1, 0), TS(-1, -1), TS(0, 1));
+    TEST(all_sub, TS(-1, -1), TS(-1, -1), TS(0, 0));
+    TEST(all_sub, TS(0, -1), TS(0, -1), TS(0, 0));
+    TEST(all_sub, TS(0, -999999999), TS(0, 1), TS(-1, 0));
+    TEST(all_sub, TS(0, -999999999), TS(0, 2), TS(-1, -1));
+    TEST(all_sub, TS(0, 999999999), TS(0, -1), TS(1, 0));
+    TEST(all_sub, TS(0, 999999999), TS(0, -2), TS(1, 1));
+    TEST(int_sub, TS(0, 0), tlog_timespec_max, TS(LONG_MIN + 1, -999999999));
 
-    TEST(sub, TS(LONG_MIN / 2, 0), TS(LONG_MAX / 2 + 1, 0), TS(LONG_MIN, 0));
-    TEST(sub, TS(LONG_MAX / 2, 499999999), TS(LONG_MIN / 2, -500000000),
-              TS(LONG_MAX, 999999999));
+    TEST(sub, tlog_timespec_min, TS(0, 1), TS(LONG_MAX, 0));
+    TEST(cap_sub, tlog_timespec_min, TS(0, 1), tlog_timespec_min);
+    TEST(fp_sub, tlog_timespec_min, TS(0, 1), min_fp);
+
+    TEST(int_sub, TS(LONG_MIN / 2, 0), TS(LONG_MAX / 2 + 1, 0), TS(LONG_MIN, 0));
+    TEST(fp_sub, TS(LONG_MIN / 2, 0), TS(LONG_MAX / 2 + 1, 0), min_fp);
+    TEST(int_sub, TS(LONG_MAX / 2, 499999999), TS(LONG_MIN / 2, -500000000),
+                  tlog_timespec_max);
+    TEST(fp_sub, TS(LONG_MAX / 2, 499999999), TS(LONG_MIN / 2, -500000000),
+                 max_fp);
+
+    TEST(cap_sub, tlog_timespec_min, tlog_timespec_max, tlog_timespec_min);
+    TEST(cap_sub, tlog_timespec_max, tlog_timespec_min, tlog_timespec_max);
+
+    TEST(cap_sub, tlog_timespec_max, TS(0, -2), tlog_timespec_max);
+    TEST(cap_sub, tlog_timespec_min, TS(0, 2), tlog_timespec_min);
+
+    TEST(fp_sub, tlog_timespec_min, tlog_timespec_max, min_fp);
+    TEST(fp_sub, tlog_timespec_max, tlog_timespec_min, max_fp);
 
     /*
      * Addition
      */
-    TEST(add, TS(0, 0), TS(0, 0), TS(0, 0));
+    TEST(all_add, TS(0, 0), TS(0, 0), TS(0, 0));
 
-    TEST(add, TS(0, 0), TS(1, 0), TS(1, 0));
-    TEST(add, TS(1, 0), TS(1, 0), TS(2, 0));
+    TEST(all_add, TS(0, 0), TS(1, 0), TS(1, 0));
+    TEST(all_add, TS(1, 0), TS(1, 0), TS(2, 0));
 
-    TEST(add, TS(1, 1), TS(0, 0), TS(1, 1));
-    TEST(add, TS(1, 1), TS(1, 0), TS(2, 1));
-    TEST(add, TS(1, 1), TS(0, 1), TS(1, 2));
+    TEST(all_add, TS(1, 1), TS(0, 0), TS(1, 1));
+    TEST(all_add, TS(1, 1), TS(1, 0), TS(2, 1));
+    TEST(all_add, TS(1, 1), TS(0, 1), TS(1, 2));
 
-    TEST(add, TS(0, 999999999), TS(0, 0), TS(0, 999999999));
-    TEST(add, TS(0, 999999999), TS(0, 1), TS(1, 0));
-    TEST(add, TS(1, 999999999), TS(0, 1), TS(2, 0));
-    TEST(add, TS(LONG_MAX, 999999999), TS(0, 1), TS(LONG_MIN, 0));
-    TEST(add, TS(0, -1), TS(0, 1), TS(0, 0));
-    TEST(add, TS(0, -1), TS(0, 2), TS(0, 1));
-    TEST(add, TS(-1, 0), TS(0, 1), TS(0, -999999999));
-    TEST(add, TS(-1, -1), TS(0, 1), TS(-1, 0));
-    TEST(add, TS(-1, -1), TS(0, 2), TS(0, -999999999));
-    TEST(add, TS(-1, 0), TS(0, -1), TS(-1, -1));
+    TEST(all_add, TS(0, 999999999), TS(0, 0), TS(0, 999999999));
+    TEST(all_add, TS(0, 999999999), TS(0, 1), TS(1, 0));
+    TEST(all_add, TS(1, 999999999), TS(0, 1), TS(2, 0));
+    TEST(add, tlog_timespec_max, TS(0, 1), TS(LONG_MIN, 0));
+    TEST(cap_add, tlog_timespec_max, TS(0, 1), tlog_timespec_max);
+    TEST(fp_add, tlog_timespec_max, TS(0, 1), max_fp);
+    TEST(all_add, TS(0, -1), TS(0, 1), TS(0, 0));
+    TEST(all_add, TS(0, -1), TS(0, 2), TS(0, 1));
+    TEST(all_add, TS(0, -999999999), TS(0, -1), TS(-1, 0));
+    TEST(all_add, TS(0, -999999999), TS(0, -2), TS(-1, -1));
+    TEST(all_add, TS(-1, 0), TS(0, 1), TS(0, -999999999));
+    TEST(all_add, TS(-1, -1), TS(0, 1), TS(-1, 0));
+    TEST(all_add, TS(-1, -1), TS(0, 2), TS(0, -999999999));
+    TEST(all_add, TS(-1, 0), TS(0, -1), TS(-1, -1));
 
-    TEST(add, TS(LONG_MAX / 2, 500000000), TS(LONG_MAX / 2, 500000000),
-              TS(LONG_MAX, 0));
-    TEST(add, TS(LONG_MIN / 2, 0), TS(LONG_MIN / 2, 0), TS(LONG_MIN, 0));
+    TEST(int_add, TS(LONG_MAX / 2, 500000000), TS(LONG_MAX / 2, 500000000),
+                  TS(LONG_MAX, 0));
+    TEST(fp_add, TS(LONG_MAX / 2, 500000000), TS(LONG_MAX / 2, 500000000),
+                 max_fp);
+    TEST(int_add, TS(LONG_MIN / 2, 0), TS(LONG_MIN / 2, 0), TS(LONG_MIN, 0));
+    TEST(fp_add, TS(LONG_MIN / 2, 0), TS(LONG_MIN / 2, 0), min_fp);
+
+    TEST(add, tlog_timespec_max, TS(0, 1), TS(LONG_MIN, 0));
+    TEST(cap_add, tlog_timespec_max, TS(0, 1), tlog_timespec_max);
+    TEST(fp_add, tlog_timespec_max, TS(0, 1), max_fp);
+
+    TEST(add, tlog_timespec_min, TS(0, -1), TS(LONG_MAX, 0));
+    TEST(cap_add, tlog_timespec_min, TS(0, -1), tlog_timespec_min);
+    TEST(fp_add, tlog_timespec_min, TS(0, -1), min_fp);
+
+    TEST(cap_add, tlog_timespec_max, tlog_timespec_max, tlog_timespec_max);
+    TEST(cap_add, tlog_timespec_min, tlog_timespec_min, tlog_timespec_min);
+
+    TEST(cap_add, tlog_timespec_max, TS(0, 2), tlog_timespec_max);
+    TEST(cap_add, tlog_timespec_min, TS(0, -2), tlog_timespec_min);
+
+    TEST(fp_add, tlog_timespec_max, tlog_timespec_max, max_fp);
+    TEST(fp_add, tlog_timespec_min, tlog_timespec_min, min_fp);
 
     /*
      * Multiplication
@@ -161,17 +251,14 @@ main(void)
     TEST(fp_mul, TS(2, 0), TS(1, 500000000), TS(3, 0));
     TEST(fp_mul, TS(10, 0), TS(0, 100000000), TS(1, 0));
 
-    TEST(fp_mul, TS(LONG_MAX / 2, 0), TS(2, 0), TS(fp_max_s, fp_max_ns));
-    TEST(fp_mul, TS(LONG_MIN / 2, 0), TS(2, 0), TS(fp_min_s, fp_min_ns));
+    TEST(fp_mul, TS(LONG_MAX / 2, 0), TS(2, 0), max_fp);
+    TEST(fp_mul, TS(LONG_MIN / 2, 0), TS(2, 0), min_fp);
     TEST(fp_mul, TS(LONG_MAX, 0), TS(0, 500000000), TS(LONG_MAX / 2 + 1, 0));
     TEST(fp_mul, TS(LONG_MIN, 0), TS(0, 500000000), TS(LONG_MIN / 2, 0));
 
-    TEST(fp_mul, TS(LONG_MAX, 999999999), TS(LONG_MAX, 999999999),
-                 TS(fp_max_s, fp_max_ns));
-    TEST(fp_mul, TS(LONG_MAX, 999999999), TS(LONG_MIN, -999999999),
-                 TS(fp_min_s, fp_min_ns));
-    TEST(fp_mul, TS(LONG_MIN, -999999999), TS(LONG_MIN, -999999999),
-                 TS(fp_max_s, fp_max_ns));
+    TEST(fp_mul, tlog_timespec_max, tlog_timespec_max, max_fp);
+    TEST(fp_mul, tlog_timespec_max, tlog_timespec_min, min_fp);
+    TEST(fp_mul, tlog_timespec_min, tlog_timespec_min, max_fp);
 
     /* Time scaling values */
     TEST(fp_mul, TS(0, 62500000), TS(2, 0), TS(0, 125000000));
@@ -205,13 +292,13 @@ main(void)
     TEST(fp_div, TS(1000000000, 0), TS(-1, 0), TS(-1000000000, 0));
     TEST(fp_div, TS(-1000000000, 0), TS(-1, 0), TS(1000000000, 0));
 
-    TEST(fp_div, TS(LONG_MAX, 999999999), TS(LONG_MAX, 999999999), TS(1, 0));
-    TEST(fp_div, TS(LONG_MIN, -999999999), TS(LONG_MIN, -999999999), TS(1, 0));
-    TEST(fp_div, TS(LONG_MAX, 999999999), TS(LONG_MIN+1, -999999999), TS(-1, 0));
-    TEST(fp_div, TS(LONG_MIN+1, -999999999), TS(LONG_MAX, 999999999), TS(-1, 0));
+    TEST(fp_div, tlog_timespec_max, tlog_timespec_max, TS(1, 0));
+    TEST(fp_div, tlog_timespec_min, tlog_timespec_min, TS(1, 0));
+    TEST(fp_div, tlog_timespec_max, TS(LONG_MIN+1, -999999999), TS(-1, 0));
+    TEST(fp_div, TS(LONG_MIN+1, -999999999), tlog_timespec_max, TS(-1, 0));
 
-    TEST(fp_div, TS(LONG_MAX, 999999999), TS(1, 0), TS(fp_max_s, fp_max_ns));
-    TEST(fp_div, TS(LONG_MIN, -999999999), TS(1, 0), TS(fp_min_s, fp_min_ns));
+    TEST(fp_div, tlog_timespec_max, TS(1, 0), max_fp);
+    TEST(fp_div, tlog_timespec_min, TS(1, 0), min_fp);
 
     /* Time scaling values */
     TEST(fp_div, TS(16, 0), TS(2, 0), TS(8, 0));
