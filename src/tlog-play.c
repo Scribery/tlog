@@ -658,6 +658,7 @@ run(struct tlog_errs **perrs,
                 /* Advance the time */
                 rc = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
                                      &local_next_ts, NULL);
+                /* If we're interrupted */
                 if (rc == EINTR) {
                     local_last_ts = local_this_ts;
                     /* Get current time */
@@ -668,6 +669,7 @@ run(struct tlog_errs **perrs,
                                         "Failed retrieving current time");
                         goto cleanup;
                     }
+                    /* Note the interruption time */
                     tlog_timespec_sub(&local_this_ts, &local_last_ts,
                                       &pkt_delay_ts);
                     tlog_timespec_fp_mul(&pkt_delay_ts, &speed, &pkt_delay_ts);
