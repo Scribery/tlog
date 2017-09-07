@@ -43,6 +43,7 @@
 #include <tlog/json_source.h>
 #include <tlog/rc.h>
 #include <tlog/timespec.h>
+#include <tlog/timestr.h>
 #include <tlog/misc.h>
 
 #define POLL_PERIOD 1
@@ -316,6 +317,7 @@ run(struct tlog_errs **perrs,
     ssize_t rc;
     size_t i;
     size_t j;
+    const char *str;
     bool term_attrs_set = false;
     struct termios orig_termios;
     struct termios raw_termios;
@@ -339,7 +341,10 @@ run(struct tlog_errs **perrs,
     const struct timespec max_speed = {16, 0};
     const struct timespec min_speed = {0, 62500000};
     const struct timespec accel = {2, 0};
-    bool forward = false;
+    bool got_ts = false;
+    struct tlog_timestr_parser timestr_parser;
+    bool goto_active = false;
+    struct timespec goto_ts;
     bool paused = false;
     bool quit = false;
     bool persist = false;
@@ -390,9 +395,20 @@ run(struct tlog_errs **perrs,
     paused = json_object_object_get_ex(conf, "paused", &obj) &&
              json_object_get_boolean(obj);
 
-    /* Get the "forward" flag */
-    forward = json_object_object_get_ex(conf, "forward", &obj) &&
-              json_object_get_boolean(obj);
+    /* Get the "goto" location */
+    if (json_object_object_get_ex(conf, "goto", &obj)) {
+        str = json_object_get_string(obj);
+        if (strcasecmp(str, "start") == 0) {
+            goto_ts = tlog_timespec_zero;
+        } else if (strcasecmp(str, "end") == 0) {
+            goto_ts = tlog_timespec_max;
+        } else if (!tlog_timestr_to_timespec(str, &goto_ts)) {
+            tlog_errs_pushf(perrs,
+                            "Failed parsing timestamp to go to: %s", str);
+            goto cleanup;
+        }
+        goto_active = true;
+    }
 
     /* Get the "persist" flag */
     persist = json_object_object_get_ex(conf, "persist", &obj) &&
@@ -525,6 +541,29 @@ run(struct tlog_errs **perrs,
                     break;
                 } else {
                     switch (key) {
+                        case '0' ... '9':
+                        case ':':
+                            if (!got_ts) {
+                                tlog_timestr_parser_reset(&timestr_parser);
+                            }
+                            got_ts = tlog_timestr_parser_feed(&timestr_parser, key);
+                            break;
+                        case 'G':
+                            if (got_ts) {
+                                got_ts = false;
+                                goto_active =
+                                    tlog_timestr_parser_yield(&timestr_parser,
+                                                              &goto_ts);
+                            } else {
+                                goto_ts = tlog_timespec_max;
+                                goto_active = true;
+                            }
+                            break;
+                        default:
+                            got_ts = false;
+                            break;
+                    }
+                    switch (key) {
                         case ' ':
                             /* If unpausing */
                             if (paused) {
@@ -559,9 +598,6 @@ run(struct tlog_errs **perrs,
                         case '.':
                             skip = true;
                             break;
-                        case 'F':
-                            forward = true;
-                            break;
                         case 'q':
                             quit = !persist;
                             break;
@@ -576,7 +612,7 @@ run(struct tlog_errs **perrs,
         }
 
         /* Handle pausing, unless ignoring timing */
-        if (paused && !(forward || skip)) {
+        if (paused && !(goto_active || skip)) {
             do {
                 rc = clock_nanosleep(CLOCK_MONOTONIC, 0,
                                      &tlog_timespec_max, NULL);
@@ -621,9 +657,7 @@ run(struct tlog_errs **perrs,
             }
             /* If hit the end of stream */
             if (tlog_pkt_is_void(&pkt)) {
-                if (forward) {
-                    forward = false;
-                }
+                goto_active = false;
                 if (follow) {
                     read_wait = (struct timespec){POLL_PERIOD, 0};
                     continue;
@@ -646,11 +680,21 @@ run(struct tlog_errs **perrs,
             goto cleanup;
         }
 
-        /* If we're ignoring timing */
-        if (forward || skip) {
+        /* If we're skipping the timing of this packet */
+        if (skip) {
             /* Skip the time */
             local_last_ts = local_this_ts;
             skip = false;
+        /* Else, if we're fast-forwarding to a time */
+        } else if (goto_active) {
+            /* Skip the time */
+            local_last_ts = local_this_ts;
+            /* If we reached the target time */
+            if (tlog_timespec_cmp(&pkt.timestamp, &goto_ts) >= 0) {
+                goto_active = false;
+                pkt_last_ts = goto_ts;
+                continue;
+            }
         } else {
             tlog_timespec_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
             tlog_timespec_fp_div(&pkt_delay_ts, &speed, &pkt_delay_ts);

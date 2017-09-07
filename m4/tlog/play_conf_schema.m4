@@ -35,11 +35,12 @@ M4_PARAM(`', `follow', `opts-',
          `M4_LINES(`If true, then when the end of the recorded session is reached, wait',
                    `for new messages to be added and play them back when they appear.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `forward', `opts-',
-         `M4_TYPE_BOOL(false)', true,
-         `F', `', `Play recording to the end at once',
-         `M4_LINES(`If true, then play recording ignoring timing, as fast as possible,',
-                   `until the end, then resume respecting timing. Useful when following.')')m4_dnl
+M4_PARAM(`', `goto', `opts-',
+         `M4_TYPE_STRING()', false,
+         `g', `=STRING', `Fast-forward to a time (start/end/HH:MM:SS.sss)',
+         `M4_LINES(`Logical location, or a time to which recording should be fast-forwarded.',
+                   `Can be a "start", or an "end" string, or a timestamp formatted as',
+                   `HH:MM:SS.sss, where any part can be omitted to mean zero.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `paused', `opts-',
          `M4_TYPE_BOOL(false)', true,

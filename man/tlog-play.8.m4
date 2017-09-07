@@ -70,9 +70,18 @@ pause. Hold to skip through recording at constant speed (the keyboard repeat
 rate).
 
 .TP
-.B F
-Play recording to the end at once, regardless if paused or not.
-Useful with following enabled.
+.B G
+Fast-forward the recording to the end, or to specified time. Works on pause.
+The time can be specified by typing in a timestamp before pressing 'G'. The
+timestamp should follow the format of the -g/--goto option value, but without
+the fractions of a second. The command has no effect, if the specified time
+location has already been reached.
+
+E.g. pressing just 'G' would fast-forward to the end, which is useful with
+following enabled. Pressing '3', '0', 'G' (typing "30G") would fast-forward to
+30 seconds from the start of the recording. Typing "30:00G" would fast-forward
+to 30 minutes, and so would "30:G", and "1800G". Typing "2::G" would
+fast-forward to two hours into the recording, the same as "120:G" and "7200G".
 
 .TP
 .B q
