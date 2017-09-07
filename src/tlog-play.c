@@ -634,7 +634,7 @@ run(struct tlog_errs **perrs,
             local_last_ts = local_this_ts;
             skip = false;
         } else {
-            tlog_timespec_cap_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
+            tlog_timespec_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
             tlog_timespec_fp_div(&pkt_delay_ts, &speed, &pkt_delay_ts);
             tlog_timespec_cap_add(&local_last_ts, &pkt_delay_ts, &local_next_ts);
             /* If we don't need a delay for the next packet (it's overdue) */
@@ -655,8 +655,8 @@ run(struct tlog_errs **perrs,
                                         "Failed retrieving current time");
                         goto cleanup;
                     }
-                    tlog_timespec_cap_sub(&local_this_ts, &local_last_ts,
-                                          &pkt_delay_ts);
+                    tlog_timespec_sub(&local_this_ts, &local_last_ts,
+                                      &pkt_delay_ts);
                     tlog_timespec_fp_mul(&pkt_delay_ts, &speed, &pkt_delay_ts);
                     tlog_timespec_cap_add(&pkt_last_ts, &pkt_delay_ts,
                                           &pkt_last_ts);
