@@ -42,7 +42,7 @@ main(void)
 
 #define MSG(_id_tkn, _pos, _timing, \
             _in_txt, _in_bin, _out_txt, _out_bin)                   \
-    "{\"ver\":\"2.1\",\"host\":\"localhost\",\"rec\":\"rec-1\","    \
+    "{\"ver\":\"2.2\",\"host\":\"localhost\",\"rec\":\"rec-1\","    \
       "\"user\":\"user\",\"term\":\"xterm\",\"session\":1,"         \
       "\"id\":" #_id_tkn ",\"pos\":" _pos ","                       \
       "\"timing\":\"" _timing "\","                                 \

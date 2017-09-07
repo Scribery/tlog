@@ -310,7 +310,7 @@ run(struct tlog_errs **perrs,
     /* Local time of packet output next */
     struct timespec local_next_ts;
     /* Recording time of the packet output last */
-    struct timespec pkt_last_ts;
+    struct timespec pkt_last_ts = TLOG_TIMESPEC_ZERO;
     /* Delay to the packet output next */
     struct timespec pkt_delay_ts;
     ssize_t rc;
@@ -322,7 +322,6 @@ run(struct tlog_errs **perrs,
     struct sigaction sa;
     int stdin_flags = -1;
     struct tlog_source *source = NULL;
-    bool got_pkt = false;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
     struct tlog_pkt_pos pos = TLOG_PKT_POS_VOID;
     size_t loc_num;
@@ -492,6 +491,17 @@ run(struct tlog_errs **perrs,
     term_attrs_set = true;
 
     /*
+     * Start the time
+     */
+    /* Get current time */
+    if (clock_gettime(CLOCK_MONOTONIC, &local_last_ts) != 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed retrieving current time");
+        goto cleanup;
+    }
+
+    /*
      * Reproduce the logged output
      */
     while (exit_signum == 0) {
@@ -636,13 +646,8 @@ run(struct tlog_errs **perrs,
             goto cleanup;
         }
 
-        /* If this is the first packet or we're ignoring timing */
-        if (!got_pkt) {
-            got_pkt = true;
-            /* Start the time */
-            local_last_ts = local_this_ts;
-        /* Else, if we're ignoring timing */
-        } else if (forward || skip) {
+        /* If we're ignoring timing */
+        if (forward || skip) {
             /* Skip the time */
             local_last_ts = local_this_ts;
             skip = false;

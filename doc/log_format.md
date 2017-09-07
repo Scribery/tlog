@@ -44,9 +44,8 @@ Each message in a single recording has the same `host`, `rec`, `user`, `term`,
 and `session` property values. The `rec` value is an opaque string uniquely
 identifying a particular recording on the recording host. The `id` value
 starts with one for the first message in the recording and is incremented for
-each new message. The `pos` value is the message temporal position in the
-recording, in milliseconds. No assumption should be made about the time origin
-at this moment.
+each new message. The `pos` value is the message's temporal position from the
+start of recording, in milliseconds.
 
 The `in_txt`/`out_txt` properties store input and output text respectively.
 Any byte sequences which don't constitute a valid character are represented by
@@ -113,6 +112,10 @@ terminal, the command output, and a fresh shell prompt:
 
 Changelog
 ---------
+
+### 2.2 - 2017-09-07
+#### Added
+- Added origin to the value of the "pos" field: start of recording.
 
 ### 2.1 - 2017-07-13
 #### Added

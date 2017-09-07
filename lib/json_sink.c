@@ -204,7 +204,7 @@ tlog_json_sink_flush(struct tlog_sink *sink)
     len = snprintf(
         (char *)json_sink->message_buf, json_sink->message_len,
         "{"
-            "\"ver\":"      "\"2.1\","
+            "\"ver\":"      "\"2.2\","
             "\"host\":"     "\"%s\","
             "\"rec\":"      "\"%s\","
             "\"user\":"     "\"%s\","
