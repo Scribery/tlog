@@ -143,6 +143,7 @@ libtlog_la_SOURCES = \
     syslog_misc.c               \
     tap.c                       \
     timespec.c                  \
+    timestr.c                   \
     tty_sink.c                  \
     tty_source.c                \
     utf8.c

@@ -153,7 +153,8 @@ TESTS = \
     tlog-test-json-stream-btoa      \
     tlog-test-json-stream-enc-bin   \
     tlog-test-json-stream-enc-txt   \
-    tlog-test-timespec
+    tlog-test-timespec              \
+    tlog-test-timestr
 
 check_PROGRAMS = \
     tlog-test-fd-json-reader        \
@@ -167,7 +168,8 @@ check_PROGRAMS = \
     tlog-test-json-stream-btoa      \
     tlog-test-json-stream-enc-bin   \
     tlog-test-json-stream-enc-txt   \
-    tlog-test-timespec
+    tlog-test-timespec              \
+    tlog-test-timestr
 
 tlog_test_json_stream_btoa_SOURCES = tlog-test-json-stream-btoa.c
 tlog_test_json_stream_btoa_LDADD = \
@@ -234,3 +236,7 @@ tlog_test_timespec_SOURCES = tlog-test-timespec.c
 tlog_test_timespec_LDADD = \
     ../lib/libtlog.la \
     -lm
+
+tlog_test_timestr_SOURCES = tlog-test-timestr.c
+tlog_test_timestr_LDADD = \
+    ../lib/libtlog.la

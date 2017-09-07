@@ -68,6 +68,7 @@ tlog_HEADERS = \
     syslog_misc.h               \
     tap.h                       \
     timespec.h                  \
+    timestr.h                   \
     trx.h                       \
     trx_act.h                   \
     trx_basic.h                 \
