@@ -516,6 +516,19 @@ run(struct tlog_errs **perrs,
                 } else {
                     switch (key) {
                         case ' ':
+                            /* If unpausing */
+                            if (paused) {
+                                /* Skip the time we were paused */
+                                if (clock_gettime(CLOCK_MONOTONIC,
+                                                  &local_last_ts) != 0) {
+                                    grc = TLOG_GRC_ERRNO;
+                                    tlog_errs_pushc(perrs, grc);
+                                    tlog_errs_pushs(
+                                            perrs,
+                                            "Failed retrieving current time");
+                                    goto cleanup;
+                                }
+                            }
                             paused = !paused;
                             break;
                         case '\x7f':
