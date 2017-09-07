@@ -34,24 +34,6 @@ struct op {
     op_fn       fn;
 };
 
-static const char *
-ts_fmt_arg_sign(const struct timespec *ts)
-{
-    return (ts->tv_sec == 0 && ts->tv_nsec < 0) ? "-" : "";
-}
-
-static long
-ts_fmt_arg_sec(const struct timespec *ts)
-{
-    return ts->tv_sec;
-}
-
-static long
-ts_fmt_arg_nsec(const struct timespec *ts)
-{
-    return ts->tv_nsec < 0 ? -ts->tv_nsec : ts->tv_nsec;
-}
-
 static bool
 op_list_test(const struct op *op_list, size_t op_num,
              struct timespec a, struct timespec b, struct timespec exp_res)
@@ -61,33 +43,26 @@ op_list_test(const struct op *op_list, size_t op_num,
     bool passed;
     struct timespec res;
 
-#define TS_FMT "%s%ld.%09ld"
-#define TS_ARG(_x) \
-    ts_fmt_arg_sign(&_x),   \
-    ts_fmt_arg_sec(&_x),    \
-    ts_fmt_arg_nsec(&_x)
-
     for (i = 0; i < op_num; i++) {
         op_list[i].fn(&a, &b, &res);
         passed = (res.tv_sec == exp_res.tv_sec && res.tv_nsec == exp_res.tv_nsec);
         if (passed) {
             fprintf(stderr,
-                    "PASS " TS_FMT " %s " TS_FMT
-                    " == " TS_FMT "\n",
-                    TS_ARG(a), op_list[i].sym, TS_ARG(b),
-                    TS_ARG(exp_res));
+                    "PASS " TLOG_TIMESPEC_FMT " %s " TLOG_TIMESPEC_FMT
+                    " == " TLOG_TIMESPEC_FMT "\n",
+                    TLOG_TIMESPEC_ARG(&a), op_list[i].sym,
+                    TLOG_TIMESPEC_ARG(&b),
+                    TLOG_TIMESPEC_ARG(&exp_res));
         } else {
             fprintf(stderr,
-                    "FAIL " TS_FMT " %s " TS_FMT
-                    " = " TS_FMT " != " TS_FMT "\n",
-                    TS_ARG(a), op_list[i].sym, TS_ARG(b),
-                    TS_ARG(res), TS_ARG(exp_res));
+                    "FAIL " TLOG_TIMESPEC_FMT " %s " TLOG_TIMESPEC_FMT
+                    " = " TLOG_TIMESPEC_FMT " != " TLOG_TIMESPEC_FMT "\n",
+                    TLOG_TIMESPEC_ARG(&a), op_list[i].sym,
+                    TLOG_TIMESPEC_ARG(&b),
+                    TLOG_TIMESPEC_ARG(&res), TLOG_TIMESPEC_ARG(&exp_res));
         }
         all_passed = all_passed && passed;
     }
-
-#undef TS_ARG
-#undef TS_FMT
 
     return all_passed;
 }

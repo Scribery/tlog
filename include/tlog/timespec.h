@@ -246,4 +246,60 @@ tlog_timespec_cmp(const struct timespec *a, const struct timespec *b)
     return 0;
 }
 
+/** Timespec printf-style format string */
+#define TLOG_TIMESPEC_FMT "%s%ld.%09ld"
+
+/**
+ * Extract the sign string argument for printf-style format, required for
+ * formatting certain timespec values.
+ *
+ * @param ts    The timespec to extract the sign string from.
+ *
+ * @return The sign string.
+ */
+static inline const char *
+tlog_timespec_arg_sign(const struct timespec *ts)
+{
+    assert(tlog_timespec_is_valid(ts));
+    return (ts->tv_sec == 0 && ts->tv_nsec < 0) ? "-" : "";
+}
+
+/**
+ * Extract the seconds argument for timespec printf-style format.
+ *
+ * @param ts    The timespec to extract the seconds from.
+ *
+ * @return The seconds argument.
+ */
+static inline long
+tlog_timespec_arg_sec(const struct timespec *ts)
+{
+    assert(tlog_timespec_is_valid(ts));
+    return ts->tv_sec;
+}
+
+/**
+ * Extract the nanoseconds argument for timespec printf-style format.
+ *
+ * @param ts    The timespec to extract the nanoseconds from.
+ *
+ * @return The nanoseconds argument.
+ */
+static inline long
+tlog_timespec_arg_nsec(const struct timespec *ts)
+{
+    assert(tlog_timespec_is_valid(ts));
+    return ts->tv_nsec < 0 ? -ts->tv_nsec : ts->tv_nsec;
+}
+
+/**
+ * Expand to timespec printf-style format arguments.
+ *
+ * @param _ts   A timespec pointer to extract arguments from.
+ */
+#define TLOG_TIMESPEC_ARG(_ts) \
+    tlog_timespec_arg_sign(_ts),    \
+    tlog_timespec_arg_sec(_ts),     \
+    tlog_timespec_arg_nsec(_ts)
+
 #endif /* _TLOG_TIMESPEC_H */
