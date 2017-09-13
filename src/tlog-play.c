@@ -565,6 +565,7 @@ run(struct tlog_errs **perrs,
                     }
                     switch (key) {
                         case ' ':
+                        case 'p':
                             /* If unpausing */
                             if (paused) {
                                 /* Skip the time we were paused */

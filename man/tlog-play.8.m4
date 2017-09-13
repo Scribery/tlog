@@ -47,7 +47,7 @@ M4_MAN_OPTS()
 Playback can be controlled using the following keys:
 
 .TP
-.B Space
+.B SPACE, p
 Pause/resume playback.
 
 .TP
