@@ -31,6 +31,7 @@
 #include <tlog/errs.h>
 #include <termios.h>
 #include <unistd.h>
+#include <time.h>
 
 /** I/O tap state */
 struct tlog_tap {
@@ -68,6 +69,7 @@ struct tlog_tap {
  * @param in_fd     Stdin to connect to, or -1 if none.
  * @param out_fd    Stdout to connect to, or -1 if none.
  * @param err_fd    Stderr to connect to, or -1 if none.
+ * @param clock_id  Clock to use for timestamps.
  *
  * @return Global return code.
  */
@@ -76,7 +78,8 @@ extern tlog_grc tlog_tap_setup(struct tlog_errs **perrs,
                                uid_t euid, gid_t egid,
                                unsigned int opts,
                                const char *path, char **argv,
-                               int in_fd, int out_fd, int err_fd);
+                               int in_fd, int out_fd, int err_fd,
+                               clockid_t clock_id);
 
 /**
  * Teardown an I/O tap state.

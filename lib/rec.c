@@ -30,6 +30,8 @@
 #include <tlog/syslog_misc.h>
 #include <tlog/session.h>
 #include <tlog/tap.h>
+#include <tlog/timespec.h>
+#include <tlog/delay.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <syslog.h>
@@ -809,6 +811,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
          int *pstatus, int *psignal)
 {
     tlog_grc grc;
+    clockid_t clock_id;
     unsigned int session_id;
     bool lock_acquired = false;
     struct json_object *obj;
@@ -835,6 +838,30 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
             printf("%s", tlog_version);;
             goto exit;
         }
+    }
+
+    /*
+     * Choose the clock: try to use coarse monotonic clock (which is faster),
+     * if it provides the required resolution.
+     */
+    {
+        struct timespec timestamp;
+#ifdef CLOCK_MONOTONIC_COARSE
+        if (clock_getres(CLOCK_MONOTONIC_COARSE, &timestamp) == 0 &&
+            tlog_timespec_cmp(&timestamp, &tlog_delay_min_timespec) <= 0) {
+            clock_id = CLOCK_MONOTONIC_COARSE;
+        } else {
+#endif
+            if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
+                clock_id = CLOCK_MONOTONIC;
+            } else {
+                tlog_errs_pushs(perrs, "No clock to use");
+                grc = TLOG_RC_FAILURE;
+                goto cleanup;
+            }
+#ifdef CLOCK_MONOTONIC_COARSE
+        }
+#endif
     }
 
     /* Get session ID */
@@ -906,7 +933,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     /* Setup the tap */
     grc = tlog_tap_setup(perrs, &tap, euid, egid,
                          opts & TLOG_EXEC_OPT_MASK, path, argv,
-                         in_fd, out_fd, err_fd);
+                         in_fd, out_fd, err_fd, clock_id);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed setting up the I/O tap");
         goto cleanup;
