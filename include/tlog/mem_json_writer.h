@@ -32,7 +32,7 @@
 #include <tlog/json_writer.h>
 
 /**
- * File descriptor message writer type
+ * Memory buffer JSON message writer type
  *
  * Creation arguments:
  *
@@ -45,7 +45,7 @@ extern const struct tlog_json_writer_type tlog_mem_json_writer_type;
 /**
  * Create an instance of memory buffer writer.
  *
- * @param pwriter   The writer to initialize.
+ * @param pwriter   Location for the pointer to the created writer.
  * @param pbuf      Location for the allocated buffer pointer.
  * @param plen      Location for the length of the buffer contents. The memory
  *                  allocated for the buffer can be larger.
