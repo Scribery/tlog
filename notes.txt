@@ -961,3 +961,133 @@ string, similar to what journalctl accepts to filter out the required session.
 One problem can be specifying the time from which we should play. The journal
 API provides sd_journal_seek_realtime_usec and sd_journal_seek_monotonic_usec,
 which we can perhaps use by taking a separate journal source option.
+---
+So, rate limiting is not letting us log more than a specified amount of I/O
+bytes per time unit. Let's say per hour.
+
+The way we calculate that could be having an averaging time window, or just
+calculate from the start of the recording.
+
+current_rate = bytes / hours
+
+How would we choose what to drop, though?
+Should we just do
+
+    if current_rate > target_rate then
+        drop
+    else
+        pass
+
+What should be the quantum of dropping, then? A packet?
+
+----------------
+Leaky bucket for raw data, both input and output
+Either drop or hold the packets
+Consider providing maximum packet size configuration
+Consider doing it for encoded data later
+Add configuration parameter/option for bytes per second
+
+----------------
+The pass decision is for a packet.
+We can simply say every piece of it is written when dropping.
+We can simply wait on the first piece when delaying.
+----------------
+
+We need to either assume that packet timestamps are in local time,
+or take our own time samples. Because we cannot advance abstract packet
+recording time, if it is not local time. For that matter, to make the rate
+limit sink more universal we need to ignore packet timestamps and take our own
+timestamps.
+
+---------------
+
+So, we don't need to know local time if we are just dropping packets, we only
+need packet timestamps.
+
+We can drop packets based on their timestamps, or based on times when they're
+written. We can only delay packets based on writing timestamps.
+
+Having limit based on packet timestamps would be useful for testing.
+
+We would need rate limit set on the log sink, right? Right.
+
+What if we give the rate limit sink some time source function instead of
+letting it get its own time?
+
+What timestamps should delayed packets have? Original ones, or delayed? Should
+the recording reflect timestamps the packets were output by the recorded
+program and input by the user, or the timestamps they were delivered at?
+If we follow the idea of "recording what users saw on the screen", then it
+should be delivery time.
+
+Ha! Should we actually rate-limit the source instead? Then we can adjust
+packet timestamps and take time samples freely! For the start we can just give
+the rate-limit source a clock ID, but in the future we can pass it a function
+which would generate timestamps, and let us do testing at any actual speed
+required. We would also have no problem with packet fragments, as sources
+don't have any.
+
+The rate limit sink will have to assume that the time source for packets is
+the same time source it was given. We can later introduce a notion of
+"abstract time", which would have timestamp retrieval and time-advancing
+(sleeping) functions. We can have one specific time for
+clock_gettime/nanosleep, and one for testing time.
+
+Right. We can't rate-limit source, because we will be dropping data sent to
+the user terminal and entered by the user. We have to rate-limit the log sink.
+
+Would it be right to change the timestamp of packets sent to the log?
+No it likely wouldn't.
+
+Should we have delay at the TTY source, but dropping at the log sink?
+Even if we had delay at the TTY source, would it be right to change packet
+timestamp? For that matter, what the packet timestamp should be? Time of
+arrival, or time of departure? And should input and output rather be both
+measured at the tlog<->program interface, and not input at tty<->tlog and
+output at tlog<->program interfaces? Or both at tty<->tlog interface, as the
+user saw it? From the point of correlating with other logs, the right way
+would be to record time at the tlog<->program interface, as that would be
+closer to other events in the system. The tty<->tlog interface is just a
+display, after all. What about window resizes? That should be the same as
+input.
+
+For that matter, if we did throttling (delaying) at the source, then only
+input and window timestamps should be updated, and we wouldn't really be able
+to use packet timestamps for rate control. However, since we don't let any
+packets pass until we log them, and we can't really control logging latency,
+we can only log source timestamps.
+
+But should we log only before passing the I/O? If not, then when should we log
+it? Should we log it after passing a single packet? Why a single packet then?
+Why not two? What if it's a single *big* packet? No, we should log *before*
+passing the packet, or rather we log any data, before passing it on.
+
+To avoid the mess of timestamps, we can just assume that timestamp is opaque
+packet data, and deal only with rate related to the provided clock. Then we
+can implement rate-limit sink, simply, covering all the features.
+
+What if we're asked to write only a part of a packet, and it doesn't pass,
+but a later part passes? Do we write a fragment only? Apparently yes.
+So dropping/delaying quanta becomes a packet fragment.
+
+Should we allow a part of packet fragment through, if only a part fits?
+
+We should let whatever fits through immediately, and drop/delay the rest.
+
+We need to do the pkt_pos math properly. Support adding and subtracting. Both
+should round to the closest possible value, just like floating point does.
+Should they cap at maximum?
+
+ppos + free, cap at end
+if more than zero, write
+if less than end, delay until what's left can fit
+
+First purpose of pkt_pos: track progress of writing packets.
+I.e. we need to mark where we were and where we've gone until all of the
+packet is written
+Second purpose of pkt_pos: calculating payload size and converting payload
+size to position to write from and until
+
+No, we're not going to be rate-limiting at the packet level. First of all,
+encoded size can be wildly different, then it will be hard to tell if anything
+was dropped or not. We need to rate-limit at the JSON writer sink.
