@@ -260,65 +260,32 @@ cleanup:
 }
 
 /**
- * Create the log sink according to configuration.
+ * Create a JSON message writer according to configuration.
  *
  * @param perrs         Location for the error stack. Can be NULL.
- * @param psink         Location for the created sink pointer.
+ * @param pwriter       Location for the created writer pointer.
  * @param conf          Configuration JSON object.
- * @param session_id    The ID of the session being recorded.
+ * @param id            ID of the recording being created.
+ * @param username      The name of the user being recorded.
+ * @param session_id    The ID of the audit session being recorded.
  *
  * @return Global return code.
  */
 static tlog_grc
-tlog_rec_create_log_sink(struct tlog_errs **perrs,
-                         struct tlog_sink **psink,
-                         struct json_object *conf,
-                         unsigned int session_id)
+tlog_rec_create_json_writer(struct tlog_errs **perrs,
+                            struct tlog_json_writer **pwriter,
+                            struct json_object *conf,
+                            const char *id,
+                            const char *username,
+                            unsigned int session_id)
 {
     tlog_grc grc;
-    int64_t num;
-    const char *str;
+    int rc;
     struct json_object *obj;
-    struct tlog_sink *sink = NULL;
+    const char *str;
     struct tlog_json_writer *writer = NULL;
     int fd = -1;
-    int rc;
-    char *fqdn = NULL;
-    char *id = NULL;
-    struct passwd *passwd;
-    const char *term;
 
-    /* Get recording ID */
-    grc = tlog_rec_get_id(perrs, &id);
-    if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed generating recording ID");
-        goto cleanup;
-    }
-
-    /* Get real user entry */
-    errno = 0;
-    passwd = getpwuid(getuid());
-    if (passwd == NULL) {
-        if (errno == 0) {
-            grc = TLOG_RC_FAILURE;
-            tlog_errs_pushs(perrs, "User entry not found");
-        } else {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed retrieving user entry");
-        }
-        goto cleanup;
-    }
-    if (!tlog_utf8_str_is_valid(passwd->pw_name)) {
-        tlog_errs_pushf(perrs, "User name is not valid UTF-8: %s",
-                        passwd->pw_name);
-        grc = TLOG_RC_FAILURE;
-        goto cleanup;
-    }
-
-    /*
-     * Create the writer
-     */
     if (!json_object_object_get_ex(conf, "writer", &obj)) {
         tlog_errs_pushs(perrs, "Writer type is not specified");
         grc = TLOG_RC_FAILURE;
@@ -451,7 +418,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
 
         /* Create the writer */
         grc = tlog_journal_json_writer_create(&writer, priority, id,
-                                              passwd->pw_name, session_id);
+                                              username, session_id);
         if (grc != TLOG_RC_OK) {
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed creating journal writer");
@@ -460,6 +427,82 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     } else {
         tlog_errs_pushf(perrs, "Unknown writer type: %s", str);
         grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+
+    *pwriter = writer;
+    writer = NULL;
+    grc = TLOG_RC_OK;
+
+cleanup:
+    tlog_json_writer_destroy(writer);
+    if (fd >= 0) {
+        close(fd);
+    }
+    return grc;
+}
+
+/**
+ * Create a log sink according to configuration.
+ *
+ * @param perrs         Location for the error stack. Can be NULL.
+ * @param psink         Location for the created sink pointer.
+ * @param conf          Configuration JSON object.
+ * @param session_id    The ID of the session being recorded.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_rec_create_log_sink(struct tlog_errs **perrs,
+                         struct tlog_sink **psink,
+                         struct json_object *conf,
+                         unsigned int session_id)
+{
+    tlog_grc grc;
+    int64_t num;
+    struct json_object *obj;
+    struct tlog_sink *sink = NULL;
+    struct tlog_json_writer *writer = NULL;
+    char *fqdn = NULL;
+    char *id = NULL;
+    struct passwd *passwd;
+    const char *term;
+
+    /* Get recording ID */
+    grc = tlog_rec_get_id(perrs, &id);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs, "Failed generating recording ID");
+        goto cleanup;
+    }
+
+    /* Get real user entry */
+    errno = 0;
+    passwd = getpwuid(getuid());
+    if (passwd == NULL) {
+        if (errno == 0) {
+            grc = TLOG_RC_FAILURE;
+            tlog_errs_pushs(perrs, "User entry not found");
+        } else {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed retrieving user entry");
+        }
+        goto cleanup;
+    }
+    if (!tlog_utf8_str_is_valid(passwd->pw_name)) {
+        tlog_errs_pushf(perrs, "User name is not valid UTF-8: %s",
+                        passwd->pw_name);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+
+    /*
+     * Create the writer
+     */
+    grc = tlog_rec_create_json_writer(perrs, &writer, conf,
+                                      id, passwd->pw_name, session_id);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs, "Failed creating JSON message writer");
         goto cleanup;
     }
 
@@ -524,11 +567,8 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     *psink = sink;
     sink = NULL;
     grc = TLOG_RC_OK;
-cleanup:
 
-    if (fd >= 0) {
-        close(fd);
-    }
+cleanup:
     tlog_json_writer_destroy(writer);
     free(id);
     free(fqdn);
