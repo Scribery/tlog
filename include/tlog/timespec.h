@@ -208,6 +208,20 @@ extern void tlog_timespec_fp_div(const struct timespec *a,
                                  struct timespec *res);
 
 /**
+ * Check if a timespec is negative (not positive and not zero).
+ *
+ * @param t     Timespec to check.
+ *
+ * @return True if the timespec is negative, false otherwise.
+ */
+static inline bool
+tlog_timespec_is_negative(const struct timespec *t)
+{
+    assert(tlog_timespec_is_valid(t));
+    return t->tv_sec < 0 || t->tv_nsec < 0;
+}
+
+/**
  * Check if a timespec is zero.
  *
  * @param t     Timespec to check.
@@ -221,17 +235,18 @@ tlog_timespec_is_zero(const struct timespec *t)
 }
 
 /**
- * Check if a timespec is negative.
+ * Check if a timespec is positive, (not negative and not zero).
  *
  * @param t     Timespec to check.
  *
- * @return True if the timespec is negative, false otherwise.
+ * @return True if the timespec is positive, false otherwise.
  */
 static inline bool
-tlog_timespec_is_negative(const struct timespec *t)
+tlog_timespec_is_positive(const struct timespec *t)
 {
     assert(tlog_timespec_is_valid(t));
-    return t->tv_sec < 0 || t->tv_nsec < 0;
+    return (t->tv_sec > 0 && t->tv_nsec >= 0) ||
+           (t->tv_sec >= 0 && t->tv_nsec > 0);
 }
 
 /**
