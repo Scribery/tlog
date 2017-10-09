@@ -221,6 +221,20 @@ tlog_timespec_is_zero(const struct timespec *t)
 }
 
 /**
+ * Check if a timespec is negative.
+ *
+ * @param t     Timespec to check.
+ *
+ * @return True if the timespec is negative, false otherwise.
+ */
+static inline bool
+tlog_timespec_is_negative(const struct timespec *t)
+{
+    assert(tlog_timespec_is_valid(t));
+    return t->tv_sec < 0 || t->tv_nsec < 0;
+}
+
+/**
  * Compare two timespec's.
  *
  * @param a     First timespec to compare.
