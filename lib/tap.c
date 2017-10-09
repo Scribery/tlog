@@ -24,8 +24,6 @@
 #include <tlog/tap.h>
 #include <tlog/tty_source.h>
 #include <tlog/tty_sink.h>
-#include <tlog/timespec.h>
-#include <tlog/delay.h>
 #include <tlog/misc.h>
 #include <pty.h>
 #include <sys/mman.h>
@@ -147,39 +145,15 @@ tlog_tap_setup(struct tlog_errs **perrs,
                struct tlog_tap *ptap,
                uid_t euid, gid_t egid,
                unsigned int opts, const char *path, char **argv,
-               int in_fd, int out_fd, int err_fd)
+               int in_fd, int out_fd, int err_fd,
+               clockid_t clock_id)
 {
     tlog_grc grc;
     struct tlog_tap tap = TLOG_TAP_VOID;
-    clockid_t clock_id;
     sem_t *sem = MAP_FAILED;
     bool sem_initialized = false;
 
     assert(ptap != NULL);
-
-    /*
-     * Choose the clock: try to use coarse monotonic clock (which is faster),
-     * if it provides the required resolution.
-     */
-    {
-        struct timespec timestamp;
-#ifdef CLOCK_MONOTONIC_COARSE
-        if (clock_getres(CLOCK_MONOTONIC_COARSE, &timestamp) == 0 &&
-            tlog_timespec_cmp(&timestamp, &tlog_delay_min_timespec) <= 0) {
-            clock_id = CLOCK_MONOTONIC_COARSE;
-        } else {
-#endif
-            if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
-                clock_id = CLOCK_MONOTONIC;
-            } else {
-                tlog_errs_pushs(perrs, "No clock to use");
-                grc = TLOG_RC_FAILURE;
-                goto cleanup;
-            }
-#ifdef CLOCK_MONOTONIC_COARSE
-        }
-#endif
-    }
 
     /* Try to find a TTY FD and get terminal attributes */
     errno = 0;
