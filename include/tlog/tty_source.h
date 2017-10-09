@@ -34,16 +34,11 @@
 /** Minimum size of the I/O buffer */
 #define TLOG_TTY_SOURCE_IO_SIZE_MIN 32
 
-/**
- * TTY source type
- *
- * Creation arguments:
- *
- */
+/** TTY source type */
 extern const struct tlog_source_type tlog_tty_source_type;
 
 /**
- * Create (allocate and initialize) a log source.
+ * Create (allocate and initialize) a TTY source.
  *
  * @param psource   Location for created source pointer, set to NULL
  *                  in case of error.

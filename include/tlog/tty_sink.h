@@ -31,12 +31,7 @@
 
 #include <tlog/sink.h>
 
-/**
- * TTY sink type
- *
- * Creation arguments:
- *
- */
+/** TTY sink type */
 extern const struct tlog_sink_type tlog_tty_sink_type;
 
 /**

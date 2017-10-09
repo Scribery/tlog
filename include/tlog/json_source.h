@@ -81,7 +81,7 @@ extern bool tlog_json_source_params_is_valid(
                             const struct tlog_json_source_params *params);
 
 /**
- * Create (allocate and initialize) a log source.
+ * Create (allocate and initialize) a JSON source.
  *
  * @param psource   Location for created source pointer,
  *                  set to NULL in case of error.
