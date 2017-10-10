@@ -74,6 +74,15 @@ tlog_timespec_add(const struct timespec *a,
         }
     }
 
+    /* Carry from sec */
+    if (tmp.tv_sec < 0 && tmp.tv_nsec > 0) {
+        tmp.tv_sec++;
+        tmp.tv_nsec -= 1000000000;
+    } else if (tmp.tv_sec > 0 && tmp.tv_nsec < 0) {
+        tmp.tv_sec--;
+        tmp.tv_nsec += 1000000000;
+    }
+
     *res = tmp;
     assert(tlog_timespec_is_valid(res));
 }
@@ -105,6 +114,15 @@ tlog_timespec_sub(const struct timespec *a,
             tmp.tv_sec--;
             tmp.tv_nsec += 1000000000;
         }
+    }
+
+    /* Carry from sec */
+    if (tmp.tv_sec < 0 && tmp.tv_nsec > 0) {
+        tmp.tv_sec++;
+        tmp.tv_nsec -= 1000000000;
+    } else if (tmp.tv_sec > 0 && tmp.tv_nsec < 0) {
+        tmp.tv_sec--;
+        tmp.tv_nsec += 1000000000;
     }
 
     *res = tmp;
@@ -158,6 +176,15 @@ tlog_timespec_cap_add(const struct timespec *a,
         }
     }
 
+    /* Carry from sec */
+    if (tmp.tv_sec < 0 && tmp.tv_nsec > 0) {
+        tmp.tv_sec++;
+        tmp.tv_nsec -= 1000000000;
+    } else if (tmp.tv_sec > 0 && tmp.tv_nsec < 0) {
+        tmp.tv_sec--;
+        tmp.tv_nsec += 1000000000;
+    }
+
     *res = tmp;
 exit:
     assert(tlog_timespec_is_valid(res));
@@ -208,6 +235,15 @@ tlog_timespec_cap_sub(const struct timespec *a,
             tmp.tv_sec--;
             tmp.tv_nsec += 1000000000;
         }
+    }
+
+    /* Carry from sec */
+    if (tmp.tv_sec < 0 && tmp.tv_nsec > 0) {
+        tmp.tv_sec++;
+        tmp.tv_nsec -= 1000000000;
+    } else if (tmp.tv_sec > 0 && tmp.tv_nsec < 0) {
+        tmp.tv_sec--;
+        tmp.tv_nsec += 1000000000;
     }
 
     *res = tmp;
