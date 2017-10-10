@@ -128,6 +128,8 @@ main(void)
     TEST(all_sub, TS(1, 0), TS(2, 1), TS(-1, -1));
     TEST(all_sub, TS(1, 1), TS(2, 2), TS(-1, -1));
     TEST(all_sub, TS(-1, 0), TS(0, 1), TS(-1, -1));
+    TEST(all_sub, TS(-1, 0), TS(0, -1), TS(0, -999999999));
+    TEST(all_sub, TS(-1, 0), TS(0, 1), TS(-1, -1));
     TEST(all_sub, TS(-1, 0), TS(-1, 0), TS(0, 0));
     TEST(all_sub, TS(-1, 0), TS(-1, -1), TS(0, 1));
     TEST(all_sub, TS(-1, -1), TS(-1, -1), TS(0, 0));
@@ -136,6 +138,8 @@ main(void)
     TEST(all_sub, TS(0, -999999999), TS(0, 2), TS(-1, -1));
     TEST(all_sub, TS(0, 999999999), TS(0, -1), TS(1, 0));
     TEST(all_sub, TS(0, 999999999), TS(0, -2), TS(1, 1));
+    TEST(all_sub, TS(1, 500000000), TS(2, 0), TS(0, -500000000));
+    TEST(all_sub, TS(-1, -500000000), TS(-2, 0), TS(0, 500000000));
     TEST(int_sub, TS(0, 0), tlog_timespec_max, TS(LONG_MIN + 1, -999999999));
 
     TEST(sub, tlog_timespec_min, TS(0, 1), TS(LONG_MAX, 0));
@@ -181,9 +185,13 @@ main(void)
     TEST(all_add, TS(0, -999999999), TS(0, -1), TS(-1, 0));
     TEST(all_add, TS(0, -999999999), TS(0, -2), TS(-1, -1));
     TEST(all_add, TS(-1, 0), TS(0, 1), TS(0, -999999999));
+    TEST(all_add, TS(-1, 0), TS(0, -1), TS(-1, -1));
+    TEST(all_add, TS(-1, 0), TS(0, 1), TS(0, -999999999));
     TEST(all_add, TS(-1, -1), TS(0, 1), TS(-1, 0));
     TEST(all_add, TS(-1, -1), TS(0, 2), TS(0, -999999999));
     TEST(all_add, TS(-1, 0), TS(0, -1), TS(-1, -1));
+    TEST(all_add, TS(-1, -500000000), TS(2, 0), TS(0, 500000000));
+    TEST(all_add, TS(1, 500000000), TS(-2, 0), TS(0, -500000000));
 
     TEST(int_add, TS(LONG_MAX / 2, 500000000), TS(LONG_MAX / 2, 500000000),
                   TS(LONG_MAX, 0));
