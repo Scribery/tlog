@@ -51,6 +51,9 @@ M4_PARAM(`', `notice', `file-env',
                    `recording and the user shell. Can be used to warn',
                    `the user that the session is recorded.')')m4_dnl
 m4_dnl
+m4_dnl
+m4_dnl Include common schema, but limit its scope to environment
+m4_dnl
 m4_pushdef(`_M4_PARAM', `M4_PARAM(`$1', `$2', `$3env', m4_shiftn(3, $@))')m4_dnl
 m4_include(`rec_common_conf_schema.m4')m4_dnl
 m4_popdef(`_M4_PARAM')m4_dnl
