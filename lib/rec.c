@@ -916,14 +916,14 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
             /* If asked to log this type of packet */
             if (item_mask & (1 << tlog_rec_item_from_pkt(&pkt))) {
                 grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
-                if (grc != TLOG_RC_OK &&
-                    grc != TLOG_GRC_FROM(errno, EINTR)) {
+                if (grc == TLOG_RC_OK) {
+                    log_pending = true;
+                } else if (grc != TLOG_GRC_FROM(errno, EINTR)) {
                     tlog_errs_pushc(perrs, grc);
                     tlog_errs_pushs(perrs, "Failed logging terminal data");
                     return_grc = grc;
                     goto cleanup;
                 }
-                log_pending = true;
             } else {
                 tlog_pkt_pos_move_past(&log_pos, &pkt);
             }
