@@ -263,6 +263,302 @@ cleanup:
 }
 
 /**
+ * Create a file JSON message writer according to configuration.
+ *
+ * @param perrs         Location for the error stack. Can be NULL.
+ * @param pwriter       Location for the created writer pointer.
+ * @param conf          Writer configuration JSON object.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_rec_create_file_json_writer(struct tlog_errs **perrs,
+                                 struct tlog_json_writer **pwriter,
+                                 struct json_object *conf)
+{
+    tlog_grc grc;
+    int rc;
+    struct json_object *obj;
+    const char *str;
+    struct tlog_json_writer *writer = NULL;
+    int fd = -1;
+
+    assert(pwriter != NULL);
+    assert(conf != NULL);
+
+    /* Get the file path */
+    if (!json_object_object_get_ex(conf, "path", &obj)) {
+        tlog_errs_pushs(perrs, "Log file path is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    str = json_object_get_string(obj);
+
+    /* Open the file */
+    fd = open(str, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed opening log file \"%s\"", str);
+        goto cleanup;
+    }
+    /* Get file flags */
+    rc = fcntl(fd, F_GETFD);
+    if (rc < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed getting log file descriptor flags");
+        goto cleanup;
+    }
+    /* Add FD_CLOEXEC to file flags */
+    rc = fcntl(fd, F_SETFD, rc | FD_CLOEXEC);
+    if (rc < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed setting log file descriptor flags");
+        goto cleanup;
+    }
+
+    /* Create the writer, letting it take over the FD */
+    grc = tlog_fd_json_writer_create(&writer, fd, true);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating file writer");
+        goto cleanup;
+    }
+    fd = -1;
+
+    *pwriter = writer;
+    writer = NULL;
+    grc = TLOG_RC_OK;
+
+cleanup:
+    tlog_json_writer_destroy(writer);
+    if (fd >= 0) {
+        close(fd);
+    }
+    return grc;
+}
+
+/**
+ * Create a syslog JSON message writer according to configuration.
+ *
+ * @param perrs         Location for the error stack. Can be NULL.
+ * @param pwriter       Location for the created writer pointer.
+ * @param conf          Writer configuration JSON object.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_rec_create_syslog_json_writer(struct tlog_errs **perrs,
+                                   struct tlog_json_writer **pwriter,
+                                   struct json_object *conf)
+{
+    tlog_grc grc;
+    struct json_object *obj;
+    const char *str;
+    struct tlog_json_writer *writer = NULL;
+    int facility;
+    int priority;
+
+    assert(pwriter != NULL);
+    assert(conf != NULL);
+
+    /* Get facility */
+    if (!json_object_object_get_ex(conf, "facility", &obj)) {
+        tlog_errs_pushs(perrs, "Syslog facility is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    str = json_object_get_string(obj);
+    facility = tlog_syslog_facility_from_str(str);
+    if (facility < 0) {
+        tlog_errs_pushf(perrs, "Unknown syslog facility: %s", str);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+
+    /* Get priority */
+    if (!json_object_object_get_ex(conf, "priority", &obj)) {
+        tlog_errs_pushs(perrs, "Syslog priority is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    str = json_object_get_string(obj);
+    priority = tlog_syslog_priority_from_str(str);
+    if (priority < 0) {
+        tlog_errs_pushf(perrs, "Unknown syslog priority: %s", str);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+
+    /* Create the writer */
+    openlog("tlog", LOG_NDELAY, facility);
+    grc = tlog_syslog_json_writer_create(&writer, priority);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating syslog writer");
+        goto cleanup;
+    }
+
+    *pwriter = writer;
+    writer = NULL;
+    grc = TLOG_RC_OK;
+
+cleanup:
+    tlog_json_writer_destroy(writer);
+    return grc;
+}
+
+/**
+ * Create a journal JSON message writer according to configuration.
+ *
+ * @param perrs         Location for the error stack. Can be NULL.
+ * @param pwriter       Location for the created writer pointer.
+ * @param conf          Configuration JSON object.
+ * @param id            ID of the recording being created.
+ * @param username      The name of the user being recorded.
+ * @param session_id    The ID of the audit session being recorded.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_rec_create_journal_json_writer(struct tlog_errs **perrs,
+                                    struct tlog_json_writer **pwriter,
+                                    struct json_object *conf,
+                                    const char *id,
+                                    const char *username,
+                                    unsigned int session_id)
+{
+    tlog_grc grc;
+    struct json_object *obj;
+    const char *str;
+    struct tlog_json_writer *writer = NULL;
+    int priority;
+
+    assert(pwriter != NULL);
+    assert(conf != NULL);
+    assert(id != NULL);
+    assert(username != NULL);
+
+    /* Get priority */
+    if (!json_object_object_get_ex(conf, "priority", &obj)) {
+        tlog_errs_pushs(perrs, "Journal priority is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    str = json_object_get_string(obj);
+    priority = tlog_syslog_priority_from_str(str);
+    if (priority < 0) {
+        tlog_errs_pushf(perrs, "Unknown journal priority: %s", str);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+
+    /* Create the writer */
+    grc = tlog_journal_json_writer_create(&writer, priority, id,
+                                          username, session_id);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating journal writer");
+        goto cleanup;
+    }
+
+    *pwriter = writer;
+    writer = NULL;
+    grc = TLOG_RC_OK;
+
+cleanup:
+    tlog_json_writer_destroy(writer);
+    return grc;
+}
+
+/**
+ * Create a rate-limiting JSON message writer, if configured.
+ *
+ * @param perrs         Location for the error stack. Can be NULL.
+ * @param pwriter       Location of the "below" writer pointer to attach under
+ *                      the rate-limiting writer, and for the created
+ *                      rate-limiting writer pointer, if rate-limiting is
+ *                      enabled. Otherwise the pointer stays unchanged.
+ * @param conf          Rate-limiting configuration JSON object.
+ * @param clock_id      The clock to use for rate-limiting.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_rec_create_rl_json_writer(struct tlog_errs **perrs,
+                               struct tlog_json_writer **pwriter,
+                               struct json_object *conf,
+                               clockid_t clock_id)
+{
+    tlog_grc grc;
+    struct json_object *obj;
+    const char *str;
+    struct tlog_json_writer *writer = NULL;
+    bool drop;
+    uint64_t rate;
+    uint64_t burst;
+
+    assert(pwriter != NULL);
+    assert(tlog_json_writer_is_valid(*pwriter));
+    assert(conf != NULL);
+
+    /* Get the action */
+    if (!json_object_object_get_ex(conf, "action", &obj)) {
+        tlog_errs_pushs(perrs, "Logging limit action is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    str = json_object_get_string(obj);
+
+    if (strcasecmp(str, "pass") == 0) {
+        grc = TLOG_RC_OK;
+        goto cleanup;
+    } else if (strcasecmp(str, "delay") == 0) {
+        drop = false;
+    } else if (strcasecmp(str, "drop") == 0) {
+        drop = true;
+    } else {
+        assert(!"Unknown limit action");
+        grc = TLOG_RC_FAILURE;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Unknown limit action is specified: %s", str);
+        goto cleanup;
+    }
+
+    /* Get the rate */
+    if (!json_object_object_get_ex(conf, "rate", &obj)) {
+        tlog_errs_pushs(perrs, "Logging rate limit is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    rate = json_object_get_int64(obj);
+
+    /* Get the burst threshold */
+    if (!json_object_object_get_ex(conf, "burst", &obj)) {
+        tlog_errs_pushs(perrs,
+                        "Logging burst threshold is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    burst = json_object_get_int64(obj);
+
+    /* Superimpose the writer, transfer ownership of below writer */
+    grc = tlog_rl_json_writer_create(pwriter, *pwriter, true, clock_id,
+                                     (size_t)rate, (size_t)burst, drop);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating rate-limiting writer");
+        goto cleanup;
+    }
+
+cleanup:
+    tlog_json_writer_destroy(writer);
+    return grc;
+}
+
+/**
  * Create a JSON message writer according to configuration.
  *
  * @param perrs         Location for the error stack. Can be NULL.
@@ -285,11 +581,15 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
                             clockid_t clock_id)
 {
     tlog_grc grc;
-    int rc;
     struct json_object *obj;
     const char *str;
+    struct json_object *writer_conf;
     struct tlog_json_writer *writer = NULL;
-    int fd = -1;
+
+    assert(pwriter != NULL);
+    assert(conf != NULL);
+    assert(id != NULL);
+    assert(username != NULL);
 
     /*
      * Create the terminating writer
@@ -301,135 +601,43 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
     }
     str = json_object_get_string(obj);
     if (strcmp(str, "file") == 0) {
-        struct json_object *conf_file;
-
         /* Get file writer conf container */
-        if (!json_object_object_get_ex(conf, "file", &conf_file)) {
+        if (!json_object_object_get_ex(conf, str, &writer_conf)) {
             tlog_errs_pushs(perrs, "File writer parameters are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
 
-        /* Get the file path */
-        if (!json_object_object_get_ex(conf_file, "path", &obj)) {
-            tlog_errs_pushs(perrs, "Log file path is not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-        str = json_object_get_string(obj);
-
-        /* Open the file */
-        fd = open(str, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
-        if (fd < 0) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed opening log file \"%s\"", str);
-            goto cleanup;
-        }
-        /* Get file flags */
-        rc = fcntl(fd, F_GETFD);
-        if (rc < 0) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed getting log file descriptor flags");
-            goto cleanup;
-        }
-        /* Add FD_CLOEXEC to file flags */
-        rc = fcntl(fd, F_SETFD, rc | FD_CLOEXEC);
-        if (rc < 0) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed setting log file descriptor flags");
-            goto cleanup;
-        }
-
-        /* Create the writer, letting it take over the FD */
-        grc = tlog_fd_json_writer_create(&writer, fd, true);
+        /* Create file writer */
+        grc = tlog_rec_create_file_json_writer(perrs, &writer, writer_conf);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating file writer");
             goto cleanup;
         }
-        fd = -1;
     } else if (strcmp(str, "syslog") == 0) {
-        struct json_object *conf_syslog;
-        int facility;
-        int priority;
-
         /* Get syslog writer conf container */
-        if (!json_object_object_get_ex(conf, "syslog", &conf_syslog)) {
+        if (!json_object_object_get_ex(conf, str, &writer_conf)) {
             tlog_errs_pushs(perrs, "Syslog writer parameters are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
 
-        /* Get facility */
-        if (!json_object_object_get_ex(conf_syslog, "facility", &obj)) {
-            tlog_errs_pushs(perrs, "Syslog facility is not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-        str = json_object_get_string(obj);
-        facility = tlog_syslog_facility_from_str(str);
-        if (facility < 0) {
-            tlog_errs_pushf(perrs, "Unknown syslog facility: %s", str);
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-
-        /* Get priority */
-        if (!json_object_object_get_ex(conf_syslog, "priority", &obj)) {
-            tlog_errs_pushs(perrs, "Syslog priority is not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-        str = json_object_get_string(obj);
-        priority = tlog_syslog_priority_from_str(str);
-        if (priority < 0) {
-            tlog_errs_pushf(perrs, "Unknown syslog priority: %s", str);
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-
-        /* Create the writer */
-        openlog("tlog", LOG_NDELAY, facility);
-        grc = tlog_syslog_json_writer_create(&writer, priority);
+        /* Create syslog writer */
+        grc = tlog_rec_create_syslog_json_writer(perrs, &writer, writer_conf);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating syslog writer");
             goto cleanup;
         }
     } else if (strcmp(str, "journal") == 0) {
-        struct json_object *conf_journal;
-        int priority;
-
         /* Get journal writer conf container */
-        if (!json_object_object_get_ex(conf, "journal", &conf_journal)) {
-            tlog_errs_pushs(perrs, "Jouranl writer parameters are not specified");
+        if (!json_object_object_get_ex(conf, str, &writer_conf)) {
+            tlog_errs_pushs(perrs, "Journal writer parameters are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
 
-        /* Get priority */
-        if (!json_object_object_get_ex(conf_journal, "priority", &obj)) {
-            tlog_errs_pushs(perrs, "Journal priority is not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-        str = json_object_get_string(obj);
-        priority = tlog_syslog_priority_from_str(str);
-        if (priority < 0) {
-            tlog_errs_pushf(perrs, "Unknown journal priority: %s", str);
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-
-        /* Create the writer */
-        grc = tlog_journal_json_writer_create(&writer, priority, id,
-                                              username, session_id);
+        /* Create journal writer */
+        grc = tlog_rec_create_journal_json_writer(perrs, &writer, writer_conf,
+                                                  id, username, session_id);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating journal writer");
             goto cleanup;
         }
     } else {
@@ -439,73 +647,21 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
     }
 
     /*
-     * Create the rate-limiting writer, if requested
+     * Attach the rate-limiting writer, if requested
      */
-    do {
-        struct json_object *conf_limit;
-        bool drop;
-        uint64_t rate;
-        uint64_t burst;
-        struct tlog_json_writer *rl_writer;
+    /* Get limit conf container */
+    if (!json_object_object_get_ex(conf, "limit", &writer_conf)) {
+        tlog_errs_pushs(perrs, "Logging limit parameters are not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
 
-        /* Get limit conf container */
-        if (!json_object_object_get_ex(conf, "limit", &conf_limit)) {
-            tlog_errs_pushs(perrs, "Logging limit parameters are not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-
-        /* Get the action */
-        if (!json_object_object_get_ex(conf_limit, "action", &obj)) {
-            tlog_errs_pushs(perrs, "Logging limit action is not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-        str = json_object_get_string(obj);
-
-        if (strcasecmp(str, "pass") == 0) {
-            break;
-        } else if (strcasecmp(str, "delay") == 0) {
-            drop = false;
-        } else if (strcasecmp(str, "drop") == 0) {
-            drop = true;
-        } else {
-            assert(!"Unknown limit action");
-            grc = TLOG_RC_FAILURE;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Unknown limit action is specified: %s", str);
-            goto cleanup;
-        }
-
-        /* Get the rate */
-        if (!json_object_object_get_ex(conf_limit, "rate", &obj)) {
-            tlog_errs_pushs(perrs, "Logging rate limit is not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-        rate = json_object_get_int64(obj);
-
-        /* Get the burst threshold */
-        if (!json_object_object_get_ex(conf_limit, "burst", &obj)) {
-            tlog_errs_pushs(perrs,
-                            "Logging burst threshold is not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-        burst = json_object_get_int64(obj);
-
-        /* Create the writer, transfer ownership of terminating writer */
-        grc = tlog_rl_json_writer_create(&rl_writer, writer, true, clock_id,
-                                         (size_t)rate, (size_t)burst, drop);
-        if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating rate-limiting writer");
-            goto cleanup;
-        }
-
-        /* Replace the writer with rate-limiting writer */
-        writer = rl_writer;
-    } while (0);
+    /* Create rate-limiting writer */
+    grc = tlog_rec_create_rl_json_writer(perrs, &writer, writer_conf,
+                                         clock_id);
+    if (grc != TLOG_RC_OK) {
+        goto cleanup;
+    }
 
     *pwriter = writer;
     writer = NULL;
@@ -513,9 +669,6 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
 
 cleanup:
     tlog_json_writer_destroy(writer);
-    if (fd >= 0) {
-        close(fd);
-    }
     return grc;
 }
 
