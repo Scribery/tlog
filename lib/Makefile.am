@@ -136,6 +136,7 @@ libtlog_la_SOURCES = \
     rec_session_conf.c          \
     rec_session_conf_cmd.c      \
     rec_session_conf_validate.c \
+    rl_json_writer.c            \
     session.c                   \
     sink.c                      \
     source.c                    \

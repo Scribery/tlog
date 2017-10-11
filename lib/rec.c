@@ -26,6 +26,7 @@
 #include <tlog/syslog_json_writer.h>
 #include <tlog/journal_json_writer.h>
 #include <tlog/fd_json_writer.h>
+#include <tlog/rl_json_writer.h>
 #include <tlog/source.h>
 #include <tlog/syslog_misc.h>
 #include <tlog/session.h>
@@ -270,6 +271,7 @@ cleanup:
  * @param id            ID of the recording being created.
  * @param username      The name of the user being recorded.
  * @param session_id    The ID of the audit session being recorded.
+ * @param clock_id      The clock to use for rate-limiting.
  *
  * @return Global return code.
  */
@@ -279,7 +281,8 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
                             struct json_object *conf,
                             const char *id,
                             const char *username,
-                            unsigned int session_id)
+                            unsigned int session_id,
+                            clockid_t clock_id)
 {
     tlog_grc grc;
     int rc;
@@ -288,6 +291,9 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
     struct tlog_json_writer *writer = NULL;
     int fd = -1;
 
+    /*
+     * Create the terminating writer
+     */
     if (!json_object_object_get_ex(conf, "writer", &obj)) {
         tlog_errs_pushs(perrs, "Writer type is not specified");
         grc = TLOG_RC_FAILURE;
@@ -432,6 +438,75 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
         goto cleanup;
     }
 
+    /*
+     * Create the rate-limiting writer, if requested
+     */
+    do {
+        struct json_object *conf_limit;
+        bool drop;
+        uint64_t rate;
+        uint64_t burst;
+        struct tlog_json_writer *rl_writer;
+
+        /* Get limit conf container */
+        if (!json_object_object_get_ex(conf, "limit", &conf_limit)) {
+            tlog_errs_pushs(perrs, "Logging limit parameters are not specified");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+
+        /* Get the action */
+        if (!json_object_object_get_ex(conf_limit, "action", &obj)) {
+            tlog_errs_pushs(perrs, "Logging limit action is not specified");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+        str = json_object_get_string(obj);
+
+        if (strcasecmp(str, "pass") == 0) {
+            break;
+        } else if (strcasecmp(str, "delay") == 0) {
+            drop = false;
+        } else if (strcasecmp(str, "drop") == 0) {
+            drop = true;
+        } else {
+            assert(!"Unknown limit action");
+            grc = TLOG_RC_FAILURE;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Unknown limit action is specified: %s", str);
+            goto cleanup;
+        }
+
+        /* Get the rate */
+        if (!json_object_object_get_ex(conf_limit, "rate", &obj)) {
+            tlog_errs_pushs(perrs, "Logging rate limit is not specified");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+        rate = json_object_get_int64(obj);
+
+        /* Get the burst threshold */
+        if (!json_object_object_get_ex(conf_limit, "burst", &obj)) {
+            tlog_errs_pushs(perrs,
+                            "Logging burst threshold is not specified");
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+        burst = json_object_get_int64(obj);
+
+        /* Create the writer, transfer ownership of terminating writer */
+        grc = tlog_rl_json_writer_create(&rl_writer, writer, true, clock_id,
+                                         (size_t)rate, (size_t)burst, drop);
+        if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating rate-limiting writer");
+            goto cleanup;
+        }
+
+        /* Replace the writer with rate-limiting writer */
+        writer = rl_writer;
+    } while (0);
+
     *pwriter = writer;
     writer = NULL;
     grc = TLOG_RC_OK;
@@ -451,6 +526,7 @@ cleanup:
  * @param psink         Location for the created sink pointer.
  * @param conf          Configuration JSON object.
  * @param session_id    The ID of the session being recorded.
+ * @param clock_id      The clock to use for rate-limiting.
  *
  * @return Global return code.
  */
@@ -458,7 +534,8 @@ static tlog_grc
 tlog_rec_create_log_sink(struct tlog_errs **perrs,
                          struct tlog_sink **psink,
                          struct json_object *conf,
-                         unsigned int session_id)
+                         unsigned int session_id,
+                         clockid_t clock_id)
 {
     tlog_grc grc;
     int64_t num;
@@ -502,7 +579,8 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
      * Create the writer
      */
     grc = tlog_rec_create_json_writer(perrs, &writer, conf,
-                                      id, passwd->pw_name, session_id);
+                                      id, passwd->pw_name, session_id,
+                                      clock_id);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed creating JSON message writer");
         goto cleanup;
@@ -915,7 +993,8 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     }
 
     /* Create the log sink */
-    grc = tlog_rec_create_log_sink(perrs, &log_sink, conf, session_id);
+    grc = tlog_rec_create_log_sink(perrs, &log_sink, conf,
+                                   session_id, clock_id);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed creating log sink");
         goto cleanup;
