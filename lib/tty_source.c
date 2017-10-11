@@ -47,9 +47,8 @@ tlog_tty_source_winch_sighandler(int signum)
 
 /** FD index */
 enum tlog_tty_source_fd_idx {
-    /* Output must be first, see tlog_tty_source_read */
-    TLOG_TTY_SOURCE_FD_IDX_OUT,
     TLOG_TTY_SOURCE_FD_IDX_IN,
+    TLOG_TTY_SOURCE_FD_IDX_OUT,
     TLOG_TTY_SOURCE_FD_IDX_NUM
 };
 
@@ -61,6 +60,7 @@ struct tlog_tty_source {
     size_t                  io_size;    /**< Size of I/O buffer */
     uint8_t                *io_buf;     /**< Pointer to I/O buffer */
     struct pollfd           fd_list[TLOG_TTY_SOURCE_FD_IDX_NUM];
+    size_t                  fd_idx;     /**< Index of FD read last */
     int                     win_fd;     /**< Window size source FD */
     bool                    started;    /**< True if read */
     struct timespec         start_ts;   /**< First read timestamp */
@@ -110,10 +110,13 @@ tlog_tty_source_init(struct tlog_source *source, va_list ap)
 
     assert(io_size >= TLOG_TTY_SOURCE_IO_SIZE_MIN);
 
-    tty_source->fd_list[TLOG_TTY_SOURCE_FD_IDX_OUT].fd = out_fd;
-    tty_source->fd_list[TLOG_TTY_SOURCE_FD_IDX_OUT].events = POLLIN;
     tty_source->fd_list[TLOG_TTY_SOURCE_FD_IDX_IN].fd = in_fd;
     tty_source->fd_list[TLOG_TTY_SOURCE_FD_IDX_IN].events = POLLIN;
+    tty_source->fd_list[TLOG_TTY_SOURCE_FD_IDX_OUT].fd = out_fd;
+    tty_source->fd_list[TLOG_TTY_SOURCE_FD_IDX_OUT].events = POLLIN;
+
+    /* Non-existing FD was read last */
+    tty_source->fd_idx = SIZE_MAX;
 
     /* Don't commit to getting window sizes yet */
     tty_source->win_fd = -1;
@@ -203,7 +206,6 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
     struct tlog_tty_source *tty_source =
                                 (struct tlog_tty_source *)source;
     struct timespec ts;
-    size_t i;
 
     assert(tlog_pkt_is_void(pkt));
 
@@ -252,18 +254,18 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
 
     /*
      * Read I/O.
-     *
-     * Prioritize output reading, so a pseudo-TTY transfer using this source
-     * aborts immediately on trying to read from a missing child, rather than
-     * trying to write the input read from this source to a missing child,
-     * which can block.
      */
-    assert(TLOG_TTY_SOURCE_FD_IDX_OUT == 0);
-    for (i = 0; i < TLOG_ARRAY_SIZE(tty_source->fd_list); i++) {
-        if (tty_source->fd_list[i].revents & (POLLIN | POLLHUP | POLLERR)) {
+    while (true) {
+        /* Make sure we start from another FD each call */
+        tty_source->fd_idx++;
+        if (tty_source->fd_idx >= TLOG_ARRAY_SIZE(tty_source->fd_list)) {
+            tty_source->fd_idx = 0;
+        }
+        if (tty_source->fd_list[tty_source->fd_idx].revents &
+                (POLLIN | POLLHUP | POLLERR)) {
             ssize_t rc;
 
-            rc = read(tty_source->fd_list[i].fd,
+            rc = read(tty_source->fd_list[tty_source->fd_idx].fd,
                       tty_source->io_buf, tty_source->io_size);
 
             if (rc < 0) {
@@ -273,7 +275,8 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
                     return TLOG_GRC_ERRNO;
                 }
                 tlog_pkt_init_io(pkt, &ts,
-                                 i == TLOG_TTY_SOURCE_FD_IDX_OUT,
+                                 tty_source->fd_idx ==
+                                    TLOG_TTY_SOURCE_FD_IDX_OUT,
                                  tty_source->io_buf, false, rc);
             }
             goto success;
