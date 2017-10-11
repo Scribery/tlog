@@ -60,13 +60,15 @@ tlog_fd_json_writer_write(struct tlog_json_writer *writer,
     struct tlog_fd_json_writer *fd_json_writer =
                                     (struct tlog_fd_json_writer*)writer;
     ssize_t rc;
+    const uint8_t *p = buf;
 
     (void)id;
 
     while (true) {
-        rc = write(fd_json_writer->fd, buf, len);
+        rc = write(fd_json_writer->fd, p, len);
         if (rc < 0) {
-            if (errno == EINTR) {
+            /* If interrupted after writing something */
+            if (errno == EINTR && p > buf) {
                 continue;
             } else {
                 return TLOG_GRC_ERRNO;
@@ -75,7 +77,7 @@ tlog_fd_json_writer_write(struct tlog_json_writer *writer,
         if ((size_t)rc == len) {
             return TLOG_RC_OK;
         }
-        buf += rc;
+        p += rc;
         len -= (size_t)rc;
     }
 }
