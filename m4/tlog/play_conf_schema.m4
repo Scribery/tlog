@@ -107,3 +107,9 @@ M4_PARAM(`', `persist', `file-',
          `', `', `Ignore quit key and signals from keyboard',
          `M4_LINES(`If true, ignore any keyboard-generated signals and the quit key.')')m4_dnl
 m4_dnl
+M4_PARAM(`', `lax', `file-',
+         `M4_TYPE_BOOL(false)', true,
+         `', `', `Ignore missing (dropped) log messages',
+         `M4_LINES(`If true, ignore missing (dropped, or lost) log messages.',
+                   `If false, report an error and abort when a message is missing.')')m4_dnl
+m4_dnl

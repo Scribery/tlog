@@ -263,13 +263,19 @@ create_log_source(struct tlog_errs **perrs,
         goto cleanup;
     }
 
-    /* Create the source */
+    /*
+     * Create the source
+     */
     {
         struct tlog_json_source_params params = {
             .reader = reader,
             .reader_owned = true,
             .io_size = 4096,
         };
+        /* Get the "lax" flag */
+        params.lax = json_object_object_get_ex(conf, "lax", &obj) &&
+                     json_object_get_boolean(obj);
+        /* Create the source */
         grc = tlog_json_source_create(&source, &params);
         if (grc != TLOG_RC_OK) {
             tlog_errs_pushc(perrs, grc);
