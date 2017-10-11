@@ -59,6 +59,7 @@ tlog_HEADERS = \
     rec_session_conf.h          \
     rec_session_conf_cmd.h      \
     rec_session_conf_validate.h \
+    rl_json_writer.h            \
     session.h                   \
     sink.h                      \
     sink_type.h                 \

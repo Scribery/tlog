@@ -59,6 +59,28 @@ _M4_PARAM(`/log', `window', `file-',
 m4_dnl
 m4_dnl
 m4_dnl
+M4_CONTAINER(`', `/limit', `Logging limit')m4_dnl
+m4_dnl
+_M4_PARAM(`/limit', `rate', `file-',
+          `M4_TYPE_INT(16384, 0)', true,
+          `', `=NUMBER', `Set logging rate limit to NUMBER of message bytes/sec',
+          `M4_LINES(`Maximum rate messages could be logged at, bytes/sec.')')m4_dnl
+m4_dnl
+_M4_PARAM(`/limit', `burst', `file-',
+          `M4_TYPE_INT(32768, 0)', true,
+          `', `=NUMBER', `Set logging burst limit to NUMBER of message bytes',
+          `M4_LINES(`Number of bytes by which logged messages are allowed to exceed',
+                    `the rate limit momentarily, i.e. "burstiness", bytes.')')m4_dnl
+m4_dnl
+_M4_PARAM(`/limit', `action', `file-',
+          `M4_TYPE_CHOICE(`pass', `pass', `delay', `drop')', true,
+          `', `=STRING', `Perform STRING action above limits (pass/delay/drop)',
+          `M4_LINES(`If set to "pass" no logging limits will be applied.',
+                    `If set to "delay", logging will be throttled.',
+                    `If set to "drop", messages exceeding limits will be dropped.')')m4_dnl
+m4_dnl
+m4_dnl
+m4_dnl
 M4_CONTAINER(`', `/file', `File writer')m4_dnl
 m4_dnl
 _M4_PARAM(`/file', `path', `file-',
