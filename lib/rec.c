@@ -881,7 +881,9 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         if (new_alarm_caught != last_alarm_caught) {
             alarm_set = false;
             grc = tlog_sink_flush(log_sink);
-            if (grc != TLOG_RC_OK) {
+            if (grc == TLOG_GRC_FROM(errno, EINTR)) {
+                continue;
+            } else if (grc != TLOG_RC_OK) {
                 tlog_errs_pushc(perrs, grc);
                 tlog_errs_pushs(perrs, "Failed flushing log");
                 return_grc = grc;
