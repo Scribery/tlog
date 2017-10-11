@@ -57,6 +57,9 @@ tlog_rec_exit_sighandler(int signum)
     }
 }
 
+/* True if an alarm was set, but not yet delivered */
+static volatile sig_atomic_t tlog_rec_alarm_set;
+
 /* Number of ALRM signals caught */
 static volatile sig_atomic_t tlog_rec_alarm_caught;
 
@@ -64,6 +67,7 @@ static void
 tlog_rec_alarm_sighandler(int signum)
 {
     (void)signum;
+    tlog_rec_alarm_set = false;
     tlog_rec_alarm_caught++;
 }
 
@@ -839,7 +843,6 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
     tlog_grc grc;
     size_t i, j;
     struct sigaction sa;
-    bool alarm_set = false;
     bool log_pending = false;
     sig_atomic_t last_alarm_caught = 0;
     sig_atomic_t new_alarm_caught;
@@ -848,6 +851,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
     struct tlog_pkt_pos log_pos = TLOG_PKT_POS_VOID;
 
     tlog_rec_exit_signum = 0;
+    tlog_rec_alarm_set = false;
     tlog_rec_alarm_caught = 0;
 
     /* Setup signal handlers to terminate gracefully */
@@ -879,7 +883,6 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         /* Handle latency limit */
         new_alarm_caught = tlog_rec_alarm_caught;
         if (new_alarm_caught != last_alarm_caught) {
-            alarm_set = false;
             grc = tlog_sink_flush(log_sink);
             if (grc == TLOG_GRC_FROM(errno, EINTR)) {
                 continue;
@@ -891,9 +894,9 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
             }
             last_alarm_caught = new_alarm_caught;
             log_pending = false;
-        } else if (log_pending && !alarm_set) {
+        } else if (log_pending && !tlog_rec_alarm_set) {
+            tlog_rec_alarm_set = true;
             alarm(latency);
-            alarm_set = true;
         }
 
         /* Deliver logged data if any */
@@ -952,6 +955,12 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         }
     }
 
+    /* Cancel pending alarm, if any, to avoid interruptions */
+    if (tlog_rec_alarm_set) {
+        alarm(0);
+        tlog_rec_alarm_set = false;
+    }
+
     /* Cut the log (write incomplete characters as binary) */
     grc = tlog_sink_cut(log_sink);
     if (grc != TLOG_RC_OK) {
@@ -981,8 +990,11 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
 cleanup:
 
     tlog_pkt_cleanup(&pkt);
-    /* Stop the timer */
-    alarm(0);
+    /* Stop the timer, if any */
+    if (tlog_rec_alarm_set) {
+        alarm(0);
+        tlog_rec_alarm_set = false;
+    }
     /* Restore signal handlers */
     signal(SIGALRM, SIG_DFL);
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
