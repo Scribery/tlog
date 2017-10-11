@@ -62,6 +62,8 @@ extern bool tlog_json_writer_is_valid(const struct tlog_json_writer *writer);
 
 /**
  * Write with a writer.
+ * Atomic, i.e. always writes everything, or nothing,
+ * unless an error beside EINTR occurs.
  *
  * @param writer    The writer to write with.
  * @param id        ID of the message in the buffer. Cannot be zero.
@@ -69,6 +71,8 @@ extern bool tlog_json_writer_is_valid(const struct tlog_json_writer *writer);
  * @param len       The length of the message buffer to write.
  *
  * @return Global return code.
+ *         Can return TLOG_GRC_FROM(errno, EINTR), if writing was interrupted
+ *         by a signal before anything was written.
  */
 extern tlog_grc tlog_json_writer_write(struct tlog_json_writer *writer,
                                        size_t id,

@@ -61,6 +61,8 @@ typedef bool (*tlog_json_writer_type_is_valid_fn)(
 
 /**
  * Message writing function prototype.
+ * Atomic, i.e. always writes everything, or nothing,
+ * unless an error beside EINTR occurs.
  *
  * @param writer    The writer to operate on.
  * @param id        ID of the message in the buffer. Cannot be zero.
@@ -68,6 +70,8 @@ typedef bool (*tlog_json_writer_type_is_valid_fn)(
  * @param len       The length of the message buffer to write.
  *
  * @return Global return code.
+ *         Can return TLOG_GRC_FROM(errno, EINTR), if writing was interrupted
+ *         by a signal before anything was written.
  */
 typedef tlog_grc (*tlog_json_writer_type_write_fn)(
                                 struct tlog_json_writer *writer,
