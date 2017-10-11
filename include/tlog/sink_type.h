@@ -68,6 +68,8 @@ typedef bool (*tlog_sink_type_is_valid_fn)(const struct tlog_sink *sink);
  * @param end   Position in the packet the write should end at.
  *
  * @return Global return code.
+ *         Can return TLOG_GRC_FROM(errno, EINTR), if writing was interrupted
+ *         by a signal before anything was written.
  */
 typedef tlog_grc (*tlog_sink_type_write_fn)(struct tlog_sink *sink,
                                             const struct tlog_pkt *pkt,

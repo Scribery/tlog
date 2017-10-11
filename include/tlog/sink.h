@@ -75,6 +75,8 @@ extern bool tlog_sink_is_valid(const struct tlog_sink *sink);
  *              position right after the end of the packet.
  *
  * @return Global return code.
+ *         Can return TLOG_GRC_FROM(errno, EINTR), if ppos wasn't NULL, and
+ *         writing was interrupted by a signal before anything was written.
  */
 extern tlog_grc tlog_sink_write(struct tlog_sink *sink,
                                 const struct tlog_pkt *pkt,
@@ -87,6 +89,8 @@ extern tlog_grc tlog_sink_write(struct tlog_sink *sink,
  * @param sink  The sink to cut I/O for.
  *
  * @return Global return code.
+ *         Can return TLOG_GRC_FROM(errno, EINTR), if writing was attempted
+ *         and interrupted by a signal before anything was written.
  */
 extern tlog_grc tlog_sink_cut(struct tlog_sink *sink);
 
@@ -96,6 +100,8 @@ extern tlog_grc tlog_sink_cut(struct tlog_sink *sink);
  * @param sink  The sink to flush.
  *
  * @return Global return code.
+ *         Can return TLOG_GRC_FROM(errno, EINTR), if writing was attempted
+ *         and interrupted by a signal before anything was written.
  */
 extern tlog_grc tlog_sink_flush(struct tlog_sink *sink);
 
