@@ -71,11 +71,11 @@ rate).
 
 .TP
 .B G
-Fast-forward the recording to the end, or to specified time. Works on pause.
-The time can be specified by typing in a timestamp before pressing 'G'. The
-timestamp should follow the format of the -g/--goto option value, but without
-the fractions of a second. The command has no effect, if the specified time
-location has already been reached.
+Fast-forward the recording to the end, or to specified time. Works while
+playing and on pause. The time can be specified by typing in a timestamp
+before pressing 'G'. The timestamp should follow the format of the -g/--goto
+option value, but without the fractions of a second. The command has no
+effect, if the specified time location has already been reached.
 
 E.g. pressing just 'G' would fast-forward to the end, which is useful with
 following enabled. Pressing '3', '0', 'G' (typing "30G") would fast-forward to
