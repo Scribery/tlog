@@ -58,6 +58,8 @@ struct tlog_json_source {
     unsigned int        session_id;     /**< Session ID to filter messages by,
                                              NULL for unfiltered */
 
+    bool                lax;            /**< Ignore missing messages, i.e.
+                                             message ID jumps, if true */
     bool                got_msg;        /**< Read at least one message */
     size_t              last_msg_id;    /**< Last message ID */
     bool                got_pkt;        /**< Read at least one packet */
@@ -145,6 +147,7 @@ tlog_json_source_init(struct tlog_source *source, va_list ap)
         }
     }
     json_source->session_id = params->session_id;
+    json_source->lax = params->lax;
 
     tlog_json_msg_init(&json_source->msg, NULL);
 
@@ -264,7 +267,9 @@ tlog_json_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
                 return TLOG_RC_OK;
             }
             if (json_source->got_msg) {
-                if (msg->id != (json_source->last_msg_id + 1)) {
+                if (json_source->lax
+                        ? (msg->id <= json_source->last_msg_id)
+                        : (msg->id != (json_source->last_msg_id + 1))) {
                     tlog_json_msg_cleanup(msg);
                     return TLOG_RC_JSON_SOURCE_MSG_ID_OUT_OF_ORDER;
                 }

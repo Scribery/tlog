@@ -66,6 +66,12 @@ struct tlog_json_source_params {
     const char                 *terminal;
     /** Session ID to filter log messages by, 0 for unfiltered */
     unsigned int                session_id;
+    /**
+     * Ignore missing messages, i.e. message ID jumps, if true,
+     * return TLOG_RC_JSON_SOURCE_MSG_ID_OUT_OF_ORDER, if a missing
+     * message is detected, if false.
+     */
+    bool                        lax;
     /** Size of I/O data buffer used in packets */
     size_t                      io_size;
 };
