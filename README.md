@@ -49,7 +49,11 @@ need to follow the usual configure & make approach:
 
     ./configure --prefix=/usr --sysconfdir=/etc && make
 
-From the same source tarball you can build an SRPM package:
+To generate a source tarball:
+
+    ./configure --prefix=/usr --sysconfdir=/etc && make dist
+
+From a source tarball you can build an SRPM package:
 
     rpmbuild -ts <tarball>
 
