@@ -97,20 +97,9 @@ rm -r %{buildroot}/usr/include/%{name}
 
 %post
 /sbin/ldconfig
-# Add tlog-rec-session to /etc/shells if it exists
-test -e '%{_sysconfdir}/shells' &&
-    sed -i \
-        -e '\%^%{_bindir}/%{name}-rec-session$% q' \
-        -e '$ s%$%\n%{_bindir}/%{name}-rec-session%' \
-        %{_sysconfdir}/shells
 
 %postun
 /sbin/ldconfig
-# Remove tlog-rec-session from /etc/shells if it exists
-test -e '%{_sysconfdir}/shells' &&
-    sed -i \
-        -e '\%^%{_bindir}/%{name}-rec-session$% d' \
-        %{_sysconfdir}/shells
 
 %changelog
 * Sun Jan 29 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 4-1
