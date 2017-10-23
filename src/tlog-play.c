@@ -205,6 +205,7 @@ create_log_source(struct tlog_errs **perrs,
                         perrs,
                         "Systemd journal match symbol #%zu \"%s\" is invalid",
                         i + 1, str_list[i]);
+                    goto cleanup;
                 }
             }
         }
