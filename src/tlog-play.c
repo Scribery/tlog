@@ -412,6 +412,7 @@ run(struct tlog_errs **perrs,
         } else if (!tlog_timestr_to_timespec(str, &goto_ts)) {
             tlog_errs_pushf(perrs,
                             "Failed parsing timestamp to go to: %s", str);
+            grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
         goto_active = true;
