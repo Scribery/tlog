@@ -106,10 +106,10 @@ create_log_source(struct tlog_errs **perrs,
         const char *baseurl;
         const char *query;
 
-        /* Get ElasticSearch reader conf container */
+        /* Get Elasticsearch reader conf container */
         if (!json_object_object_get_ex(conf, "es", &conf_es)) {
             tlog_errs_pushs(perrs,
-                            "ElasticSearch reader parameters "
+                            "Elasticsearch reader parameters "
                             "are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
@@ -117,7 +117,7 @@ create_log_source(struct tlog_errs **perrs,
 
         /* Get the base URL */
         if (!json_object_object_get_ex(conf_es, "baseurl", &obj)) {
-            tlog_errs_pushs(perrs, "ElasticSearch base URL is not specified");
+            tlog_errs_pushs(perrs, "Elasticsearch base URL is not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -126,14 +126,14 @@ create_log_source(struct tlog_errs **perrs,
         /* Check base URL validity */
         if (!tlog_es_json_reader_base_url_is_valid(baseurl)) {
             tlog_errs_pushf(perrs,
-                            "Invalid ElasticSearch base URL: %s", baseurl);
+                            "Invalid Elasticsearch base URL: %s", baseurl);
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
 
         /* Get the query */
         if (!json_object_object_get_ex(conf_es, "query", &obj)) {
-            tlog_errs_pushs(perrs, "ElasticSearch query is not specified");
+            tlog_errs_pushs(perrs, "Elasticsearch query is not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -143,7 +143,7 @@ create_log_source(struct tlog_errs **perrs,
         grc = tlog_es_json_reader_create(&reader, baseurl, query, 10);
         if (grc != TLOG_RC_OK) {
             tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating the ElasticSearch reader");
+            tlog_errs_pushs(perrs, "Failed creating the Elasticsearch reader");
             goto cleanup;
         }
     } else if (strcmp(str, "journal") == 0) {

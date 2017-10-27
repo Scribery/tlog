@@ -102,7 +102,7 @@ Play back a recording from Journal:
 .B tlog-play -r journal -M TLOG_REC=6071524bb44d403991a00413ab7c8596-53bd-378c5d9
 
 .TP
-Play back a recording from ElasticSearch:
+Play back a recording from Elasticsearch:
 .B tlog-play -r es --es-baseurl=http://localhost:9200/tlog/tlog/_search --es-query=session:121
 
 .SH SEE ALSO

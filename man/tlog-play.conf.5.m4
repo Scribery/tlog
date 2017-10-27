@@ -53,7 +53,7 @@ A config specifying only the reader:
 .fi
 
 .TP
-A config specifying ElasticSearch reader, along with the base URL.
+A config specifying Elasticsearch reader, along with the base URL.
 .nf
 
 {
