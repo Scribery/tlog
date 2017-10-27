@@ -1127,8 +1127,10 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
         /* If the session is already locked (recorded) */
         if (!lock_acquired) {
             /* Exec the bare session */
-            grc = tlog_exec(perrs, opts & TLOG_EXEC_OPT_MASK, path, argv);
-            goto cleanup;
+            tlog_exec(perrs, opts & TLOG_EXEC_OPT_MASK, path, argv);
+            tlog_errs_print(stderr, *perrs);
+            tlog_errs_destroy(perrs);
+            _exit(127);
         }
     }
 

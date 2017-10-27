@@ -256,8 +256,10 @@ tlog_tap_setup(struct tlog_errs **perrs,
         }
 
         /* Execute the program to record */
-        grc = tlog_exec(perrs, opts, path, argv);
-        goto cleanup;
+        tlog_exec(perrs, opts, path, argv);
+        tlog_errs_print(stderr, *perrs);
+        tlog_errs_destroy(perrs);
+        _exit(127);
     }
 
     /* Lock the possibly-privileged GID permanently */
