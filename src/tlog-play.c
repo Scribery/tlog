@@ -200,7 +200,6 @@ create_log_source(struct tlog_errs **perrs,
                                 json_object_array_get_idx(obj, i));
                 if (!tlog_journal_match_sym_is_valid(str_list[i])) {
                     grc = TLOG_RC_FAILURE;
-                    tlog_errs_pushc(perrs, grc);
                     tlog_errs_pushf(
                         perrs,
                         "Systemd journal match symbol #%zu \"%s\" is invalid",
@@ -860,7 +859,6 @@ main(int argc, char **argv)
     /* Read configuration and command-line usage message */
     grc = tlog_play_conf_load(&errs, &cmd_help, &conf, argc, argv);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(&errs, "Failed retrieving configuration");
         goto cleanup;
     }
 

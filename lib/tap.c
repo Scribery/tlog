@@ -257,9 +257,6 @@ tlog_tap_setup(struct tlog_errs **perrs,
 
         /* Execute the program to record */
         grc = tlog_exec(perrs, opts, path, argv);
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs,
-                        "Failed executing the program to record (%s)", path);
         goto cleanup;
     }
 

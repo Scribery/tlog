@@ -526,7 +526,6 @@ tlog_rec_create_rl_json_writer(struct tlog_errs **perrs,
     } else {
         assert(!"Unknown limit action");
         grc = TLOG_RC_FAILURE;
-        tlog_errs_pushc(perrs, grc);
         tlog_errs_pushf(perrs, "Unknown limit action is specified: %s", str);
         goto cleanup;
     }
@@ -1121,7 +1120,6 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
         /* Attempt to lock the session */
         grc = tlog_session_lock(perrs, session_id, euid, egid, &lock_acquired);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed locking session");
             goto cleanup;
         }
@@ -1130,8 +1128,6 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
         if (!lock_acquired) {
             /* Exec the bare session */
             grc = tlog_exec(perrs, opts & TLOG_EXEC_OPT_MASK, path, argv);
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed executing the program to record");
             goto cleanup;
         }
     }
@@ -1154,7 +1150,6 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     }
     grc = tlog_rec_get_item_mask(perrs, obj, &item_mask);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
         tlog_errs_pushs(perrs, "Failed reading log mask");
         goto cleanup;
     }
