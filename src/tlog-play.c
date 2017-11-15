@@ -106,10 +106,10 @@ create_log_source(struct tlog_errs **perrs,
         const char *baseurl;
         const char *query;
 
-        /* Get ElasticSearch reader conf container */
+        /* Get Elasticsearch reader conf container */
         if (!json_object_object_get_ex(conf, "es", &conf_es)) {
             tlog_errs_pushs(perrs,
-                            "ElasticSearch reader parameters "
+                            "Elasticsearch reader parameters "
                             "are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
@@ -117,7 +117,7 @@ create_log_source(struct tlog_errs **perrs,
 
         /* Get the base URL */
         if (!json_object_object_get_ex(conf_es, "baseurl", &obj)) {
-            tlog_errs_pushs(perrs, "ElasticSearch base URL is not specified");
+            tlog_errs_pushs(perrs, "Elasticsearch base URL is not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -126,14 +126,14 @@ create_log_source(struct tlog_errs **perrs,
         /* Check base URL validity */
         if (!tlog_es_json_reader_base_url_is_valid(baseurl)) {
             tlog_errs_pushf(perrs,
-                            "Invalid ElasticSearch base URL: %s", baseurl);
+                            "Invalid Elasticsearch base URL: %s", baseurl);
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
 
         /* Get the query */
         if (!json_object_object_get_ex(conf_es, "query", &obj)) {
-            tlog_errs_pushs(perrs, "ElasticSearch query is not specified");
+            tlog_errs_pushs(perrs, "Elasticsearch query is not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -143,7 +143,7 @@ create_log_source(struct tlog_errs **perrs,
         grc = tlog_es_json_reader_create(&reader, baseurl, query, 10);
         if (grc != TLOG_RC_OK) {
             tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating the ElasticSearch reader");
+            tlog_errs_pushs(perrs, "Failed creating the Elasticsearch reader");
             goto cleanup;
         }
     } else if (strcmp(str, "journal") == 0) {
@@ -451,7 +451,12 @@ run(struct tlog_errs **perrs,
 
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
-        sigaction(exit_sig[i], NULL, &sa);
+        if(sigaction(exit_sig[i], NULL, &sa) == -1){
+          grc = TLOG_GRC_ERRNO;
+          tlog_errs_pushc(perrs, grc);
+          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
+          goto cleanup;
+        }
         if (sa.sa_handler != SIG_IGN) {
             sa.sa_handler = exit_sighandler;
             sigemptyset(&sa.sa_mask);
@@ -460,7 +465,12 @@ run(struct tlog_errs **perrs,
             }
             /* NOTE: no SA_RESTART on purpose */
             sa.sa_flags = 0;
-            sigaction(exit_sig[i], &sa, NULL);
+            if(sigaction(exit_sig[i], &sa, NULL) == -1){
+              grc = TLOG_GRC_ERRNO;
+              tlog_errs_pushc(perrs, grc);
+              tlog_errs_pushs(perrs, "Failed to set an exit signal action");
+              goto cleanup;
+            }
         }
     }
 
@@ -470,7 +480,12 @@ run(struct tlog_errs **perrs,
     sigaddset(&sa.sa_mask, SIGIO);
     /* NOTE: no SA_RESTART on purpose */
     sa.sa_flags = 0;
-    sigaction(SIGIO, &sa, NULL);
+    if(sigaction(SIGIO, &sa, NULL) == -1){
+      grc = TLOG_GRC_ERRNO;
+      tlog_errs_pushc(perrs, grc);
+      tlog_errs_pushs(perrs, "Failed to set SIGIO action");
+      goto cleanup;
+    }
 
     /* Setup signal-driven IO on stdin (and stdout) */
     if (fcntl(STDIN_FILENO, F_SETOWN, getpid()) < 0) {
@@ -691,12 +706,12 @@ run(struct tlog_errs **perrs,
         /* If we're skipping the timing of this packet */
         if (skip) {
             /* Skip the time */
-            local_last_ts = local_this_ts;
+          //  local_last_ts = local_this_ts;
             skip = false;
         /* Else, if we're fast-forwarding to a time */
         } else if (goto_active) {
             /* Skip the time */
-            local_last_ts = local_this_ts;
+          //  local_last_ts = local_this_ts;
             /* If we reached the target time */
             if (tlog_timespec_cmp(&pkt.timestamp, &goto_ts) >= 0) {
                 goto_active = false;
@@ -710,14 +725,14 @@ run(struct tlog_errs **perrs,
             /* If we don't need a delay for the next packet (it's overdue) */
             if (tlog_timespec_cmp(&local_next_ts, &local_this_ts) <= 0) {
                 /* Stretch the time */
-                local_last_ts = local_this_ts;
+            //    local_last_ts = local_this_ts;
             } else {
                 /* Advance the time */
                 rc = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
                                      &local_next_ts, NULL);
                 /* If we're interrupted */
                 if (rc == EINTR) {
-                    local_last_ts = local_this_ts;
+                //    local_last_ts = local_this_ts;
                     /* Get current time */
                     if (clock_gettime(CLOCK_MONOTONIC, &local_this_ts) != 0) {
                         grc = TLOG_GRC_ERRNO;
@@ -732,7 +747,7 @@ run(struct tlog_errs **perrs,
                     tlog_timespec_fp_mul(&pkt_delay_ts, &speed, &pkt_delay_ts);
                     tlog_timespec_cap_add(&pkt_last_ts, &pkt_delay_ts,
                                           &pkt_last_ts);
-                    local_last_ts = local_this_ts;
+                //    local_last_ts = local_this_ts;
                     continue;
                 } else if (rc != 0) {
                     grc = TLOG_GRC_FROM(errno, rc);
@@ -740,7 +755,7 @@ run(struct tlog_errs **perrs,
                     tlog_errs_pushs(perrs, "Failed sleeping");
                     goto cleanup;
                 }
-                local_last_ts = local_next_ts;
+        //        local_last_ts = local_next_ts;
             }
         }
 
@@ -808,7 +823,11 @@ cleanup:
 
     /* Restore signal handlers */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
-        sigaction(exit_sig[i], NULL, &sa);
+        if(sigaction(exit_sig[i], NULL, &sa) == -1) {
+          grc = TLOG_GRC_ERRNO;
+          tlog_errs_pushc(perrs, grc);
+          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
+        }
         if (sa.sa_handler != SIG_IGN) {
             signal(exit_sig[i], SIG_DFL);
         }
