@@ -855,7 +855,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
 
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
-        if(sigaction(SIGALRM, &sa, NULL) == -1) {
+        if(sigaction(SIGALRM, &sa, NULL) == -1){
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed to set an SIGALRM signal action");
