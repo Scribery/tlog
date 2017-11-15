@@ -454,7 +454,7 @@ run(struct tlog_errs **perrs,
         if(sigaction(exit_sig[i], NULL, &sa) == -1){
           grc = TLOG_GRC_ERRNO;
           tlog_errs_pushc(perrs, grc);
-          tlog_errs_pushs(perrs, "Failed sigaction");
+          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
           goto cleanup;
         }
         if (sa.sa_handler != SIG_IGN) {
@@ -468,7 +468,7 @@ run(struct tlog_errs **perrs,
             if(sigaction(exit_sig[i], &sa, NULL) == -1){
               grc = TLOG_GRC_ERRNO;
               tlog_errs_pushc(perrs, grc);
-              tlog_errs_pushs(perrs, "Failed sigaction");
+              tlog_errs_pushs(perrs, "Failed to set an exit signal action");
               goto cleanup;
             }
         }
@@ -483,7 +483,7 @@ run(struct tlog_errs **perrs,
     if(sigaction(SIGIO, &sa, NULL) == -1){
       grc = TLOG_GRC_ERRNO;
       tlog_errs_pushc(perrs, grc);
-      tlog_errs_pushs(perrs, "Failed sigaction");
+      tlog_errs_pushs(perrs, "Failed to set SIGIO action");
       goto cleanup;
     }
 
@@ -706,12 +706,12 @@ run(struct tlog_errs **perrs,
         /* If we're skipping the timing of this packet */
         if (skip) {
             /* Skip the time */
-            local_last_ts = local_this_ts;
+          //  local_last_ts = local_this_ts;
             skip = false;
         /* Else, if we're fast-forwarding to a time */
         } else if (goto_active) {
             /* Skip the time */
-            local_last_ts = local_this_ts;
+          //  local_last_ts = local_this_ts;
             /* If we reached the target time */
             if (tlog_timespec_cmp(&pkt.timestamp, &goto_ts) >= 0) {
                 goto_active = false;
@@ -725,14 +725,14 @@ run(struct tlog_errs **perrs,
             /* If we don't need a delay for the next packet (it's overdue) */
             if (tlog_timespec_cmp(&local_next_ts, &local_this_ts) <= 0) {
                 /* Stretch the time */
-                local_last_ts = local_this_ts;
+            //    local_last_ts = local_this_ts;
             } else {
                 /* Advance the time */
                 rc = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
                                      &local_next_ts, NULL);
                 /* If we're interrupted */
                 if (rc == EINTR) {
-                    local_last_ts = local_this_ts;
+                //    local_last_ts = local_this_ts;
                     /* Get current time */
                     if (clock_gettime(CLOCK_MONOTONIC, &local_this_ts) != 0) {
                         grc = TLOG_GRC_ERRNO;
@@ -747,7 +747,7 @@ run(struct tlog_errs **perrs,
                     tlog_timespec_fp_mul(&pkt_delay_ts, &speed, &pkt_delay_ts);
                     tlog_timespec_cap_add(&pkt_last_ts, &pkt_delay_ts,
                                           &pkt_last_ts);
-                    local_last_ts = local_this_ts;
+                //    local_last_ts = local_this_ts;
                     continue;
                 } else if (rc != 0) {
                     grc = TLOG_GRC_FROM(errno, rc);
@@ -755,7 +755,7 @@ run(struct tlog_errs **perrs,
                     tlog_errs_pushs(perrs, "Failed sleeping");
                     goto cleanup;
                 }
-                local_last_ts = local_next_ts;
+        //        local_last_ts = local_next_ts;
             }
         }
 
@@ -823,7 +823,11 @@ cleanup:
 
     /* Restore signal handlers */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
-        sigaction(exit_sig[i], NULL, &sa);
+        if(sigaction(exit_sig[i], NULL, &sa) == -1) {
+          grc = TLOG_GRC_ERRNO;
+          tlog_errs_pushc(perrs, grc);
+          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
+        }
         if (sa.sa_handler != SIG_IGN) {
             signal(exit_sig[i], SIG_DFL);
         }
