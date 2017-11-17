@@ -855,7 +855,12 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
 
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
-        sigaction(exit_sig[i], NULL, &sa);
+        if (sigaction(exit_sig[i], NULL, &sa) == -1) {
+          grc = TLOG_GRC_ERRNO;
+          tlog_errs_pushc(perrs, grc);
+          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
+          goto cleanup;
+        }
         if (sa.sa_handler != SIG_IGN) {
             sa.sa_handler = tlog_rec_exit_sighandler;
             sigemptyset(&sa.sa_mask);
@@ -864,7 +869,12 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
             }
             /* NOTE: no SA_RESTART on purpose */
             sa.sa_flags = 0;
-            sigaction(exit_sig[i], &sa, NULL);
+            if(sigaction(exit_sig[i], &sa, NULL) == -1) {
+              grc = TLOG_GRC_ERRNO;
+              tlog_errs_pushc(perrs, grc);
+              tlog_errs_pushs(perrs, "Failed to set an exit signal action");
+              goto cleanup;
+            }
         }
     }
 
@@ -873,7 +883,12 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
     sigemptyset(&sa.sa_mask);
     /* NOTE: no SA_RESTART on purpose */
     sa.sa_flags = 0;
-    sigaction(SIGALRM, &sa, NULL);
+    if(sigaction(SIGALRM, &sa, NULL) == -1) {
+      grc = TLOG_GRC_ERRNO;
+      tlog_errs_pushc(perrs, grc);
+      tlog_errs_pushs(perrs, "Failed to set a SIGALRM signal action");
+      goto cleanup;
+    }
 
     /*
      * Transfer I/O and window changes
