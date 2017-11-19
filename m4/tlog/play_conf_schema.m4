@@ -65,18 +65,18 @@ M4_PARAM(`/file', `path', `file-',
 m4_dnl
 m4_dnl
 m4_dnl
-M4_CONTAINER(`', `/es', `ElasticSearch reader')m4_dnl
+M4_CONTAINER(`', `/es', `Elasticsearch reader')m4_dnl
 m4_dnl
 M4_PARAM(`/es', `baseurl', `file-',
          `M4_TYPE_STRING()', false,
-         `', `=STRING', `ElasticSearch URL without query or fragment parts',
-         `M4_LINES(`The base URL to request ElasticSearch through. Should not',
+         `', `=STRING', `Elasticsearch URL without query or fragment parts',
+         `M4_LINES(`The base URL to request Elasticsearch through. Should not',
                    `contain the query (?...) or fragment (#...) parts.')')m4_dnl
 m4_dnl
 M4_PARAM(`/es', `query', `file-',
          `M4_TYPE_STRING()', false,
-         `', `=STRING', `ElasticSearch query',
-         `M4_LINES(`The query string to send to ElasticSearch')')m4_dnl
+         `', `=STRING', `Elasticsearch query',
+         `M4_LINES(`The query string to send to Elasticsearch')')m4_dnl
 m4_dnl
 m4_dnl
 m4_dnl

@@ -106,10 +106,10 @@ create_log_source(struct tlog_errs **perrs,
         const char *baseurl;
         const char *query;
 
-        /* Get ElasticSearch reader conf container */
+        /* Get Elasticsearch reader conf container */
         if (!json_object_object_get_ex(conf, "es", &conf_es)) {
             tlog_errs_pushs(perrs,
-                            "ElasticSearch reader parameters "
+                            "Elasticsearch reader parameters "
                             "are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
@@ -117,7 +117,7 @@ create_log_source(struct tlog_errs **perrs,
 
         /* Get the base URL */
         if (!json_object_object_get_ex(conf_es, "baseurl", &obj)) {
-            tlog_errs_pushs(perrs, "ElasticSearch base URL is not specified");
+            tlog_errs_pushs(perrs, "Elasticsearch base URL is not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -126,14 +126,14 @@ create_log_source(struct tlog_errs **perrs,
         /* Check base URL validity */
         if (!tlog_es_json_reader_base_url_is_valid(baseurl)) {
             tlog_errs_pushf(perrs,
-                            "Invalid ElasticSearch base URL: %s", baseurl);
+                            "Invalid Elasticsearch base URL: %s", baseurl);
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
 
         /* Get the query */
         if (!json_object_object_get_ex(conf_es, "query", &obj)) {
-            tlog_errs_pushs(perrs, "ElasticSearch query is not specified");
+            tlog_errs_pushs(perrs, "Elasticsearch query is not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
@@ -143,7 +143,7 @@ create_log_source(struct tlog_errs **perrs,
         grc = tlog_es_json_reader_create(&reader, baseurl, query, 10);
         if (grc != TLOG_RC_OK) {
             tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating the ElasticSearch reader");
+            tlog_errs_pushs(perrs, "Failed creating the Elasticsearch reader");
             goto cleanup;
         }
     } else if (strcmp(str, "journal") == 0) {
@@ -451,7 +451,12 @@ run(struct tlog_errs **perrs,
 
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
-        sigaction(exit_sig[i], NULL, &sa);
+        if(sigaction(exit_sig[i], NULL, &sa) == -1){
+          grc = TLOG_GRC_ERRNO;
+          tlog_errs_pushc(perrs, grc);
+          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
+          goto cleanup;
+        }
         if (sa.sa_handler != SIG_IGN) {
             sa.sa_handler = exit_sighandler;
             sigemptyset(&sa.sa_mask);
@@ -460,7 +465,12 @@ run(struct tlog_errs **perrs,
             }
             /* NOTE: no SA_RESTART on purpose */
             sa.sa_flags = 0;
-            sigaction(exit_sig[i], &sa, NULL);
+            if(sigaction(exit_sig[i], &sa, NULL) == -1){
+              grc = TLOG_GRC_ERRNO;
+              tlog_errs_pushc(perrs, grc);
+              tlog_errs_pushs(perrs, "Failed to set an exit signal action");
+              goto cleanup;
+            }
         }
     }
 
@@ -470,7 +480,12 @@ run(struct tlog_errs **perrs,
     sigaddset(&sa.sa_mask, SIGIO);
     /* NOTE: no SA_RESTART on purpose */
     sa.sa_flags = 0;
-    sigaction(SIGIO, &sa, NULL);
+    if(sigaction(SIGIO, &sa, NULL) == -1){
+      grc = TLOG_GRC_ERRNO;
+      tlog_errs_pushc(perrs, grc);
+      tlog_errs_pushs(perrs, "Failed to set SIGIO action");
+      goto cleanup;
+    }
 
     /* Setup signal-driven IO on stdin (and stdout) */
     if (fcntl(STDIN_FILENO, F_SETOWN, getpid()) < 0) {
@@ -498,10 +513,12 @@ run(struct tlog_errs **perrs,
      * but keep signal generation, if not persistent
      */
     raw_termios = orig_termios;
-    raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO | (persist ? ISIG : 0));
+    raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHONL | ECHO | (persist ? ISIG : 0));
     raw_termios.c_iflag &= ~(BRKINT | ICRNL | IGNBRK | IGNCR | INLCR |
                              INPCK | ISTRIP | IXON | PARMRK);
     raw_termios.c_oflag &= ~OPOST;
+    raw_termios.c_cflag &= ~(CSIZE | PARENB);
+    raw_termios.c_cflag |= CS8;
     raw_termios.c_cc[VMIN] = 1;
     raw_termios.c_cc[VTIME] = 0;
     rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw_termios);
@@ -808,7 +825,12 @@ cleanup:
 
     /* Restore signal handlers */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
-        sigaction(exit_sig[i], NULL, &sa);
+        if(sigaction(exit_sig[i], NULL, &sa) == -1) {
+          grc = TLOG_GRC_ERRNO;
+          tlog_errs_pushc(perrs, grc);
+          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
+        }
+
         if (sa.sa_handler != SIG_IGN) {
             signal(exit_sig[i], SIG_DFL);
         }

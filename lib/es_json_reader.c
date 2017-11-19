@@ -1,5 +1,5 @@
 /*
- * ElasticSearch JSON message reader.
+ * Elasticsearch JSON message reader.
  *
  * Copyright (C) 2015 Red Hat
  *
@@ -30,7 +30,7 @@
 #include <tlog/es_json_reader.h>
 #include <tlog/rc.h>
 
-/** ElasticSearch reader data */
+/** Elasticsearch reader data */
 struct tlog_es_json_reader {
     struct tlog_json_reader     reader;     /**< Base type */
     CURL                       *curl;       /**< libcurl handle */
@@ -80,15 +80,15 @@ tlog_es_json_reader_cleanup(struct tlog_json_reader *reader)
 }
 
 /**
- * Format an ElasticSearch request URL prefix: the URL ending with "from=",
+ * Format an Elasticsearch request URL prefix: the URL ending with "from=",
  * ready for the addition of the message index.
  *
  * @param purl_pfx  The location for the dynamically-allocated URL prefix.
  * @param curl      The CURL handle to escape with.
- * @param base_url  The base URL to request ElasticSearch, without the query
+ * @param base_url  The base URL to request Elasticsearch, without the query
  *                  or the fragment parts.
  * @param query     The query string to send to ElastiSearch.
- * @param size      Number of messages to request from ElasticSearch in one
+ * @param size      Number of messages to request from Elasticsearch in one
  *                  HTTP request.
  *
  * @return Global return code.
@@ -287,7 +287,7 @@ tlog_es_json_reader_loc_fmt(const struct tlog_json_reader *reader,
 }
 
 /**
- * Format an ElasticSearch request URL for the current message index of a
+ * Format an Elasticsearch request URL for the current message index of a
  * reader.
  *
  * @param reader    The reader to format the URL for.

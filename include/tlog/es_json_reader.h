@@ -1,9 +1,9 @@
 /**
  * @file
- * @brief ElasticSearch JSON message reader.
+ * @brief Elasticsearch JSON message reader.
  *
  * An implementation of a reader retrieving JSON log messages from
- * ElasticSearch, provided base URL and a query.
+ * Elasticsearch, provided base URL and a query.
  */
 /*
  * Copyright (C) 2015 Red Hat
@@ -32,27 +32,27 @@
 #include <tlog/json_reader.h>
 
 /**
- * Minimum number of messages to request from ElasticSearch in one HTTP
+ * Minimum number of messages to request from Elasticsearch in one HTTP
  * request
  */
 #define TLOG_ES_JSON_READER_SIZE_MIN 1
 
 /**
- * ElasticSearch message reader type
+ * Elasticsearch message reader type
  *
  * Creation arguments:
  *
- * const char  *base_url    The base URL to request ElasticSearch, without the
+ * const char  *base_url    The base URL to request Elasticsearch, without the
  *                          query or the fragment parts.
  * const char  *query       The query string to send to ElastiSearch.
- * size_t       size        Number of messages to request from ElasticSearch
+ * size_t       size        Number of messages to request from Elasticsearch
  *                          in one HTTP request.
  *
  */
 extern const struct tlog_json_reader_type tlog_es_json_reader_type;
 
 /**
- * Check if a base URL is valid for use with an ElasticSearch reader, that is,
+ * Check if a base URL is valid for use with an Elasticsearch reader, that is,
  * if it doesn't contain the query (?...) or the fragment (#...) parts.
  *
  * @param base_url   The base URL to check.
@@ -62,14 +62,14 @@ extern const struct tlog_json_reader_type tlog_es_json_reader_type;
 extern bool tlog_es_json_reader_base_url_is_valid(const char *base_url);
 
 /**
- * Create an ElasticSearch reader.
+ * Create an Elasticsearch reader.
  *
  * @param preader   Location for the created reader pointer, will be set to
  *                  NULL in case of error.
- * @param base_url  The base URL to request ElasticSearch, without the query
+ * @param base_url  The base URL to request Elasticsearch, without the query
  *                  or the fragment parts.
  * @param query     The query string to send to ElastiSearch.
- * @param size      Number of messages to request from ElasticSearch in one
+ * @param size      Number of messages to request from Elasticsearch in one
  *                  HTTP request.
  *
  * @return Global return code.
