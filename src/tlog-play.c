@@ -513,10 +513,12 @@ run(struct tlog_errs **perrs,
      * but keep signal generation, if not persistent
      */
     raw_termios = orig_termios;
-    raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO | (persist ? ISIG : 0));
+    raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO | ECHONL | (persist ? ISIG : 0));
     raw_termios.c_iflag &= ~(BRKINT | ICRNL | IGNBRK | IGNCR | INLCR |
                              INPCK | ISTRIP | IXON | PARMRK);
     raw_termios.c_oflag &= ~OPOST;
+    raw_termios.c_cflag &= ~(CSIZE | PARENB);
+    raw_termios.c_cflag |= CS8;
     raw_termios.c_cc[VMIN] = 1;
     raw_termios.c_cc[VTIME] = 0;
     rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw_termios);
