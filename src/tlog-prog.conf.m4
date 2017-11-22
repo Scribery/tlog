@@ -1,5 +1,6 @@
 m4_include(`misc.m4')m4_dnl
 m4_include(`conf_origin.m4')m4_dnl
+m4_include(`conf_misc.m4')m4_dnl
 //
 // Tlog-M4_PROG_NAME() M4_CONF_TYPE() configuration. See tlog-M4_PROG_NAME().conf(5) for details.
 // This file uses JSON format with both C and C++ comments allowed.
@@ -97,31 +98,40 @@ m4_define(
             M4_PREFIX(),
             `
                 m4_ifelse(
-                    M4_FIRST(),
-                    `true',
-                    `m4_define(`M4_FIRST', `false')',
-                    `m4_printl(`,', `')'
-                )
-                m4_ifelse(
-                    `$2',
-                    `',
-                    `m4_printl(M4_INDENT()`{')',
+                    M4_CONF_CONTAINER_SIZE(M4_PROG_SYM()`_conf_schema.m4',
+                                           M4_PREFIX()`$2',
+                                           `file'),
+                    0,
+                    ,
                     `
-                        m4_printl(M4_INDENT()`// $3 parameters')
-                        m4_printl(M4_INDENT()`"m4_substr(`$2', 1)": {')
+                        m4_ifelse(
+                            M4_FIRST(),
+                            `true',
+                            `m4_define(`M4_FIRST', `false')',
+                            `m4_printl(`,', `')'
+                        )
+                        m4_ifelse(
+                            `$2',
+                            `',
+                            `m4_printl(M4_INDENT()`{')',
+                            `
+                                m4_printl(M4_INDENT()`// $3 parameters')
+                                m4_printl(M4_INDENT()`"m4_substr(`$2', 1)": {')
+                            '
+                        )
+                        m4_pushdef(`M4_PREFIX', M4_PREFIX()`$2')
+                        m4_pushdef(`M4_INDENT', M4_INDENT()`    ')
+                        m4_pushdef(`M4_FIRST', `true')
+
+                        m4_include(M4_PROG_SYM()`_conf_schema.m4')
+
+                        m4_popdef(`M4_FIRST')
+                        m4_popdef(`M4_INDENT')
+                        m4_popdef(`M4_PREFIX')
+                        m4_printl(`')
+                        m4_print(M4_INDENT()`}')
                     '
                 )
-                m4_pushdef(`M4_PREFIX', M4_PREFIX()`$2')
-                m4_pushdef(`M4_INDENT', M4_INDENT()`    ')
-                m4_pushdef(`M4_FIRST', `true')
-
-                m4_include(M4_PROG_SYM()`_conf_schema.m4')
-
-                m4_popdef(`M4_FIRST')
-                m4_popdef(`M4_INDENT')
-                m4_popdef(`M4_PREFIX')
-                m4_printl(`')
-                m4_print(M4_INDENT()`}')
             '
         )
     '
