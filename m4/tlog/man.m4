@@ -232,26 +232,35 @@ m4_define(
             `$1',
             M4_MAN_CONF_PREFIX(),
             `
-                m4_print(
-                    `.SS ',
-                    `m4_ifelse(
-                        `$2',
-                        `',
-                        ,
-                        `m4_substr(m4_translit(`$1$2', `/', `.'), 1) - ')',
-                    `$3 object')
-                m4_printl(`')
-                m4_pushdef(`M4_MAN_CONF_PREFIX', M4_MAN_CONF_PREFIX()`$2')
+                m4_ifelse(
+                    M4_CONF_CONTAINER_SIZE(M4_PROG_SYM()`_conf_schema.m4',
+                                           M4_MAN_CONF_PREFIX()`$2',
+                                           `file'),
+                    0,
+                    ,
+                    `
+                        m4_print(
+                            `.SS ',
+                            `m4_ifelse(
+                                `$2',
+                                `',
+                                ,
+                                `m4_substr(m4_translit(`$1$2', `/', `.'), 1) - ')',
+                            `$3 object')
+                        m4_printl(`')
+                        m4_pushdef(`M4_MAN_CONF_PREFIX', M4_MAN_CONF_PREFIX()`$2')
 
-                m4_pushdef(`M4_CONTAINER', m4_defn(`M4_MAN_CONF_CONTAINER_DESC'))
-                m4_pushdef(`M4_PARAM', m4_defn(`M4_MAN_CONF_PARAM_DESC'))
-                m4_include(M4_PROG_SYM()`_conf_schema.m4')
-                m4_popdef(`M4_PARAM')
-                m4_popdef(`M4_CONTAINER')
+                        m4_pushdef(`M4_CONTAINER', m4_defn(`M4_MAN_CONF_CONTAINER_DESC'))
+                        m4_pushdef(`M4_PARAM', m4_defn(`M4_MAN_CONF_PARAM_DESC'))
+                        m4_include(M4_PROG_SYM()`_conf_schema.m4')
+                        m4_popdef(`M4_PARAM')
+                        m4_popdef(`M4_CONTAINER')
 
-                m4_include(M4_PROG_SYM()`_conf_schema.m4')
+                        m4_include(M4_PROG_SYM()`_conf_schema.m4')
 
-                m4_popdef(`M4_MAN_CONF_PREFIX')
+                        m4_popdef(`M4_MAN_CONF_PREFIX')
+                    '
+                )
             '
         )
     '
