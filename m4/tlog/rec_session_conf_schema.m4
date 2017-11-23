@@ -27,19 +27,22 @@ m4_dnl
 M4_PARAM(`', `shell', `file-env',
          `M4_TYPE_STRING(`/bin/bash')', true,
          `s', `=SHELL', `Spawn the specified SHELL',
-         `M4_LINES(`The path to the shell executable that should be spawned.')')m4_dnl
+         `SHELL is the ', `The ',
+         `M4_LINES(`path to the shell executable which should be spawned.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `login', `name-',
          `M4_TYPE_BOOL()', false,
          `l', `', `Make the shell a login shell',
-         `M4_LINES(`If set to true, the shell is signalled to act as a login shell.',
+         `If specified, ', `If true ',
+         `M4_LINES(`the shell is signalled to act as a login shell.',
                    `This is done by prepending argv[0] of the shell',
                    `with a dash character.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `command', `opts',
          `M4_TYPE_BOOL()', false,
          `c', `', `Execute shell commands',
-         `M4_LINES(`If set to true, tlog-rec-session passes the -c option to the shell,',
+         `If specified, ', `If true ',
+         `M4_LINES(`tlog-rec-session passes the -c option to the shell,',
                    `followed by all the positional arguments, which specify the shell',
                    `commands to execute along with command name and its arguments.')')m4_dnl
 m4_dnl
@@ -47,7 +50,8 @@ M4_PARAM(`', `notice', `file-env',
          `M4_TYPE_STRING(`\nATTENTION! Your session is being recorded!\n\n')',
          true,
          `', `=TEXT', `Print TEXT message before starting recording',
-         `M4_LINES(`A message which will be printed before starting',
+         `TEXT is a ', `A ',
+         `M4_LINES(`message which will be printed before starting',
                    `recording and the user shell. Can be used to warn',
                    `the user that the session is recorded.')')m4_dnl
 m4_dnl
@@ -61,6 +65,7 @@ m4_dnl
 M4_PARAM(`', `writer', `file-env',
          `M4_TYPE_CHOICE(`syslog', `journal', `syslog', `file')', true,
          `w', `=STRING', `Use STRING log writer (journal/syslog/file, default syslog)',
-         `M4_LINES(`The type of "log writer" to use for logging. The writer needs',
+         `STRING is the ', `The ',
+         `M4_LINES(`type of "log writer" to use for logging. The writer needs',
                    `to be configured using its dedicated parameters.')')m4_dnl
 m4_dnl

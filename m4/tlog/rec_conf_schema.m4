@@ -30,6 +30,7 @@ m4_dnl
 M4_PARAM(`', `writer', `file-',
          `M4_TYPE_CHOICE(`file', `journal', `syslog', `file')', true,
          `w', `=STRING', `Use STRING log writer (journal/syslog/file, default file)',
-         `M4_LINES(`The type of "log writer" to use for logging. The writer needs',
+         `STRING is the ', `The ',
+         `M4_LINES(`type of "log writer" to use for logging. The writer needs',
                    `to be configured using its dedicated parameters.')')m4_dnl
 m4_dnl

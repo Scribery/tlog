@@ -43,8 +43,10 @@ m4_dnl      $4 Type, must be an invocation of M4_TYPE_*.
 m4_dnl      $5 `true' if has default value, `false' otherwise
 m4_dnl      $6 Option letter
 m4_dnl      $7 Option value placeholder
-m4_dnl      $8 Option title
-m4_dnl      $9 Description, must be an invocation of M4_LINES
+m4_dnl      $8 Option summary
+m4_dnl      $9 Option description prologue
+m4_dnl      $10 Configuration description prologue
+m4_dnl      $11 Common description epilogue, must be an invocation of M4_LINES
 m4_dnl
 m4_dnl M4_TYPE_INT - describe integer type
 m4_dnl Arguments:
@@ -80,14 +82,17 @@ m4_dnl
 M4_PARAM(`', `args', `args',
          `M4_TYPE_STRING_ARRAY()', false,
          `', `', `',
+         `', `',
          `M4_LINES(`Non-option positional command-line arguments.')')m4_dnl
 m4_dnl
 M4_PARAM(`', `help', `opts',
          `M4_TYPE_BOOL(false)', true,
          `h', `', `Output a command-line usage message and exit',
+         `', `',
          `M4_LINES(`')')m4_dnl
 m4_dnl
 M4_PARAM(`', `version', `opts',
          `M4_TYPE_BOOL(false)', true,
          `v', `', `Output version information and exit',
+         `', `',
          `M4_LINES(`')')m4_dnl

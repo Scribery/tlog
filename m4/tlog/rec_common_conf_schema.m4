@@ -27,14 +27,17 @@ m4_dnl
 _M4_PARAM(`', `latency', `file-',
           `M4_TYPE_INT(10, 1)', true,
           `', `=SECONDS', `Cache captured data SECONDS seconds before logging',
-          `M4_LINES(`The encoded data which does not reach payload size',
+          `SECONDS is the ', `The ',
+          `M4_LINES(`number of seconds to cache captured data for before logging.',
+                    `The encoded data which does not reach payload size',
                     `stays in memory and is not logged until this number of',
                     `seconds elapses.')')m4_dnl
 m4_dnl
 _M4_PARAM(`', `payload', `file-',
           `M4_TYPE_INT(2048, 32)', true,
           `', `=BYTES', `Limit encoded data to BYTES bytes',
-          `M4_LINES(`Maximum encoded data (payload) size per message, bytes.',
+          `BYTES is the ', `The ',
+          `M4_LINES(`maximum encoded data (payload) size per message, bytes.',
                     `As soon as payload exceeds this number of bytes,',
                     `it is formatted into a message and logged.')')m4_dnl
 m4_dnl
@@ -45,17 +48,20 @@ m4_dnl
 _M4_PARAM(`/log', `input', `file-',
           `M4_TYPE_BOOL(false)', true,
           `', `[=BOOL]', `Enable/disable logging user input',
-          `M4_LINES(`If specified as true, user input is logged.')')m4_dnl
+          `If specified as ', `If ',
+          `M4_LINES(`true, user input is logged.')')m4_dnl
 m4_dnl
 _M4_PARAM(`/log', `output', `file-',
           `M4_TYPE_BOOL(true)', true,
           `', `[=BOOL]', `Enable/disable logging program output',
-          `M4_LINES(`If specified as true, terminal output is logged.')')m4_dnl
+          `If specified as ', `If ',
+          `M4_LINES(`true, terminal output is logged.')')m4_dnl
 m4_dnl
 _M4_PARAM(`/log', `window', `file-',
           `M4_TYPE_BOOL(true)', true,
           `', `[=BOOL]', `Enable/disable logging terminal window size changes',
-          `M4_LINES(`If specified as true, terminal window size changes are logged.')')m4_dnl
+          `If specified as ', `If ',
+          `M4_LINES(`true, terminal window size changes are logged.')')m4_dnl
 m4_dnl
 m4_dnl
 m4_dnl
@@ -64,18 +70,22 @@ m4_dnl
 _M4_PARAM(`/limit', `rate', `file-',
           `M4_TYPE_INT(16384, 0)', true,
           `', `=NUMBER', `Set logging rate limit to NUMBER of message bytes/sec',
-          `M4_LINES(`Maximum rate messages could be logged at, bytes/sec.')')m4_dnl
+          `NUMBER is the ', `The ',
+          `M4_LINES(`maximum rate messages could be logged at, bytes/sec.')')m4_dnl
 m4_dnl
 _M4_PARAM(`/limit', `burst', `file-',
           `M4_TYPE_INT(32768, 0)', true,
           `', `=NUMBER', `Set logging burst limit to NUMBER of message bytes',
-          `M4_LINES(`Number of bytes by which logged messages are allowed to exceed',
-                    `the rate limit momentarily, i.e. "burstiness", bytes.')')m4_dnl
+          `NUMBER is the ', `The ',
+          `M4_LINES(`number of bytes by which logged messages are allowed to exceed',
+                    `the rate limit momentarily, i.e. "burstiness".')')m4_dnl
 m4_dnl
 _M4_PARAM(`/limit', `action', `file-',
           `M4_TYPE_CHOICE(`pass', `pass', `delay', `drop')', true,
           `', `=STRING', `Perform STRING action above limits (pass/delay/drop)',
-          `M4_LINES(`If set to "pass" no logging limits will be applied.',
+          `STRING is the ', `The ',
+          `M4_LINES(`logging limit action.',
+                    `If set to "pass" no logging limits will be applied.',
                     `If set to "delay", logging will be throttled.',
                     `If set to "drop", messages exceeding limits will be dropped.')')m4_dnl
 m4_dnl
@@ -86,7 +96,8 @@ m4_dnl
 _M4_PARAM(`/file', `path', `file-',
           `M4_TYPE_STRING()', false,
           `o', `=FILE', `Log to FILE file',
-          `M4_LINES(`The "file" writer log file path.')')m4_dnl
+          `FILE is the ', `The ',
+          `M4_LINES(`"file" writer log file path.')')m4_dnl
 m4_dnl
 m4_dnl
 m4_dnl
@@ -116,7 +127,8 @@ _M4_PARAM(`/syslog', `facility', `file-',
                           `uucp')',
           true,
           `', `=STRING', `Log with STRING syslog facility',
-          `M4_LINES(`Syslog facility the "syslog" writer should use for the messages.')')m4_dnl
+          `STRING is the ', `The ',
+          `M4_LINES(`syslog facility "syslog" writer should use for messages.')')m4_dnl
 m4_dnl
 _M4_PARAM(`/syslog', `priority', `file-',
           `M4_TYPE_CHOICE(`info',
@@ -130,7 +142,8 @@ _M4_PARAM(`/syslog', `priority', `file-',
                           `debug')',
           true,
           `', `=STRING', `Log with STRING syslog priority',
-          `M4_LINES(`Syslog priority the "syslog" writer should use for the messages.')')m4_dnl
+          `STRING is the ', `The ',
+          `M4_LINES(`syslog priority "syslog" writer should use for messages.')')m4_dnl
 m4_dnl
 m4_dnl
 m4_dnl
@@ -148,5 +161,6 @@ _M4_PARAM(`/journal', `priority', `file-',
                           `debug')',
           true,
           `', `=STRING', `Log with STRING syslog-style priority',
-          `M4_LINES(`Syslog-style priority the "journal" writer should use for the messages.')')m4_dnl
+          `STRING is the ', `The ',
+          `M4_LINES(`syslog-style priority "journal" writer should use for messages.')')m4_dnl
 m4_dnl

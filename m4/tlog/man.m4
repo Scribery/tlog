@@ -181,7 +181,8 @@ m4_define(
                         m4_print(`$2 (')
                         $4
                         m4_printl(`)')
-                        $9
+                        m4_print(`m4_argn(`10', $@)')
+                        m4_argn(`11', $@)
                         m4_popdef(`M4_MAN_CONF_TYPE_EXPAND_TO')
                         m4_printl(`')
                         m4_pushdef(`M4_MAN_CONF_TYPE_EXPAND_TO', `desc')
@@ -377,7 +378,7 @@ m4_define(
 )
 
 m4_dnl
-m4_dnl Output a description of a configuration parameter
+m4_dnl Output a description of a parameter's option
 m4_dnl
 m4_define(
     `M4_MAN_OPTS_CONTAINER_PARAM',
@@ -401,7 +402,8 @@ m4_define(
                             `',
                             `$8.',
                             `')
-                        $9
+                        m4_print(`$9')
+                        m4_argn(11, $@)
                         m4_printl(`')
                         $4
                     '

@@ -45,10 +45,11 @@ m4_define(
             `',
             `$#', `1',
             `
-                m4_printl(M4_INDENT()`// $1')
+                m4_printl(`$1')
             ',
             `
-                m4_printl(M4_INDENT()`// $1')
+                m4_printl(`$1')
+                m4_print(M4_INDENT()`// ')
                 M4_LINES(m4_shift($@))
             '
         )
@@ -72,7 +73,8 @@ m4_define(
                             `m4_define(`M4_FIRST', `false')',
                             `m4_printl(`,', `')'
                         )
-                        $9
+                        m4_print(M4_INDENT()`// m4_argn(`10', $@)')
+                        m4_argn(`11', $@)
                         m4_print(M4_INDENT())
                         m4_ifelse(
                             `$5',
