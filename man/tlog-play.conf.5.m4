@@ -44,7 +44,7 @@ via command-line options.
 M4_MAN_CONF()
 .SH EXAMPLES
 .TP
-A config specifying only the reader:
+A configuration specifying only the reader:
 .nf
 
 {
@@ -53,7 +53,7 @@ A config specifying only the reader:
 .fi
 
 .TP
-A config specifying Elasticsearch reader, along with the base URL.
+A configuration specifying Elasticsearch reader, along with the base URL.
 .nf
 
 {

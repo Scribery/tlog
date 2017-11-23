@@ -44,7 +44,7 @@ in other ways: through environment variables or command line.
 M4_MAN_CONF()
 .SH EXAMPLES
 .TP
-A config specifying only a shell:
+A configuration specifying only a shell:
 .nf
 
 {
@@ -53,7 +53,7 @@ A config specifying only a shell:
 .fi
 
 .TP
-A config enabling logging user input:
+A configuration enabling logging user input:
 .nf
 
 {
@@ -64,7 +64,7 @@ A config enabling logging user input:
 .fi
 
 .TP
-A config specifying logging to a file:
+A configuration specifying logging to a file:
 .nf
 
 {
