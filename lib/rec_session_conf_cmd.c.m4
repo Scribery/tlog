@@ -1,6 +1,6 @@
 m4_include(`misc.m4')m4_dnl
 m4_include(`conf_cmd.m4')m4_dnl
-m4_changecom()
+m4_changecom()m4_dnl
 /*
  * Tlog-M4_PROG_NAME() command-line parsing.
  *
