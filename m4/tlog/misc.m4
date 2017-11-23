@@ -110,6 +110,16 @@ m4_define(`m4_shiftn',
                                 m4_eval(`$1'), `0', `m4_shift($@)',
                                 `m4_shiftn(m4_decr(`$1'), m4_shift(m4_shift($@)))')')')m4_dnl
 m4_dnl
+m4_dnl Expand to 1+Nth argument.
+m4_dnl Arguments:
+m4_dnl
+m4_dnl      $1      Number of the argument to expand to, minus one.
+m4_dnl      $@      Arguments to expand from.
+m4_dnl
+m4_define(`m4_argn',
+          `m4_ifelse(`$1', `1', `$2',
+                     `m4_argn(m4_decr(`$1'), m4_shift(m4_shift($@)))')')m4_dnl
+m4_dnl
 m4_dnl Replace specific strings with another string, otherwise don't modify.
 m4_dnl Arguments:
 m4_dnl
