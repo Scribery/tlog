@@ -58,8 +58,8 @@ tlog_journal_match_sym_is_valid(const char *match_sym)
 {
     return match_sym != NULL &&
            (tlog_journal_match_is_valid(match_sym, 0) ||
-            strcmp(match_sym, "or") == 0 ||
-            strcmp(match_sym, "and") == 0);
+            strcasecmp(match_sym, "OR") == 0 ||
+            strcasecmp(match_sym, "AND") == 0);
 }
 
 int
@@ -68,9 +68,9 @@ tlog_journal_add_match_sym(sd_journal *j, const char *match_sym)
     assert(j != NULL);
     assert(tlog_journal_match_sym_is_valid(match_sym));
 
-    if (strcmp(match_sym, "AND") == 0) {
+    if (strcasecmp(match_sym, "AND") == 0) {
         return sd_journal_add_conjunction(j);
-    } else if (strcmp(match_sym, "OR") == 0) {
+    } else if (strcasecmp(match_sym, "OR") == 0) {
         return sd_journal_add_disjunction(j);
     } else {
         return sd_journal_add_match(j, match_sym, 0);
