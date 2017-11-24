@@ -25,7 +25,9 @@
 #include <tlog/rec_item.h>
 #include <tlog/json_sink.h>
 #include <tlog/syslog_json_writer.h>
+#ifdef TLOG_JOURNAL_ENABLED
 #include <tlog/journal_json_writer.h>
+#endif
 #include <tlog/fd_json_writer.h>
 #include <tlog/rl_json_writer.h>
 #include <tlog/source.h>

@@ -38,8 +38,10 @@
 #include <tlog/play_conf_cmd.h>
 #include <tlog/fd_json_reader.h>
 #include <tlog/es_json_reader.h>
+#ifdef TLOG_JOURNAL_ENABLED
 #include <tlog/journal_json_reader.h>
 #include <tlog/journal_misc.h>
+#endif
 #include <tlog/json_source.h>
 #include <tlog/rc.h>
 #include <tlog/timespec.h>
