@@ -64,8 +64,8 @@ m4_popdef(`_M4_PARAM')m4_dnl
 m4_dnl
 m4_ifelse(M4_JOURNAL_ENABLED(), `1',
 `M4_PARAM(`', `writer', `file-env',
-          `M4_TYPE_CHOICE(`syslog', `journal', `syslog', `file')', true,
-          `w', `=STRING', `Use STRING log writer (journal/syslog/file, default syslog)',
+          `M4_TYPE_CHOICE(`journal', `journal', `syslog', `file')', true,
+          `w', `=STRING', `Use STRING log writer (journal/syslog/file, default journal)',
           `STRING is the ', `The ',
           `M4_LINES(`type of "log writer" to use for logging. The writer needs',
                     `to be configured using its dedicated parameters.')')',
