@@ -62,10 +62,17 @@ m4_pushdef(`_M4_PARAM', `M4_PARAM(`$1', `$2', `$3env', m4_shiftn(3, $@))')m4_dnl
 m4_include(`rec_common_conf_schema.m4')m4_dnl
 m4_popdef(`_M4_PARAM')m4_dnl
 m4_dnl
-M4_PARAM(`', `writer', `file-env',
-         `M4_TYPE_CHOICE(`syslog', `journal', `syslog', `file')', true,
-         `w', `=STRING', `Use STRING log writer (journal/syslog/file, default syslog)',
-         `STRING is the ', `The ',
-         `M4_LINES(`type of "log writer" to use for logging. The writer needs',
-                   `to be configured using its dedicated parameters.')')m4_dnl
+m4_ifelse(M4_JOURNAL_ENABLED(), `1',
+`M4_PARAM(`', `writer', `file-env',
+          `M4_TYPE_CHOICE(`syslog', `journal', `syslog', `file')', true,
+          `w', `=STRING', `Use STRING log writer (journal/syslog/file, default syslog)',
+          `STRING is the ', `The ',
+          `M4_LINES(`type of "log writer" to use for logging. The writer needs',
+                    `to be configured using its dedicated parameters.')')',
+`M4_PARAM(`', `writer', `file-env',
+          `M4_TYPE_CHOICE(`syslog', `syslog', `file')', true,
+          `w', `=STRING', `Use STRING log writer (syslog/file, default syslog)',
+          `STRING is the ', `The ',
+          `M4_LINES(`type of "log writer" to use for logging. The writer needs',
+                    `to be configured using its dedicated parameters.')')')m4_dnl
 m4_dnl

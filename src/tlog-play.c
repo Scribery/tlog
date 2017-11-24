@@ -146,6 +146,7 @@ create_log_source(struct tlog_errs **perrs,
             tlog_errs_pushs(perrs, "Failed creating the Elasticsearch reader");
             goto cleanup;
         }
+#ifdef TLOG_JOURNAL_ENABLED
     } else if (strcmp(str, "journal") == 0) {
         struct json_object *conf_journal;
         int64_t since = 0;
@@ -216,6 +217,7 @@ create_log_source(struct tlog_errs **perrs,
             goto cleanup;
         }
 
+#endif
     } else if (strcmp(str, "file") == 0) {
         struct json_object *conf_file;
 

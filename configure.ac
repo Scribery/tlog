@@ -51,6 +51,11 @@ AC_ARG_ENABLE(
     AS_HELP_STRING([--enable-debug], [enable debugging features]),
     [], [tlog_debug_enabled="no"])
 
+AC_ARG_ENABLE(
+    journal,
+    AS_HELP_STRING([--disable-journal], [disable support for Systemd Journal]),
+    [tlog_journal_enabled="$enableval"], [tlog_journal_enabled="yes"])
+
 # Output features to preprocessor and compiler
 if test "$tlog_debug_enabled" = "yes"; then
     CPPFLAGS="$CPPFLAGS -UNDEBUG"
@@ -59,8 +64,16 @@ fi
 
 # Check for libraries
 PKG_CHECK_MODULES(JSON, json-c)
-PKG_CHECK_MODULES(SYSTEMD_JOURNAL, libsystemd, ,
-                  [PKG_CHECK_MODULES(SYSTEMD_JOURNAL, libsystemd-journal)])
+if test "$tlog_journal_enabled" = "yes"; then
+    PKG_CHECK_MODULES(SYSTEMD_JOURNAL, libsystemd, ,
+                      [PKG_CHECK_MODULES(SYSTEMD_JOURNAL, libsystemd-journal)])
+    AC_SUBST([TLOG_JOURNAL_ENABLED], [1])
+    AC_DEFINE([TLOG_JOURNAL_ENABLED], [1],
+              [Define to 1 if Systemd Journal support is enabled])
+else
+    AC_SUBST([TLOG_JOURNAL_ENABLED], [0])
+fi
+AM_CONDITIONAL([TLOG_JOURNAL_ENABLED], [test "$tlog_journal_enabled" = "yes"])
 
 LIBCURL_CHECK_CONFIG([yes], [7.15.4], ,
                      AC_MSG_ERROR([libcurl not found]))

@@ -20,6 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <config.h>
 #include <tlog/rec.h>
 #include <tlog/rec_item.h>
 #include <tlog/json_sink.h>
@@ -414,6 +415,7 @@ cleanup:
     return grc;
 }
 
+#ifdef TLOG_JOURNAL_ENABLED
 /**
  * Create a journal JSON message writer according to configuration.
  *
@@ -476,6 +478,7 @@ cleanup:
     tlog_json_writer_destroy(writer);
     return grc;
 }
+#endif
 
 /**
  * Create a rate-limiting JSON message writer, if configured.
@@ -629,6 +632,7 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
         if (grc != TLOG_RC_OK) {
             goto cleanup;
         }
+#ifdef TLOG_JOURNAL_ENABLED
     } else if (strcmp(str, "journal") == 0) {
         /* Get journal writer conf container */
         if (!json_object_object_get_ex(conf, str, &writer_conf)) {
@@ -643,6 +647,7 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
         if (grc != TLOG_RC_OK) {
             goto cleanup;
         }
+#endif
     } else {
         tlog_errs_pushf(perrs, "Unknown writer type: %s", str);
         grc = TLOG_RC_FAILURE;

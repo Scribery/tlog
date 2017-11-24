@@ -97,9 +97,11 @@ The system-wide configuration file
 Play back contents of a file written with tlog-rec's "file" writer:
 .B tlog-play -r file --file-path=recording.log
 
+m4_ifelse(M4_JOURNAL_ENABLED(), `1', `m4_dnl
 .TP
 Play back a recording from Journal:
 .B tlog-play -r journal -M TLOG_REC=6071524bb44d403991a00413ab7c8596-53bd-378c5d9
+')m4_dnl
 
 .TP
 Play back a recording from Elasticsearch:

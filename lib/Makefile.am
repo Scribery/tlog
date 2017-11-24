@@ -108,9 +108,6 @@ libtlog_la_SOURCES = \
     fd_json_reader.c            \
     fd_json_writer.c            \
     grc.c                       \
-    journal_json_reader.c       \
-    journal_json_writer.c       \
-    journal_misc.c              \
     json_chunk.c                \
     json_dispatcher.c           \
     json_misc.c                 \
@@ -148,6 +145,13 @@ libtlog_la_SOURCES = \
     tty_sink.c                  \
     tty_source.c                \
     utf8.c
+
+if TLOG_JOURNAL_ENABLED
+libtlog_la_SOURCES += \
+    journal_json_reader.c   \
+    journal_json_writer.c   \
+    journal_misc.c
+endif
 
 libtlog_la_LIBADD = \
     $(JSON_LIBS) \

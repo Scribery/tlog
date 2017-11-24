@@ -29,9 +29,6 @@ tlog_HEADERS = \
     fd_json_reader.h            \
     fd_json_writer.h            \
     grc.h                       \
-    journal_json_reader.h       \
-    journal_json_writer.h       \
-    journal_misc.h              \
     json_chunk.h                \
     json_dispatcher.h           \
     json_misc.h                 \
@@ -80,6 +77,13 @@ tlog_HEADERS = \
     tty_sink.h                  \
     tty_source.h                \
     utf8.h
+
+if TLOG_JOURNAL_ENABLED
+tlog_HEADERS += \
+    journal_json_reader.h   \
+    journal_json_writer.h   \
+    journal_misc.h
+endif
 
 noinst_HEADERS = \
     test_json_sink.h        \

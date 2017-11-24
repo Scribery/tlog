@@ -51,12 +51,19 @@ M4_PARAM(`', `paused', `opts-',
          `If specified, ', `If true, ',
          `M4_LINES(`playback is started in a paused state.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `reader', `file-',
-         `M4_TYPE_CHOICE(`file', `file', `journal', `es')', true,
-         `r', `=STRING', `Use STRING log reader (file/journal/es, default file)',
-         `STRING is the ', `The ',
-         `M4_LINES(`type of "log reader" to use for retrieving log messages. The chosen',
-                   `reader needs to be configured using its own dedicated parameters.')')m4_dnl
+m4_ifelse(M4_JOURNAL_ENABLED(), `1',
+`M4_PARAM(`', `reader', `file-',
+          `M4_TYPE_CHOICE(`file', `file', `journal', `es')', true,
+          `r', `=STRING', `Use STRING log reader (file/journal/es, default file)',
+          `STRING is the ', `The ',
+          `M4_LINES(`type of "log reader" to use for retrieving log messages. The chosen',
+                    `reader needs to be configured using its own dedicated parameters.')')',
+`M4_PARAM(`', `reader', `file-',
+          `M4_TYPE_CHOICE(`file', `file', `es')', true,
+          `r', `=STRING', `Use STRING log reader (file/es, default file)',
+          `STRING is the ', `The ',
+          `M4_LINES(`type of "log reader" to use for retrieving log messages. The chosen',
+                    `reader needs to be configured using its own dedicated parameters.')')')m4_dnl
 m4_dnl
 m4_dnl
 m4_dnl
@@ -87,6 +94,8 @@ M4_PARAM(`/es', `query', `file-',
 m4_dnl
 m4_dnl
 m4_dnl
+m4_ifelse(M4_JOURNAL_ENABLED(), `1', `m4_dnl
+m4_dnl
 M4_CONTAINER(`', `/journal', `Systemd journal reader')m4_dnl
 m4_dnl
 M4_PARAM(`/journal', `since', `opts-',
@@ -111,6 +120,8 @@ M4_PARAM(`/journal', `match', `opts-',
                    `pair, according to sd_journal_add_match(3), or an "OR" or "AND"',
                    `string signifying disjunction or conjunction, as with',
                    `sd_journal_add_disjunction(3) and sd_journal_add_conjunction(3)')')m4_dnl
+m4_dnl
+')m4_dnl m4_ifelse M4_JOURNAL_ENABLED
 m4_dnl
 M4_PARAM(`', `persist', `file-',
          `M4_TYPE_BOOL(false)', true,

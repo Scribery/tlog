@@ -147,6 +147,8 @@ _M4_PARAM(`/syslog', `priority', `file-',
 m4_dnl
 m4_dnl
 m4_dnl
+m4_ifelse(M4_JOURNAL_ENABLED(), `1', `m4_dnl
+m4_dnl
 M4_CONTAINER(`', `/journal', `Journal writer')m4_dnl
 m4_dnl
 _M4_PARAM(`/journal', `priority', `file-',
@@ -163,4 +165,6 @@ _M4_PARAM(`/journal', `priority', `file-',
           `', `=STRING', `Log with STRING syslog-style priority',
           `STRING is the ', `The ',
           `M4_LINES(`syslog-style priority "journal" writer should use for messages.')')m4_dnl
+m4_dnl
+')m4_dnl m4_ifelse M4_JOURNAL_ENABLED
 m4_dnl
