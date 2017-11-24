@@ -49,10 +49,10 @@ AX_PTHREAD
 AC_ARG_ENABLE(
     debug,
     AS_HELP_STRING([--enable-debug], [enable debugging features]),
-    [], [enable_debug="no"])
+    [], [tlog_debug_enabled="no"])
 
 # Output features to preprocessor and compiler
-if test "$enable_debug" = "yes"; then
+if test "$tlog_debug_enabled" = "yes"; then
     CPPFLAGS="$CPPFLAGS -UNDEBUG"
     CFLAGS="$CFLAGS -Wall -Wextra -Werror -g -O0"
 fi
