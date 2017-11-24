@@ -148,63 +148,58 @@ create_log_source(struct tlog_errs **perrs,
         }
     } else if (strcmp(str, "journal") == 0) {
         struct json_object *conf_journal;
-        int64_t since;
-        int64_t until;
+        int64_t since = 0;
+        int64_t until = INT64_MAX;
 
         /* Get journal reader conf container */
-        if (!json_object_object_get_ex(conf, "journal", &conf_journal)) {
-            tlog_errs_pushs(perrs,
-                            "Systemd journal reader parameters "
-                            "are not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-
-        /* Get the "since" timestamp */
-        if (json_object_object_get_ex(conf_journal, "since", &obj)) {
-            since = json_object_get_int64(obj);
-            if (since < 0) {
+        if (json_object_object_get_ex(conf, "journal", &conf_journal)) {
+            /* Get the "since" timestamp */
+            if (json_object_object_get_ex(conf_journal, "since", &obj)) {
+                since = json_object_get_int64(obj);
+                if (since < 0) {
+                    since = 0;
+                } else if ((uint64_t)since > UINT64_MAX/1000000) {
+                    since = UINT64_MAX/1000000;
+                }
+            } else {
                 since = 0;
-            } else if ((uint64_t)since > UINT64_MAX/1000000) {
-                since = UINT64_MAX/1000000;
             }
-        } else {
-            since = 0;
-        }
 
-        /* Get the "until" timestamp */
-        if (json_object_object_get_ex(conf_journal, "until", &obj)) {
-            until = json_object_get_int64(obj);
-            if (until < 0) {
-                until = 0;
-            } else if ((uint64_t)until > UINT64_MAX/1000000) {
-                until = UINT64_MAX/1000000;
+            /* Get the "until" timestamp */
+            if (json_object_object_get_ex(conf_journal, "until", &obj)) {
+                until = json_object_get_int64(obj);
+                if (until < 0) {
+                    until = 0;
+                } else if ((uint64_t)until > UINT64_MAX/1000000) {
+                    until = UINT64_MAX/1000000;
+                }
+            } else {
+                until = INT64_MAX;
             }
-        } else {
-            until = INT64_MAX;
-        }
 
-        /* Get the match array, if any */
-        if (json_object_object_get_ex(conf_journal, "match", &obj)) {
-            str_list = calloc(json_object_array_length(obj) + 1,
-                              sizeof(*str_list));
-            if (str_list == NULL) {
-                grc = TLOG_GRC_ERRNO;
-                tlog_errs_pushc(perrs, grc);
-                tlog_errs_pushs(perrs,
-                                "Failed allocating systemd journal match list");
-                goto cleanup;
-            }
-            for (i = 0; (int)i < (int)json_object_array_length(obj); i++) {
-                str_list[i] = json_object_get_string(
-                                json_object_array_get_idx(obj, i));
-                if (!tlog_journal_match_sym_is_valid(str_list[i])) {
-                    grc = TLOG_RC_FAILURE;
-                    tlog_errs_pushf(
-                        perrs,
-                        "Systemd journal match symbol #%zu \"%s\" is invalid",
-                        i + 1, str_list[i]);
+            /* Get the match array, if any */
+            if (json_object_object_get_ex(conf_journal, "match", &obj)) {
+                str_list = calloc(json_object_array_length(obj) + 1,
+                                  sizeof(*str_list));
+                if (str_list == NULL) {
+                    grc = TLOG_GRC_ERRNO;
+                    tlog_errs_pushc(perrs, grc);
+                    tlog_errs_pushs(perrs,
+                                    "Failed allocating systemd journal match list");
                     goto cleanup;
+                }
+                for (i = 0; (int)i < (int)json_object_array_length(obj); i++) {
+                    str_list[i] = json_object_get_string(
+                                    json_object_array_get_idx(obj, i));
+                    if (!tlog_journal_match_sym_is_valid(str_list[i])) {
+                        grc = TLOG_RC_FAILURE;
+                        tlog_errs_pushf(
+                            perrs,
+                            "Systemd journal match symbol #%zu \"%s\" "
+                            "is invalid",
+                            i + 1, str_list[i]);
+                        goto cleanup;
+                    }
                 }
             }
         }
