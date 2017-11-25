@@ -25,9 +25,9 @@
 /* NOTE: Not using the macro from the header to workaround a gcc 4.8 bug */
 const struct timespec tlog_timespec_zero = {0, 0};
 
-const struct timespec tlog_timespec_min = {LONG_MIN, -999999999};
+const struct timespec tlog_timespec_min = {LONG_MIN, -TLOG_TIMESPEC_NSEC_PER_SEC + 1};
 
-const struct timespec tlog_timespec_max = {LONG_MAX, 999999999};
+const struct timespec tlog_timespec_max = {LONG_MAX, TLOG_TIMESPEC_NSEC_PER_SEC - 1};
 
 #define TLOG_TIMESPEC_FP_OP_ADD +
 #define TLOG_TIMESPEC_FP_OP_SUB -
@@ -61,26 +61,26 @@ tlog_timespec_add(const struct timespec *a,
 
     /* Carry from nsec */
     if (b->tv_sec >= 0 && b->tv_nsec >= 0) {
-        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= 1000000000
+        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= TLOG_TIMESPEC_NSEC_PER_SEC
                             : tmp.tv_nsec > 0) {
             tmp.tv_sec++;
-            tmp.tv_nsec -= 1000000000;
+            tmp.tv_nsec -= TLOG_TIMESPEC_NSEC_PER_SEC;
         }
     } else {
         if (tmp.tv_sec > 0 ? tmp.tv_nsec < 0
-                           : tmp.tv_nsec <= -1000000000) {
+                           : tmp.tv_nsec <= -TLOG_TIMESPEC_NSEC_PER_SEC) {
             tmp.tv_sec--;
-            tmp.tv_nsec += 1000000000;
+            tmp.tv_nsec += TLOG_TIMESPEC_NSEC_PER_SEC;
         }
     }
 
     /* Carry from sec */
     if (tmp.tv_sec < 0 && tmp.tv_nsec > 0) {
         tmp.tv_sec++;
-        tmp.tv_nsec -= 1000000000;
+        tmp.tv_nsec -= TLOG_TIMESPEC_NSEC_PER_SEC;
     } else if (tmp.tv_sec > 0 && tmp.tv_nsec < 0) {
         tmp.tv_sec--;
-        tmp.tv_nsec += 1000000000;
+        tmp.tv_nsec += TLOG_TIMESPEC_NSEC_PER_SEC;
     }
 
     *res = tmp;
@@ -103,26 +103,26 @@ tlog_timespec_sub(const struct timespec *a,
 
     /* Carry from nsec */
     if (b->tv_sec < 0 || b->tv_nsec < 0) {
-        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= 1000000000
+        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= TLOG_TIMESPEC_NSEC_PER_SEC
                             : tmp.tv_nsec > 0) {
             tmp.tv_sec++;
-            tmp.tv_nsec -= 1000000000;
+            tmp.tv_nsec -= TLOG_TIMESPEC_NSEC_PER_SEC;
         }
     } else {
         if (tmp.tv_sec > 0 ? tmp.tv_nsec < 0
-                           : tmp.tv_nsec <= -1000000000) {
+                           : tmp.tv_nsec <= -TLOG_TIMESPEC_NSEC_PER_SEC) {
             tmp.tv_sec--;
-            tmp.tv_nsec += 1000000000;
+            tmp.tv_nsec += TLOG_TIMESPEC_NSEC_PER_SEC;
         }
     }
 
     /* Carry from sec */
     if (tmp.tv_sec < 0 && tmp.tv_nsec > 0) {
         tmp.tv_sec++;
-        tmp.tv_nsec -= 1000000000;
+        tmp.tv_nsec -= TLOG_TIMESPEC_NSEC_PER_SEC;
     } else if (tmp.tv_sec > 0 && tmp.tv_nsec < 0) {
         tmp.tv_sec--;
-        tmp.tv_nsec += 1000000000;
+        tmp.tv_nsec += TLOG_TIMESPEC_NSEC_PER_SEC;
     }
 
     *res = tmp;
@@ -153,7 +153,7 @@ tlog_timespec_cap_add(const struct timespec *a,
 
     /* Carry from nsec */
     if (b->tv_sec >= 0 && b->tv_nsec >= 0) {
-        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= 1000000000
+        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= TLOG_TIMESPEC_NSEC_PER_SEC
                             : tmp.tv_nsec > 0) {
             /* If overflow */
             if (tmp.tv_sec == LONG_MAX) {
@@ -161,28 +161,28 @@ tlog_timespec_cap_add(const struct timespec *a,
                 goto exit;
             }
             tmp.tv_sec++;
-            tmp.tv_nsec -= 1000000000;
+            tmp.tv_nsec -= TLOG_TIMESPEC_NSEC_PER_SEC;
         }
     } else {
         if (tmp.tv_sec > 0 ? tmp.tv_nsec < 0
-                           : tmp.tv_nsec <= -1000000000) {
+                           : tmp.tv_nsec <= -TLOG_TIMESPEC_NSEC_PER_SEC) {
             /* If overflow */
             if (tmp.tv_sec == LONG_MIN) {
                 *res = tlog_timespec_min;
                 goto exit;
             }
             tmp.tv_sec--;
-            tmp.tv_nsec += 1000000000;
+            tmp.tv_nsec += TLOG_TIMESPEC_NSEC_PER_SEC;
         }
     }
 
     /* Carry from sec */
     if (tmp.tv_sec < 0 && tmp.tv_nsec > 0) {
         tmp.tv_sec++;
-        tmp.tv_nsec -= 1000000000;
+        tmp.tv_nsec -= TLOG_TIMESPEC_NSEC_PER_SEC;
     } else if (tmp.tv_sec > 0 && tmp.tv_nsec < 0) {
         tmp.tv_sec--;
-        tmp.tv_nsec += 1000000000;
+        tmp.tv_nsec += TLOG_TIMESPEC_NSEC_PER_SEC;
     }
 
     *res = tmp;
@@ -214,7 +214,7 @@ tlog_timespec_cap_sub(const struct timespec *a,
 
     /* Carry from nsec */
     if (b->tv_sec < 0 || b->tv_nsec < 0) {
-        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= 1000000000
+        if (tmp.tv_sec >= 0 ? tmp.tv_nsec >= TLOG_TIMESPEC_NSEC_PER_SEC
                             : tmp.tv_nsec > 0) {
             /* If overflow */
             if (tmp.tv_sec == LONG_MAX) {
@@ -222,28 +222,28 @@ tlog_timespec_cap_sub(const struct timespec *a,
                 goto exit;
             }
             tmp.tv_sec++;
-            tmp.tv_nsec -= 1000000000;
+            tmp.tv_nsec -= TLOG_TIMESPEC_NSEC_PER_SEC;
         }
     } else {
         if (tmp.tv_sec > 0 ? tmp.tv_nsec < 0
-                           : tmp.tv_nsec <= -1000000000) {
+                           : tmp.tv_nsec <= -TLOG_TIMESPEC_NSEC_PER_SEC) {
             /* If overflow */
             if (tmp.tv_sec == LONG_MIN) {
                 *res = tlog_timespec_min;
                 goto exit;
             }
             tmp.tv_sec--;
-            tmp.tv_nsec += 1000000000;
+            tmp.tv_nsec += TLOG_TIMESPEC_NSEC_PER_SEC;
         }
     }
 
     /* Carry from sec */
     if (tmp.tv_sec < 0 && tmp.tv_nsec > 0) {
         tmp.tv_sec++;
-        tmp.tv_nsec -= 1000000000;
+        tmp.tv_nsec -= TLOG_TIMESPEC_NSEC_PER_SEC;
     } else if (tmp.tv_sec > 0 && tmp.tv_nsec < 0) {
         tmp.tv_sec--;
-        tmp.tv_nsec += 1000000000;
+        tmp.tv_nsec += TLOG_TIMESPEC_NSEC_PER_SEC;
     }
 
     *res = tmp;

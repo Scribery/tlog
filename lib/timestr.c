@@ -40,7 +40,7 @@ tlog_timestr_parser_is_valid(const struct tlog_timestr_parser *parser)
     return parser != NULL &&
            (parser->comp_num <= TLOG_ARRAY_SIZE(parser->comp_list)) &&
            (!parser->got_point ||
-            (parser->frac_len <= 9 && parser->frac_val <= 999999999));
+            (parser->frac_len <= 9 && parser->frac_val <= TLOG_TIMESPEC_NSEC_PER_SEC - 1));
 }
 
 bool
