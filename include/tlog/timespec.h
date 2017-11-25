@@ -52,6 +52,9 @@ extern const struct timespec tlog_timespec_max;
 #define TLOG_TIMESPEC_FP_MIN \
             nextafter((double)LONG_MIN - (double)0.999999999, 0)
 
+/** Nanoseconds per second */
+#define TLOG_TIMESPEC_NSEC_PER_SEC  1000000000
+
 /**
  * Cap a double-precision floating point to timespec range
  */
@@ -72,8 +75,8 @@ static inline bool
 tlog_timespec_is_valid(const struct timespec *ts)
 {
     return ts != NULL &&
-           ts->tv_nsec < 1000000000 &&
-           ts->tv_nsec > -1000000000 &&
+           ts->tv_nsec < TLOG_TIMESPEC_NSEC_PER_SEC  &&
+           ts->tv_nsec > -TLOG_TIMESPEC_NSEC_PER_SEC &&
            ((ts->tv_sec < 0)
                 ? (ts->tv_nsec <= 0)
                 : (ts->tv_sec == 0 || ts->tv_nsec >= 0));
@@ -94,7 +97,7 @@ tlog_timespec_from_fp(double n, struct timespec *res)
 
     f = modf(n, &i);
     res->tv_sec = i;
-    res->tv_nsec = f * 1000000000;
+    res->tv_nsec = f * TLOG_TIMESPEC_NSEC_PER_SEC ;
 
     assert(tlog_timespec_is_valid(res));
 }
@@ -110,7 +113,7 @@ static inline double
 tlog_timespec_to_fp(const struct timespec *ts)
 {
     assert(tlog_timespec_is_valid(ts));
-    return (double)ts->tv_sec + (double)ts->tv_nsec / 1000000000;
+    return (double)ts->tv_sec + (double)ts->tv_nsec / TLOG_TIMESPEC_NSEC_PER_SEC ;
 }
 
 /**
