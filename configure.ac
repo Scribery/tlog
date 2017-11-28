@@ -84,8 +84,13 @@ AC_CONFIG_FILES([Makefile
                  m4/tlog/Makefile
                  include/Makefile
                  include/tlog/Makefile
+                 include/tltest/Makefile
                  lib/Makefile
+                 lib/tlog/Makefile
+                 lib/tltest/Makefile
                  src/Makefile
+                 src/tlog/Makefile
+                 src/tltest/Makefile
                  doc/Makefile
                  man/Makefile])
 AC_OUTPUT

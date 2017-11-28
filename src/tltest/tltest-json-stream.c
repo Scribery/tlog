@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <tlog/json_stream.h>
-#include <tlog/test_misc.h>
+#include <tltest/misc.h>
 #include <tlog/misc.h>
 #include <tlog/rc.h>
 

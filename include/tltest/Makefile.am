@@ -19,4 +19,8 @@
 
 include $(top_srcdir)/Common.am
 
-SUBDIRS = tlog tltest
+noinst_HEADERS = \
+    json_sink.h         \
+    json_source.h       \
+    json_stream_enc.h   \
+    misc.h

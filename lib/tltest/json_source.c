@@ -20,11 +20,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <tlog/test_json_source.h>
+#include <tltest/json_source.h>
 #include <tlog/mem_json_reader.h>
 #include <tlog/misc.h>
 #include <tlog/json_source.h>
-#include <tlog/test_misc.h>
+#include <tltest/misc.h>
 #include <tlog/rc.h>
 #include <errno.h>
 #include <stdio.h>

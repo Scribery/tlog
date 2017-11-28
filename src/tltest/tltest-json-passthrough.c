@@ -32,8 +32,8 @@
 #include <tlog/json_source.h>
 #include <tlog/delay.h>
 #include <tlog/misc.h>
-#include <tlog/test_json_sink.h>
-#include <tlog/test_json_source.h>
+#include <tltest/json_sink.h>
+#include <tltest/json_source.h>
 
 struct tlog_test_json_passthrough {
     struct tlog_test_json_sink_input    input;

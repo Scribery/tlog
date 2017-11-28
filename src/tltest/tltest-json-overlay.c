@@ -21,7 +21,7 @@
  */
 
 #include <tlog/json_misc.h>
-#include <tlog/test_misc.h>
+#include <tltest/misc.h>
 #include <tlog/grc.h>
 #include <tlog/rc.h>
 #include <stdio.h>

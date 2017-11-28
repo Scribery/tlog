@@ -21,7 +21,7 @@
  */
 
 #include <string.h>
-#include <tlog/test_json_source.h>
+#include <tltest/json_source.h>
 #include <tlog/rc.h>
 #include <tlog/grc.h>
 #include <tlog/delay.h>

@@ -27,7 +27,7 @@
 #include <tlog/rc.h>
 #include <tlog/fd_json_reader.h>
 #include <tlog/misc.h>
-#include <tlog/test_misc.h>
+#include <tltest/misc.h>
 
 /** Fd reader text buffer size */
 #define BUF_SIZE 16

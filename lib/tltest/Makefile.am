@@ -19,4 +19,17 @@
 
 include $(top_srcdir)/Common.am
 
-SUBDIRS = tlog tltest
+AM_CPPFLAGS = \
+    $(JSON_CFLAGS)                                                                              \
+    $(SYSTEMD_JOURNAL_CFLAGS)                                                                   \
+    $(LIBCURL_CPPFLAGS)
+
+noinst_LTLIBRARIES = libtltest.la
+
+libtltest_la_SOURCES = \
+    json_sink.c         \
+    json_source.c       \
+    json_stream_enc.c   \
+    misc.c
+
+libtltest_la_LIBADD = ../tlog/libtlog.la

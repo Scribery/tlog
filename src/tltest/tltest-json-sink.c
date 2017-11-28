@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <tlog/test_json_sink.h>
+#include <tltest/json_sink.h>
 #include <tlog/delay.h>
 #include <tlog/misc.h>
 #include <limits.h>

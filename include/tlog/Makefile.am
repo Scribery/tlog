@@ -85,9 +85,3 @@ tlog_HEADERS += \
     journal_json_writer.h   \
     journal_misc.h
 endif
-
-noinst_HEADERS = \
-    test_json_sink.h        \
-    test_json_source.h      \
-    test_json_stream_enc.h  \
-    test_misc.h

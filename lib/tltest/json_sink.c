@@ -20,12 +20,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <tlog/test_json_sink.h>
+#include <tltest/json_sink.h>
 #include <tlog/mem_json_writer.h>
 #include <tlog/json_sink.h>
 #include <tlog/misc.h>
 #include <tlog/rc.h>
-#include <tlog/test_misc.h>
+#include <tltest/misc.h>
 
 const char*
 tlog_test_json_sink_op_type_to_str(enum tlog_test_json_sink_op_type type)

@@ -21,7 +21,7 @@
  */
 
 #include <tlog/misc.h>
-#include <tlog/test_misc.h>
+#include <tltest/misc.h>
 
 static void
 tlog_test_diff_side(FILE *stream, const char *name,

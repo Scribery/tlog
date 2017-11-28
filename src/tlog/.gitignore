@@ -1,6 +1,4 @@
 /tlog-rec
 /tlog-rec-session
 /tlog-play
-tlog-test-*
-!tlog-test-*.c
 *.conf

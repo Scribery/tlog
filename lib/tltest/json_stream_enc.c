@@ -23,8 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <tlog/misc.h>
-#include <tlog/test_misc.h>
-#include <tlog/test_json_stream_enc.h>
+#include <tltest/misc.h>
+#include <tltest/json_stream_enc.h>
 
 #define BOOL_STR(_b) ((_b) ? "true" : "false")
 

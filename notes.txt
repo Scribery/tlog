@@ -1091,3 +1091,41 @@ size to position to write from and until
 No, we're not going to be rate-limiting at the packet level. First of all,
 encoded size can be wildly different, then it will be hard to tell if anything
 was dropped or not. We need to rate-limit at the JSON writer sink.
+
+------------
+
+So, tests, even unit tests are essentially an outside entity.
+Or, perhaps, not entirely. If we ship a library, and we hide some of the
+internal interfaces, we might need to access them for testing purposes.
+Thus unit tests will be a privileged entity, with access to internal
+interfaces. Still, we can build a separate library, with those interfaces
+exposed, so that the unit tests can reach them.
+
+Regardless, unit tests and integration tests are not a part of the
+release distribution, they're outside of it, working on the product of it.
+Ideally, they need to be in a separate directory, beside tlog.
+
+Yet, having two directories side-by-side in the root of a git repo is
+generally unheard of, and we shouldn't really have a separate repo for the
+tests, as it will make it difficult to keep them in sync with the code.
+
+Shall we make subdirs under top directories instead? E.g.
+
+    include
+        tlog
+        tltest
+    lib
+        tlog
+        tltest
+    src
+        tlog
+        tltest
+    m4
+        autotools
+        tlog
+    man
+        tlog
+    doc
+        tlog
+
+Let's try.

@@ -21,7 +21,7 @@
  */
 
 #include <stdio.h>
-#include <tlog/test_json_stream_enc.h>
+#include <tltest/json_stream_enc.h>
 
 int
 main(void)

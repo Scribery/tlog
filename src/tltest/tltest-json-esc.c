@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
-#include <tlog/test_misc.h>
+#include <tltest/misc.h>
 #include <tlog/json_misc.h>
 
 #define BOOL_STR(_x) ((_x) ? "true" : "false")
