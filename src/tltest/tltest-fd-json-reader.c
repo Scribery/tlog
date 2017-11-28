@@ -157,7 +157,7 @@ test(const char *file, int line, const char *n, const struct test t)
                     memcmp(res_string, op->data.read.exp_string,
                            res_string_len) != 0) {
                     FAIL_OP("object mismatch:");
-                    tlog_test_diff(
+                    tltest_diff(
                             stderr,
                             (const uint8_t *)res_string,
                             res_string_len,

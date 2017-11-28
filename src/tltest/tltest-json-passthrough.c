@@ -35,16 +35,16 @@
 #include <tltest/json_sink.h>
 #include <tltest/json_source.h>
 
-struct tlog_test_json_passthrough {
-    struct tlog_test_json_sink_input    input;
-    struct tlog_test_json_source_output output;
+struct tltest_json_passthrough {
+    struct tltest_json_sink_input    input;
+    struct tltest_json_source_output output;
 };
 
 static bool
-tlog_test_json_passthrough(const char *file,
-                           int line,
-                           const char *name,
-                           struct tlog_test_json_passthrough test)
+tltest_json_passthrough(const char *file,
+                        int line,
+                        const char *name,
+                        struct tltest_json_passthrough test)
 {
     bool passed = true;
     char *sink_name = NULL;
@@ -65,12 +65,12 @@ tlog_test_json_passthrough(const char *file,
         goto exit;
     }
 
-    passed = tlog_test_json_sink_run(sink_name,
-                                     &test.input, &log_buf, &log_len) &&
+    passed = tltest_json_sink_run(sink_name,
+                                  &test.input, &log_buf, &log_len) &&
              passed;
 
-    passed = tlog_test_json_source_run(source_name,
-                                       log_buf, log_len, &test.output) &&
+    passed = tltest_json_source_run(source_name,
+                                    log_buf, log_len, &test.output) &&
              passed;
 
 exit:
@@ -88,11 +88,11 @@ exit:
 }
 
 static bool
-tlog_test_json_passthrough_buf(const char *name,
-                               size_t sink_chunk_size,
-                               size_t source_io_size,
-                               const char *data_buf,
-                               size_t data_len)
+tltest_json_passthrough_buf(const char *name,
+                            size_t sink_chunk_size,
+                            size_t source_io_size,
+                            const char *data_buf,
+                            size_t data_len)
 {
     bool mismatch;
     bool passed = false;
@@ -205,10 +205,10 @@ cleanup:
 }
 
 static bool
-tlog_test_json_passthrough_random(const char *name,
-                                  size_t sink_chunk_size,
-                                  size_t source_io_size,
-                                  size_t data_len)
+tltest_json_passthrough_random(const char *name,
+                               size_t sink_chunk_size,
+                               size_t source_io_size,
+                               size_t data_len)
 {
     bool passed;
     char *data_buf;
@@ -219,9 +219,9 @@ tlog_test_json_passthrough_random(const char *name,
         data_buf[i] = (uint64_t)random() * 255 / RAND_MAX;
     }
 
-    passed = tlog_test_json_passthrough_buf(name,
-                                            sink_chunk_size, source_io_size,
-                                            data_buf, data_len);
+    passed = tltest_json_passthrough_buf(name,
+                                         sink_chunk_size, source_io_size,
+                                         data_buf, data_len);
     free(data_buf);
 
     return passed;
@@ -243,14 +243,14 @@ main(void)
 #define PKT_IO_STR(_tv_sec, _tv_nsec, _output, _buf) \
     TLOG_PKT_IO_STR(_tv_sec, _tv_nsec, _output, _buf)
 
-#define OP_WRITE(_pkt)  TLOG_TEST_JSON_SINK_OP_WRITE(_pkt)
-#define OP_FLUSH        TLOG_TEST_JSON_SINK_OP_FLUSH
-#define OP_CUT          TLOG_TEST_JSON_SINK_OP_CUT
+#define OP_WRITE(_pkt)  TLTEST_JSON_SINK_OP_WRITE(_pkt)
+#define OP_FLUSH        TLTEST_JSON_SINK_OP_FLUSH
+#define OP_CUT          TLTEST_JSON_SINK_OP_CUT
 
 #define OP_LOC_GET(_exp_loc) \
-    TLOG_TEST_JSON_SOURCE_OP_LOC_GET(_exp_loc)
+    TLTEST_JSON_SOURCE_OP_LOC_GET(_exp_loc)
 #define OP_READ(_exp_grc, _exp_pkt) \
-    TLOG_TEST_JSON_SOURCE_OP_READ(_exp_grc, _exp_pkt)
+    TLTEST_JSON_SOURCE_OP_READ(_exp_grc, _exp_pkt)
 #define OP_READ_OK(_exp_pkt) \
     OP_READ(TLOG_RC_OK, _exp_pkt)
 
@@ -274,11 +274,9 @@ main(void)
     }
 
 #define TEST(_name_token, _struct_init_args...) \
-    passed = tlog_test_json_passthrough(                \
-                __FILE__, __LINE__, #_name_token,       \
-                (struct tlog_test_json_passthrough){    \
-                    _struct_init_args                   \
-                }                                       \
+    passed = tltest_json_passthrough(                               \
+                __FILE__, __LINE__, #_name_token,                   \
+                (struct tltest_json_passthrough){_struct_init_args} \
              ) && passed
 
     TEST(null,
@@ -1028,9 +1026,9 @@ main(void)
          )
     );
 
-    passed = tlog_test_json_passthrough_random("random",
-                                               16 * 1024, 16 * 1024,
-                                               256 * 1024) &&
+    passed = tltest_json_passthrough_random("random",
+                                            16 * 1024, 16 * 1024,
+                                            256 * 1024) &&
              passed;
 
     return !passed;

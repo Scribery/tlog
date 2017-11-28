@@ -29,8 +29,8 @@ main(void)
     bool passed = true;
 
 #define TEST(_name_token, _struct_init_args...) \
-    passed = tlog_test_json_stream_enc(__FILE__, __LINE__, #_name_token,    \
-                                  (struct tlog_test_json_stream_enc)        \
+    passed = tltest_json_stream_enc(__FILE__, __LINE__, #_name_token,       \
+                                    (struct tltest_json_stream_enc)         \
                                        {.func = tlog_json_stream_enc_bin,   \
                                         ##_struct_init_args}) &&            \
              passed

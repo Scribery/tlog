@@ -24,9 +24,9 @@
 #include <tltest/misc.h>
 
 static void
-tlog_test_diff_side(FILE *stream, const char *name,
-                    const uint8_t *out_buf, size_t out_len,
-                    const uint8_t *exp_buf, size_t exp_len)
+tltest_diff_side(FILE *stream, const char *name,
+                 const uint8_t *out_buf, size_t out_len,
+                 const uint8_t *exp_buf, size_t exp_len)
 {
     size_t min_len = TLOG_MIN(out_len, exp_len);
     size_t max_len = TLOG_MAX(out_len, exp_len);
@@ -67,12 +67,12 @@ tlog_test_diff_side(FILE *stream, const char *name,
 }
 
 void
-tlog_test_diff(FILE *stream,
-               const uint8_t *res_buf, size_t res_len,
-               const uint8_t *exp_buf, size_t exp_len)
+tltest_diff(FILE *stream,
+            const uint8_t *res_buf, size_t res_len,
+            const uint8_t *exp_buf, size_t exp_len)
 {
-    tlog_test_diff_side(stream, "expected", exp_buf, exp_len, res_buf, res_len);
+    tltest_diff_side(stream, "expected", exp_buf, exp_len, res_buf, res_len);
     fprintf(stream, "\n");
-    tlog_test_diff_side(stream, "result", res_buf, res_len, exp_buf, exp_len);
+    tltest_diff_side(stream, "result", res_buf, res_len, exp_buf, exp_len);
 }
 

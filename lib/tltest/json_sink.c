@@ -28,16 +28,16 @@
 #include <tltest/misc.h>
 
 const char*
-tlog_test_json_sink_op_type_to_str(enum tlog_test_json_sink_op_type type)
+tltest_json_sink_op_type_to_str(enum tltest_json_sink_op_type type)
 {
     switch (type) {
-    case TLOG_TEST_JSON_SINK_OP_TYPE_NONE:
+    case TLTEST_JSON_SINK_OP_TYPE_NONE:
         return "none";
-    case TLOG_TEST_JSON_SINK_OP_TYPE_WRITE:
+    case TLTEST_JSON_SINK_OP_TYPE_WRITE:
         return "write";
-    case TLOG_TEST_JSON_SINK_OP_TYPE_FLUSH:
+    case TLTEST_JSON_SINK_OP_TYPE_FLUSH:
         return "flush";
-    case TLOG_TEST_JSON_SINK_OP_TYPE_CUT:
+    case TLTEST_JSON_SINK_OP_TYPE_CUT:
         return "cut";
     default:
         return "<unknown>";
@@ -45,17 +45,17 @@ tlog_test_json_sink_op_type_to_str(enum tlog_test_json_sink_op_type type)
 }
 
 bool
-tlog_test_json_sink_run(
-        const char                                 *name,
-        const struct tlog_test_json_sink_input     *input,
-        char                                      **pres_output_buf,
-        size_t                                     *pres_output_len)
+tltest_json_sink_run(
+        const char                             *name,
+        const struct tltest_json_sink_input    *input,
+        char                                  **pres_output_buf,
+        size_t                                 *pres_output_len)
 {
     bool passed = true;
     tlog_grc grc;
     struct tlog_json_writer *writer = NULL;
     struct tlog_sink *sink = NULL;
-    const struct tlog_test_json_sink_op *op;
+    const struct tltest_json_sink_op *op;
 
     grc = tlog_mem_json_writer_create(&writer,
                                       pres_output_buf, pres_output_len);
@@ -91,11 +91,11 @@ tlog_test_json_sink_run(
     } while (0)
 
 #define FAIL_OP \
-    do {                                                \
-        FAIL("op #%zd (%s) failed",                     \
-             op - input->op_list + 1,                   \
-             tlog_test_json_sink_op_type_to_str(op->type));  \
-        goto cleanup;                                   \
+    do {                                                    \
+        FAIL("op #%zd (%s) failed",                         \
+             op - input->op_list + 1,                       \
+             tltest_json_sink_op_type_to_str(op->type));    \
+        goto cleanup;                                       \
     } while (0)
 
 #define CHECK_OP(_expr) \
@@ -106,16 +106,16 @@ tlog_test_json_sink_run(
     } while (0)
 
     for (op = input->op_list;
-         op->type != TLOG_TEST_JSON_SINK_OP_TYPE_NONE;
+         op->type != TLTEST_JSON_SINK_OP_TYPE_NONE;
          op++) {
         switch (op->type) {
-        case TLOG_TEST_JSON_SINK_OP_TYPE_WRITE:
+        case TLTEST_JSON_SINK_OP_TYPE_WRITE:
             CHECK_OP(tlog_sink_write(sink, &op->data.write, NULL, NULL));
             break;
-        case TLOG_TEST_JSON_SINK_OP_TYPE_FLUSH:
+        case TLTEST_JSON_SINK_OP_TYPE_FLUSH:
             CHECK_OP(tlog_sink_flush(sink));
             break;
-        case TLOG_TEST_JSON_SINK_OP_TYPE_CUT:
+        case TLTEST_JSON_SINK_OP_TYPE_CUT:
             CHECK_OP(tlog_sink_cut(sink));
             break;
         default:
@@ -135,8 +135,8 @@ cleanup:
 }
 
 bool
-tlog_test_json_sink(const char *file, int line, const char *name,
-                    const struct tlog_test_json_sink test)
+tltest_json_sink(const char *file, int line, const char *name,
+                 const struct tltest_json_sink test)
 {
     bool passed = true;
     const char *exp_output_buf = test.output;
@@ -144,17 +144,17 @@ tlog_test_json_sink(const char *file, int line, const char *name,
     char *res_output_buf = NULL;
     size_t res_output_len = 0;
 
-    passed = tlog_test_json_sink_run(name,
-                                     &test.input,
-                                     &res_output_buf,
-                                     &res_output_len);
+    passed = tltest_json_sink_run(name,
+                                  &test.input,
+                                  &res_output_buf,
+                                  &res_output_len);
 
     if (res_output_len != exp_output_len ||
         memcmp(res_output_buf, exp_output_buf, res_output_len) != 0) {
         fprintf(stderr, "%s: output mismatch:\n", name);
-        tlog_test_diff(stderr,
-                       (const uint8_t *)res_output_buf, res_output_len,
-                       (const uint8_t *)exp_output_buf, exp_output_len);
+        tltest_diff(stderr,
+                    (const uint8_t *)res_output_buf, res_output_len,
+                    (const uint8_t *)exp_output_buf, exp_output_len);
         passed = false;
     }
 

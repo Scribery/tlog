@@ -311,9 +311,9 @@ test(const char *file, int line, const char *n, const struct test t)
         if ((_result_len) != (_expected_len) ||                         \
             memcmp(_result_ptr, _expected_ptr, _expected_len) != 0) {   \
             fprintf(stderr, "%s: " #_name "_buf mismatch:\n", n);       \
-            tlog_test_diff(stderr,                                      \
-                           _result_ptr, _result_len,                    \
-                           _expected_ptr, _expected_len);               \
+            tltest_diff(stderr,                                         \
+                        _result_ptr, _result_len,                       \
+                        _expected_ptr, _expected_len);                  \
             passed = false;                                             \
         }                                                               \
     } while (0)

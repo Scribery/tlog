@@ -24,27 +24,27 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TLOG_TEST_JSON_STREAM_ENC_H
-#define _TLOG_TEST_JSON_STREAM_ENC_H
+#ifndef _TLTEST_JSON_STREAM_ENC_H
+#define _TLTEST_JSON_STREAM_ENC_H
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <tlog/json_stream.h>
 
-#define TLOG_TEST_JSON_STREAM_ENC_BUF_SIZE    32
+#define TLTEST_JSON_STREAM_ENC_BUF_SIZE    32
 
-typedef bool (*tlog_test_json_stream_enc_func)(
+typedef bool (*tltest_json_stream_enc_func)(
                                 tlog_trx_state trx,
                                 struct tlog_json_dispatcher *dispatcher,
                                 uint8_t *obuf, size_t *polen,
                                 size_t *pirun, size_t *pidig,
                                 const uint8_t *ibuf, size_t ilen);
 
-struct tlog_test_json_stream_enc {
-    tlog_test_json_stream_enc_func  func;
-    const uint8_t   ibuf_in[TLOG_TEST_JSON_STREAM_ENC_BUF_SIZE];
+struct tltest_json_stream_enc {
+    tltest_json_stream_enc_func  func;
+    const uint8_t   ibuf_in[TLTEST_JSON_STREAM_ENC_BUF_SIZE];
     size_t          ilen_in;
-    const uint8_t   obuf_out[TLOG_TEST_JSON_STREAM_ENC_BUF_SIZE];
+    const uint8_t   obuf_out[TLTEST_JSON_STREAM_ENC_BUF_SIZE];
     size_t          orem_in;
     size_t          orem_out;
     size_t          olen_in;
@@ -64,10 +64,10 @@ struct tlog_test_json_stream_enc {
  *
  * @return True if test passed, false otherwise.
  */
-extern bool tlog_test_json_stream_enc(
+extern bool tltest_json_stream_enc(
                         const char *file,
                         int line,
                         const char *n,
-                        const struct tlog_test_json_stream_enc t);
+                        const struct tltest_json_stream_enc t);
 
-#endif /* _TLOG_TEST_JSON_STREAM_ENC_H */
+#endif /* _TLTEST_JSON_STREAM_ENC_H */

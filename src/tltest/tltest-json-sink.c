@@ -30,9 +30,9 @@ main(void)
 {
     bool passed = true;
 
-#define OP_WRITE(_pkt)  TLOG_TEST_JSON_SINK_OP_WRITE(_pkt)
-#define OP_FLUSH        TLOG_TEST_JSON_SINK_OP_FLUSH
-#define OP_CUT          TLOG_TEST_JSON_SINK_OP_CUT
+#define OP_WRITE(_pkt)  TLTEST_JSON_SINK_OP_WRITE(_pkt)
+#define OP_FLUSH        TLTEST_JSON_SINK_OP_FLUSH
+#define OP_CUT          TLTEST_JSON_SINK_OP_CUT
 
 #define OP_WRITE_WINDOW(_pkt_window_args...) \
     OP_WRITE(TLOG_PKT_WINDOW(_pkt_window_args))
@@ -65,12 +65,10 @@ main(void)
     .output = (_string)
 
 #define TEST(_name_token, _struct_init_args...) \
-    passed = tlog_test_json_sink(               \
-                __FILE__, __LINE__,             \
-                #_name_token,                   \
-                (struct tlog_test_json_sink){   \
-                    _struct_init_args           \
-                }                               \
+    passed = tltest_json_sink(                                  \
+                __FILE__, __LINE__,                             \
+                #_name_token,                                   \
+                (struct tltest_json_sink){_struct_init_args}    \
     ) && passed
 
     TEST(null,              INPUT(.op_list = {}),

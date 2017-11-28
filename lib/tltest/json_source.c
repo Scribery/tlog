@@ -32,14 +32,14 @@
 #include <string.h>
 
 const char*
-tlog_test_json_source_op_type_to_str(enum tlog_test_json_source_op_type type)
+tltest_json_source_op_type_to_str(enum tltest_json_source_op_type type)
 {
     switch (type) {
-    case TLOG_TEST_JSON_SOURCE_OP_TYPE_NONE:
+    case TLTEST_JSON_SOURCE_OP_TYPE_NONE:
         return "none";
-    case TLOG_TEST_JSON_SOURCE_OP_TYPE_READ:
+    case TLTEST_JSON_SOURCE_OP_TYPE_READ:
         return "read";
-    case TLOG_TEST_JSON_SOURCE_OP_TYPE_LOC_GET:
+    case TLTEST_JSON_SOURCE_OP_TYPE_LOC_GET:
         return "loc_get";
     default:
         return "<unknown>";
@@ -96,9 +96,9 @@ pkt_diff(FILE *stream,
             memcmp(res->data.io.buf, exp->data.io.buf,
                    res->data.io.len) != 0) {
             fprintf(stream, "buf mismatch:\n");
-            tlog_test_diff(stream,
-                           res->data.io.buf, res->data.io.len,
-                           exp->data.io.buf, exp->data.io.len);
+            tltest_diff(stream,
+                        res->data.io.buf, res->data.io.len,
+                        exp->data.io.buf, exp->data.io.len);
         }
         break;
     default:
@@ -107,18 +107,18 @@ pkt_diff(FILE *stream,
 }
 
 bool
-tlog_test_json_source_run(
-        const char                                   *name,
-        const char                                   *input_buf,
-        size_t                                        input_len,
-        const struct tlog_test_json_source_output    *output)
+tltest_json_source_run(
+        const char                             *name,
+        const char                             *input_buf,
+        size_t                                  input_len,
+        const struct tltest_json_source_output *output)
 {
     bool passed = true;
     tlog_grc grc;
     struct tlog_json_reader *reader = NULL;
     struct tlog_source *source = NULL;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
-    const struct tlog_test_json_source_op *op;
+    const struct tltest_json_source_op *op;
     size_t loc;
 
     grc = tlog_mem_json_reader_create(&reader, input_buf, input_len);
@@ -153,14 +153,14 @@ tlog_test_json_source_run(
 
 #define FAIL_OP(_fmt, _args...) \
     FAIL("op #%zd (%s): " _fmt,                                 \
-         op - output->op_list + 1,                                 \
-         tlog_test_json_source_op_type_to_str(op->type), ##_args)
+         op - output->op_list + 1,                              \
+         tltest_json_source_op_type_to_str(op->type), ##_args)
 
     for (op = output->op_list;
-         op->type != TLOG_TEST_JSON_SOURCE_OP_TYPE_NONE;
+         op->type != TLTEST_JSON_SOURCE_OP_TYPE_NONE;
          op++) {
         switch (op->type) {
-        case TLOG_TEST_JSON_SOURCE_OP_TYPE_READ:
+        case TLTEST_JSON_SOURCE_OP_TYPE_READ:
             grc = tlog_source_read(source, &pkt);
             if (grc != op->data.read.exp_grc) {
                 const char *res_str;
@@ -177,7 +177,7 @@ tlog_test_json_source_run(
             }
             tlog_pkt_cleanup(&pkt);
             break;
-        case TLOG_TEST_JSON_SOURCE_OP_TYPE_LOC_GET:
+        case TLTEST_JSON_SOURCE_OP_TYPE_LOC_GET:
             loc = tlog_source_loc_get(source);
             if (loc != op->data.loc_get.exp_loc) {
                 char *res_str;
@@ -207,12 +207,12 @@ tlog_test_json_source_run(
 }
 
 bool
-tlog_test_json_source(const char *file, int line, const char *name,
-                      const struct tlog_test_json_source test)
+tltest_json_source(const char *file, int line, const char *name,
+                   const struct tltest_json_source test)
 {
     bool passed;
 
-    passed = tlog_test_json_source_run(name,
+    passed = tltest_json_source_run(name,
                                        test.input, strlen(test.input),
                                        &test.output);
     fprintf(stderr, "%s %s:%d %s\n", (passed ? "PASS" : "FAIL"),

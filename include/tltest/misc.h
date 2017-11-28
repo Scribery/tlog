@@ -24,8 +24,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _TLOG_TEST_MISC_H
-#define _TLOG_TEST_MISC_H
+#ifndef _TLTEST_MISC_H
+#define _TLTEST_MISC_H
 
 #include <stdio.h>
 #include <stdint.h>
@@ -39,8 +39,8 @@
  * @param exp_buf   "Expected" buffer.
  * @param exp_len   "Expected" length.
  */
-extern void tlog_test_diff(FILE *stream,
-                           const uint8_t *res_buf, size_t res_len,
-                           const uint8_t *exp_buf, size_t exp_len);
+extern void tltest_diff(FILE *stream,
+                        const uint8_t *res_buf, size_t res_len,
+                        const uint8_t *exp_buf, size_t exp_len);
 
-#endif /* _TLOG_TEST_MISC_H */
+#endif /* _TLTEST_MISC_H */

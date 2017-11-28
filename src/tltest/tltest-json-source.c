@@ -43,9 +43,9 @@ main(void)
     TLOG_PKT_IO_STR(_tv_sec, _tv_nsec, _output, _buf)
 
 #define OP_LOC_GET(_exp_loc) \
-    TLOG_TEST_JSON_SOURCE_OP_LOC_GET(_exp_loc)
+    TLTEST_JSON_SOURCE_OP_LOC_GET(_exp_loc)
 #define OP_READ(_exp_grc, _exp_pkt) \
-    TLOG_TEST_JSON_SOURCE_OP_READ(_exp_grc, _exp_pkt)
+    TLTEST_JSON_SOURCE_OP_READ(_exp_grc, _exp_pkt)
 
 #define MSG_SPEC(_host_token, _user_token, _term_token, _session_token, \
                  _id_token, _pos,                                       \
@@ -86,12 +86,10 @@ main(void)
     }
 
 #define TEST(_name_token, _struct_init_args...) \
-    passed = tlog_test_json_source(             \
-                __FILE__, __LINE__,             \
-                #_name_token,                   \
-                (struct tlog_test_json_source){ \
-                    _struct_init_args           \
-                }                               \
+    passed = tltest_json_source(                                \
+                __FILE__, __LINE__,                             \
+                #_name_token,                                   \
+                (struct tltest_json_source){_struct_init_args}  \
              ) && passed
 
     TEST(null,

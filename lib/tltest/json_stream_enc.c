@@ -102,11 +102,11 @@ test_meta_init(struct test_meta *meta, size_t rem)
 }
 
 bool
-tlog_test_json_stream_enc(const char *file, int line, const char *n,
-                          const struct tlog_test_json_stream_enc t)
+tltest_json_stream_enc(const char *file, int line, const char *n,
+                       const struct tltest_json_stream_enc t)
 {
     bool passed = true;
-    uint8_t obuf[TLOG_TEST_JSON_STREAM_ENC_BUF_SIZE] = {0,};
+    uint8_t obuf[TLTEST_JSON_STREAM_ENC_BUF_SIZE] = {0,};
     struct test_meta meta;
     size_t olen = t.olen_in;
     size_t irun = t.irun_in;
@@ -146,11 +146,11 @@ tlog_test_json_stream_enc(const char *file, int line, const char *n,
     CMP_SIZE(irun);
     CMP_SIZE(idig);
 
-    if (memcmp(obuf, t.obuf_out, TLOG_TEST_JSON_STREAM_ENC_BUF_SIZE) != 0) {
+    if (memcmp(obuf, t.obuf_out, TLTEST_JSON_STREAM_ENC_BUF_SIZE) != 0) {
         fprintf(stderr, "%s: obuf mismatch:\n", n);
-        tlog_test_diff(stderr,
-                       obuf, TLOG_TEST_JSON_STREAM_ENC_BUF_SIZE,
-                       t.obuf_out, TLOG_TEST_JSON_STREAM_ENC_BUF_SIZE);
+        tltest_diff(stderr,
+                    obuf, TLTEST_JSON_STREAM_ENC_BUF_SIZE,
+                    t.obuf_out, TLTEST_JSON_STREAM_ENC_BUF_SIZE);
         passed = false;
     }
 
