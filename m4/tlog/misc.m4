@@ -41,7 +41,7 @@ m4_dnl
 m4_dnl Concatenate arguments into diversion 0
 m4_dnl Arguments:
 m4_dnl
-m4_dnl      $@  Text to output
+m4_dnl      $@  Text to output.
 m4_dnl
 m4_define(`m4_print', `m4_dnl
 m4_pushdef(`m4_orig_divnum', m4_divnum)m4_dnl
@@ -55,7 +55,7 @@ m4_dnl
 m4_dnl Append arguments with newlines and concatenate into diversion 0.
 m4_dnl Arguments:
 m4_dnl
-m4_dnl      $@  Text to output
+m4_dnl      $@  Text to output.
 m4_dnl
 m4_define(`m4_printl', `m4_dnl
 m4_pushdef(`m4_orig_divnum', m4_divnum)m4_dnl
@@ -69,7 +69,7 @@ m4_dnl
 m4_dnl Output a warning header about the file being generated.
 m4_dnl Arguments:
 m4_dnl
-m4_dnl      $1  Prefix to put in front of each line
+m4_dnl      $1  Prefix to put in front of each line.
 m4_dnl
 m4_define(
 `m4_generated_warning',
@@ -84,7 +84,7 @@ m4_dnl
 m4_dnl Quote the argument in single quotes, as a C character literal.
 m4_dnl Arguments:
 m4_dnl
-m4_dnl      $1  The text to single-quote
+m4_dnl      $1  The text to single-quote.
 m4_dnl
 m4_changequote(`[', `]')m4_dnl
 m4_define([m4_singlequote], ['$1'])m4_dnl
@@ -100,8 +100,8 @@ m4_dnl
 m4_dnl Shift N arguments.
 m4_dnl Arguments:
 m4_dnl
-m4_dnl      $1      Number of arguments to shift
-m4_dnl      $@      The arguments to shift
+m4_dnl      $1      Number of arguments to shift.
+m4_dnl      $@      The arguments to shift.
 m4_dnl
 m4_define(`m4_shiftn',
           `m4_ifelse(`$#', `0', ,
