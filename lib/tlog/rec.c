@@ -1069,6 +1069,55 @@ tlog_rec_get_item_mask(struct tlog_errs **perrs,
     return TLOG_RC_OK;
 }
 
+/**
+ * Signal through the "READY" semaphore file, if specified.
+ *
+ * @param perrs Location for the error stack. Can be NULL.
+ * @param conf  Recording program configuration JSON object.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_rec_semaphore(struct tlog_errs **perrs, struct json_object *conf)
+{
+    tlog_grc grc;
+    struct json_object *obj;
+    const char *str;
+    int fd = -1;
+    ssize_t rc;
+
+    if (json_object_object_get_ex(conf, "semaphore", &obj)) {
+        str = json_object_get_string(obj);
+        fd = open(str, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+        if (fd < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed opening semaphore file \"%s\"", str);
+            goto cleanup;
+        }
+        rc = write(fd, "READY", 5);
+        if (rc < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushf(perrs, "Failed writing semaphore file \"%s\"", str);
+            goto cleanup;
+        } else if (rc < 5) {
+            grc = TLOG_RC_FAILURE;
+            tlog_errs_pushf(perrs, "Short write to semaphore file \"%s\"", str);
+            goto cleanup;
+        }
+        close(fd);
+        fd = -1;
+    }
+
+    grc = TLOG_RC_OK;
+cleanup:
+    if (fd >= 0) {
+        close(fd);
+    }
+    return grc;
+}
+
 tlog_grc
 tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
          const char *cmd_help, struct json_object *conf,
@@ -1201,6 +1250,13 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
                          in_fd, out_fd, err_fd, clock_id);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed setting up the I/O tap");
+        goto cleanup;
+    }
+
+    /* Signal "READY" semaphore, if specified */
+    grc = tlog_rec_semaphore(perrs, conf);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushs(perrs, "Failed signalling \"READY\" semaphore");
         goto cleanup;
     }
 

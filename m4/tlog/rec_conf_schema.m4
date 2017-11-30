@@ -41,3 +41,11 @@ m4_ifelse(M4_JOURNAL_ENABLED(), `1',
           `M4_LINES(`type of "log writer" to use for logging. The writer needs',
                     `to be configured using its dedicated parameters.')')')m4_dnl
 m4_dnl
+M4_PARAM(`', `semaphore', `opts',
+         `M4_TYPE_STRING()', false,
+         `', `=FILE', `Write "READY" to FILE when recording is setup',
+         `FILE is a ', `A ',
+         `M4_LINES(`path to a "semaphore" file to write string "READY" to, when the ',
+                   `recording setup is done, and I/O can be passed to and from the ',
+                   `recorded program.')')m4_dnl
+m4_dnl
