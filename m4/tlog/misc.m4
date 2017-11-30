@@ -133,3 +133,59 @@ m4_define(`m4_repl_cases',
                      `$#', `2', `m4_ifelse(`$1', `$2', `', `$1')',
                      `m4_ifelse(`$1', `$2', `$3',
                                 `m4_repl_cases(`$1', m4_shiftn(3, $@))')')')m4_dnl
+m4_dnl
+m4_dnl Substitute a string's substrings matching a list of regular expressions
+m4_dnl with corresponding replacements.
+m4_dnl Arguments:
+m4_dnl
+m4_dnl      $1      The string to match and replace substrings in.
+m4_dnl      $N*2    The Nth regular expression to match against.
+m4_dnl      $N*2+1  The Nth replacement.
+m4_dnl
+m4_define(`m4_patsubst_list',
+          `m4_ifelse(`$#', `0', ,
+                     `$#', `1', `$1',
+                     `$#', `2', `m4_patsubst(`$1', `$2')',
+                     `$#', `3', `m4_patsubst(`$1', `$2', `$3')',
+                     `m4_patsubst_list(m4_patsubst(`$1', `$2', `$3'),
+                                       m4_shiftn(3, $@))')')m4_dnl
+m4_dnl
+m4_dnl Escape string for use in C string literal.
+m4_dnl Arguments:
+m4_dnl
+m4_dnl      $1      The string to escape.
+m4_dnl
+m4_define(`m4_cstr_esc',
+          `m4_patsubst_list(`$1',
+                            `[\"?]', `\\\&',
+                            m4_format(`%c',  1), `\\x01',
+                            m4_format(`%c',  2), `\\x02',
+                            m4_format(`%c',  3), `\\x03',
+                            m4_format(`%c',  4), `\\x04',
+                            m4_format(`%c',  5), `\\x05',
+                            m4_format(`%c',  6), `\\x06',
+                            m4_format(`%c',  7), `\\a',
+                            m4_format(`%c',  8), `\\b',
+                            m4_format(`%c',  9), `\\t',
+                            m4_format(`%c', 10), `\\n',
+                            m4_format(`%c', 11), `\\v',
+                            m4_format(`%c', 12), `\\f',
+                            m4_format(`%c', 13), `\\r',
+                            m4_format(`%c', 14), `\\x0e',
+                            m4_format(`%c', 15), `\\x0f',
+                            m4_format(`%c', 16), `\\x10',
+                            m4_format(`%c', 17), `\\x11',
+                            m4_format(`%c', 18), `\\x12',
+                            m4_format(`%c', 19), `\\x13',
+                            m4_format(`%c', 20), `\\x14',
+                            m4_format(`%c', 21), `\\x15',
+                            m4_format(`%c', 22), `\\x16',
+                            m4_format(`%c', 23), `\\x17',
+                            m4_format(`%c', 24), `\\x18',
+                            m4_format(`%c', 25), `\\x19',
+                            m4_format(`%c', 26), `\\x1a',
+                            m4_format(`%c', 27), `\\x1b',
+                            m4_format(`%c', 28), `\\x1c',
+                            m4_format(`%c', 29), `\\x1d',
+                            m4_format(`%c', 30), `\\x1e',
+                            m4_format(`%c', 31), `\\x1f')')m4_dnl
