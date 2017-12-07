@@ -30,7 +30,8 @@
 #define BOOL_STR(_x) ((_x) ? "true" : "false")
 
 static bool
-test(const char *name, size_t exp_res_len,
+test(const char *file, int line,
+     const char *name, size_t exp_res_len,
      const char *out_ptr, size_t out_len,
      const char *in_ptr, size_t in_len)
 {
@@ -50,9 +51,10 @@ test(const char *name, size_t exp_res_len,
     res_res_len = tlog_json_esc_buf(res_out_buf, out_len, in_ptr, in_len);
 
 #define FAIL(_fmt, _args...) \
-    do {                                                    \
-        fprintf(stderr, "%s: " _fmt "\n", name, ##_args);   \
-        passed = false;                                     \
+    do {                                                            \
+        fprintf(stderr, "FAIL %s:%d %s " _fmt "\n", file, line,     \
+                name, ##_args);                                     \
+        passed = false;                                             \
     } while (0)
 #define TEST(_expr, _fmt, _args...) \
     do {                            \
@@ -69,7 +71,8 @@ test(const char *name, size_t exp_res_len,
     }
 #undef TEST
 #undef FAIL
-    fprintf(stderr, "%s: %s\n", name, (passed ? "PASS" : "FAIL"));
+    fprintf(stderr, "%s %s:%d %s\n", (passed ? "PASS" : "FAIL"),
+            file, line, name);
     return passed;
 }
 
@@ -81,7 +84,7 @@ main(void)
 #define TEST_BUF_BUF(_name_token, _exp_res_len, \
                      _out_ptr, _out_len, _in_ptr, _in_len)              \
     do {                                                                \
-        passed = test(#_name_token, _exp_res_len,                       \
+        passed = test(__FILE__, __LINE__, #_name_token, _exp_res_len,   \
                       _out_ptr, _out_len, _in_ptr, _in_len) && passed;  \
     } while (0);
 

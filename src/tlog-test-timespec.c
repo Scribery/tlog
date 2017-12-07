@@ -35,7 +35,8 @@ struct op {
 };
 
 static bool
-op_list_test(const struct op *op_list, size_t op_num,
+op_list_test(const char *file, int line,
+             const struct op *op_list, size_t op_num,
              struct timespec a, struct timespec b, struct timespec exp_res)
 {
     bool all_passed = true;
@@ -48,15 +49,17 @@ op_list_test(const struct op *op_list, size_t op_num,
         passed = (res.tv_sec == exp_res.tv_sec && res.tv_nsec == exp_res.tv_nsec);
         if (passed) {
             fprintf(stderr,
-                    "PASS " TLOG_TIMESPEC_FMT " %s " TLOG_TIMESPEC_FMT
+                    "PASS %s:%d " TLOG_TIMESPEC_FMT " %s " TLOG_TIMESPEC_FMT
                     " == " TLOG_TIMESPEC_FMT "\n",
+                    file, line,
                     TLOG_TIMESPEC_ARG(&a), op_list[i].sym,
                     TLOG_TIMESPEC_ARG(&b),
                     TLOG_TIMESPEC_ARG(&exp_res));
         } else {
             fprintf(stderr,
-                    "FAIL " TLOG_TIMESPEC_FMT " %s " TLOG_TIMESPEC_FMT
+                    "FAIL %s:%d " TLOG_TIMESPEC_FMT " %s " TLOG_TIMESPEC_FMT
                     " = " TLOG_TIMESPEC_FMT " != " TLOG_TIMESPEC_FMT "\n",
+                    file, line,
                     TLOG_TIMESPEC_ARG(&a), op_list[i].sym,
                     TLOG_TIMESPEC_ARG(&b),
                     TLOG_TIMESPEC_ARG(&res), TLOG_TIMESPEC_ARG(&exp_res));
@@ -99,9 +102,10 @@ main(void)
 #define TS(_sec, _nsec) (struct timespec){_sec, _nsec}
 
 #define TEST(_op_list, _a, _b, _exp_res) \
-    do {                                                                \
-        passed = op_list_test((_op_list), TLOG_ARRAY_SIZE(_op_list),    \
-                              _a, _b, _exp_res) && passed;              \
+    do {                                                      \
+        passed = op_list_test(__FILE__, __LINE__, (_op_list), \
+                              TLOG_ARRAY_SIZE(_op_list),      \
+                              _a, _b, _exp_res) && passed;    \
     } while (0)
 
     /*

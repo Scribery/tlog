@@ -77,7 +77,7 @@ struct test {
 };
 
 static bool
-test(const char *n, const struct test t)
+test(const char *file, int line, const char *n, const struct test t)
 {
     bool passed = true;
     int fd = -1;
@@ -121,9 +121,10 @@ test(const char *n, const struct test t)
     }
 
 #define FAIL(_fmt, _args...) \
-    do {                                                \
-        fprintf(stderr, "%s: " _fmt "\n", n, ##_args);  \
-        passed = false;                                 \
+    do {                                              \
+        fprintf(stderr, "FAIL %s:%d %s " _fmt "\n",   \
+                file, line, n, ##_args);              \
+        passed = false;                               \
     } while (0)
 
 #define FAIL_OP(_fmt, _args...) \
@@ -192,7 +193,8 @@ test(const char *n, const struct test t)
 #undef FAIL_OP
 #undef FAIL
 
-    fprintf(stderr, "%s: %s\n", n, (passed ? "PASS" : "FAIL"));
+    fprintf(stderr, "%s %s:%d %s\n", (passed ? "PASS" : "FAIL"),
+            file, line, n);
 
     tlog_json_reader_destroy(reader);
     if (fd >= 0) {
@@ -218,7 +220,7 @@ main(void)
      .data = {.loc_get = {.exp_loc = _exp_loc}}}
 
 #define TEST(_name_token, _input, _op_list_init_args...) \
-    passed = test(#_name_token,                                 \
+    passed = test(__FILE__, __LINE__, #_name_token,             \
                   (struct test){                                \
                     .input = _input,                            \
                     .op_list = {_op_list_init_args, OP_NONE}    \
@@ -490,4 +492,3 @@ main(void)
 
     return !passed;
 }
-

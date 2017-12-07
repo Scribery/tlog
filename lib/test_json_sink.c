@@ -135,7 +135,8 @@ cleanup:
 }
 
 bool
-tlog_test_json_sink(const char *name, const struct tlog_test_json_sink test)
+tlog_test_json_sink(const char *file, int line, const char *name,
+                    const struct tlog_test_json_sink test)
 {
     bool passed = true;
     const char *exp_output_buf = test.output;
@@ -159,6 +160,6 @@ tlog_test_json_sink(const char *name, const struct tlog_test_json_sink test)
 
     free(res_output_buf);
 
-    fprintf(stderr, "%s: %s\n", name, (passed ? "PASS" : "FAIL"));
+    fprintf(stderr, "%s %s:%d %s\n",(passed ? "PASS" : "FAIL"), file, line, name);
     return passed;
 }

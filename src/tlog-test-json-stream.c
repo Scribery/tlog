@@ -195,7 +195,7 @@ test_meta_cleanup(struct test_meta *meta)
 }
 
 static bool
-test(const char *n, const struct test t)
+test(const char *file, int line, const char *n, const struct test t)
 {
     bool passed = true;
     struct test_meta meta;
@@ -213,9 +213,10 @@ test(const char *n, const struct test t)
     last_rem = meta.rem;
 
 #define FAIL(_fmt, _args...) \
-    do {                                                \
-        fprintf(stderr, "%s: " _fmt "\n", n, ##_args);  \
-        passed = false;                                 \
+    do {                                                          \
+        fprintf(stderr, "FAIL %s:%d %s" _fmt "\n", file, line,    \
+                n, ##_args);                                      \
+        passed = false;                                           \
     } while (0)
 
 #define FAIL_OP(_fmt, _args...) \
@@ -326,7 +327,8 @@ test(const char *n, const struct test t)
 #undef BUF_CMP
 
 #undef FAIL
-    fprintf(stderr, "%s: %s\n", n, (passed ? "PASS" : "FAIL"));
+    fprintf(stderr, "%s %s:%d %s\n", (passed ? "PASS" : "FAIL"),
+            file, line, n);
 
 cleanup:
     test_meta_cleanup(&meta);
@@ -339,7 +341,8 @@ main(void)
     bool passed = true;
 
 #define TEST(_name_token, _struct_init_args...) \
-    passed = test(#_name_token, (struct test){_struct_init_args}) && passed
+    passed = test(__FILE__, __LINE__, #_name_token,     \
+                  (struct test){_struct_init_args}) && passed
 
 #define OP_WRITE(_data_init_args...) \
     {.type = OP_TYPE_WRITE, .data = {.write = {_data_init_args}}}

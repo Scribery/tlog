@@ -65,6 +65,8 @@ struct tlog_test_json_stream_enc {
  * @return True if test passed, false otherwise.
  */
 extern bool tlog_test_json_stream_enc(
+                        const char *file,
+                        int line,
                         const char *n,
                         const struct tlog_test_json_stream_enc t);
 

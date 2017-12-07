@@ -41,7 +41,9 @@ struct tlog_test_json_passthrough {
 };
 
 static bool
-tlog_test_json_passthrough(const char *name,
+tlog_test_json_passthrough(const char *file,
+                           int line,
+                           const char *name,
                            struct tlog_test_json_passthrough test)
 {
     bool passed = true;
@@ -72,7 +74,8 @@ tlog_test_json_passthrough(const char *name,
              passed;
 
 exit:
-    fprintf(stderr, "%s: %s\n", name, (passed ? "PASS" : "FAIL"));
+    fprintf(stderr, "%s %s:%d %s\n", (passed ? "PASS" : "FAIL"),
+            file, line, name);
     if (!passed) {
         fprintf(stderr, "%s log:\n%.*s", name, (int)log_len, log_buf);
     }
@@ -272,7 +275,7 @@ main(void)
 
 #define TEST(_name_token, _struct_init_args...) \
     passed = tlog_test_json_passthrough(                \
-                #_name_token,                           \
+                __FILE__, __LINE__, #_name_token,       \
                 (struct tlog_test_json_passthrough){    \
                     _struct_init_args                   \
                 }                                       \

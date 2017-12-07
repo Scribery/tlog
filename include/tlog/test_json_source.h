@@ -93,7 +93,7 @@ struct tlog_test_json_source {
     struct tlog_test_json_source_output     output;
 };
 
-extern bool tlog_test_json_source(const char *name,
+extern bool tlog_test_json_source(const char *file, int line, const char *name,
                                   const struct tlog_test_json_source test);
 
 #endif /* _TLOG_TEST_JSON_SOURCE_H */

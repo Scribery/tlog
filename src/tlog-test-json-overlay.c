@@ -29,7 +29,9 @@
 #include <assert.h>
 
 bool
-test(const char *name,
+test(const char *file,
+     int line,
+     const char *name,
      const char *lower_text,
      const char *upper_text,
      const char *exp_result_text)
@@ -81,7 +83,8 @@ test(const char *name,
                        exp_result_len);
     }
 
-    fprintf(stderr, "%s: %s\n", name, (passed ? "PASS" : "FAIL"));
+    fprintf(stderr, "%s %s:%d %s\n", (passed ? "PASS" : "FAIL"),
+            file, line, name);
 
     json_object_put(lower);
     json_object_put(upper);
@@ -96,7 +99,8 @@ main(void)
     bool passed = true;
 
 #define TEST(_name_token, _lower, _upper, _result) \
-    passed = test(#_name_token, _lower, _upper, _result) && passed
+    passed = test(__FILE__, __LINE__, #_name_token,   \
+                  _lower, _upper, _result) && passed  \
 
     TEST(empty, "{ }", "{ }", "{ }");
 
