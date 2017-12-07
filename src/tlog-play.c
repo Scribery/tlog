@@ -72,18 +72,19 @@ io_sighandler(int signum)
 }
 
 /**
- * Create the log source according to configuration.
+ * Create a JSON message reader according to configuration.
  *
- * @param perrs Location for the error stack. Can be NULL.
- * @param psink Location for the created source pointer.
- * @param conf  Configuration JSON object.
+ * @param perrs         Location for the error stack. Can be NULL.
+ * @param preader       Location for the created reader pointer. Not modified
+ *                      in case of error.
+ * @param conf          Configuration JSON object.
  *
  * @return Global return code.
  */
 static tlog_grc
-create_log_source(struct tlog_errs **perrs,
-                  struct tlog_source **psource,
-                  struct json_object *conf)
+create_json_reader(struct tlog_errs **perrs,
+                   struct tlog_json_reader **preader,
+                   struct json_object *conf)
 {
     tlog_grc grc;
     struct json_object *obj;
@@ -92,11 +93,7 @@ create_log_source(struct tlog_errs **perrs,
     size_t i;
     const char **str_list = NULL;
     struct tlog_json_reader *reader = NULL;
-    struct tlog_source *source = NULL;
 
-    /*
-     * Create the reader
-     */
     if (!json_object_object_get_ex(conf, "reader", &obj)) {
         tlog_errs_pushs(perrs, "Reader type is not specified");
         grc = TLOG_RC_FAILURE;
@@ -262,6 +259,47 @@ create_log_source(struct tlog_errs **perrs,
         goto cleanup;
     }
 
+    *preader = reader;
+    reader = NULL;
+    grc = TLOG_RC_OK;
+
+cleanup:
+
+    if (fd >= 0) {
+        close(fd);
+    }
+    free(str_list);
+    tlog_json_reader_destroy(reader);
+    return grc;
+}
+
+/**
+ * Create the log source according to configuration.
+ *
+ * @param perrs Location for the error stack. Can be NULL.
+ * @param psink Location for the created source pointer.
+ * @param conf  Configuration JSON object.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+create_log_source(struct tlog_errs **perrs,
+                  struct tlog_source **psource,
+                  struct json_object *conf)
+{
+    tlog_grc grc;
+    struct json_object *obj;
+    struct tlog_json_reader *reader = NULL;
+    struct tlog_source *source = NULL;
+
+    /*
+     * Create the reader
+     */
+    grc = create_json_reader(perrs, &reader, conf);
+    if (grc != TLOG_RC_OK) {
+        goto cleanup;
+    }
+
     /*
      * Create the source
      */
@@ -290,10 +328,6 @@ create_log_source(struct tlog_errs **perrs,
 
 cleanup:
 
-    if (fd >= 0) {
-        close(fd);
-    }
-    free(str_list);
     tlog_json_reader_destroy(reader);
     tlog_source_destroy(source);
     return grc;
