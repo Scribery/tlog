@@ -764,8 +764,7 @@ run(struct tlog_errs **perrs,
          */
         /* Wait for I/O on the terminal */
         do {
-            rc = ppoll(std_pollfds, TLOG_ARRAY_SIZE(std_pollfds),
-                       &tlog_timespec_max, NULL);
+            rc = ppoll(std_pollfds, TLOG_ARRAY_SIZE(std_pollfds), NULL, NULL);
         } while (rc == 0);
         if (rc < 0) {
             if (errno == EINTR) {
