@@ -102,7 +102,7 @@ test_meta_init(struct test_meta *meta, size_t rem)
 }
 
 bool
-tlog_test_json_stream_enc(const char *n,
+tlog_test_json_stream_enc(const char *file, int line, const char *n,
                           const struct tlog_test_json_stream_enc t)
 {
     bool passed = true;
@@ -157,7 +157,8 @@ tlog_test_json_stream_enc(const char *n,
 #undef CMP_SIZE
 #undef CMP_BOOL
 #undef FAIL
-    fprintf(stderr, "%s: %s\n", n, (passed ? "PASS" : "FAIL"));
+    fprintf(stderr, "%s %s:%d %s\n", (passed ? "PASS" : "FAIL"),
+            file, line, n);
 
     return passed;
 }

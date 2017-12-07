@@ -31,9 +31,10 @@
 #include <tlog/rc.h>
 
 bool
-test(const char *name, bool res)
+test(const char *file, int line, const char *name, bool res)
 {
-    fprintf(stderr, "%s: %s\n", name, (res ? "PASS" : "FAIL"));
+    fprintf(stderr, "%s %s:%d %s\n", (res ? "PASS" : "FAIL"),
+            file, line, name);
     return res;
 }
 
@@ -43,7 +44,7 @@ main(void)
     bool passed = true;
 
 #define TEST(_name_token, _expr) \
-    passed = test(#_name_token, _expr) && passed
+    passed = test(__FILE__, __LINE__, #_name_token, _expr) && passed
 
     TEST(invalid, !tlog_grc_is_valid(INT_MAX));
 

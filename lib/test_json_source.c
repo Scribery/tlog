@@ -207,7 +207,7 @@ tlog_test_json_source_run(
 }
 
 bool
-tlog_test_json_source(const char *name,
+tlog_test_json_source(const char *file, int line, const char *name,
                       const struct tlog_test_json_source test)
 {
     bool passed;
@@ -215,6 +215,7 @@ tlog_test_json_source(const char *name,
     passed = tlog_test_json_source_run(name,
                                        test.input, strlen(test.input),
                                        &test.output);
-    fprintf(stderr, "%s: %s\n", name, (passed ? "PASS" : "FAIL"));
+    fprintf(stderr, "%s %s:%d %s\n", (passed ? "PASS" : "FAIL"),
+            file, line, name);
     return passed;
 }

@@ -86,7 +86,7 @@ struct tlog_test_json_sink {
     const char                     *output;
 };
 
-extern bool tlog_test_json_sink(const char *name,
+extern bool tlog_test_json_sink(const char *file, int line, const char *name,
                                 const struct tlog_test_json_sink test);
 
 #endif /* _TLOG_TEST_JSON_SINK_H */

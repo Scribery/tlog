@@ -25,7 +25,8 @@
 #include <stdio.h>
 
 bool
-test(const char *timestr, bool exp_rc, struct timespec exp_ts)
+test(const char *file, int line, const char *timestr,
+     bool exp_rc, struct timespec exp_ts)
 {
     bool passed;
     bool rc_passed;
@@ -40,14 +41,16 @@ test(const char *timestr, bool exp_rc, struct timespec exp_ts)
 
     if (passed) {
         fprintf(stderr,
-                "PASS: tlog_timestr_to_timespec(\"%s\", "
+                "PASS %s:%d tlog_timestr_to_timespec(\"%s\", "
                 TLOG_TIMESPEC_FMT ") = %s\n",
+                file, line,
                 timestr, TLOG_TIMESPEC_ARG(&ts), (rc ? "true" : "false"));
     } else {
         fprintf(stderr,
-                "FAIL: tlog_timestr_to_timespec(\"%s\", "
+                "FAIL %s:%d tlog_timestr_to_timespec(\"%s\", "
                 TLOG_TIMESPEC_FMT " %s " TLOG_TIMESPEC_FMT") = "
                 "%s %s %s\n",
+                file, line,
                 timestr, TLOG_TIMESPEC_ARG(&ts), (ts_passed ? "==" : "!="),
                 TLOG_TIMESPEC_ARG(&exp_ts),
                 (rc ? "true" : "false"), (rc_passed ? "==" : "!="),
@@ -64,7 +67,7 @@ main(void)
 
 #define TS(_sec, _nsec) (struct timespec){_sec, _nsec}
 #define TEST(_timestr, _exp_rc, _exp_ts) \
-    passed = test(_timestr, _exp_rc, _exp_ts) && passed;
+    passed = test(__FILE__, __LINE__, _timestr, _exp_rc, _exp_ts) && passed;
 
     TEST("A", false, TS(0, 0));
     TEST(",", false, TS(0, 0));
