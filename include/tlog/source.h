@@ -32,7 +32,10 @@
 
 /** Abstract source */
 struct tlog_source {
-    const struct tlog_source_type *type;   /**< Type */
+    const struct tlog_source_type *type;           /**< Type */
+#ifndef NDEBUG
+    struct timespec                last_timestamp; /**< Last timestamp */
+#endif
 };
 
 /**

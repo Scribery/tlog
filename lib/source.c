@@ -28,6 +28,10 @@
 #include <tlog/rc.h>
 #include <tlog/misc.h>
 #include <tlog/source.h>
+#ifndef NDEBUG
+#include <tlog/timespec.h>
+#include <tlog/delay.h>
+#endif
 
 tlog_grc
 tlog_source_create(struct tlog_source **psource,
@@ -101,6 +105,9 @@ tlog_grc
 tlog_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
 {
     tlog_grc grc;
+#ifndef NDEBUG
+    struct timespec diff;
+#endif
     assert(tlog_source_is_valid(source));
     assert(tlog_pkt_is_valid(pkt));
     assert(tlog_pkt_is_void(pkt));
@@ -109,6 +116,14 @@ tlog_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
 
     assert(grc == TLOG_RC_OK || tlog_pkt_is_void(pkt));
     assert(tlog_source_is_valid(source));
+#ifndef NDEBUG
+    if (!tlog_pkt_is_void(pkt)) {
+        tlog_timespec_sub(&pkt->timestamp, &source->last_timestamp, &diff);
+        assert(tlog_timespec_cmp(&diff, &tlog_timespec_zero) >= 0);
+        assert(tlog_timespec_cmp(&diff, &tlog_delay_max_timespec) <= 0);
+        source->last_timestamp = pkt->timestamp;
+    }
+#endif
     return grc;
 }
 
