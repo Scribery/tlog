@@ -333,126 +333,182 @@ cleanup:
     return grc;
 }
 
+/** List of exit signals playback handles */
+const int tlog_play_exit_sig_list[] = {SIGINT, SIGTERM, SIGHUP};
+
+/** Playback state */
+struct tlog_play_state {
+    /** True, if we should poll after EOF */
+    bool                    follow;
+    /** Recorded data source */
+    struct tlog_source     *source;
+    /** Current playback speed (time divisor) */
+    struct timespec         speed;
+    /** True if "goto" function is active */
+    bool                    goto_active;
+    /** Timestamp the "goto" function should go to */
+    struct timespec         goto_ts;
+    /** True if playback is paused */
+    bool                    paused;
+    /** True if commands to quit playback should be ignored */
+    bool                    persist;
+    /** Original stdin file flags, -1 if not changed */
+    int                     stdin_flags;
+    /* True if terminal attributes were changed */
+    bool                    term_attrs_set;
+    /** Original termios attributes */
+    struct termios          orig_termios;
+    /** True if cURL global state was initialized, false otherwise */
+    bool                    curl_initialized;
+};
+
+/**
+ * Destroy (cleanup and free) a playback state.
+ *
+ * @param perrs     Location for the error stack. Can be NULL.
+ * @param state     The playback state to destroy. Can be NULL.
+ *
+ * @return Global return code.
+ */
 static tlog_grc
-run(struct tlog_errs **perrs,
-    const char *cmd_help,
-    struct json_object *conf)
+tlog_play_destroy(struct tlog_errs **perrs,
+                  struct tlog_play_state *state)
 {
-    const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
-    tlog_grc grc;
-    struct json_object *obj;
-    /* True, if we should poll after EOF */
-    bool follow;
-    /* Local time of packet output last */
-    struct timespec local_last_ts;
-    /* Local time now */
-    struct timespec local_this_ts;
-    /* Local time of packet output next */
-    struct timespec local_next_ts;
-    /* Recording time of the packet output last */
-    struct timespec pkt_last_ts = TLOG_TIMESPEC_ZERO;
-    /* Delay to the packet output next */
-    struct timespec pkt_delay_ts;
+    tlog_grc grc = TLOG_RC_OK;
+    struct sigaction sa;
     ssize_t rc;
     size_t i;
-    size_t j;
+
+    if (state == NULL) {
+        return grc;
+    }
+
+    tlog_source_destroy(state->source);
+    if (state->curl_initialized) {
+        curl_global_cleanup();
+    }
+
+    /* Restore stdin flags, if changed */
+    if (state->stdin_flags >= 0) {
+        if (fcntl(STDIN_FILENO, F_SETFL, state->stdin_flags) < 0) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed setting stdin flags");
+        }
+    }
+
+    /* Restore signal handlers */
+    for (i = 0; i < TLOG_ARRAY_SIZE(tlog_play_exit_sig_list); i++) {
+        if(sigaction(tlog_play_exit_sig_list[i], NULL, &sa) == -1) {
+          grc = TLOG_GRC_ERRNO;
+          tlog_errs_pushc(perrs, grc);
+          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
+        }
+
+        if (sa.sa_handler != SIG_IGN) {
+            signal(tlog_play_exit_sig_list[i], SIG_DFL);
+        }
+    }
+    signal(SIGIO, SIG_DFL);
+
+    /* Restore terminal attributes */
+    if (state->term_attrs_set) {
+        const char newline = '\n';
+
+        rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &state->orig_termios);
+        if (rc < 0 && errno != EBADF) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed restoring TTY attributes");
+        }
+
+        /* Clear off remaining reproduced output */
+        rc = write(STDOUT_FILENO, &newline, sizeof(newline));
+        if (rc < 0 && errno != EBADF) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed writing newline to TTY");
+        }
+    }
+
+    memset(state, 0, sizeof(*state));
+    free(state);
+
+    return grc;
+}
+
+/**
+ * Create a playback state and initialize global state.
+ *
+ * @param perrs     Location for the error stack. Can be NULL.
+ * @param pstate    Location for the created state pointer. Can be NULL.
+ * @param conf      Configuration JSON object.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_play_create(struct tlog_errs **perrs,
+                 struct tlog_play_state **pstate,
+                 struct json_object *conf)
+{
+    tlog_grc grc;
+    tlog_grc cleanup_grc;
+    ssize_t rc;
+    struct tlog_play_state *state = NULL;
+    struct json_object *obj;
     const char *str;
-    bool term_attrs_set = false;
-    struct termios orig_termios;
     struct termios raw_termios;
     struct sigaction sa;
-    int stdin_flags = -1;
-    struct tlog_source *source = NULL;
-    struct tlog_pkt pkt = TLOG_PKT_VOID;
-    struct tlog_pkt_pos pos = TLOG_PKT_POS_VOID;
-    size_t loc_num;
-    char *loc_str = NULL;
-    struct timespec read_wait = TLOG_TIMESPEC_ZERO;
-    sig_atomic_t last_io_caught = 0;
-    sig_atomic_t new_io_caught;
-    char key;
-    struct pollfd std_pollfds[2] = {[STDIN_FILENO] = {.fd = STDIN_FILENO,
-                                                      .events = POLLIN},
-                                    [STDOUT_FILENO] = {.fd = STDOUT_FILENO,
-                                                       .events = POLLOUT}};
-    struct timespec speed = {1, 0};
-    struct timespec new_speed;
-    const struct timespec max_speed = {16, 0};
-    const struct timespec min_speed = {0, 62500000};
-    const struct timespec accel = {2, 0};
-    bool got_ts = false;
-    struct tlog_timestr_parser timestr_parser;
-    bool goto_active = false;
-    struct timespec goto_ts;
-    bool paused = false;
-    bool quit = false;
-    bool persist = false;
-    bool skip = false;
+    size_t i;
+    size_t j;
 
-    assert(cmd_help != NULL);
-
-    io_caught = 0;
-
-    /* Check if arguments are provided */
-    if (json_object_object_get_ex(conf, "args", &obj) &&
-        json_object_array_length(obj) > 0) {
-        tlog_errs_pushf(perrs,
-                        "Positional arguments are not accepted\n%s",
-                        cmd_help);
-        grc = TLOG_RC_FAILURE;
+    /* Allocate the bare state */
+    state = calloc(1, sizeof(*state));
+    if (state == NULL) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed allocating playback state");
         goto cleanup;
     }
 
-    /* Check for the help flag */
-    if (json_object_object_get_ex(conf, "help", &obj)) {
-        if (json_object_get_boolean(obj)) {
-            fprintf(stdout, "%s\n", cmd_help);
-            grc = TLOG_RC_OK;
-            goto cleanup;
-        }
-    }
+    /* Invalidate stdin flags, marking them as not changed */
+    state->stdin_flags = -1;
 
-    /* Check for the version flag */
-    if (json_object_object_get_ex(conf, "version", &obj)) {
-        if (json_object_get_boolean(obj)) {
-            printf("%s", tlog_version);;
-            grc = TLOG_RC_OK;
-            goto cleanup;
-        }
-    }
+    /* Set playback speed to default 1x */
+    state->speed.tv_sec = 1;
 
-    /* Get the "speed" option */
+    /* Get the "speed" option, if any */
     if (json_object_object_get_ex(conf, "speed", &obj)) {
-        tlog_timespec_from_fp(json_object_get_double(obj), &speed);
+        tlog_timespec_from_fp(json_object_get_double(obj), &state->speed);
     }
 
     /* Get the "follow" flag */
-    follow = json_object_object_get_ex(conf, "follow", &obj) &&
-             json_object_get_boolean(obj);
+    state->follow = json_object_object_get_ex(conf, "follow", &obj) &&
+                    json_object_get_boolean(obj);
 
     /* Get the "paused" flag */
-    paused = json_object_object_get_ex(conf, "paused", &obj) &&
-             json_object_get_boolean(obj);
+    state->paused = json_object_object_get_ex(conf, "paused", &obj) &&
+                    json_object_get_boolean(obj);
 
     /* Get the "goto" location */
     if (json_object_object_get_ex(conf, "goto", &obj)) {
         str = json_object_get_string(obj);
         if (strcasecmp(str, "start") == 0) {
-            goto_ts = tlog_timespec_zero;
+            state->goto_ts = tlog_timespec_zero;
         } else if (strcasecmp(str, "end") == 0) {
-            goto_ts = tlog_timespec_max;
-        } else if (!tlog_timestr_to_timespec(str, &goto_ts)) {
+            state->goto_ts = tlog_timespec_max;
+        } else if (!tlog_timestr_to_timespec(str, &state->goto_ts)) {
             tlog_errs_pushf(perrs,
                             "Failed parsing timestamp to go to: %s", str);
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
-        goto_active = true;
+        state->goto_active = true;
     }
 
     /* Get the "persist" flag */
-    persist = json_object_object_get_ex(conf, "persist", &obj) &&
-              json_object_get_boolean(obj);
+    state->persist = json_object_object_get_ex(conf, "persist", &obj) &&
+                     json_object_get_boolean(obj);
 
     /* Initialize libcurl */
     grc = TLOG_GRC_FROM(curl, curl_global_init(CURL_GLOBAL_NOTHING));
@@ -461,30 +517,18 @@ run(struct tlog_errs **perrs,
         tlog_errs_pushs(perrs, "Failed initializing libcurl");
         goto cleanup;
     }
+    state->curl_initialized = true;
 
     /* Create log source */
-    grc = create_log_source(perrs, &source, conf);
+    grc = create_log_source(perrs, &state->source, conf);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed creating log source");
         goto cleanup;
     }
 
-    /* Get terminal attributes */
-    rc = tcgetattr(STDOUT_FILENO, &orig_termios);
-    if (rc < 0) {
-        grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed retrieving TTY attributes");
-        goto cleanup;
-    }
-
-    /* Output and discard any accumulated non-critical error messages */
-    tlog_errs_print(stderr, *perrs);
-    tlog_errs_destroy(perrs);
-
     /* Setup signal handlers to terminate gracefully */
-    for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
-        if(sigaction(exit_sig[i], NULL, &sa) == -1){
+    for (i = 0; i < TLOG_ARRAY_SIZE(tlog_play_exit_sig_list); i++) {
+        if(sigaction(tlog_play_exit_sig_list[i], NULL, &sa) == -1){
           grc = TLOG_GRC_ERRNO;
           tlog_errs_pushc(perrs, grc);
           tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
@@ -493,12 +537,12 @@ run(struct tlog_errs **perrs,
         if (sa.sa_handler != SIG_IGN) {
             sa.sa_handler = exit_sighandler;
             sigemptyset(&sa.sa_mask);
-            for (j = 0; j < TLOG_ARRAY_SIZE(exit_sig); j++) {
-                sigaddset(&sa.sa_mask, exit_sig[j]);
+            for (j = 0; j < TLOG_ARRAY_SIZE(tlog_play_exit_sig_list); j++) {
+                sigaddset(&sa.sa_mask, tlog_play_exit_sig_list[j]);
             }
             /* NOTE: no SA_RESTART on purpose */
             sa.sa_flags = 0;
-            if(sigaction(exit_sig[i], &sa, NULL) == -1){
+            if(sigaction(tlog_play_exit_sig_list[i], &sa, NULL) == -1){
               grc = TLOG_GRC_ERRNO;
               tlog_errs_pushc(perrs, grc);
               tlog_errs_pushs(perrs, "Failed to set an exit signal action");
@@ -527,17 +571,28 @@ run(struct tlog_errs **perrs,
         tlog_errs_pushs(perrs, "Failed taking over stdin signals");
         goto cleanup;
     }
-    stdin_flags = fcntl(STDIN_FILENO, F_GETFL);
-    if (stdin_flags < 0) {
+    state->stdin_flags = fcntl(STDIN_FILENO, F_GETFL);
+    if (state->stdin_flags < 0) {
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushs(perrs, "Failed getting stdin flags");
         goto cleanup;
     }
-    if (fcntl(STDIN_FILENO, F_SETFL, stdin_flags | O_ASYNC | O_NONBLOCK) < 0) {
+    if (fcntl(STDIN_FILENO, F_SETFL,
+              state->stdin_flags | O_ASYNC | O_NONBLOCK) < 0) {
+        state->stdin_flags = -1;
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushs(perrs, "Failed setting stdin flags");
+        goto cleanup;
+    }
+
+    /* Get terminal attributes */
+    rc = tcgetattr(STDOUT_FILENO, &state->orig_termios);
+    if (rc < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed retrieving TTY attributes");
         goto cleanup;
     }
 
@@ -545,8 +600,9 @@ run(struct tlog_errs **perrs,
      * Switch the terminal to raw mode,
      * but keep signal generation, if not persistent
      */
-    raw_termios = orig_termios;
-    raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO | (persist ? ISIG : 0));
+    raw_termios = state->orig_termios;
+    raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO |
+                             (state->persist ? ISIG : 0));
     raw_termios.c_iflag &= ~(BRKINT | ICRNL | IGNBRK | IGNCR | INLCR |
                              INPCK | ISTRIP | IXON | PARMRK);
     raw_termios.c_oflag &= ~OPOST;
@@ -559,7 +615,65 @@ run(struct tlog_errs **perrs,
         tlog_errs_pushs(perrs, "Failed setting TTY attributes");
         goto cleanup;
     }
-    term_attrs_set = true;
+    state->term_attrs_set = true;
+
+    /* Output the state, if requested */
+    if (pstate != NULL) {
+        *pstate = state;
+    }
+    state = NULL;
+    grc = TLOG_RC_OK;
+
+cleanup:
+
+    cleanup_grc = tlog_play_destroy(perrs, state);
+    if (cleanup_grc != TLOG_RC_OK) {
+        grc = cleanup_grc;
+    }
+
+    return grc;
+}
+
+static tlog_grc
+tlog_play_run(struct tlog_errs **perrs,
+              struct tlog_play_state *state)
+{
+    tlog_grc grc;
+    ssize_t rc;
+    /** Local time of packet output last */
+    struct timespec local_last_ts;
+    /** Local time now */
+    struct timespec local_this_ts;
+    /** Local time of packet output next */
+    struct timespec local_next_ts;
+    /** Recording time of the packet output last */
+    struct timespec pkt_last_ts;
+    /** Delay to the packet output next */
+    struct timespec pkt_delay_ts;
+    struct tlog_pkt pkt = TLOG_PKT_VOID;
+    struct tlog_pkt_pos pos = TLOG_PKT_POS_VOID;
+    size_t loc_num;
+    char *loc_str = NULL;
+    struct timespec read_wait = TLOG_TIMESPEC_ZERO;
+    sig_atomic_t last_io_caught = 0;
+    sig_atomic_t new_io_caught;
+    char key;
+    struct pollfd std_pollfds[2] = {[STDIN_FILENO] = {.fd = STDIN_FILENO,
+                                                      .events = POLLIN},
+                                    [STDOUT_FILENO] = {.fd = STDOUT_FILENO,
+                                                       .events = POLLOUT}};
+    struct timespec new_speed;
+    const struct timespec max_speed = {16, 0};
+    const struct timespec min_speed = {0, 62500000};
+    const struct timespec accel = {2, 0};
+    bool got_ts = false;
+    struct tlog_timestr_parser timestr_parser;
+    /** True if playback should be stopped */
+    bool quit = false;
+    /** True if "skip" function is active */
+    bool skip = false;
+
+    io_caught = 0;
 
     /*
      * Start the time
@@ -606,12 +720,12 @@ run(struct tlog_errs **perrs,
                         case 'G':
                             if (got_ts) {
                                 got_ts = false;
-                                goto_active =
+                                state->goto_active =
                                     tlog_timestr_parser_yield(&timestr_parser,
-                                                              &goto_ts);
+                                                              &state->goto_ts);
                             } else {
-                                goto_ts = tlog_timespec_max;
-                                goto_active = true;
+                                state->goto_ts = tlog_timespec_max;
+                                state->goto_active = true;
                             }
                             break;
                         default:
@@ -622,7 +736,7 @@ run(struct tlog_errs **perrs,
                         case ' ':
                         case 'p':
                             /* If unpausing */
-                            if (paused) {
+                            if (state->paused) {
                                 /* Skip the time we were paused */
                                 if (clock_gettime(CLOCK_MONOTONIC,
                                                   &local_last_ts) != 0) {
@@ -634,28 +748,30 @@ run(struct tlog_errs **perrs,
                                     goto cleanup;
                                 }
                             }
-                            paused = !paused;
+                            state->paused = !state->paused;
                             break;
                         case '\x7f':
-                            speed = (struct timespec){1, 0};
+                            state->speed = (struct timespec){1, 0};
                             break;
                         case '}':
-                            tlog_timespec_fp_mul(&speed, &accel, &new_speed);
+                            tlog_timespec_fp_mul(&state->speed, &accel,
+                                                 &new_speed);
                             if (tlog_timespec_cmp(&new_speed, &max_speed) <= 0) {
-                                speed = new_speed;
+                                state->speed = new_speed;
                             }
                             break;
                         case '{':
-                            tlog_timespec_fp_div(&speed, &accel, &new_speed);
+                            tlog_timespec_fp_div(&state->speed, &accel,
+                                                 &new_speed);
                             if (tlog_timespec_cmp(&new_speed, &min_speed) >= 0) {
-                                speed = new_speed;
+                                state->speed = new_speed;
                             }
                             break;
                         case '.':
                             skip = true;
                             break;
                         case 'q':
-                            quit = !persist;
+                            quit = !state->persist;
                             break;
                         default:
                             break;
@@ -668,7 +784,7 @@ run(struct tlog_errs **perrs,
         }
 
         /* Handle pausing, unless ignoring timing */
-        if (paused && !(goto_active || skip)) {
+        if (state->paused && !(state->goto_active || skip)) {
             do {
                 rc = clock_nanosleep(CLOCK_MONOTONIC, 0,
                                      &tlog_timespec_max, NULL);
@@ -701,20 +817,20 @@ run(struct tlog_errs **perrs,
                 }
             }
             /* Read a packet */
-            loc_num = tlog_source_loc_get(source);
-            grc = tlog_source_read(source, &pkt);
+            loc_num = tlog_source_loc_get(state->source);
+            grc = tlog_source_read(state->source, &pkt);
             if (grc == TLOG_GRC_FROM(errno, EINTR)) {
                 continue;
             } else if (grc != TLOG_RC_OK) {
                 tlog_errs_pushc(perrs, grc);
-                loc_str = tlog_source_loc_fmt(source, loc_num);
+                loc_str = tlog_source_loc_fmt(state->source, loc_num);
                 tlog_errs_pushf(perrs, "Failed reading the source at %s", loc_str);
                 goto cleanup;
             }
             /* If hit the end of stream */
             if (tlog_pkt_is_void(&pkt)) {
-                goto_active = false;
-                if (follow) {
+                state->goto_active = false;
+                if (state->follow) {
                     read_wait = (struct timespec){POLL_PERIOD, 0};
                     continue;
                 } else {
@@ -742,19 +858,20 @@ run(struct tlog_errs **perrs,
             local_last_ts = local_this_ts;
             skip = false;
         /* Else, if we're fast-forwarding to a time */
-        } else if (goto_active) {
+        } else if (state->goto_active) {
             /* Skip the time */
             local_last_ts = local_this_ts;
             /* If we reached the target time */
-            if (tlog_timespec_cmp(&pkt.timestamp, &goto_ts) >= 0) {
-                goto_active = false;
-                pkt_last_ts = goto_ts;
+            if (tlog_timespec_cmp(&pkt.timestamp, &state->goto_ts) >= 0) {
+                state->goto_active = false;
+                pkt_last_ts = state->goto_ts;
                 continue;
             }
         } else {
             tlog_timespec_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
-            tlog_timespec_fp_div(&pkt_delay_ts, &speed, &pkt_delay_ts);
-            tlog_timespec_cap_add(&local_last_ts, &pkt_delay_ts, &local_next_ts);
+            tlog_timespec_fp_div(&pkt_delay_ts, &state->speed, &pkt_delay_ts);
+            tlog_timespec_cap_add(&local_last_ts, &pkt_delay_ts,
+                                  &local_next_ts);
             /* If we don't need a delay for the next packet (it's overdue) */
             if (tlog_timespec_cmp(&local_next_ts, &local_this_ts) <= 0) {
                 /* Stretch the time */
@@ -777,7 +894,8 @@ run(struct tlog_errs **perrs,
                     /* Note the interruption time */
                     tlog_timespec_sub(&local_this_ts, &local_last_ts,
                                       &pkt_delay_ts);
-                    tlog_timespec_fp_mul(&pkt_delay_ts, &speed, &pkt_delay_ts);
+                    tlog_timespec_fp_mul(&pkt_delay_ts, &state->speed,
+                                         &pkt_delay_ts);
                     tlog_timespec_cap_add(&pkt_last_ts, &pkt_delay_ts,
                                           &pkt_last_ts);
                     local_last_ts = local_this_ts;
@@ -838,53 +956,72 @@ run(struct tlog_errs **perrs,
     grc = TLOG_RC_OK;
 
 cleanup:
-
     free(loc_str);
     tlog_pkt_cleanup(&pkt);
-    tlog_source_destroy(source);
-    curl_global_cleanup();
 
-    /* Restore stdin flags, if changed */
-    if (stdin_flags >= 0) {
-        if (fcntl(STDIN_FILENO, F_SETFL, stdin_flags) < 0) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed setting stdin flags");
+    return grc;
+}
+
+static tlog_grc
+run(struct tlog_errs **perrs,
+    const char *cmd_help,
+    struct json_object *conf)
+{
+    tlog_grc grc;
+    tlog_grc cleanup_grc;
+    struct tlog_play_state *state = NULL;
+    struct json_object *obj;
+
+    assert(cmd_help != NULL);
+
+    /* Check if arguments are provided */
+    if (json_object_object_get_ex(conf, "args", &obj) &&
+        json_object_array_length(obj) > 0) {
+        tlog_errs_pushf(perrs,
+                        "Positional arguments are not accepted\n%s",
+                        cmd_help);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+
+    /* Check for the help flag */
+    if (json_object_object_get_ex(conf, "help", &obj)) {
+        if (json_object_get_boolean(obj)) {
+            fprintf(stdout, "%s\n", cmd_help);
+            grc = TLOG_RC_OK;
+            goto cleanup;
         }
     }
 
-    /* Restore signal handlers */
-    for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
-        if(sigaction(exit_sig[i], NULL, &sa) == -1) {
-          grc = TLOG_GRC_ERRNO;
-          tlog_errs_pushc(perrs, grc);
-          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
-        }
-
-        if (sa.sa_handler != SIG_IGN) {
-            signal(exit_sig[i], SIG_DFL);
+    /* Check for the version flag */
+    if (json_object_object_get_ex(conf, "version", &obj)) {
+        if (json_object_get_boolean(obj)) {
+            printf("%s", tlog_version);;
+            grc = TLOG_RC_OK;
+            goto cleanup;
         }
     }
-    signal(SIGIO, SIG_DFL);
 
-    /* Restore terminal attributes */
-    if (term_attrs_set) {
-        const char newline = '\n';
+    /* Output and discard any accumulated non-critical error messages */
+    tlog_errs_print(stderr, *perrs);
+    tlog_errs_destroy(perrs);
 
-        rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &orig_termios);
-        if (rc < 0 && errno != EBADF) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed restoring TTY attributes");
-        }
+    /* Create playback state */
+    grc = tlog_play_create(perrs, &state, conf);
+    if (grc != TLOG_RC_OK) {
+        goto cleanup;
+    }
 
-        /* Clear off remaining reproduced output */
-        rc = write(STDOUT_FILENO, &newline, sizeof(newline));
-        if (rc < 0 && errno != EBADF) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed writing newline to TTY");
-        }
+    /* Run playback */
+    grc = tlog_play_run(perrs, state);
+
+cleanup:
+
+    /* Destroy playback state */
+    cleanup_grc = tlog_play_destroy(perrs, state);
+    state = NULL;
+    if (cleanup_grc != TLOG_RC_OK) {
+        grc = cleanup_grc;
     }
 
     return grc;
