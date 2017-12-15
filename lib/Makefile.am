@@ -121,6 +121,7 @@ libtlog_la_SOURCES = \
     mem_json_writer.c           \
     misc.c                      \
     pkt.c                       \
+    play.c                      \
     play_conf.c                 \
     play_conf_cmd.c             \
     play_conf_validate.c        \
