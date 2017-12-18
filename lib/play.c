@@ -338,6 +338,8 @@ struct timespec tlog_play_speed;
 bool tlog_play_goto_active;
 /** Timestamp the "goto" function should go to */
 struct timespec tlog_play_goto_ts;
+/** True if "skip" function is active */
+bool tlog_play_skip;
 /** True if playback is paused */
 bool tlog_play_paused;
 /** True if commands to quit playback should be ignored */
@@ -350,6 +352,12 @@ bool tlog_play_term_attrs_set;
 struct termios tlog_play_orig_termios;
 /** True if cURL global state was initialized, false otherwise */
 bool tlog_play_curl_initialized;
+/** True if have received at least one character of a timestamp from user */
+bool tlog_play_got_ts;
+/** Accumulated timestamp parser state, valid only if tlog_play_got_ts */
+struct tlog_timestr_parser tlog_play_timestr_parser;
+/** Local time of packet output last */
+struct timespec tlog_play_local_last_ts;
 
 /** True if playback state was initialized succesfully */
 bool tlog_play_initialized = false;
@@ -451,11 +459,13 @@ tlog_play_init(struct tlog_errs **perrs,
     tlog_play_speed.tv_sec = 1;
     tlog_play_speed.tv_nsec = 0;
     tlog_play_goto_active = false;
+    tlog_play_skip = false;
     tlog_play_paused = false;
     tlog_play_persist = false;
     tlog_play_stdin_flags = -1;
     tlog_play_term_attrs_set = false;
     tlog_play_curl_initialized = false;
+    tlog_play_got_ts = false;
 
     /* Get the "speed" option, if any */
     if (json_object_object_get_ex(conf, "speed", &obj)) {
@@ -597,6 +607,17 @@ tlog_play_init(struct tlog_errs **perrs,
     }
     tlog_play_term_attrs_set = true;
 
+    /*
+     * Start the time
+     */
+    /* Get current time */
+    if (clock_gettime(CLOCK_MONOTONIC, &tlog_play_local_last_ts) != 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed retrieving current time");
+        goto cleanup;
+    }
+
     grc = TLOG_RC_OK;
 
 cleanup:
@@ -609,6 +630,124 @@ cleanup:
     }
 
     tlog_play_initialized = (grc == TLOG_RC_OK);
+    return grc;
+}
+
+/**
+ * Read playback input, interpreting user input.
+ *
+ * @param perrs     Location for the error stack. Can be NULL.
+ * @param pquit     Location for the "quit" flag. Set to true if playback was
+ *                  signalled to quit. Set to false otherwise. Not modified on
+ *                  error. Can be NULL.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
+{
+    tlog_grc grc;
+    ssize_t rc;
+    /** True if playback should be stopped */
+    bool quit = false;
+    char key;
+    struct timespec new_speed;
+    const struct timespec max_speed = {16, 0};
+    const struct timespec min_speed = {0, 62500000};
+    const struct timespec accel = {2, 0};
+
+    while (!quit) {
+        rc = read(STDIN_FILENO, &key, sizeof(key));
+        if (rc < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                break;
+            } else {
+                grc = TLOG_GRC_ERRNO;
+                tlog_errs_pushc(perrs, grc);
+                tlog_errs_pushs(perrs, "Failed reading stdin");
+                goto cleanup;
+            }
+        } else if (rc == 0) {
+            break;
+        } else {
+            switch (key) {
+                case '0' ... '9':
+                case ':':
+                    if (!tlog_play_got_ts) {
+                        tlog_timestr_parser_reset(&tlog_play_timestr_parser);
+                    }
+                    tlog_play_got_ts = tlog_timestr_parser_feed(
+                                            &tlog_play_timestr_parser, key);
+                    break;
+                case 'G':
+                    if (tlog_play_got_ts) {
+                        tlog_play_got_ts = false;
+                        tlog_play_goto_active =
+                            tlog_timestr_parser_yield(
+                                                &tlog_play_timestr_parser,
+                                                &tlog_play_goto_ts);
+                    } else {
+                        tlog_play_goto_ts = tlog_timespec_max;
+                        tlog_play_goto_active = true;
+                    }
+                    break;
+                default:
+                    tlog_play_got_ts = false;
+                    break;
+            }
+            switch (key) {
+                case ' ':
+                case 'p':
+                    /* If unpausing */
+                    if (tlog_play_paused) {
+                        /* Skip the time we were paused */
+                        if (clock_gettime(CLOCK_MONOTONIC,
+                                          &tlog_play_local_last_ts) != 0) {
+                            grc = TLOG_GRC_ERRNO;
+                            tlog_errs_pushc(perrs, grc);
+                            tlog_errs_pushs(
+                                    perrs,
+                                    "Failed retrieving current time");
+                            goto cleanup;
+                        }
+                    }
+                    tlog_play_paused = !tlog_play_paused;
+                    break;
+                case '\x7f':
+                    tlog_play_speed = (struct timespec){1, 0};
+                    break;
+                case '}':
+                    tlog_timespec_fp_mul(&tlog_play_speed, &accel,
+                                         &new_speed);
+                    if (tlog_timespec_cmp(&new_speed, &max_speed) <= 0) {
+                        tlog_play_speed = new_speed;
+                    }
+                    break;
+                case '{':
+                    tlog_timespec_fp_div(&tlog_play_speed, &accel,
+                                         &new_speed);
+                    if (tlog_timespec_cmp(&new_speed, &min_speed) >= 0) {
+                        tlog_play_speed = new_speed;
+                    }
+                    break;
+                case '.':
+                    tlog_play_skip = true;
+                    break;
+                case 'q':
+                    quit = !tlog_play_persist;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    if (pquit != NULL) {
+        *pquit = quit;
+    }
+
+    grc = TLOG_RC_OK;
+cleanup:
     return grc;
 }
 
@@ -627,8 +766,6 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
 {
     tlog_grc grc;
     ssize_t rc;
-    /** Local time of packet output last */
-    struct timespec local_last_ts;
     /** Local time now */
     struct timespec local_this_ts;
     /** Local time of packet output next */
@@ -644,37 +781,15 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
     struct timespec read_wait = TLOG_TIMESPEC_ZERO;
     sig_atomic_t last_io_caught = 0;
     sig_atomic_t new_io_caught;
-    char key;
     struct pollfd std_pollfds[2] = {[STDIN_FILENO] = {.fd = STDIN_FILENO,
                                                       .events = POLLIN},
                                     [STDOUT_FILENO] = {.fd = STDOUT_FILENO,
                                                        .events = POLLOUT}};
-    struct timespec new_speed;
-    const struct timespec max_speed = {16, 0};
-    const struct timespec min_speed = {0, 62500000};
-    const struct timespec accel = {2, 0};
-    bool got_ts = false;
-    struct tlog_timestr_parser timestr_parser;
-    /** True if playback should be stopped */
-    bool quit = false;
-    /** True if "skip" function is active */
-    bool skip = false;
 
     assert(tlog_play_initialized);
 
     tlog_play_exit_signum = 0;
     tlog_play_io_caught = 0;
-
-    /*
-     * Start the time
-     */
-    /* Get current time */
-    if (clock_gettime(CLOCK_MONOTONIC, &local_last_ts) != 0) {
-        grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed retrieving current time");
-        goto cleanup;
-    }
 
     /*
      * Reproduce the logged output
@@ -683,98 +798,19 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
         /* React to input */
         new_io_caught = tlog_play_io_caught;
         if (new_io_caught != last_io_caught) {
-            while (!quit) {
-                rc = read(STDIN_FILENO, &key, sizeof(key));
-                if (rc < 0) {
-                    if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                        last_io_caught = new_io_caught;
-                        break;
-                    } else {
-                        grc = TLOG_GRC_ERRNO;
-                        tlog_errs_pushc(perrs, grc);
-                        tlog_errs_pushs(perrs, "Failed reading stdin");
-                        goto cleanup;
-                    }
-                } else if (rc == 0) {
-                    last_io_caught = new_io_caught;
-                    break;
-                } else {
-                    switch (key) {
-                        case '0' ... '9':
-                        case ':':
-                            if (!got_ts) {
-                                tlog_timestr_parser_reset(&timestr_parser);
-                            }
-                            got_ts = tlog_timestr_parser_feed(&timestr_parser, key);
-                            break;
-                        case 'G':
-                            if (got_ts) {
-                                got_ts = false;
-                                tlog_play_goto_active =
-                                    tlog_timestr_parser_yield(&timestr_parser,
-                                                              &tlog_play_goto_ts);
-                            } else {
-                                tlog_play_goto_ts = tlog_timespec_max;
-                                tlog_play_goto_active = true;
-                            }
-                            break;
-                        default:
-                            got_ts = false;
-                            break;
-                    }
-                    switch (key) {
-                        case ' ':
-                        case 'p':
-                            /* If unpausing */
-                            if (tlog_play_paused) {
-                                /* Skip the time we were paused */
-                                if (clock_gettime(CLOCK_MONOTONIC,
-                                                  &local_last_ts) != 0) {
-                                    grc = TLOG_GRC_ERRNO;
-                                    tlog_errs_pushc(perrs, grc);
-                                    tlog_errs_pushs(
-                                            perrs,
-                                            "Failed retrieving current time");
-                                    goto cleanup;
-                                }
-                            }
-                            tlog_play_paused = !tlog_play_paused;
-                            break;
-                        case '\x7f':
-                            tlog_play_speed = (struct timespec){1, 0};
-                            break;
-                        case '}':
-                            tlog_timespec_fp_mul(&tlog_play_speed, &accel,
-                                                 &new_speed);
-                            if (tlog_timespec_cmp(&new_speed, &max_speed) <= 0) {
-                                tlog_play_speed = new_speed;
-                            }
-                            break;
-                        case '{':
-                            tlog_timespec_fp_div(&tlog_play_speed, &accel,
-                                                 &new_speed);
-                            if (tlog_timespec_cmp(&new_speed, &min_speed) >= 0) {
-                                tlog_play_speed = new_speed;
-                            }
-                            break;
-                        case '.':
-                            skip = true;
-                            break;
-                        case 'q':
-                            quit = !tlog_play_persist;
-                            break;
-                        default:
-                            break;
-                    }
-                }
+            bool quit;
+            grc = tlog_play_run_read_input(perrs, &quit);
+            if (grc != TLOG_RC_OK) {
+                goto cleanup;
             }
+            last_io_caught = new_io_caught;
             if (quit) {
                 break;
             }
         }
 
         /* Handle pausing, unless ignoring timing */
-        if (tlog_play_paused && !(tlog_play_goto_active || skip)) {
+        if (tlog_play_paused && !(tlog_play_goto_active || tlog_play_skip)) {
             do {
                 rc = clock_nanosleep(CLOCK_MONOTONIC, 0,
                                      &tlog_timespec_max, NULL);
@@ -843,14 +879,14 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
         }
 
         /* If we're skipping the timing of this packet */
-        if (skip) {
+        if (tlog_play_skip) {
             /* Skip the time */
-            local_last_ts = local_this_ts;
-            skip = false;
+            tlog_play_local_last_ts = local_this_ts;
+            tlog_play_skip = false;
         /* Else, if we're fast-forwarding to a time */
         } else if (tlog_play_goto_active) {
             /* Skip the time */
-            local_last_ts = local_this_ts;
+            tlog_play_local_last_ts = local_this_ts;
             /* If we reached the target time */
             if (tlog_timespec_cmp(&pkt.timestamp, &tlog_play_goto_ts) >= 0) {
                 tlog_play_goto_active = false;
@@ -860,19 +896,19 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
         } else {
             tlog_timespec_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
             tlog_timespec_fp_div(&pkt_delay_ts, &tlog_play_speed, &pkt_delay_ts);
-            tlog_timespec_cap_add(&local_last_ts, &pkt_delay_ts,
+            tlog_timespec_cap_add(&tlog_play_local_last_ts, &pkt_delay_ts,
                                   &local_next_ts);
             /* If we don't need a delay for the next packet (it's overdue) */
             if (tlog_timespec_cmp(&local_next_ts, &local_this_ts) <= 0) {
                 /* Stretch the time */
-                local_last_ts = local_this_ts;
+                tlog_play_local_last_ts = local_this_ts;
             } else {
                 /* Advance the time */
                 rc = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
                                      &local_next_ts, NULL);
                 /* If we're interrupted */
                 if (rc == EINTR) {
-                    local_last_ts = local_this_ts;
+                    tlog_play_local_last_ts = local_this_ts;
                     /* Get current time */
                     if (clock_gettime(CLOCK_MONOTONIC, &local_this_ts) != 0) {
                         grc = TLOG_GRC_ERRNO;
@@ -882,13 +918,13 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                         goto cleanup;
                     }
                     /* Note the interruption time */
-                    tlog_timespec_sub(&local_this_ts, &local_last_ts,
+                    tlog_timespec_sub(&local_this_ts, &tlog_play_local_last_ts,
                                       &pkt_delay_ts);
                     tlog_timespec_fp_mul(&pkt_delay_ts, &tlog_play_speed,
                                          &pkt_delay_ts);
                     tlog_timespec_cap_add(&pkt_last_ts, &pkt_delay_ts,
                                           &pkt_last_ts);
-                    local_last_ts = local_this_ts;
+                    tlog_play_local_last_ts = local_this_ts;
                     continue;
                 } else if (rc != 0) {
                     grc = TLOG_GRC_FROM(errno, rc);
@@ -896,7 +932,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                     tlog_errs_pushs(perrs, "Failed sleeping");
                     goto cleanup;
                 }
-                local_last_ts = local_next_ts;
+                tlog_play_local_last_ts = local_next_ts;
             }
         }
 
