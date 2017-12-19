@@ -23,7 +23,7 @@ m4_generated_warning(`.\" ')m4_dnl
 .\"
 .TH tlog-M4_PROG_NAME() "8" "May 2017" "Tlog"
 .SH NAME
-tlog-rec \- record terminal I/O of a program or a user shell
+tlog-M4_PROG_NAME() \- record terminal I/O of a program or a user shell
 
 .SH SYNOPSIS
 .B tlog-rec

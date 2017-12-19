@@ -23,20 +23,20 @@ m4_generated_warning(`.\" ')m4_dnl
 .\"
 .TH tlog-M4_PROG_NAME() "8" "March 2016" "Tlog"
 .SH NAME
-tlog-play \- play back terminal I/O recorded by tlog-rec(8)
+tlog-M4_PROG_NAME() \- play back terminal I/O recorded by tlog-rec(8)
 
 .SH SYNOPSIS
-.B tlog-play
+.B tlog-M4_PROG_NAME()
 [OPTION...]
 
 .SH DESCRIPTION
-.B Tlog-play
+.B Tlog-M4_PROG_NAME()
 is a playback program for terminal I/O recorded with tlog-rec(8).  It
 reproduces the recording on the terminal it's run under, and can't change its
 size, so the playback terminal size needs to match the recorded terminal size
 for proper playback.
 
-.B Tlog-play
+.B Tlog-M4_PROG_NAME()
 loads its parameters from the system-wide configuration file M4_CONF_PATH(),
 which can be overridden with command-line options described below.
 
@@ -95,17 +95,17 @@ The system-wide configuration file
 .SH EXAMPLES
 .TP
 Play back contents of a file written with tlog-rec's "file" writer:
-.B tlog-play -r file --file-path=recording.log
+.B tlog-M4_PROG_NAME() -r file --file-path=recording.log
 
 m4_ifelse(M4_JOURNAL_ENABLED(), `1', `m4_dnl
 .TP
 Play back a recording from Journal:
-.B tlog-play -r journal -M TLOG_REC=6071524bb44d403991a00413ab7c8596-53bd-378c5d9
+.B tlog-M4_PROG_NAME() -r journal -M TLOG_REC=6071524bb44d403991a00413ab7c8596-53bd-378c5d9
 ')m4_dnl
 
 .TP
 Play back a recording from Elasticsearch:
-.B tlog-play -r es --es-baseurl=http://localhost:9200/tlog/tlog/_search --es-query=session:121
+.B tlog-M4_PROG_NAME() -r es --es-baseurl=http://localhost:9200/tlog/tlog/_search --es-query=session:121
 
 .SH SEE ALSO
 tlog-M4_PROG_NAME().conf(5), tlog-rec(8)

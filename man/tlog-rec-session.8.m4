@@ -23,24 +23,24 @@ m4_generated_warning(`.\" ')m4_dnl
 .\"
 .TH tlog-M4_PROG_NAME() "8" "May 2017" "Tlog"
 .SH NAME
-tlog-rec-session \- start a shell and log terminal I/O
+tlog-M4_PROG_NAME() \- start a shell and log terminal I/O
 
 .SH SYNOPSIS
-.B tlog-rec-session
+.B tlog-M4_PROG_NAME()
 [OPTION...] [CMD_FILE [CMD_ARG...]]
 .br
-.B tlog-rec-session
+.B tlog-M4_PROG_NAME()
 -c [OPTION...] CMD_STRING [CMD_NAME [CMD_ARG...]]
 
 .SH DESCRIPTION
-.B Tlog-rec-session
+.B Tlog-M4_PROG_NAME()
 is a terminal session I/O logging program, intended for use as the login shell
 for a user. The actual user shell to start is retrieved from configuration or
-environment. Tlog-rec-session starts the actual shell under a pseudo-TTY,
+environment. Tlog-M4_PROG_NAME() starts the actual shell under a pseudo-TTY,
 connects it to the actual terminal and logs whatever passes between them
 including user input, program output, and terminal window size changes.
 
-Tlog-rec-session will not start recording if another process with the same
+Tlog-M4_PROG_NAME() will not start recording if another process with the same
 audit session ID (as seen in /proc/PID/sessionid) is already being recorded.
 Instead, it will simply start the shell.
 
@@ -56,12 +56,12 @@ its arguments (CMD_ARG).
 If no non-option arguments are encountered, then the shell is started
 interactively.
 
-If tlog-rec-session is invoked under a name beginning with a dash (i.e.
+If tlog-M4_PROG_NAME() is invoked under a name beginning with a dash (i.e.
 argv[0] beginning with '-'), then the executed shell name is also prepended
 with a dash. This passes the "login shell" status to the recorded shell and is
 equivalent to using the "-l" option.
 
-.B Tlog-rec-session
+.B Tlog-M4_PROG_NAME()
 loads its parameters first from the system-wide configuration file
 M4_CONF_PATH(), then from the file pointed at by TLOG_REC_SESSION_CONF_FILE
 environment variable (if set), then from the contents of the
@@ -98,11 +98,11 @@ The system-wide configuration file
 .SH EXAMPLES
 .TP
 Start recording a login shell:
-.B tlog-rec-session -l
+.B tlog-M4_PROG_NAME() -l
 
 .TP
 Ask the recorded shell to execute a command:
-.B tlog-rec-session -c whoami
+.B tlog-M4_PROG_NAME() -c whoami
 
 .SH SEE ALSO
 tlog-M4_PROG_NAME().conf(5), tlog-rec(8), tlog-play(8)
