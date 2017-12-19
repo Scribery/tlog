@@ -650,14 +650,26 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
     ssize_t rc;
     /** True if playback should be stopped */
     bool quit = false;
-    char key;
+    unsigned char c;
     struct timespec new_speed;
     const struct timespec max_speed = {16, 0};
     const struct timespec min_speed = {0, 62500000};
     const struct timespec accel = {2, 0};
+    enum {
+        /* Base state */
+        STATE_BASE,
+        /* Got ESC */
+        STATE_ESC,
+        /* Inside control sequence */
+        STATE_CTL,
+        /* Inside mouse report sequence  */
+        STATE_MOUSE,
+    } state = STATE_BASE;
+    /* Position in mouse report sequence */
+    size_t mouse_seq_pos;
 
     while (!quit) {
-        rc = read(STDIN_FILENO, &key, sizeof(key));
+        rc = read(STDIN_FILENO, &c, sizeof(c));
         if (rc < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 break;
@@ -669,76 +681,132 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
             }
         } else if (rc == 0) {
             break;
-        } else {
-            switch (key) {
-                case '0' ... '9':
-                case ':':
-                    if (!tlog_play_got_ts) {
-                        tlog_timestr_parser_reset(&tlog_play_timestr_parser);
-                    }
-                    tlog_play_got_ts = tlog_timestr_parser_feed(
-                                            &tlog_play_timestr_parser, key);
-                    break;
-                case 'G':
-                    if (tlog_play_got_ts) {
-                        tlog_play_got_ts = false;
-                        tlog_play_goto_active =
-                            tlog_timestr_parser_yield(
-                                                &tlog_play_timestr_parser,
-                                                &tlog_play_goto_ts);
-                    } else {
-                        tlog_play_goto_ts = tlog_timespec_max;
-                        tlog_play_goto_active = true;
-                    }
-                    break;
-                default:
+        }
+
+        /* Parse control sequences */
+        /* FIXME Throw this away and embed a terminal emulator instead */
+        if (state == STATE_BASE) {
+            switch (c) {
+            case '\x1b':
+                state = STATE_ESC;
+                continue;
+            }
+        } else if (state == STATE_ESC) {
+            switch (c) {
+            case '\x1b':
+                state = STATE_ESC;
+                continue;
+            case '[':
+            case 'O':
+                state = STATE_CTL;
+                continue;
+            default:
+                state = STATE_BASE;
+                /* If it's a parameter or an alphabetic */
+                if (c >= 0x30 && c <= 0x7e) {
+                    continue;
+                }
+                /* Proceed */
+                break;
+            }
+        } else if (state == STATE_CTL) {
+            /* If it's C0 control, an intermediate, a parameter, or Delete */
+            if (c <= 0x3f || c == 0x7f) {
+                continue;
+            /* If it's a mouse report */
+            } else if (c == 'M') {
+                state = STATE_MOUSE;
+                mouse_seq_pos = 0;
+                continue;
+            /* If it's an alphabetic */
+            } else if (c >= 0x40 && c <= 0x7f) {
+                state = STATE_BASE;
+                continue;
+            } else {
+                state = STATE_BASE;
+                /* Proceed */
+            }
+        } else if (state == STATE_MOUSE) {
+            mouse_seq_pos++;
+            if (mouse_seq_pos >= 3) {
+                state = STATE_BASE;
+            }
+            continue;
+        }
+
+        assert(state == STATE_BASE);
+
+        /* Parse goto commands */
+        switch (c) {
+            case '0' ... '9':
+            case ':':
+                if (!tlog_play_got_ts) {
+                    tlog_timestr_parser_reset(&tlog_play_timestr_parser);
+                }
+                tlog_play_got_ts = tlog_timestr_parser_feed(
+                                        &tlog_play_timestr_parser, c);
+                break;
+            case 'G':
+                if (tlog_play_got_ts) {
                     tlog_play_got_ts = false;
-                    break;
-            }
-            switch (key) {
-                case ' ':
-                case 'p':
-                    /* If unpausing */
-                    if (tlog_play_paused) {
-                        /* Skip the time we were paused */
-                        if (clock_gettime(CLOCK_MONOTONIC,
-                                          &tlog_play_local_last_ts) != 0) {
-                            grc = TLOG_GRC_ERRNO;
-                            tlog_errs_pushc(perrs, grc);
-                            tlog_errs_pushs(
-                                    perrs,
-                                    "Failed retrieving current time");
-                            goto cleanup;
-                        }
+                    tlog_play_goto_active =
+                        tlog_timestr_parser_yield(
+                                            &tlog_play_timestr_parser,
+                                            &tlog_play_goto_ts);
+                } else {
+                    tlog_play_goto_ts = tlog_timespec_max;
+                    tlog_play_goto_active = true;
+                }
+                break;
+            default:
+                tlog_play_got_ts = false;
+                break;
+        }
+
+        /* Parse other control keys */
+        switch (c) {
+            case ' ':
+            case 'p':
+                /* If unpausing */
+                if (tlog_play_paused) {
+                    /* Skip the time we were paused */
+                    if (clock_gettime(CLOCK_MONOTONIC,
+                                      &tlog_play_local_last_ts) != 0) {
+                        grc = TLOG_GRC_ERRNO;
+                        tlog_errs_pushc(perrs, grc);
+                        tlog_errs_pushs(
+                                perrs,
+                                "Failed retrieving current time");
+                        goto cleanup;
                     }
-                    tlog_play_paused = !tlog_play_paused;
-                    break;
-                case '\x7f':
-                    tlog_play_speed = (struct timespec){1, 0};
-                    break;
-                case '}':
-                    tlog_timespec_fp_mul(&tlog_play_speed, &accel,
-                                         &new_speed);
-                    if (tlog_timespec_cmp(&new_speed, &max_speed) <= 0) {
-                        tlog_play_speed = new_speed;
-                    }
-                    break;
-                case '{':
-                    tlog_timespec_fp_div(&tlog_play_speed, &accel,
-                                         &new_speed);
-                    if (tlog_timespec_cmp(&new_speed, &min_speed) >= 0) {
-                        tlog_play_speed = new_speed;
-                    }
-                    break;
-                case '.':
-                    tlog_play_skip = true;
-                    break;
-                case 'q':
-                    quit = !tlog_play_persist;
-                    break;
-                default:
-                    break;
-            }
+                }
+                tlog_play_paused = !tlog_play_paused;
+                break;
+            case '\x7f':
+                tlog_play_speed = (struct timespec){1, 0};
+                break;
+            case '}':
+                tlog_timespec_fp_mul(&tlog_play_speed, &accel,
+                                     &new_speed);
+                if (tlog_timespec_cmp(&new_speed, &max_speed) <= 0) {
+                    tlog_play_speed = new_speed;
+                }
+                break;
+            case '{':
+                tlog_timespec_fp_div(&tlog_play_speed, &accel,
+                                     &new_speed);
+                if (tlog_timespec_cmp(&new_speed, &min_speed) >= 0) {
+                    tlog_play_speed = new_speed;
+                }
+                break;
+            case '.':
+                tlog_play_skip = true;
+                break;
+            case 'q':
+                quit = !tlog_play_persist;
+                break;
+            default:
+                break;
         }
     }
 
