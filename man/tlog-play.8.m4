@@ -92,6 +92,22 @@ Stop playing and quit.
 M4_CONF_PATH()
 The system-wide configuration file
 
+.SH BUGS
+
+Recordings can include control sequences attempting to communicate with the
+terminal, and the playback terminal would dutifully reply to them. Tlog-play
+tries to filter these responses out, but since it's not a full terminal
+emulator itself, and since there's a great variety of such control sequences,
+it can sometimes fail, and interpret some of these as playback control keys
+described above, with corresponding effects.
+
+This is going to be fixed in future releases, possibly by embedding a proper
+terminal emulator in tlog-play. For now, most recordings would reproduce
+correctly, but some might exhibit erratic behavior, and it is possible to e.g.
+make a recording which would skip (hide) a part of itself on playback.
+However, there are other, easier ways to hide actions on a terminal, of
+course.
+
 .SH EXAMPLES
 .TP
 Play back contents of a file written with tlog-rec's "file" writer:

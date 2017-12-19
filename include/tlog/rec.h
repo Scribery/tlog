@@ -61,8 +61,8 @@ enum tlog_rec_opt {
  * @param out_fd    Stdout to connect to, or -1 if none.
  * @param err_fd    Stderr to connect to, or -1 if none.
  * @param pstatus   Location for the recorded program exit status as returned
- *                  by waitpid(2), can be NULL, if not required. Not modified
- *                  in case of error. Can be NULL, if not needed.
+ *                  by waitpid(2). Not modified in case of error. Can be NULL,
+ *                  if not needed.
  * @param psignal   Location for the number of signal which caused recording
  *                  termination, or for zero, if terminated for other reason.
  *                  Not modified in case of error. Can be NULL, if not needed.

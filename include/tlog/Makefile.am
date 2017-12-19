@@ -44,6 +44,7 @@ tlog_HEADERS = \
     mem_json_writer.h           \
     misc.h                      \
     pkt.h                       \
+    play.h                      \
     play_conf.h                 \
     play_conf_cmd.h             \
     play_conf_validate.h        \

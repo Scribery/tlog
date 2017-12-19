@@ -49,7 +49,7 @@ AX_PTHREAD
 AC_ARG_ENABLE(
     debug,
     AS_HELP_STRING([--enable-debug], [enable debugging features]),
-    [], [tlog_debug_enabled="no"])
+    [tlog_debug_enabled="$enableval"], [tlog_debug_enabled="no"])
 
 AC_ARG_ENABLE(
     journal,
