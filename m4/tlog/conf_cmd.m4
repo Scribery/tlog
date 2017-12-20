@@ -227,7 +227,7 @@ m4_define(
            `    "    ',
            `$1',
            m4_substr(`                            ', m4_len(`$1')),
-           `$2')
+           m4_cstr_esc(`$2'))
         m4_printl(`\n"')
     '
 )
