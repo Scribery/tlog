@@ -338,6 +338,10 @@ struct timespec tlog_play_speed;
 bool tlog_play_goto_active;
 /** Timestamp the "goto" function should go to */
 struct timespec tlog_play_goto_ts;
+/** True if "to" function is active */
+bool tlog_play_to_active;
+/** Timestamp the "to" function should go to */
+struct timespec tlog_play_to_ts;
 /** True if "skip" function is active */
 bool tlog_play_skip;
 /** True if playback is paused */
@@ -459,6 +463,7 @@ tlog_play_init(struct tlog_errs **perrs,
     tlog_play_speed.tv_sec = 1;
     tlog_play_speed.tv_nsec = 0;
     tlog_play_goto_active = false;
+    tlog_play_to_active = false;
     tlog_play_skip = false;
     tlog_play_paused = false;
     tlog_play_persist = false;
@@ -494,6 +499,22 @@ tlog_play_init(struct tlog_errs **perrs,
             goto cleanup;
         }
         tlog_play_goto_active = true;
+    }
+
+    /* Get the "to" location */
+    if (json_object_object_get_ex(conf, "to", &obj)) {
+        str = json_object_get_string(obj);
+        if (strcasecmp(str, "start") == 0) {
+            tlog_play_to_ts = tlog_timespec_zero;
+        } else if (strcasecmp(str, "end") == 0) {
+            tlog_play_to_ts = tlog_timespec_max;
+        } else if (!tlog_timestr_to_timespec(str, &tlog_play_to_ts)) {
+            tlog_errs_pushf(perrs,
+                            "Failed parsing timestamp to go to range: %s", str);
+            grc = TLOG_RC_FAILURE;
+            goto cleanup;
+        }
+        tlog_play_to_active = true;
     }
 
     /* Get the "persist" flag */
@@ -758,6 +779,18 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
                     tlog_play_goto_active = true;
                 }
                 break;
+            case 'T':
+                if (tlog_play_got_ts) {
+                    tlog_play_got_ts = false;
+                    tlog_play_to_active =
+                        tlog_timestr_parser_yield(
+                                            &tlog_play_timestr_parser,
+                                            &tlog_play_to_ts);
+                } else {
+                    tlog_play_to_ts = tlog_timespec_max;
+                    tlog_play_to_active = true;
+                }
+                break;
             default:
                 tlog_play_got_ts = false;
                 break;
@@ -924,6 +957,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
             /* If hit the end of stream */
             if (tlog_pkt_is_void(&pkt)) {
                 tlog_play_goto_active = false;
+                tlog_play_to_active = false;
                 if (tlog_play_follow) {
                     read_wait = (struct timespec){POLL_PERIOD, 0};
                     continue;
@@ -1003,7 +1037,12 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                 tlog_play_local_last_ts = local_next_ts;
             }
         }
-
+        /* If hit the end of timespec with "to" function active */
+        if (tlog_play_to_active && (tlog_timespec_cmp(&pkt.timestamp,
+            &tlog_play_to_ts) >= 0)) {
+            tlog_play_to_active = false;
+            break;
+        }
         /*
          * Output the packet emulating synchronous I/O.
          * Otherwise we would get EAGAIN/EWOULDBLOCK.

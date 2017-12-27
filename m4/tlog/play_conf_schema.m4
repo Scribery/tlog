@@ -45,6 +45,14 @@ M4_PARAM(`', `goto', `opts-',
                    `Can be a "start", or an "end" string, or a timestamp formatted as',
                    `HH:MM:SS.sss, where any part can be omitted to mean zero.')')m4_dnl
 m4_dnl
+M4_PARAM(`', `to', `opts-',
+         `M4_TYPE_STRING()', false,
+         `t', `=STRING', `Stop to STRING time (start/end/HH:MM:SS.sss)',
+         `STRING is a ', `A ',
+         `M4_LINES(`logical location, or a time to which recording should be stopped at specific time.',
+         `Can be a "start", or an "end" string, or a timestamp formatted as',
+         `HH:MM:SS.sss, where any part can be omitted to mean zero.')')m4_dnl
+m4_dnl
 M4_PARAM(`', `paused', `opts-',
          `M4_TYPE_BOOL(false)', true,
          `p', `', `Start playback paused',
