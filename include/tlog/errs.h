@@ -141,4 +141,64 @@ extern void tlog_errs_pushf(struct tlog_errs **perrs, const char *fmt, ...)
  */
 extern int tlog_errs_print(FILE *stream, const struct tlog_errs *errs);
 
+/**
+ * Push an error to the "perrs" stack, with message as a constant string
+ * and then go to cleanup.
+ *
+ * @param _msg   The message string to copy and put into the pushed error.
+ *               Cannot be NULL.
+ */
+#define TLOG_ERRS_RAISES(_msg) \
+     do {                                                                 \
+         tlog_errs_pushs(perrs, _msg);                                    \
+         goto cleanup;                                                    \
+     } while (0)
+
+/**
+ * Push two errors to the "perrs" stack, first one with message being a global
+ * return code description, and the second with message as a constant string.
+ * And then go to cleanup.
+ *
+ * @param _grc  The global return code, which description will be pushed to
+ *              the stack.
+ * @param _msg  The message string to copy and put into the pushed error.
+ *              Cannot be NULL.
+ */
+#define TLOG_ERRS_RAISECS(_grc, _msg) \
+     do {                                                                 \
+         tlog_errs_pushc(perrs, _grc);                                    \
+         tlog_errs_pushs(perrs, _msg);                                    \
+         goto cleanup;                                                    \
+     } while (0)
+
+/**
+ * Push an error to the "perrs" stack, with a sprintf-formatted message.
+ * And then go to cleanup.
+ *
+ * @param _fmt  The message sprintf(3) format string. Cannot be NULL.
+ * @param ...   The message format arguments.
+ */
+#define TLOG_ERRS_RAISEF(_fmt, _args...) \
+     do {                                                                 \
+         tlog_errs_pushf(perrs, _fmt, ##_args);                           \
+         goto cleanup;                                                    \
+     } while (0)
+
+/**
+ * Push two errors to the "perrs" stack, first one with message being a global
+ * return code description, and the second with a sprintf-formatted message.
+ * And then go to cleanup.
+ *
+ * @param _grc  The global return code, which description will be pushed to
+ *              the stack.
+ * @param _fmt  The message sprintf(3) format string. Cannot be NULL.
+ * @param ...   The message format arguments.
+ */
+#define TLOG_ERRS_RAISECF(_grc, _fmt, _args...) \
+     do {                                                                 \
+         tlog_errs_pushc(perrs, _grc);                                    \
+         tlog_errs_pushf(perrs, _fmt, ##_args);                           \
+         goto cleanup;                                                    \
+     } while (0)
+
 #endif /* _TLOG_ERRS_H */
