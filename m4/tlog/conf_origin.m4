@@ -4,10 +4,11 @@ m4_dnl
 m4_dnl Configuration parameter origin is one of the following strings:
 m4_dnl "file", "env", "name", "opts", or "args".
 m4_dnl
-m4_dnl Configuration parameter origin range is either an empty string for all origins,
-m4_dnl ORIGIN for specific origin, ORIGIN- for specific origin and all that follows,
-m4_dnl -ORIGIN for specific origin and all that precedes, or ORIGIN1-ORIGIN2 for
-m4_dnl everything between and including two specific origins.
+m4_dnl Configuration parameter origin range is either an empty string or "-"
+m4_dnl for all origins, ORIGIN for specific origin, ORIGIN- for specific
+m4_dnl origin and all that follows, -ORIGIN for specific origin and all that
+m4_dnl precedes, or ORIGIN1-ORIGIN2 for everything between and including two
+m4_dnl specific origins.
 m4_dnl
 m4_dnl Copyright (C) 2017 Red Hat
 m4_dnl
