@@ -927,6 +927,8 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                 if (tlog_play_follow) {
                     read_wait = (struct timespec){POLL_PERIOD, 0};
                     continue;
+                } else if (tlog_play_paused) {
+                    continue;
                 } else {
                     break;
                 }
