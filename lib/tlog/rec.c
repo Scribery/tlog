@@ -1150,7 +1150,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     /* Check for the version flag */
     if (json_object_object_get_ex(conf, "version", &obj)) {
         if (json_object_get_boolean(obj)) {
-            printf("%s", tlog_version);;
+            printf("%s", tlog_version);
             goto exit;
         }
     }
