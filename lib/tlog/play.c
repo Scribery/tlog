@@ -1134,7 +1134,7 @@ tlog_play(struct tlog_errs **perrs,
     /* Check for the version flag */
     if (json_object_object_get_ex(conf, "version", &obj)) {
         if (json_object_get_boolean(obj)) {
-            printf("%s", tlog_version);;
+            printf("%s", tlog_version);
             grc = TLOG_RC_OK;
             goto cleanup;
         }
