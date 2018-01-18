@@ -518,7 +518,7 @@ tlog_play_init(struct tlog_errs **perrs,
 
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(tlog_play_exit_sig_list); i++) {
-        if(sigaction(tlog_play_exit_sig_list[i], NULL, &sa) == -1){
+        if(sigaction(tlog_play_exit_sig_list[i], NULL, &sa) == -1) {
           grc = TLOG_GRC_ERRNO;
           tlog_errs_pushc(perrs, grc);
           tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
@@ -532,7 +532,7 @@ tlog_play_init(struct tlog_errs **perrs,
             }
             /* NOTE: no SA_RESTART on purpose */
             sa.sa_flags = 0;
-            if(sigaction(tlog_play_exit_sig_list[i], &sa, NULL) == -1){
+            if(sigaction(tlog_play_exit_sig_list[i], &sa, NULL) == -1) {
               grc = TLOG_GRC_ERRNO;
               tlog_errs_pushc(perrs, grc);
               tlog_errs_pushs(perrs, "Failed to set an exit signal action");
@@ -547,7 +547,7 @@ tlog_play_init(struct tlog_errs **perrs,
     sigaddset(&sa.sa_mask, SIGIO);
     /* NOTE: no SA_RESTART on purpose */
     sa.sa_flags = 0;
-    if(sigaction(SIGIO, &sa, NULL) == -1){
+    if(sigaction(SIGIO, &sa, NULL) == -1) {
       grc = TLOG_GRC_ERRNO;
       tlog_errs_pushc(perrs, grc);
       tlog_errs_pushs(perrs, "Failed to set SIGIO action");
