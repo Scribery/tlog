@@ -213,6 +213,8 @@ Customize `tlog-rec-session` configuration in
 `/etc/tlog/tlog-rec-session.conf` as necessary (see `tlog-rec-session.conf(5)`
 for details).
 
+#### Locale configuration issue on Fedora and RHEL
+
 Fedora and RHEL (and some other distros) use an approach for configuring
 system locale, where the login shell is responsible for reading the locale
 configuration from a file (`/etc/locale.conf`) itself, instead of receiving it
@@ -238,6 +240,20 @@ all other `session` lines:
 
 However, tlog only supports UTF-8 so far, so the above workaround only serves
 to silent the fallback warning.
+
+#### Configuring shell per-user using symlinks
+
+You can create a symlink to `tlog-rec-sessions` containing the shell it should
+start, in its name. E.g. if you create a symlink like this:
+
+    sudo ln -s tlog-rec-session /usr/bin/tlog-rec-session-shell-bin-zsh
+
+and execute `tlog-rec-session-shell-bin-zsh`, then `tlog-rec-session` will
+start and execute `/bin/zsh` as the shell to record. See `tlog-rec-session(8)`
+for details.
+
+Such symlinks can then be assigned as login shells to certain users to have a
+specific shell started for them, under recording.
 
 ### Recording sessions to Elasticsearch
 

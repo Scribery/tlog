@@ -61,6 +61,19 @@ argv[0] beginning with '-'), then the executed shell name is also prepended
 with a dash. This passes the "login shell" status to the recorded shell and is
 equivalent to using the "-l" option.
 
+If tlog-M4_PROG_NAME() is invoked under a name containing "-shell-", then the
+rest of the name after that string is considered an encoded absolute path to
+the shell to execute for the recorded session. The path is expected to be
+encoded by replacing all forward slashes '/' with dashes '-' and any
+characters to be preserved as is prepended with a backslash '\\'. E.g. to
+have tlog-M4_PROG_NAME() execute /bin/dash as the shell, invoke it with the
+name "tlog-M4_PROG_NAME()-shell-bin-dash".
+
+This is normally done by making a symlink with that name pointing to
+tlog-M4_PROG_NAME(), and then executing the link. Such links can be assigned
+to users as their shells to have specific shells started under recording for
+specific users.
+
 .B Tlog-M4_PROG_NAME()
 loads its parameters first from the system-wide configuration file
 M4_CONF_PATH(), then from the file pointed at by TLOG_REC_SESSION_CONF_FILE
@@ -88,7 +101,8 @@ specified with TLOG_REC_SESSION_CONF_FILE.
 .TP
 TLOG_REC_SESSION_SHELL
 Specifies the shell to spawn. Overrides configuration specified with
-TLOG_REC_SESSION_CONF_TEXT. Can be overridden with command-line options.
+TLOG_REC_SESSION_CONF_TEXT. Can be overridden by invoking tlog-M4_PROG_NAME()
+under a special name (see above).
 
 .SH FILES
 .TP

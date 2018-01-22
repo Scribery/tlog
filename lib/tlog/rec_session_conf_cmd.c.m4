@@ -55,7 +55,13 @@ tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
 {
     tlog_grc grc;
     char *progpath = NULL;
-    const char *p;
+    const char *shell_suffix = "-shell-";
+    const char *progname_start;
+    const char *progname_end;
+    const char *shell_start;
+    char *shell = NULL;
+    char *src;
+    char *dst;
     char *progname = NULL;
     char *help = NULL;
     struct json_object *conf = NULL;
@@ -74,7 +80,7 @@ tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
         goto cleanup;
     }
 
-    /* Extract program name, noting login dash prefix */
+    /* Get program path */
     progpath = strdup(argv[0]);
     if (progpath == NULL) {
         grc = TLOG_GRC_ERRNO;
@@ -82,9 +88,11 @@ tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
         tlog_errs_pushs(perrs, "Failed allocating a copy of program path");
         goto cleanup;
     }
-    p = basename(progpath);
-    if (p[0] == m4_singlequote(-)) {
-        p++;
+
+    /* Check for and extract login dash prefix */
+    progname_start = basename(progpath);
+    if (progname_start[0] == '-') {
+        progname_start++;
         val = json_object_new_boolean(true);
         if (val == NULL) {
             grc = TLOG_GRC_ERRNO;
@@ -100,7 +108,56 @@ tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
         }
         val = NULL;
     }
-    progname = strdup(p);
+
+    /* Check for the shell suffix and extract the shell */
+    progname_end = strstr(progname_start, shell_suffix);
+    if (progname_end == NULL) {
+        progname_end = progname_start + strlen(progname_start);
+    } else {
+        /* Copy the encoded shell path */
+        assert(strlen(shell_suffix) > 0);
+        assert(shell_suffix[strlen(shell_suffix) - 1] == '-');
+        shell_start = progname_end + strlen(shell_suffix) - 1;
+        shell = strdup(shell_start);
+        if (shell == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs,
+                            "Failed allocating a copy of the shell part "
+                            "of the program name");
+            goto cleanup;
+        }
+        /* Decode and unescape the shell path */
+        for (dst = src = shell; ;) {
+            if (*src == '-') {
+                *dst = '/';
+                continue;
+            } else if (*src == '\\') {
+                src++;
+            }
+            if ((*dst++ = *src++) == '\0') {
+                break;
+            }
+        }
+        /* Store the shell */
+        val = json_object_new_string(shell);
+        if (val == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed creating shell path object");
+            goto cleanup;
+        }
+        grc = tlog_json_object_object_add_path(conf, "shell", val);
+        if (grc != TLOG_RC_OK) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed storing shell path");
+            goto cleanup;
+        }
+        val = NULL;
+    }
+
+    /* Extract the program name */
+    progname = strndup(progname_start, progname_end - progname_start);
     if (progname == NULL) {
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(perrs, grc);
@@ -139,6 +196,7 @@ tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
 cleanup:
     free(help);
     free(progname);
+    free(shell);
     free(progpath);
     json_object_put(val);
     json_object_put(conf);
