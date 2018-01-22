@@ -138,9 +138,9 @@ In practice however, playback from journal is usually done with a single match
 against the `TLOG_REC` journal field. The `TLOG_REC` field contains a copy of
 the `rec` field from the logged JSON data, which is a host-unique ID of the
 recording. For example, to playback a recording which contains this message
-(output with `journalctl -o verbose` and truncated for brewity):
+(output with `journalctl -o verbose` and abbreviated):
 
-    Mon 2018-01-22 10:51:48.463904 EET [s=87ea0a3f655a48cd80d7f49053860806;i=cd01;b=12ca5b356065453fb50adfe57007658a;m=5f1658ad89;t=563598a61e555;x=233b64cd25acb24]
+    Mon 2018-01-22 10:51:48.463904 EET [s=87ea0a3f655a48cd80d7f49053860806;...
         _AUDIT_LOGINUID=1000
         _UID=1000
         _GID=1000
@@ -155,7 +155,7 @@ recording. For example, to playback a recording which contains this message
         TLOG_USER=nkondras
         TLOG_SESSION=2
         TLOG_ID=1
-        MESSAGE={"ver":"2.2","host":"bard","rec":"12ca5b356065453fb50adfe57007658a-306a-26f2910","user":"nkondras",...
+        MESSAGE={"ver":"2.2","host":"bard","rec":"12ca5b356065453fb50adfe57007658a-306a-26f2910",...
         SYSLOG_IDENTIFIER=tlog-rec
         _PID=12394
         _COMM=tlog-rec
