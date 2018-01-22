@@ -358,6 +358,8 @@ bool tlog_play_got_ts;
 struct tlog_timestr_parser tlog_play_timestr_parser;
 /** Local time of packet output last */
 struct timespec tlog_play_local_last_ts;
+/** Recording's time of packet output last */
+struct timespec tlog_play_pkt_last_ts;
 
 /** True if playback state was initialized succesfully */
 bool tlog_play_initialized = false;
@@ -610,7 +612,9 @@ tlog_play_init(struct tlog_errs **perrs,
     /*
      * Start the time
      */
-    /* Get current time */
+    /* Set recording's last packet time to the start */
+    tlog_play_pkt_last_ts = TLOG_TIMESPEC_ZERO;
+    /* Set local last packet time to the current time */
     if (clock_gettime(CLOCK_MONOTONIC, &tlog_play_local_last_ts) != 0) {
         grc = TLOG_GRC_ERRNO;
         tlog_errs_pushc(perrs, grc);
@@ -838,8 +842,6 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
     struct timespec local_this_ts;
     /** Local time of packet output next */
     struct timespec local_next_ts;
-    /** Recording time of the packet output last */
-    struct timespec pkt_last_ts = TLOG_TIMESPEC_ZERO;
     /** Delay to the packet output next */
     struct timespec pkt_delay_ts;
     struct tlog_pkt pkt = TLOG_PKT_VOID;
@@ -958,11 +960,11 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
             /* If we reached the target time */
             if (tlog_timespec_cmp(&pkt.timestamp, &tlog_play_goto_ts) >= 0) {
                 tlog_play_goto_active = false;
-                pkt_last_ts = tlog_play_goto_ts;
+                tlog_play_pkt_last_ts = tlog_play_goto_ts;
                 continue;
             }
         } else {
-            tlog_timespec_sub(&pkt.timestamp, &pkt_last_ts, &pkt_delay_ts);
+            tlog_timespec_sub(&pkt.timestamp, &tlog_play_pkt_last_ts, &pkt_delay_ts);
             tlog_timespec_fp_div(&pkt_delay_ts, &tlog_play_speed, &pkt_delay_ts);
             tlog_timespec_cap_add(&tlog_play_local_last_ts, &pkt_delay_ts,
                                   &local_next_ts);
@@ -990,8 +992,8 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                                       &pkt_delay_ts);
                     tlog_timespec_fp_mul(&pkt_delay_ts, &tlog_play_speed,
                                          &pkt_delay_ts);
-                    tlog_timespec_cap_add(&pkt_last_ts, &pkt_delay_ts,
-                                          &pkt_last_ts);
+                    tlog_timespec_cap_add(&tlog_play_pkt_last_ts, &pkt_delay_ts,
+                                          &tlog_play_pkt_last_ts);
                     tlog_play_local_last_ts = local_this_ts;
                     continue;
                 } else if (rc != 0) {
@@ -1038,7 +1040,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                 goto cleanup;
             }
         }
-        pkt_last_ts = pkt.timestamp;
+        tlog_play_pkt_last_ts = pkt.timestamp;
         /* Consume the output part (or the whole) of the packet */
         tlog_pkt_pos_move(&pos, &pkt, rc);
         if (tlog_pkt_pos_is_past(&pos, &pkt)) {
