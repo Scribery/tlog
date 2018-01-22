@@ -167,6 +167,35 @@ whole recording like this:
 
     tlog-rec -r journal -M TLOG_REC=12ca5b356065453fb50adfe57007658a-306a-26f2910
 
+### Playing back ongoing recordings
+
+By default, once `tlog-play` reaches the last message a recording has so far,
+it exits. However, it can be made to poll for new messages appearing with the
+`-f/--follow` option, which is useful for playing back ongoing recordings.
+
+### Playback controls
+
+`Tlog-play` accepts several command-line options affecting playback, including
+`-s/--speed` for setting playback speed multiplier, `-g/--goto` for specifying
+the location the playback should be fast-forwarded to, and `-p/--paused` for
+starting playback in paused state.
+
+Several control keys are also recognized during playback:
+
+* SPACE or `p` for pause/resume,
+* `{` and `}` for halving and doubling the playback speed,
+* `.` for stepping through the recording (on pause or during playback)
+* `G` for fast-forwarding to the end of the recording (useful with
+  `--follow`), or to the specified timestamp (see tlog-play(8) for details),
+* and `q` for quitting playback.
+
+### Playing back partial recordings
+
+By default `tlog-play` will terminate playback, if it notices out-of-order or
+missing log messages. However, it is possible to make it ignore missing
+messages with the `--lax` option for when you need to playback a partial
+or a corrupted recording.
+
 ### Recording sessions of a user
 
 Change the shell of the user to be recorded to `tlog-rec-session`:
