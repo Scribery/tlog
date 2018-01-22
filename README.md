@@ -414,14 +414,12 @@ time, you can put them in `/etc/tlog/tlog-play.conf` configuration file.
 
 #### Limitations
 
-Currently `tlog-play` is very limited. It doesn't provide a way to rewind
-playback, only to fast-forward. It polls Elasticsearch for new messages,
-instead of asking to be updated when they appear. Even though the messages
-contain recorded terminal window (re)sizes, it cannot resize its own terminal
-to fit the output better.
-
-Further development will be addressing these and other issues either in
-`tlog-play`, and/or in the upcoming Web UI, which will be a separate project.
+Currently `tlog-play` functionality is limited. It doesn't provide a way to
+rewind playback, only to fast-forward. It polls files, Journal and
+Elasticsearch for new messages, instead of asking to be updated when they
+appear, which impairs performance. Even though the messages contain recorded
+terminal window (re)sizes, it doesn't resize its own terminal to fit the
+output better. Further development will be addressing these.
 
 [session_recording]: http://scribery.github.io/
 [log_format]: doc/log_format.md
