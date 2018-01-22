@@ -186,7 +186,7 @@ Several control keys are also recognized during playback:
 * `{` and `}` for halving and doubling the playback speed,
 * `.` for stepping through the recording (on pause or during playback)
 * `G` for fast-forwarding to the end of the recording (useful with
-  `--follow`), or to the specified timestamp (see tlog-play(8) for details),
+  `--follow`), or to the specified timestamp (see `tlog-play(8)` for details),
 * and `q` for quitting playback.
 
 ### Playing back partial recordings
@@ -258,7 +258,7 @@ specific shell started for them, under recording.
 #### Configuring recording in SSSD
 
 SSSD starting with v1.16.0 allows configuring which users and/or groups should
-be recorded (have tlog-rec-session started when they login), while also
+be recorded (have `tlog-rec-session` started when they login), while also
 preserving the original user shell. See `sssd-session-recording(5)`.
 
 ### Recording sessions to Elasticsearch
