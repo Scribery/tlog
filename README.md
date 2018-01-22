@@ -11,9 +11,9 @@ development preview quality.
 
 Whereas most other similar packages write the recorded data to a file in their
 own format, or upload it to a custom server, `tlog` sends it to a logging
-service. The standard syslog interface is supported already, with journald
-possibly to come. The recorded data is [encoded][log_format] in JSON in
-a way which keeps it human-readable and searchable as much as possible.
+service. Both the standard syslog and the journald interfaces are supported.
+The recorded data is [encoded][log_format] in JSON in a way which keeps it
+human-readable and searchable as much as possible.
 
 The primary purpose of logging in JSON format is to eventually deliver the
 recorded data to a storage service such as [Elasticsearch][elasticsearch],
@@ -38,6 +38,10 @@ Build dependencies are systemd, cURL, and json-c, which development packages are
 `systemd-devel`, `json-c-devel`, and `libcurl-devel` on RPM-based distros, and
 `libjson-c-dev` and `libsystemd-journal-dev` and `libcurl-*-dev` on
 Debian-based distros.
+
+If Systemd Journal support is not required, it can be disabled with
+configure's "--disable-journal" option, removing the systemd dependency as
+well.
 
 If you'd like to build `tlog` from the Git source tree, you need to first
 generate the build system files:
@@ -108,6 +112,61 @@ Both during, and after the recording you can play the session back with
 
     tlog-play --reader=file --file-path=tlog.log
 
+### Recording to Systemd Journal
+
+To record into the Systemd Journal, execute `tlog-rec` as such:
+
+    tlog-rec --writer=journal
+
+Along with the regular JSON log messages, when recording to journal, tlog
+copies a few JSON fields to Journal fields to aid searching and extracting
+(parts of) particular recordings:
+
+* `TLOG_USER` - the user the recording was started as (`user` in JSON),
+* `TLOG_SESSION` - the audit session ID of the recording process
+   (`session` in JSON),
+* `TLOG_REC` - host-unique recording ID (`rec` in JSON),
+* `TLOG_ID` - log message ID within the recording (`id` in JSON).
+
+### Playing back from Systemd Journal
+
+In general, selecting Journal log entries for playback is done using Journal
+matches and timestamp limits, with `-M/--journal-match`, `-S/--journal-since`,
+and `-U/--journal-until` options.
+
+In practice however, playback from journal is usually done with a single match
+against the `TLOG_REC` journal field. The `TLOG_REC` field contains a copy of
+the `rec` field from the logged JSON data, which is a host-unique ID of the
+recording. For example, to playback a recording which contains this message
+(output with `journalctl -o verbose` and truncated for brewity):
+
+    Mon 2018-01-22 10:51:48.463904 EET [s=87ea0a3f655a48cd80d7f49053860806;i=cd01;b=12ca5b356065453fb50adfe57007658a;m=5f1658ad89;t=563598a61e555;x=233b64cd25acb24]
+        _AUDIT_LOGINUID=1000
+        _UID=1000
+        _GID=1000
+        _AUDIT_SESSION=2
+        _BOOT_ID=12ca5b356065453fb50adfe57007658a
+        _MACHINE_ID=2d8d017e2b1144cbbdd049a8a997911b
+        _HOSTNAME=bard
+        PRIORITY=6
+        _TRANSPORT=journal
+        _SYSTEMD_OWNER_UID=1000
+        TLOG_REC=12ca5b356065453fb50adfe57007658a-306a-26f2910
+        TLOG_USER=nkondras
+        TLOG_SESSION=2
+        TLOG_ID=1
+        MESSAGE={"ver":"2.2","host":"bard","rec":"12ca5b356065453fb50adfe57007658a-306a-26f2910","user":"nkondras",...
+        SYSLOG_IDENTIFIER=tlog-rec
+        _PID=12394
+        _COMM=tlog-rec
+        _SOURCE_REALTIME_TIMESTAMP=1516611108463904
+
+you can take the ID either from the `TLOG_REC` field value directly, or from
+the `MESSAGE` field (from the JSON `rec` field). You can then playback the
+whole recording like this:
+
+    tlog-rec -r journal -M TLOG_REC=12ca5b356065453fb50adfe57007658a-306a-26f2910
+
 ### Recording sessions of a user
 
 Change the shell of the user to be recorded to `tlog-rec-session`:
@@ -115,9 +174,11 @@ Change the shell of the user to be recorded to `tlog-rec-session`:
     sudo usermod -s /usr/bin/tlog-rec-session <user>
 
 Login as the user on a text terminal. By default the recorded terminal data
-will be delivered to syslog with facility "authpriv" and priority "info". It
-will appear in journal, if you use journald, in `/var/log/auth.log` on
-Debian-based systems, or in `/var/log/secure` on Fedora and derived systems.
+will be delivered to Journal (if tlog was built with Journal support) or to
+syslog with facility "authpriv". In both cases default priority will be
+"info". It will appear in Journal, if you use journald, or in
+`/var/log/auth.log` on Debian-based systems, and in `/var/log/secure` on
+Fedora and derived systems.
 
 Customize `tlog-rec-session` configuration in
 `/etc/tlog/tlog-rec-session.conf` as necessary (see `tlog-rec-session.conf(5)`
