@@ -255,6 +255,12 @@ for details.
 Such symlinks can then be assigned as login shells to certain users to have a
 specific shell started for them, under recording.
 
+#### Configuring recording in SSSD
+
+SSSD starting with v1.16.0 allows configuring which users and/or groups should
+be recorded (have tlog-rec-session started when they login), while also
+preserving the original user shell. See `sssd-session-recording(5)`.
+
 ### Recording sessions to Elasticsearch
 
 Rsyslog can be set up to deliver tlog messages to Elasticsearch. First of
