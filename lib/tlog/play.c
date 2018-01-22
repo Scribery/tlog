@@ -756,7 +756,9 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
                     tlog_play_goto_active =
                         tlog_timestr_parser_yield(
                                             &tlog_play_timestr_parser,
-                                            &tlog_play_goto_ts);
+                                            &tlog_play_goto_ts) &&
+                        tlog_timespec_cmp(&tlog_play_goto_ts,
+                                          &tlog_play_pkt_last_ts) > 0;
                 } else {
                     tlog_play_goto_ts = tlog_timespec_max;
                     tlog_play_goto_active = true;
