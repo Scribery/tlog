@@ -40,7 +40,7 @@ Build dependencies are systemd, cURL, and json-c, which development packages are
 Debian-based distros.
 
 If Systemd Journal support is not required, it can be disabled with
-configure's "--disable-journal" option, removing the systemd dependency as
+configure's `--disable-journal` option, removing the systemd dependency as
 well.
 
 If you'd like to build `tlog` from the Git source tree, you need to first
