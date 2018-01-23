@@ -139,7 +139,7 @@ main(void)
     TEST(all_sub, TS(-1, -1), TS(-1, -1), TS(0, 0));
     TEST(all_sub, TS(0, -1), TS(0, -1), TS(0, 0));
     TEST(all_sub, TS(0, -TLOG_TIMESPEC_NSEC_PER_SEC + 1), TS(0, 1), TS(-1, 0));
-      TEST(all_sub, TS(0, -TLOG_TIMESPEC_NSEC_PER_SEC + 1), TS(0, 2), TS(-1, -1));
+    TEST(all_sub, TS(0, -TLOG_TIMESPEC_NSEC_PER_SEC + 1), TS(0, 2), TS(-1, -1));
     TEST(all_sub, TS(0, TLOG_TIMESPEC_NSEC_PER_SEC - 1), TS(0, -1), TS(1, 0));
     TEST(all_sub, TS(0, TLOG_TIMESPEC_NSEC_PER_SEC - 1), TS(0, -2), TS(1, 1));
     TEST(all_sub, TS(1, 500000000), TS(2, 0), TS(0, -500000000));
