@@ -89,6 +89,7 @@ tlog_journal_json_writer_is_valid(const struct tlog_json_writer *writer)
     struct tlog_journal_json_writer *journal_json_writer =
                                     (struct tlog_journal_json_writer*)writer;
     return tlog_syslog_priority_is_valid(journal_json_writer->priority) &&
+           journal_json_writer->recording != NULL &&
            journal_json_writer->username != NULL &&
            journal_json_writer->session_id != 0;
 }
