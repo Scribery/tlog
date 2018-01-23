@@ -32,10 +32,10 @@ and `tlog-rec-session`.
 Building
 --------
 
-Build dependencies are systemd, cURL, and json-c, which development packages are
-`systemd-devel`, `json-c-devel`, and `libcurl-devel` on RPM-based distros, and
-`libjson-c-dev` and `libsystemd-journal-dev` and `libcurl-*-dev` on
-Debian-based distros.
+Build dependencies are systemd, cURL, and json-c, which development packages
+are `systemd-devel`, `json-c-devel`, and `libcurl-devel` on RPM-based distros,
+and `libjson-c-dev`, `libsystemd-journal-dev`/`libsystemd-dev` and
+`libcurl-*-dev` on Debian-based distros.
 
 If Systemd Journal support is not required, it can be disabled with
 configure's `--disable-journal` option, removing the systemd dependency as
