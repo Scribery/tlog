@@ -97,7 +97,7 @@ tlog_timespec_from_fp(double n, struct timespec *res)
 
     f = modf(n, &i);
     res->tv_sec = i;
-    res->tv_nsec = f * TLOG_TIMESPEC_NSEC_PER_SEC ;
+    res->tv_nsec = lround(f * TLOG_TIMESPEC_NSEC_PER_SEC);
 
     assert(tlog_timespec_is_valid(res));
 }
