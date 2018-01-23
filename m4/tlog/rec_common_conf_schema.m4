@@ -166,5 +166,14 @@ _M4_PARAM(`/journal', `priority', `file-',
           `STRING is the ', `The ',
           `M4_LINES(`syslog-style priority "journal" writer should use for messages.')')m4_dnl
 m4_dnl
+_M4_PARAM(`/journal', `augment', `file-',
+          `M4_TYPE_BOOL(true)',
+          true,
+          `', `[=BOOL]', `Enable/disable adding extra journal fields',
+          `If specified as ', `If ',
+          `M4_LINES(`true, the "journal" writer copies the following JSON fields',
+                    `to Journal fields: user -> TLOG_USER, session -> TLOG_SESSION,',
+                    `rec -> TLOG_REC, and id -> TLOG_ID.')')m4_dnl
+m4_dnl
 ')m4_dnl m4_ifelse M4_JOURNAL_ENABLED
 m4_dnl

@@ -442,12 +442,22 @@ tlog_rec_create_journal_json_writer(struct tlog_errs **perrs,
     struct json_object *obj;
     const char *str;
     struct tlog_json_writer *writer = NULL;
+    bool augment;
     int priority;
 
     assert(pwriter != NULL);
     assert(conf != NULL);
     assert(id != NULL);
     assert(username != NULL);
+
+    /* Get the "augment" flag */
+    if (json_object_object_get_ex(conf, "augment", &obj)) {
+        augment = json_object_get_boolean(obj);
+    } else {
+        tlog_errs_pushs(perrs, "\"Augment\" flag is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
 
     /* Get priority */
     if (!json_object_object_get_ex(conf, "priority", &obj)) {
@@ -464,8 +474,8 @@ tlog_rec_create_journal_json_writer(struct tlog_errs **perrs,
     }
 
     /* Create the writer */
-    grc = tlog_journal_json_writer_create(&writer, priority, id,
-                                          username, session_id);
+    grc = tlog_journal_json_writer_create(&writer, priority, augment,
+                                          id, username, session_id);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushc(perrs, grc);
         tlog_errs_pushs(perrs, "Failed creating journal writer");

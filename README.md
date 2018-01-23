@@ -119,8 +119,8 @@ To record into the Systemd Journal, execute `tlog-rec` as such:
     tlog-rec --writer=journal
 
 Along with the regular JSON log messages, when recording to journal, tlog
-copies a few JSON fields to Journal fields to aid searching and extracting
-(parts of) particular recordings:
+copies a few JSON fields to Journal fields (unless explicitly disabled) to aid
+searching and extracting (parts of) particular recordings:
 
 * `TLOG_USER` - the user the recording was started as (`user` in JSON),
 * `TLOG_SESSION` - the audit session ID of the recording process

@@ -47,26 +47,33 @@ extern const struct tlog_json_writer_type tlog_journal_json_writer_type;
  * @param pwriter       Location for the created writer pointer, will be set to
  *                      NULL in case of error.
  * @param priority      The "priority" argument to pass to journal(3).
+ * @param augment       True if any fields beside MESSAGE and PRIORITY should
+ *                      be added to Journal entries, false otherwise.
  * @param recording     Host-unique recording ID.
+ *                      Cannot be NULL, ignored if augment is false
  * @param username      Name of the user being recorded.
+ *                      Cannot be NULL, ignored if augment is false
  * @param session_id    Audit session ID of the recording.
+ *                      Cannot be zero, ignored if augment is false
  *
  * @return Global return code.
  */
 static inline tlog_grc
 tlog_journal_json_writer_create(struct tlog_json_writer **pwriter,
                                 int priority,
+                                bool augment,
                                 const char *recording,
                                 const char *username,
                                 unsigned int session_id)
 {
     assert(pwriter != NULL);
     assert(tlog_syslog_priority_is_valid(priority));
-    assert(recording != NULL);
-    assert(username != NULL);
-    assert(session_id != 0);
+    assert(!augment || recording != NULL);
+    assert(!augment || username != NULL);
+    assert(!augment || session_id != 0);
     return tlog_json_writer_create(pwriter, &tlog_journal_json_writer_type,
-                                   priority, recording, username, session_id);
+                                   priority, augment,
+                                   recording, username, session_id);
 }
 
 #endif /* _TLOG_JOURNAL_JSON_WRITER_H */

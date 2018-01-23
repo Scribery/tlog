@@ -29,6 +29,7 @@
 struct tlog_journal_json_writer {
     struct tlog_json_writer     writer;     /**< Abstract writer instance */
     int                         priority;   /**< Logging priority */
+    bool                        augment;    /**< True to add extra fields */
     char                       *recording;  /**< Recording ID */
     char                       *username;   /**< Session user name */
     unsigned int                session_id; /**< Session ID */
@@ -50,30 +51,35 @@ tlog_journal_json_writer_init(struct tlog_json_writer *writer, va_list ap)
                                     (struct tlog_journal_json_writer*)writer;
     tlog_grc grc;
     int priority = va_arg(ap, int);
+    bool augment = (bool)va_arg(ap, int);
     const char *recording = va_arg(ap, const char *);
     const char *username = va_arg(ap, const char *);
     unsigned int session_id = va_arg(ap, unsigned int);
 
     assert(tlog_syslog_priority_is_valid(priority));
-    assert(recording != NULL);
-    assert(username != NULL);
-    assert(session_id != 0);
+    assert(!augment || recording != NULL);
+    assert(!augment || username != NULL);
+    assert(!augment || session_id != 0);
 
     journal_json_writer->priority = priority;
 
-    journal_json_writer->recording = strdup(recording);
-    if (journal_json_writer->recording == NULL) {
-        grc = TLOG_GRC_ERRNO;
-        goto cleanup;
-    }
+    journal_json_writer->augment = augment;
 
-    journal_json_writer->username = strdup(username);
-    if (journal_json_writer->username == NULL) {
-        grc = TLOG_GRC_ERRNO;
-        goto cleanup;
-    }
+    if (journal_json_writer->augment) {
+        journal_json_writer->recording = strdup(recording);
+        if (journal_json_writer->recording == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            goto cleanup;
+        }
 
-    journal_json_writer->session_id = session_id;
+        journal_json_writer->username = strdup(username);
+        if (journal_json_writer->username == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            goto cleanup;
+        }
+
+        journal_json_writer->session_id = session_id;
+    }
 
     grc = TLOG_RC_OK;
 cleanup:
@@ -89,9 +95,10 @@ tlog_journal_json_writer_is_valid(const struct tlog_json_writer *writer)
     struct tlog_journal_json_writer *journal_json_writer =
                                     (struct tlog_journal_json_writer*)writer;
     return tlog_syslog_priority_is_valid(journal_json_writer->priority) &&
-           journal_json_writer->recording != NULL &&
-           journal_json_writer->username != NULL &&
-           journal_json_writer->session_id != 0;
+           (!journal_json_writer->augment ||
+            (journal_json_writer->recording != NULL &&
+             journal_json_writer->username != NULL &&
+             journal_json_writer->session_id != 0));
 }
 
 static tlog_grc
@@ -101,13 +108,25 @@ tlog_journal_json_writer_write(struct tlog_json_writer *writer,
     struct tlog_journal_json_writer *journal_json_writer =
                                     (struct tlog_journal_json_writer*)writer;
     int sd_rc;
-    sd_rc = sd_journal_send("PRIORITY=%d", journal_json_writer->priority,
-                            "TLOG_REC=%s", journal_json_writer->recording,
-                            "TLOG_USER=%s", journal_json_writer->username,
-                            "TLOG_SESSION=%u", journal_json_writer->session_id,
-                            "TLOG_ID=%zu", id,
-                            "MESSAGE=%.*s", len, buf,
-                            NULL);
+
+#define BASE_ARGS \
+    "PRIORITY=%d", journal_json_writer->priority,   \
+    "MESSAGE=%.*s", len, buf
+
+    if (journal_json_writer->augment) {
+        sd_rc = sd_journal_send(
+                    "TLOG_REC=%s", journal_json_writer->recording,
+                    "TLOG_USER=%s", journal_json_writer->username,
+                    "TLOG_SESSION=%u", journal_json_writer->session_id,
+                    "TLOG_ID=%zu", id,
+                    BASE_ARGS,
+                    NULL);
+    } else {
+        sd_rc = sd_journal_send(BASE_ARGS, NULL);
+    }
+
+#undef BASE_ARGS
+
     return (sd_rc < 0) ? TLOG_GRC_FROM(systemd, sd_rc) : TLOG_RC_OK;
 }
 
