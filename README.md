@@ -6,8 +6,6 @@ Tlog
 
 `Tlog` is a terminal I/O recording and playback package suitable for
 implementing [centralized user session recording][session_recording].
-At the moment it is not ready for production and is to be considered
-development preview quality.
 
 Whereas most other similar packages write the recorded data to a file in their
 own format, or upload it to a custom server, `tlog` sends it to a logging
