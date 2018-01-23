@@ -33,7 +33,13 @@ in JSON format.
 %setup -q
 
 %build
+# If it's not RHEL6 and older
+%if 0%{?rhel} == 0 || 0%{?rhel} >= 7
 %configure --disable-rpath --disable-static
+# Else, if it's RHEL6 or older
+%else
+%configure --disable-rpath --disable-static --disable-journal
+%endif
 make %{?_smp_mflags}
 
 %check
