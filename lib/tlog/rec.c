@@ -1173,8 +1173,8 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
      * if it provides the required resolution.
      */
     {
-        struct timespec timestamp;
 #ifdef CLOCK_MONOTONIC_COARSE
+        struct timespec timestamp;
         if (clock_getres(CLOCK_MONOTONIC_COARSE, &timestamp) == 0 &&
             tlog_timespec_cmp(&timestamp, &tlog_delay_min_timespec) <= 0) {
             clock_id = CLOCK_MONOTONIC_COARSE;
