@@ -609,6 +609,9 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
     assert(id != NULL);
     assert(username != NULL);
 
+    /* Unused without Journal */
+    (void)session_id;
+
     /*
      * Create the terminating writer
      */

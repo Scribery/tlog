@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
+#include <string.h>
 
 #define POLL_PERIOD 1
 
@@ -82,7 +83,6 @@ tlog_play_create_json_reader(struct tlog_errs **perrs,
     struct json_object *obj;
     const char *str;
     int fd = -1;
-    size_t i;
     const char **str_list = NULL;
     struct tlog_json_reader *reader = NULL;
 
@@ -142,6 +142,7 @@ tlog_play_create_json_reader(struct tlog_errs **perrs,
         struct json_object *conf_journal;
         int64_t since = 0;
         int64_t until = INT64_MAX;
+        size_t i;
 
         /* Get journal reader conf container */
         if (json_object_object_get_ex(conf, "journal", &conf_journal)) {
