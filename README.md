@@ -118,7 +118,7 @@ To record into the Systemd Journal, execute `tlog-rec` as such:
 
     tlog-rec --writer=journal
 
-Along with the regular JSON log messages, when recording to journal, tlog
+Along with the regular JSON log messages, when recording to Journal, tlog
 copies a few JSON fields to Journal fields (unless explicitly disabled) to aid
 searching and extracting (parts of) particular recordings:
 
@@ -134,8 +134,8 @@ In general, selecting Journal log entries for playback is done using Journal
 matches and timestamp limits, with `-M/--journal-match`, `-S/--journal-since`,
 and `-U/--journal-until` options.
 
-In practice however, playback from journal is usually done with a single match
-against the `TLOG_REC` journal field. The `TLOG_REC` field contains a copy of
+In practice however, playback from Journal is usually done with a single match
+against the `TLOG_REC` Journal field. The `TLOG_REC` field contains a copy of
 the `rec` field from the logged JSON data, which is a host-unique ID of the
 recording. For example, to playback a recording which contains this message
 (output with `journalctl -o verbose` and abbreviated):
