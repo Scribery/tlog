@@ -145,7 +145,7 @@ rm -r %{buildroot}/usr/include/%{name}
   packaging to prevent users from changing their shells themselves once it has
   been assigned.
 - Add support for specifying the shell to start via the tlog-rec-session
-  executable name. E.g. by making a tlog-rec-session-shell-zsh ->
+  executable name. E.g. by making a tlog-rec-session-shell-bin-zsh ->
   tlog-rec-session symlink and executing it. That can be used to specify
   particular shells to be recorded for specific users by assigning these
   symlinks as their login shells.
