@@ -21,4 +21,5 @@ include $(top_srcdir)/Common.am
 
 dist_doc_DATA = \
     log_format.md   \
+    mapping.json    \
     schema.json
