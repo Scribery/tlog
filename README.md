@@ -195,7 +195,7 @@ recording's messages are logged. `Tlog-rec` accepts three options:
 which specify rate limit in bytes per second, burst limit in bytes, and the
 limit action (pass/delay/drop), respectively. The same parameters can be
 changed using `limit.rate`, `limit.burst`, and `limit.action` configuration
-parameters for both `tlog-rec` and `tlog-play`.
+parameters for both `tlog-rec` and `tlog-rec-session`.
 
 The default `pass` limit action lets all the messages through unhindered,
 effectively disabling rate-limiting. You can throttle logging, and slow down
