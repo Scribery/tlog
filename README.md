@@ -187,6 +187,23 @@ Several control keys are also recognized during playback:
   `--follow`), or to the specified timestamp (see `tlog-play(8)` for details),
 * and `q` for quitting playback.
 
+### Rate-limiting during recording
+
+Both `tlog-rec` and `tlog-rec-session` can be setup to limit the rate at which
+recording's messages are logged. `Tlog-rec` accepts three options:
+`--limit-rate=NUMBER`, `--limit-burst=NUMBER`, and `--limit-action=STRING`,
+which specify rate limit in bytes per second, burst limit in bytes, and the
+limit action (pass/delay/drop), respectively. The same parameters can be
+changed using `limit.rate`, `limit.burst`, and `limit.action` configuration
+parameters for both `tlog-rec` and `tlog-play`.
+
+The default `pass` limit action lets all the messages through unhindered,
+effectively disabling rate-limiting. You can throttle logging, and slow down
+the user's terminal I/O using the `delay` limit action. Finally, you can
+simply drop the captured I/O, going above the rate and burst limits, using the
+`drop` action. See `tlog-rec(8)`, `tlog-rec.conf(5)`, and
+`tlog-rec-session.conf(5)` for details.
+
 ### Playing back partial recordings
 
 By default `tlog-play` will terminate playback, if it notices out-of-order or
