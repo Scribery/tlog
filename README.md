@@ -187,7 +187,7 @@ Several control keys are also recognized during playback:
   `--follow`), or to the specified timestamp (see `tlog-play(8)` for details),
 * and `q` for quitting playback.
 
-### Rate-limiting during recording
+### Rate-limiting recording
 
 Both `tlog-rec` and `tlog-rec-session` can be setup to limit the rate at which
 recording's messages are logged. `Tlog-rec` accepts three options:
