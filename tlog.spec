@@ -108,8 +108,45 @@ rm -r %{buildroot}/usr/include/%{name}
 /sbin/ldconfig
 
 %changelog
-* Sun Jan 29 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 4-1
-- Release v4.
+* Wed Jan 24 2018 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 4-1
+- Release v4. Added features and implemented fixes follow. See README.md and
+  manpages for documentation of new features.
+- Extract user session recording functionality from tlog-rec into a new tool:
+  tlog-rec-session. It should be used as the user's login shell now, and
+  tlog-rec should be used as a general recording and testing tool.
+- Add (optional) support for writing to and reading from Systemd Journal - the
+  "journal" reader and writer.
+- Make tlog-rec default to "file" writer, and tlog-rec-session to "journal",
+  if built with Journal support, and to "syslog" otherwise.
+- Add "-o" option to tlog-rec as an alias to "--file-path".
+- Add "-i" option to tlog-play as an alias to "--file-path".
+- Assume locale charset is UTF-8, if ASCII charset is detected, since that is
+  a likely indication the locale settings were lost. E.g. upon console login
+  or "su -" on Fedora and RHEL.
+- Switch the "ver" JSON field type to string. Now it should be two numbers
+  separated by a dot. The increase of the first number indicates
+  forward-incompatible changes, the increase of the second number -
+  forward-compatible. If the dot and the second number are omitted, the second
+  number is considered to be zero. Bump the format version to "2".
+- Add a new JSON field: "rec", containing an opaque host-unique recording ID.
+  Bump the format version to "2.1".
+- Add support for playback controls, both through the command line and via
+  playback-time control keys, including: speed adjustment, pause/resume,
+  fast-forward to a time, and packet-by-packet stepping through the recording.
+- Add optional rate-limiting of logged messages. Both throttling and dropping
+  messages are supported.
+- Add "--lax" option to tlog-play to allow playing back recordings with
+  missing messages.
+- Fix input being ignored when there is a lot of output, while recording.
+- Remove addition of tlog-rec (tlog-rec-session) to /etc/shells from RPM
+  packaging to prevent users from changing their shells themselves once it has
+  been assigned.
+- Add support for specifying the shell to start via the tlog-rec-session
+  executable name. E.g. by making a tlog-rec-session-shell-zsh ->
+  tlog-rec-session symlink and executing it. That can be used to specify
+  particular shells to be recorded for specific users by assigning these
+  symlinks as their login shells.
+- Make error messages from all the tools a bit less noisy and more readable.
 
 * Tue Apr 12 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3-1
 - Release v3. Added features and implemented fixes follow.
