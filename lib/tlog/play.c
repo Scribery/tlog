@@ -667,8 +667,14 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
         STATE_ESC,
         /* Inside control sequence */
         STATE_CTL,
+        /* Inside operating system command */
+        STATE_OSC,
+        /* Inside device control string */
+        STATE_DCS,
         /* Inside mouse report sequence  */
         STATE_MOUSE,
+        /* Number of states, not a valid state */
+        STATE_NUM
     } state = STATE_BASE;
     /* Position in mouse report sequence */
     size_t mouse_seq_pos;
@@ -701,9 +707,23 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
             case '\x1b':
                 state = STATE_ESC;
                 continue;
+            /* Control sequence */
             case '[':
+            /* Cursor keys */
             case 'O':
                 state = STATE_CTL;
+                continue;
+            /* OSC (Operating System Command) */
+            case ']':
+                state = STATE_OSC;
+                continue;
+            /* ST (String Terminator) */
+            case '\\':
+                state = STATE_BASE;
+                continue;
+            /* DCS (Device Control String) */
+            case 'P':
+                state = STATE_DCS;
                 continue;
             default:
                 state = STATE_BASE;
@@ -731,6 +751,21 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
                 state = STATE_BASE;
                 /* Proceed */
             }
+        } else if (state == STATE_OSC) {
+            /* If it's the terminating BEL */
+            if (c == '\x07') {
+                state = STATE_BASE;
+            /* If it's the possible beginning of ST */
+            } else if (c == '\x1b') {
+                state = STATE_ESC;
+            }
+            continue;
+        } else if (state == STATE_DCS) {
+            /* If it's the possible beginning of ST */
+            if (c == '\x1b') {
+                state = STATE_ESC;
+            }
+            continue;
         } else if (state == STATE_MOUSE) {
             mouse_seq_pos++;
             if (mouse_seq_pos >= 3) {
