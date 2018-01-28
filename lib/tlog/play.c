@@ -65,6 +65,235 @@ tlog_play_io_sighandler(int signum)
 }
 
 /**
+ * Create an Elasticsearch JSON message reader according to configuration.
+ *
+ * @param perrs         Location for the error stack. Can be NULL.
+ * @param preader       Location for the created reader pointer. Not modified
+ *                      in case of error.
+ * @param conf          Configuration JSON object.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_play_create_es_json_reader(struct tlog_errs **perrs,
+                                struct tlog_json_reader **preader,
+                                struct json_object *conf)
+{
+    tlog_grc grc;
+    const char *baseurl;
+    const char *query;
+    struct tlog_json_reader *reader = NULL;
+    struct json_object *obj;
+
+    assert(preader != NULL);
+    assert(conf != NULL);
+
+    /* Get the base URL */
+    if (!json_object_object_get_ex(conf, "baseurl", &obj)) {
+        tlog_errs_pushs(perrs, "Elasticsearch base URL is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    baseurl = json_object_get_string(obj);
+
+    /* Check base URL validity */
+    if (!tlog_es_json_reader_base_url_is_valid(baseurl)) {
+        tlog_errs_pushf(perrs,
+                        "Invalid Elasticsearch base URL: %s", baseurl);
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+
+    /* Get the query */
+    if (!json_object_object_get_ex(conf, "query", &obj)) {
+        tlog_errs_pushs(perrs, "Elasticsearch query is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    query = json_object_get_string(obj);
+
+    /* Create the reader */
+    grc = tlog_es_json_reader_create(&reader, baseurl, query, 10);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating the Elasticsearch reader");
+        goto cleanup;
+    }
+
+    *preader = reader;
+    reader = NULL;
+    grc = TLOG_RC_OK;
+
+cleanup:
+    tlog_json_reader_destroy(reader);
+    return grc;
+}
+
+#ifdef TLOG_JOURNAL_ENABLED
+/**
+ * Create a journal JSON message reader according to configuration.
+ *
+ * @param perrs         Location for the error stack. Can be NULL.
+ * @param preader       Location for the created reader pointer. Not modified
+ *                      in case of error.
+ * @param conf          Configuration JSON object.
+ *
+ * @return Global return code.
+ */
+static tlog_grc
+tlog_play_create_journal_json_reader(struct tlog_errs **perrs,
+                                     struct tlog_json_reader **preader,
+                                     struct json_object *conf)
+{
+    tlog_grc grc;
+    const char **str_list = NULL;
+    int64_t since = 0;
+    int64_t until = INT64_MAX;
+    size_t i;
+    struct tlog_json_reader *reader = NULL;
+    struct json_object *obj;
+
+    assert(preader != NULL);
+    assert(conf != NULL);
+
+    /* Get the "since" timestamp */
+    if (json_object_object_get_ex(conf, "since", &obj)) {
+        since = json_object_get_int64(obj);
+        if (since < 0) {
+            since = 0;
+        } else if ((uint64_t)since > UINT64_MAX/1000000) {
+            since = UINT64_MAX/1000000;
+        }
+    } else {
+        since = 0;
+    }
+
+    /* Get the "until" timestamp */
+    if (json_object_object_get_ex(conf, "until", &obj)) {
+        until = json_object_get_int64(obj);
+        if (until < 0) {
+            until = 0;
+        } else if ((uint64_t)until > UINT64_MAX/1000000) {
+            until = UINT64_MAX/1000000;
+        }
+    } else {
+        until = INT64_MAX;
+    }
+
+    /* Get the match array, if any */
+
+    if (json_object_object_get_ex(conf, "match", &obj)) {
+        str_list = calloc(json_object_array_length(obj) + 1,
+                          sizeof(*str_list));
+        if (str_list == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs,
+                            "Failed allocating systemd journal match list");
+            goto cleanup;
+        }
+        for (i = 0; (int)i < (int)json_object_array_length(obj); i++) {
+            str_list[i] = json_object_get_string(
+                            json_object_array_get_idx(obj, i));
+            if (!tlog_journal_match_sym_is_valid(str_list[i])) {
+                grc = TLOG_RC_FAILURE;
+                tlog_errs_pushf(
+                    perrs,
+                    "Systemd journal match symbol #%zu \"%s\" "
+                    "is invalid",
+                    i + 1, str_list[i]);
+                goto cleanup;
+            }
+        }
+    }
+
+    /* Create the reader */
+    grc = tlog_journal_json_reader_create(&reader,
+                                          (uint64_t)since * 1000000,
+                                          (uint64_t)until * 1000000,
+                                          str_list);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs,
+                        "Failed creating the systemd journal reader");
+        goto cleanup;
+    }
+
+    *preader = reader;
+    reader = NULL;
+    grc = TLOG_RC_OK;
+
+cleanup:
+    free(str_list);
+    tlog_json_reader_destroy(reader);
+    return grc;
+}
+#endif
+
+/**
+ * Create a file JSON message reader according to configuration.
+ *
+ * @param perrs         Location for the error stack. Can be NULL.
+ * @param preader       Location for the created reader pointer. Not modified
+ *                      in case of error.
+ * @param conf          Configuration JSON object.
+ *
+ * @return Global return code.
+*/
+static tlog_grc
+tlog_play_create_file_json_reader(struct tlog_errs **perrs,
+                                  struct tlog_json_reader **preader,
+                                  struct json_object *conf)
+{
+    tlog_grc grc;
+    const char *str;
+    int fd = -1;
+    struct tlog_json_reader *reader = NULL;
+    struct json_object *obj;
+
+    assert(preader != NULL);
+    assert(conf != NULL);
+
+    /* Get the file path */
+    if (!json_object_object_get_ex(conf, "path", &obj)) {
+        tlog_errs_pushs(perrs, "Log file path is not specified");
+        grc = TLOG_RC_FAILURE;
+        goto cleanup;
+    }
+    str = json_object_get_string(obj);
+
+    /* Open the file */
+    fd = open(str, O_RDONLY);
+    if (fd < 0) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushf(perrs, "Failed opening log file \"%s\"", str);
+        goto cleanup;
+    }
+
+    /* Create the reader, letting it take over the FD */
+    grc = tlog_fd_json_reader_create(&reader, fd, true, 65536);
+    if (grc != TLOG_RC_OK) {
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed creating file reader");
+        goto cleanup;
+    }
+    fd = -1;
+
+    *preader = reader;
+    reader = NULL;
+    grc = TLOG_RC_OK;
+
+cleanup:
+
+    if (fd >= 0) {
+        close(fd);
+    }
+    tlog_json_reader_destroy(reader);
+    return grc;
+}
+
+/**
  * Create a JSON message reader according to configuration.
  *
  * @param perrs         Location for the error stack. Can be NULL.
@@ -80,11 +309,13 @@ tlog_play_create_json_reader(struct tlog_errs **perrs,
                              struct json_object *conf)
 {
     tlog_grc grc;
-    struct json_object *obj;
     const char *str;
-    int fd = -1;
-    const char **str_list = NULL;
+    struct json_object *obj;
+    struct json_object *reader_conf;
     struct tlog_json_reader *reader = NULL;
+
+    assert(preader != NULL);
+    assert(conf != NULL);
 
     if (!json_object_object_get_ex(conf, "reader", &obj)) {
         tlog_errs_pushs(perrs, "Reader type is not specified");
@@ -93,159 +324,51 @@ tlog_play_create_json_reader(struct tlog_errs **perrs,
     }
     str = json_object_get_string(obj);
     if (strcmp(str, "es") == 0) {
-        struct json_object *conf_es;
-        const char *baseurl;
-        const char *query;
-
         /* Get Elasticsearch reader conf container */
-        if (!json_object_object_get_ex(conf, "es", &conf_es)) {
+        if (!json_object_object_get_ex(conf, "es", &reader_conf)) {
             tlog_errs_pushs(perrs,
                             "Elasticsearch reader parameters "
                             "are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
-
-        /* Get the base URL */
-        if (!json_object_object_get_ex(conf_es, "baseurl", &obj)) {
-            tlog_errs_pushs(perrs, "Elasticsearch base URL is not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-        baseurl = json_object_get_string(obj);
-
-        /* Check base URL validity */
-        if (!tlog_es_json_reader_base_url_is_valid(baseurl)) {
-            tlog_errs_pushf(perrs,
-                            "Invalid Elasticsearch base URL: %s", baseurl);
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-
-        /* Get the query */
-        if (!json_object_object_get_ex(conf_es, "query", &obj)) {
-            tlog_errs_pushs(perrs, "Elasticsearch query is not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-        query = json_object_get_string(obj);
-
-        /* Create the reader */
-        grc = tlog_es_json_reader_create(&reader, baseurl, query, 10);
+        /* Create es reader */
+        grc = tlog_play_create_es_json_reader(perrs, &reader, reader_conf);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating the Elasticsearch reader");
             goto cleanup;
         }
 #ifdef TLOG_JOURNAL_ENABLED
     } else if (strcmp(str, "journal") == 0) {
-        struct json_object *conf_journal;
-        int64_t since = 0;
-        int64_t until = INT64_MAX;
-        size_t i;
-
         /* Get journal reader conf container */
-        if (json_object_object_get_ex(conf, "journal", &conf_journal)) {
-            /* Get the "since" timestamp */
-            if (json_object_object_get_ex(conf_journal, "since", &obj)) {
-                since = json_object_get_int64(obj);
-                if (since < 0) {
-                    since = 0;
-                } else if ((uint64_t)since > UINT64_MAX/1000000) {
-                    since = UINT64_MAX/1000000;
-                }
-            } else {
-                since = 0;
+        if (json_object_object_get_ex(conf, str, &reader_conf)) {
+            /* Create journal reader */
+            grc = tlog_play_create_journal_json_reader(perrs,
+                                                       &reader,reader_conf);
+            if (grc != TLOG_RC_OK) {
+                goto cleanup;
             }
-
-            /* Get the "until" timestamp */
-            if (json_object_object_get_ex(conf_journal, "until", &obj)) {
-                until = json_object_get_int64(obj);
-                if (until < 0) {
-                    until = 0;
-                } else if ((uint64_t)until > UINT64_MAX/1000000) {
-                    until = UINT64_MAX/1000000;
-                }
-            } else {
-                until = INT64_MAX;
-            }
-
-            /* Get the match array, if any */
-            if (json_object_object_get_ex(conf_journal, "match", &obj)) {
-                str_list = calloc(json_object_array_length(obj) + 1,
-                                  sizeof(*str_list));
-                if (str_list == NULL) {
-                    grc = TLOG_GRC_ERRNO;
-                    tlog_errs_pushc(perrs, grc);
-                    tlog_errs_pushs(perrs,
-                                    "Failed allocating systemd journal match list");
-                    goto cleanup;
-                }
-                for (i = 0; (int)i < (int)json_object_array_length(obj); i++) {
-                    str_list[i] = json_object_get_string(
-                                    json_object_array_get_idx(obj, i));
-                    if (!tlog_journal_match_sym_is_valid(str_list[i])) {
-                        grc = TLOG_RC_FAILURE;
-                        tlog_errs_pushf(
-                            perrs,
-                            "Systemd journal match symbol #%zu \"%s\" "
-                            "is invalid",
-                            i + 1, str_list[i]);
-                        goto cleanup;
-                    }
-                }
+        } else {
+            /* Create journal reader in the case conf = NULL*/
+            grc = tlog_play_create_journal_json_reader(perrs, &reader, NULL);
+            if (grc != TLOG_RC_OK) {
+                goto cleanup;
             }
         }
-
-        /* Create the reader */
-        grc = tlog_journal_json_reader_create(&reader,
-                                              (uint64_t)since * 1000000,
-                                              (uint64_t)until * 1000000,
-                                              str_list);
-        if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs,
-                            "Failed creating the systemd journal reader");
-            goto cleanup;
-        }
-
 #endif
     } else if (strcmp(str, "file") == 0) {
-        struct json_object *conf_file;
-
         /* Get file reader conf container */
-        if (!json_object_object_get_ex(conf, "file", &conf_file)) {
+        if (!json_object_object_get_ex(conf, str, &reader_conf)) {
             tlog_errs_pushs(perrs,
-                            "File reader parameters are not specified");
+                            "File reader parameters "
+                            "are not specified");
             grc = TLOG_RC_FAILURE;
             goto cleanup;
         }
-
-        /* Get the file path */
-        if (!json_object_object_get_ex(conf_file, "path", &obj)) {
-            tlog_errs_pushs(perrs, "Log file path is not specified");
-            grc = TLOG_RC_FAILURE;
-            goto cleanup;
-        }
-        str = json_object_get_string(obj);
-
-        /* Open the file */
-        fd = open(str, O_RDONLY);
-        if (fd < 0) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed opening log file \"%s\"", str);
-            goto cleanup;
-        }
-
-        /* Create the reader, letting it take over the FD */
-        grc = tlog_fd_json_reader_create(&reader, fd, true, 65536);
+        /* Create file reader */
+        grc = tlog_play_create_file_json_reader(perrs, &reader, reader_conf);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating file reader");
             goto cleanup;
         }
-        fd = -1;
     } else {
         tlog_errs_pushf(perrs, "Unknown reader type: %s", str);
         grc = TLOG_RC_FAILURE;
@@ -257,11 +380,6 @@ tlog_play_create_json_reader(struct tlog_errs **perrs,
     grc = TLOG_RC_OK;
 
 cleanup:
-
-    if (fd >= 0) {
-        close(fd);
-    }
-    free(str_list);
     tlog_json_reader_destroy(reader);
     return grc;
 }
