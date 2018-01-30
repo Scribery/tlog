@@ -163,7 +163,7 @@ you can take the ID either from the `TLOG_REC` field value directly, or from
 the `MESSAGE` field (from the JSON `rec` field). You can then playback the
 whole recording like this:
 
-    tlog-rec -r journal -M TLOG_REC=12ca5b356065453fb50adfe57007658a-306a-26f2910
+    tlog-play -r journal -M TLOG_REC=12ca5b356065453fb50adfe57007658a-306a-26f2910
 
 ### Playing back ongoing recordings
 
