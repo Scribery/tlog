@@ -461,6 +461,10 @@ appear, which impairs performance. Even though the messages contain recorded
 terminal window (re)sizes, it doesn't resize its own terminal to fit the
 output better. Further development will be addressing these.
 
+### Contributing
+Please read the [Contributing Guidelines](CONTRIBUTING.md) for more details
+on the process for submitting pull requests.
+
 [session_recording]: http://scribery.github.io/
 [log_format]: doc/log_format.md
 [elasticsearch]: https://www.elastic.co/products/elasticsearch
