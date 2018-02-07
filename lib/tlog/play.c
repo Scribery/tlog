@@ -396,10 +396,10 @@ tlog_play_cleanup(struct tlog_errs **perrs)
 
     /* Restore signal handlers */
     for (i = 0; i < TLOG_ARRAY_SIZE(tlog_play_exit_sig_list); i++) {
-        if(sigaction(tlog_play_exit_sig_list[i], NULL, &sa) == -1) {
-          grc = TLOG_GRC_ERRNO;
-          tlog_errs_pushc(perrs, grc);
-          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
+        if (sigaction(tlog_play_exit_sig_list[i], NULL, &sa) == -1) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
         }
 
         if (sa.sa_handler != SIG_IGN) {
@@ -521,11 +521,11 @@ tlog_play_init(struct tlog_errs **perrs,
 
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(tlog_play_exit_sig_list); i++) {
-        if(sigaction(tlog_play_exit_sig_list[i], NULL, &sa) == -1) {
-          grc = TLOG_GRC_ERRNO;
-          tlog_errs_pushc(perrs, grc);
-          tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
-          goto cleanup;
+        if (sigaction(tlog_play_exit_sig_list[i], NULL, &sa) == -1) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
+            goto cleanup;
         }
         if (sa.sa_handler != SIG_IGN) {
             sa.sa_handler = tlog_play_exit_sighandler;
@@ -535,11 +535,11 @@ tlog_play_init(struct tlog_errs **perrs,
             }
             /* NOTE: no SA_RESTART on purpose */
             sa.sa_flags = 0;
-            if(sigaction(tlog_play_exit_sig_list[i], &sa, NULL) == -1) {
-              grc = TLOG_GRC_ERRNO;
-              tlog_errs_pushc(perrs, grc);
-              tlog_errs_pushs(perrs, "Failed to set an exit signal action");
-              goto cleanup;
+            if (sigaction(tlog_play_exit_sig_list[i], &sa, NULL) == -1) {
+                grc = TLOG_GRC_ERRNO;
+                tlog_errs_pushc(perrs, grc);
+                tlog_errs_pushs(perrs, "Failed to set an exit signal action");
+                goto cleanup;
             }
         }
     }
@@ -550,11 +550,11 @@ tlog_play_init(struct tlog_errs **perrs,
     sigaddset(&sa.sa_mask, SIGIO);
     /* NOTE: no SA_RESTART on purpose */
     sa.sa_flags = 0;
-    if(sigaction(SIGIO, &sa, NULL) == -1) {
-      grc = TLOG_GRC_ERRNO;
-      tlog_errs_pushc(perrs, grc);
-      tlog_errs_pushs(perrs, "Failed to set SIGIO action");
-      goto cleanup;
+    if (sigaction(SIGIO, &sa, NULL) == -1) {
+        grc = TLOG_GRC_ERRNO;
+        tlog_errs_pushc(perrs, grc);
+        tlog_errs_pushs(perrs, "Failed to set SIGIO action");
+        goto cleanup;
     }
 
     /* Setup signal-driven IO on stdin (and stdout) */
