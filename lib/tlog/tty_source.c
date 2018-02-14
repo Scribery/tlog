@@ -160,7 +160,9 @@ tlog_tty_source_loc_get(const struct tlog_source *source)
         return 0;
     } else {
         struct timespec ts;
-        clock_gettime(tty_source->clock_id, &ts);
+        if (clock_gettime(tty_source->clock_id, &ts) < 0) {
+            return TLOG_GRC_ERRNO;
+        }
         tlog_timespec_sub(&ts, &tty_source->start_ts, &ts);
         return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
     }
