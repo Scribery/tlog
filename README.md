@@ -34,8 +34,11 @@ Building
 
 Build dependencies are systemd, cURL, and json-c, which development packages
 are `systemd-devel`, `json-c-devel`, and `libcurl-devel` on RPM-based distros,
-and `libjson-c-dev`, `libsystemd-journal-dev`/`libsystemd-dev` and
-`libcurl-*-dev` on Debian-based distros.
+and `pkg-config`, `libjson-c-dev`, `libsystemd-journal-dev`/`libsystemd-dev`
+and `libcurl-*-dev` on Debian-based distros.
+
+To build from Git you'll need `autoconf`, `automake` and `libtool` packages.
+For creating RPM package `rpm-build` is also required.
 
 If Systemd Journal support is not required, it can be disabled with
 configure's `--disable-journal` option, removing the systemd dependency as
