@@ -144,10 +144,8 @@ tlog_rec_get_id(struct tlog_errs **perrs, char **pid)
     file = fopen(boot_id_path, "r");
     if (file == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed opening boot ID file %s",
-                        boot_id_path);
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed opening boot ID file %s",
+                          boot_id_path);
     }
 
     /* Read the boot ID file */
@@ -155,16 +153,13 @@ tlog_rec_get_id(struct tlog_errs **perrs, char **pid)
     if (rc == 0) {
         if (ferror(file)) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed reading boot ID file %s",
-                            boot_id_path);
+            TLOG_ERRS_RAISECF(grc, "Failed reading boot ID file %s",
+                              boot_id_path);
         } else {
             grc = TLOG_RC_FAILURE;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Boot ID file %s is empty",
-                            boot_id_path);
+            TLOG_ERRS_RAISECF(grc, "Boot ID file %s is empty",
+                              boot_id_path);
         }
-        goto cleanup;
     }
 
     /* Close the boot ID file */
@@ -201,10 +196,8 @@ tlog_rec_get_id(struct tlog_errs **perrs, char **pid)
     file = fopen(self_stat_path, "r");
     if (file == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed opening process status file %s",
-                        self_stat_path);
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed opening process status file %s",
+                          self_stat_path);
     }
 
     /* Read the process start time in jiffies since boot */
@@ -215,22 +208,17 @@ tlog_rec_get_id(struct tlog_errs **perrs, char **pid)
     if (rc == EOF) {
         if (ferror(file)) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed reading process status file %s",
-                            self_stat_path);
+            TLOG_ERRS_RAISECF(grc, "Failed reading process status file %s",
+                              self_stat_path);
         } else {
             grc = TLOG_RC_FAILURE;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Process status file %s is empty",
-                            self_stat_path);
+            TLOG_ERRS_RAISECF(grc, "Process status file %s is empty",
+                              self_stat_path);
         }
-        goto cleanup;
     } else if (rc < 1) {
         grc = TLOG_RC_FAILURE;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Invalid format of process status file %s",
-                        self_stat_path);
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Invalid format of process status file %s",
+                          self_stat_path);
     }
 
     /* Close the process stat file */
@@ -295,9 +283,8 @@ tlog_rec_create_file_json_writer(struct tlog_errs **perrs,
 
     /* Get the file path */
     if (!json_object_object_get_ex(conf, "path", &obj)) {
-        tlog_errs_pushs(perrs, "Log file path is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Log file path is not specified");
     }
     str = json_object_get_string(obj);
 
@@ -305,33 +292,25 @@ tlog_rec_create_file_json_writer(struct tlog_errs **perrs,
     fd = open(str, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
     if (fd < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed opening log file \"%s\"", str);
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed opening log file \"%s\"", str);
     }
     /* Get file flags */
     rc = fcntl(fd, F_GETFD);
     if (rc < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed getting log file descriptor flags");
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed getting log file descriptor flags");
     }
     /* Add FD_CLOEXEC to file flags */
     rc = fcntl(fd, F_SETFD, rc | FD_CLOEXEC);
     if (rc < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed setting log file descriptor flags");
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed setting log file descriptor flags");
     }
 
     /* Create the writer, letting it take over the FD */
     grc = tlog_fd_json_writer_create(&writer, fd, true);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating file writer");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating file writer");
     }
     fd = -1;
 
@@ -373,39 +352,33 @@ tlog_rec_create_syslog_json_writer(struct tlog_errs **perrs,
 
     /* Get facility */
     if (!json_object_object_get_ex(conf, "facility", &obj)) {
-        tlog_errs_pushs(perrs, "Syslog facility is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Syslog facility is not specified");
     }
     str = json_object_get_string(obj);
     facility = tlog_syslog_facility_from_str(str);
     if (facility < 0) {
-        tlog_errs_pushf(perrs, "Unknown syslog facility: %s", str);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISEF("Unknown syslog facility: %s", str);
     }
 
     /* Get priority */
     if (!json_object_object_get_ex(conf, "priority", &obj)) {
-        tlog_errs_pushs(perrs, "Syslog priority is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Syslog priority is not specified");
     }
     str = json_object_get_string(obj);
     priority = tlog_syslog_priority_from_str(str);
     if (priority < 0) {
-        tlog_errs_pushf(perrs, "Unknown syslog priority: %s", str);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISEF("Unknown syslog priority: %s", str);
     }
 
     /* Create the writer */
     openlog("tlog", LOG_NDELAY, facility);
     grc = tlog_syslog_json_writer_create(&writer, priority);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating syslog writer");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating syslog writer");
     }
 
     *pwriter = writer;
@@ -454,32 +427,27 @@ tlog_rec_create_journal_json_writer(struct tlog_errs **perrs,
     if (json_object_object_get_ex(conf, "augment", &obj)) {
         augment = json_object_get_boolean(obj);
     } else {
-        tlog_errs_pushs(perrs, "\"Augment\" flag is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("\"Augment\" flag is not specified");
     }
 
     /* Get priority */
     if (!json_object_object_get_ex(conf, "priority", &obj)) {
-        tlog_errs_pushs(perrs, "Journal priority is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Journal priority is not specified");
     }
     str = json_object_get_string(obj);
     priority = tlog_syslog_priority_from_str(str);
     if (priority < 0) {
-        tlog_errs_pushf(perrs, "Unknown journal priority: %s", str);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISEF("Unknown journal priority: %s", str);
     }
 
     /* Create the writer */
     grc = tlog_journal_json_writer_create(&writer, priority, augment,
                                           id, username, session_id);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating journal writer");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating journal writer");
     }
 
     *pwriter = writer;
@@ -525,9 +493,8 @@ tlog_rec_create_rl_json_writer(struct tlog_errs **perrs,
 
     /* Get the action */
     if (!json_object_object_get_ex(conf, "action", &obj)) {
-        tlog_errs_pushs(perrs, "Logging limit action is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Logging limit action is not specified");
     }
     str = json_object_get_string(obj);
 
@@ -541,24 +508,20 @@ tlog_rec_create_rl_json_writer(struct tlog_errs **perrs,
     } else {
         assert(!"Unknown limit action");
         grc = TLOG_RC_FAILURE;
-        tlog_errs_pushf(perrs, "Unknown limit action is specified: %s", str);
-        goto cleanup;
+        TLOG_ERRS_RAISEF("Unknown limit action is specified: %s", str);
     }
 
     /* Get the rate */
     if (!json_object_object_get_ex(conf, "rate", &obj)) {
-        tlog_errs_pushs(perrs, "Logging rate limit is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Logging rate limit is not specified");
     }
     rate = json_object_get_int64(obj);
 
     /* Get the burst threshold */
     if (!json_object_object_get_ex(conf, "burst", &obj)) {
-        tlog_errs_pushs(perrs,
-                        "Logging burst threshold is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Logging burst threshold is not specified");
     }
     burst = json_object_get_int64(obj);
 
@@ -566,9 +529,7 @@ tlog_rec_create_rl_json_writer(struct tlog_errs **perrs,
     grc = tlog_rl_json_writer_create(pwriter, *pwriter, true, clock_id,
                                      (size_t)rate, (size_t)burst, drop);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating rate-limiting writer");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating rate-limiting writer");
     }
 
 cleanup:
@@ -614,17 +575,15 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
      * Create the terminating writer
      */
     if (!json_object_object_get_ex(conf, "writer", &obj)) {
-        tlog_errs_pushs(perrs, "Writer type is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Writer type is not specified");
     }
     str = json_object_get_string(obj);
     if (strcmp(str, "file") == 0) {
         /* Get file writer conf container */
         if (!json_object_object_get_ex(conf, str, &writer_conf)) {
-            tlog_errs_pushs(perrs, "File writer parameters are not specified");
             grc = TLOG_RC_FAILURE;
-            goto cleanup;
+            TLOG_ERRS_RAISES("File writer parameters are not specified");
         }
 
         /* Create file writer */
@@ -635,9 +594,8 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
     } else if (strcmp(str, "syslog") == 0) {
         /* Get syslog writer conf container */
         if (!json_object_object_get_ex(conf, str, &writer_conf)) {
-            tlog_errs_pushs(perrs, "Syslog writer parameters are not specified");
             grc = TLOG_RC_FAILURE;
-            goto cleanup;
+            TLOG_ERRS_RAISES("Syslog writer parameters are not specified");
         }
 
         /* Create syslog writer */
@@ -649,9 +607,8 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
     } else if (strcmp(str, "journal") == 0) {
         /* Get journal writer conf container */
         if (!json_object_object_get_ex(conf, str, &writer_conf)) {
-            tlog_errs_pushs(perrs, "Journal writer parameters are not specified");
             grc = TLOG_RC_FAILURE;
-            goto cleanup;
+            TLOG_ERRS_RAISES("Journal writer parameters are not specified");
         }
 
         /* Create journal writer */
@@ -662,9 +619,8 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
         }
 #endif
     } else {
-        tlog_errs_pushf(perrs, "Unknown writer type: %s", str);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISEF("Unknown writer type: %s", str);
     }
 
     /*
@@ -672,9 +628,8 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
      */
     /* Get limit conf container */
     if (!json_object_object_get_ex(conf, "limit", &writer_conf)) {
-        tlog_errs_pushs(perrs, "Logging limit parameters are not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Logging limit parameters are not specified");
     }
 
     /* Create rate-limiting writer */
@@ -722,8 +677,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     /* Get recording ID */
     grc = tlog_rec_get_id(perrs, &id);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed generating recording ID");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed generating recording ID");
     }
 
     /* Get real user entry */
@@ -732,19 +686,16 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     if (passwd == NULL) {
         if (errno == 0) {
             grc = TLOG_RC_FAILURE;
-            tlog_errs_pushs(perrs, "User entry not found");
+            TLOG_ERRS_RAISES("User entry not found");
         } else {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed retrieving user entry");
+            TLOG_ERRS_RAISECS(grc, "Failed retrieving user entry");
         }
-        goto cleanup;
     }
     if (!tlog_utf8_str_is_valid(passwd->pw_name)) {
-        tlog_errs_pushf(perrs, "User name is not valid UTF-8: %s",
-                        passwd->pw_name);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISEF("User name is not valid UTF-8: %s",
+                         passwd->pw_name);
     }
 
     /*
@@ -753,8 +704,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     grc = tlog_rec_create_json_writer(perrs, &writer, conf,
                                       id, passwd->pw_name, session_id);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed creating JSON message writer");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed creating JSON message writer");
     }
 
     /*
@@ -763,14 +713,11 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     /* Get host FQDN */
     grc = tlog_rec_get_fqdn(&fqdn);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed retrieving host FQDN");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed retrieving host FQDN");
     }
     if (!tlog_utf8_str_is_valid(fqdn)) {
-        tlog_errs_pushf(perrs, "Host FQDN is not valid UTF-8: %s", fqdn);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISEF("Host FQDN is not valid UTF-8: %s", fqdn);
     }
 
     /* Get the terminal type */
@@ -779,18 +726,15 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
         term = "";
     }
     if (!tlog_utf8_str_is_valid(term)) {
-        tlog_errs_pushf(perrs,
-                        "TERM environment variable is not valid UTF-8: %s",
-                        term);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISEF("TERM environment variable is not valid UTF-8: %s",
+                         term);
     }
 
     /* Get the maximum payload size */
     if (!json_object_object_get_ex(conf, "payload", &obj)) {
-        tlog_errs_pushs(perrs, "Maximum payload size is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Maximum payload size is not specified");
     }
     num = json_object_get_int64(obj);
 
@@ -808,9 +752,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
         };
         grc = tlog_json_sink_create(&sink, &params);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating log sink");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed creating log sink");
         }
     }
     writer = NULL;
@@ -872,9 +814,8 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
         if (sigaction(exit_sig[i], NULL, &sa) == -1) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc,
+                              "Failed to retrieve an exit signal action");
         }
         if (sa.sa_handler != SIG_IGN) {
             sa.sa_handler = tlog_rec_exit_sighandler;
@@ -886,9 +827,8 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
             sa.sa_flags = 0;
             if(sigaction(exit_sig[i], &sa, NULL) == -1) {
                 grc = TLOG_GRC_ERRNO;
-                tlog_errs_pushc(perrs, grc);
-                tlog_errs_pushs(perrs, "Failed to set an exit signal action");
-                goto cleanup;
+                TLOG_ERRS_RAISECS(grc,
+                                  "Failed to set an exit signal action");
             }
         }
     }
@@ -900,9 +840,8 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
     sa.sa_flags = 0;
     if(sigaction(SIGALRM, &sa, NULL) == -1) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed to set a SIGALRM signal action");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc,
+                          "Failed to set a SIGALRM signal action");
     }
 
     /*
@@ -916,10 +855,8 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
             if (grc == TLOG_GRC_FROM(errno, EINTR)) {
                 continue;
             } else if (grc != TLOG_RC_OK) {
-                tlog_errs_pushc(perrs, grc);
-                tlog_errs_pushs(perrs, "Failed flushing log");
                 return_grc = grc;
-                goto cleanup;
+                TLOG_ERRS_RAISECS(grc, "Failed flushing log");
             }
             last_alarm_caught = new_alarm_caught;
             log_pending = false;
@@ -953,10 +890,8 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                 if (grc == TLOG_RC_OK) {
                     log_pending = true;
                 } else if (grc != TLOG_GRC_FROM(errno, EINTR)) {
-                    tlog_errs_pushc(perrs, grc);
-                    tlog_errs_pushs(perrs, "Failed logging terminal data");
                     return_grc = grc;
-                    goto cleanup;
+                    TLOG_ERRS_RAISECS(grc, "Failed logging terminal data");
                 }
             } else {
                 tlog_pkt_pos_move_past(&log_pos, &pkt);
@@ -1099,20 +1034,17 @@ tlog_rec_semaphore(struct tlog_errs **perrs, struct json_object *conf)
         fd = open(str, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
         if (fd < 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed opening semaphore file \"%s\"", str);
-            goto cleanup;
+            TLOG_ERRS_RAISECF(grc,
+                              "Failed opening semaphore file \"%s\"", str);
         }
         rc = write(fd, "READY", 5);
         if (rc < 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed writing semaphore file \"%s\"", str);
-            goto cleanup;
+            TLOG_ERRS_RAISECF(grc,
+                              "Failed writing semaphore file \"%s\"", str);
         } else if (rc < 5) {
             grc = TLOG_RC_FAILURE;
-            tlog_errs_pushf(perrs, "Short write to semaphore file \"%s\"", str);
-            goto cleanup;
+            TLOG_ERRS_RAISEF("Short write to semaphore file \"%s\"", str);
         }
         close(fd);
         fd = -1;
@@ -1178,9 +1110,8 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
             if (clock_getres(CLOCK_MONOTONIC, NULL) == 0) {
                 clock_id = CLOCK_MONOTONIC;
             } else {
-                tlog_errs_pushs(perrs, "No clock to use");
                 grc = TLOG_RC_FAILURE;
-                goto cleanup;
+                TLOG_ERRS_RAISES("No clock to use");
             }
 #ifdef CLOCK_MONOTONIC_COARSE
         }
@@ -1190,17 +1121,14 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     /* Get session ID */
     grc = tlog_session_get_id(&session_id);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed retrieving session ID");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed retrieving session ID");
     }
 
     if (opts & TLOG_REC_OPT_LOCK_SESS) {
         /* Attempt to lock the session */
         grc = tlog_session_lock(perrs, session_id, euid, egid, &lock_acquired);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushs(perrs, "Failed locking session");
-            goto cleanup;
+            TLOG_ERRS_RAISES("Failed locking session");
         }
 
         /* If the session is already locked (recorded) */
@@ -1215,32 +1143,27 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
 
     /* Read the log latency */
     if (!json_object_object_get_ex(conf, "latency", &obj)) {
-        tlog_errs_pushs(perrs, "Log latency is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Log latency is not specified");
     }
     num = json_object_get_int64(obj);
     latency = (unsigned int)num;
 
     /* Read item mask */
     if (!json_object_object_get_ex(conf, "log", &obj)) {
-        tlog_errs_pushs(perrs,
-                        "Logged data set parameters are not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Logged data set parameters are not specified");
     }
     grc = tlog_rec_get_item_mask(perrs, obj, &item_mask);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed reading log mask");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed reading log mask");
     }
 
     /* Create the log sink */
     grc = tlog_rec_create_log_sink(perrs, &log_sink, conf,
                                    session_id);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed creating log sink");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed creating log sink");
     }
 
     /* Output and discard any accumulated non-critical error messages */
@@ -1257,23 +1180,20 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
                          opts & TLOG_EXEC_OPT_MASK, path, argv,
                          in_fd, out_fd, err_fd, clock_id);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed setting up the I/O tap");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed setting up the I/O tap");
     }
 
     /* Signal "READY" semaphore, if specified */
     grc = tlog_rec_semaphore(perrs, conf);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed signalling \"READY\" semaphore");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed signalling \"READY\" semaphore");
     }
 
     /* Transfer and log the data until interrupted or either end is closed */
     grc = tlog_rec_transfer(perrs, tap.source, log_sink, tap.sink,
                             latency, item_mask, &signal);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed transferring TTY data");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed transferring TTY data");
     }
 
 exit:

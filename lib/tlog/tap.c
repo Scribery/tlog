@@ -170,9 +170,7 @@ tlog_tap_setup(struct tlog_errs **perrs,
     }
     if (errno != 0 && errno != ENOTTY && errno != EINVAL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed retrieving TTY attributes");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed retrieving TTY attributes");
     }
 
     /* Don't spawn a PTY if either input or output are closed */
@@ -185,16 +183,14 @@ tlog_tap_setup(struct tlog_errs **perrs,
                MAP_SHARED | MAP_ANONYMOUS, 0, 0);
     if (sem == MAP_FAILED) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed mmapping privilege-locking semaphore");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc,
+                          "Failed mmapping privilege-locking semaphore");
     }
     /* Initialize privilege-locking semaphore */
     if (sem_init(sem, 1, 0) < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating privilege-locking semaphore");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc,
+                          "Failed creating privilege-locking semaphore");
     }
     sem_initialized = true;
 
@@ -206,18 +202,15 @@ tlog_tap_setup(struct tlog_errs **perrs,
         /* Get terminal window size */
         if (ioctl(tap.tty_fd, TIOCGWINSZ, &winsize) < 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed retrieving TTY window size");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed retrieving TTY window size");
         }
 
         /* Fork a child connected via a PTY */
         tap.pid = forkpty(&master_fd, NULL, &tap.termios_orig, &winsize);
         if (tap.pid < 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed forking a child connected via a PTY");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc,
+                              "Failed forking a child connected via a PTY");
         }
         /* If parent */
         if (tap.pid != 0) {
@@ -226,9 +219,7 @@ tlog_tap_setup(struct tlog_errs **perrs,
             tap.out_fd = dup(master_fd);
             if (tap.out_fd < 0) {
                 grc = TLOG_GRC_ERRNO;
-                tlog_errs_pushc(perrs, grc);
-                tlog_errs_pushs(perrs, "Failed duplicating PTY master FD");
-                goto cleanup;
+                TLOG_ERRS_RAISECS(grc, "Failed duplicating PTY master FD");
             }
         }
     } else {
@@ -237,10 +228,8 @@ tlog_tap_setup(struct tlog_errs **perrs,
                                      out_fd >= 0 ? &tap.out_fd : NULL);
         if (tap.pid < 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs,
-                            "Failed forking a child connected via pipes");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc,
+                              "Failed forking a child connected via pipes");
         }
     }
 
@@ -249,10 +238,8 @@ tlog_tap_setup(struct tlog_errs **perrs,
         /* Wait for the parent to lock the privileges */
         if (sem_wait(sem) < 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs,
-                            "Failed waiting for parent to lock privileges");
-            goto cleanup;
+            TLOG_ERRS_RAISECF(grc,"Failed waiting for "
+                              "parent to lock privileges");
         }
 
         /* Execute the program to record */
@@ -265,44 +252,34 @@ tlog_tap_setup(struct tlog_errs **perrs,
     /* Lock the possibly-privileged GID permanently */
     if (setresgid(egid, egid, egid) < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed locking GID");
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed locking GID");
     }
 
     /* Lock the possibly-privileged UID permanently */
     if (setresuid(euid, euid, euid) < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed locking UID");
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed locking UID");
     }
 
     /* Signal the child we locked our privileges */
     if (sem_post(sem) < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed signaling the child "
-                               "the privileges are locked");
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed signaling the child "
+                          "the privileges are locked");
     }
 
     /* Create the TTY source */
     grc = tlog_tty_source_create(&tap.source, in_fd, tap.out_fd,
                                  tap.tty_fd, 4096, clock_id);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating TTY source");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating TTY source");
     }
 
     /* Create the TTY sink */
     grc = tlog_tty_sink_create(&tap.sink, tap.in_fd, out_fd,
                                tap.tty_fd >= 0 ? tap.in_fd : -1);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating TTY sink");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating TTY sink");
     }
 
     /* Switch the terminal to raw mode, if any */
@@ -318,9 +295,7 @@ tlog_tap_setup(struct tlog_errs **perrs,
         rc = tcsetattr(tap.tty_fd, TCSAFLUSH, &termios_raw);
         if (rc < 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed setting TTY attributes");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed setting TTY attributes");
         }
         tap.termios_set = true;
     }

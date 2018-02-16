@@ -44,16 +44,13 @@ tlog_play_conf_file_load(struct tlog_errs **perrs,
     /* Load the file */
     grc = tlog_json_object_from_file(&conf, path);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed loading \"%s\"", path);
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed loading \"%s\"", path);
     }
 
     /* Validate the contents */
     grc = tlog_play_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_FILE);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushf(perrs, "Invalid contents of \"%s\"", path);
-        goto cleanup;
+        TLOG_ERRS_RAISEF("Invalid contents of \"%s\"", path);
     }
 
     *pconf = conf;
@@ -83,9 +80,7 @@ tlog_play_conf_load(struct tlog_errs **perrs,
     conf = json_object_new_object();
     if (conf == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating configuration object");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating configuration object");
     }
 
     /* Overlay with default config */
@@ -93,22 +88,17 @@ tlog_play_conf_load(struct tlog_errs **perrs,
                                   TLOG_PLAY_CONF_DEFAULT_BUILD_PATH,
                                   TLOG_PLAY_CONF_DEFAULT_INST_PATH);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed finding default configuration");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed finding default configuration");
     }
     grc = tlog_play_conf_file_load(perrs, &overlay, path);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed loading default configuration");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed loading default configuration");
     }
     free(path);
     path = NULL;
     grc = tlog_json_overlay(&conf, conf, overlay);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed overlaying default configuration");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed overlaying default configuration");
     }
     json_object_put(overlay);
     overlay = NULL;
@@ -118,22 +108,17 @@ tlog_play_conf_load(struct tlog_errs **perrs,
                                   TLOG_PLAY_CONF_LOCAL_BUILD_PATH,
                                   TLOG_PLAY_CONF_LOCAL_INST_PATH);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed finding system configuration");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed finding system configuration");
     }
     grc = tlog_play_conf_file_load(perrs, &overlay, path);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed loading system configuration");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed loading system configuration");
     }
     free(path);
     path = NULL;
     grc = tlog_json_overlay(&conf, conf, overlay);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed overlaying system configuration");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed overlaying system configuration");
     }
     json_object_put(overlay);
     overlay = NULL;
@@ -141,16 +126,12 @@ tlog_play_conf_load(struct tlog_errs **perrs,
     /* Overlay with command-line config */
     grc = tlog_play_conf_cmd_load(perrs, &cmd_help, &overlay, argc, argv);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs,
-                        "Failed retrieving configuration from command line");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed retrieving configuration from command line");
     }
     grc = tlog_json_overlay(&conf, conf, overlay);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs,
-                        "Failed overlaying command-line configuration");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc,
+                          "Failed overlaying command-line configuration");
     }
     json_object_put(overlay);
     overlay = NULL;

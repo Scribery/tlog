@@ -34,6 +34,7 @@ main(int argc, char **argv)
 {
     tlog_grc grc;
     struct tlog_errs *errs = NULL;
+    struct tlog_errs **perrs = &errs;
     struct json_object *conf = NULL;
     char *cmd_help = NULL;
     const char *charset;
@@ -42,10 +43,8 @@ main(int argc, char **argv)
     /* Set locale from environment variables */
     if (setlocale(LC_ALL, "") == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(&errs, grc);
-        tlog_errs_pushs(&errs,
-                        "Failed setting locale from environment variables");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed setting locale from "
+                          "environment variables");
     }
 
     /* Read configuration and command-line usage message */
@@ -63,8 +62,7 @@ main(int argc, char **argv)
                                    "and charset is UTF-8");
         } else {
             grc = TLOG_RC_FAILURE;
-            tlog_errs_pushf(&errs, "Unsupported locale charset: %s", charset);
-            goto cleanup;
+            TLOG_ERRS_RAISEF("Unsupported locale charset: %s", charset);
         }
     }
 

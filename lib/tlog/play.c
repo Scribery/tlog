@@ -90,34 +90,28 @@ tlog_play_create_es_json_reader(struct tlog_errs **perrs,
 
     /* Get the base URL */
     if (!json_object_object_get_ex(conf, "baseurl", &obj)) {
-        tlog_errs_pushs(perrs, "Elasticsearch base URL is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Elasticsearch base URL is not specified");
     }
     baseurl = json_object_get_string(obj);
 
     /* Check base URL validity */
     if (!tlog_es_json_reader_base_url_is_valid(baseurl)) {
-        tlog_errs_pushf(perrs,
-                        "Invalid Elasticsearch base URL: %s", baseurl);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISEF("Invalid Elasticsearch base URL: %s", baseurl);
     }
 
     /* Get the query */
     if (!json_object_object_get_ex(conf, "query", &obj)) {
-        tlog_errs_pushs(perrs, "Elasticsearch query is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Elasticsearch query is not specified");
     }
     query = json_object_get_string(obj);
 
     /* Create the reader */
     grc = tlog_es_json_reader_create(&reader, baseurl, query, 10);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating the Elasticsearch reader");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating the Elasticsearch reader");
     }
 
     *preader = reader;
@@ -187,22 +181,17 @@ tlog_play_create_journal_json_reader(struct tlog_errs **perrs,
                           sizeof(*str_list));
         if (str_list == NULL) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs,
-                            "Failed allocating systemd journal match list");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed allocating systemd "
+                              "journal match list");
         }
         for (i = 0; (int)i < (int)json_object_array_length(obj); i++) {
             str_list[i] = json_object_get_string(
                             json_object_array_get_idx(obj, i));
             if (!tlog_journal_match_sym_is_valid(str_list[i])) {
                 grc = TLOG_RC_FAILURE;
-                tlog_errs_pushf(
-                    perrs,
-                    "Systemd journal match symbol #%zu \"%s\" "
-                    "is invalid",
-                    i + 1, str_list[i]);
-                goto cleanup;
+                TLOG_ERRS_RAISEF("Systemd journal match symbol #%zu \"%s\" "
+                                 "is invalid",
+                                 i + 1, str_list[i]);
             }
         }
     }
@@ -213,10 +202,7 @@ tlog_play_create_journal_json_reader(struct tlog_errs **perrs,
                                           (uint64_t)until * 1000000,
                                           str_list);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs,
-                        "Failed creating the systemd journal reader");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating the systemd journal reader");
     }
 
     *preader = reader;
@@ -256,9 +242,8 @@ tlog_play_create_file_json_reader(struct tlog_errs **perrs,
 
     /* Get the file path */
     if (!json_object_object_get_ex(conf, "path", &obj)) {
-        tlog_errs_pushs(perrs, "Log file path is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Log file path is not specified");
     }
     str = json_object_get_string(obj);
 
@@ -266,17 +251,13 @@ tlog_play_create_file_json_reader(struct tlog_errs **perrs,
     fd = open(str, O_RDONLY);
     if (fd < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushf(perrs, "Failed opening log file \"%s\"", str);
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed opening log file \"%s\"", str);
     }
 
     /* Create the reader, letting it take over the FD */
     grc = tlog_fd_json_reader_create(&reader, fd, true, 65536);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating file reader");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating file reader");
     }
     fd = -1;
 
@@ -318,19 +299,16 @@ tlog_play_create_json_reader(struct tlog_errs **perrs,
     assert(conf != NULL);
 
     if (!json_object_object_get_ex(conf, "reader", &obj)) {
-        tlog_errs_pushs(perrs, "Reader type is not specified");
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISES("Reader type is not specified");
     }
     str = json_object_get_string(obj);
     if (strcmp(str, "es") == 0) {
         /* Get Elasticsearch reader conf container */
         if (!json_object_object_get_ex(conf, "es", &reader_conf)) {
-            tlog_errs_pushs(perrs,
-                            "Elasticsearch reader parameters "
-                            "are not specified");
             grc = TLOG_RC_FAILURE;
-            goto cleanup;
+            TLOG_ERRS_RAISES("Elasticsearch reader parameters "
+                             "are not specified");
         }
         /* Create es reader */
         grc = tlog_play_create_es_json_reader(perrs, &reader, reader_conf);
@@ -358,11 +336,8 @@ tlog_play_create_json_reader(struct tlog_errs **perrs,
     } else if (strcmp(str, "file") == 0) {
         /* Get file reader conf container */
         if (!json_object_object_get_ex(conf, str, &reader_conf)) {
-            tlog_errs_pushs(perrs,
-                            "File reader parameters "
-                            "are not specified");
             grc = TLOG_RC_FAILURE;
-            goto cleanup;
+            TLOG_ERRS_RAISES("File reader parameters are not specified");
         }
         /* Create file reader */
         grc = tlog_play_create_file_json_reader(perrs, &reader, reader_conf);
@@ -370,9 +345,8 @@ tlog_play_create_json_reader(struct tlog_errs **perrs,
             goto cleanup;
         }
     } else {
-        tlog_errs_pushf(perrs, "Unknown reader type: %s", str);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISEF("Unknown reader type: %s", str);
     }
 
     *preader = reader;
@@ -426,9 +400,7 @@ tlog_play_create_log_source(struct tlog_errs **perrs,
         /* Create the source */
         grc = tlog_json_source_create(&source, &params);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating the source");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed creating the source");
         }
     }
     reader = NULL;
@@ -609,10 +581,8 @@ tlog_play_init(struct tlog_errs **perrs,
         } else if (strcasecmp(str, "end") == 0) {
             tlog_play_goto_ts = tlog_timespec_max;
         } else if (!tlog_timestr_to_timespec(str, &tlog_play_goto_ts)) {
-            tlog_errs_pushf(perrs,
-                            "Failed parsing timestamp to go to: %s", str);
             grc = TLOG_RC_FAILURE;
-            goto cleanup;
+            TLOG_ERRS_RAISEF("Failed parsing timestamp to go to: %s", str);
         }
         tlog_play_goto_active = true;
     }
@@ -624,26 +594,22 @@ tlog_play_init(struct tlog_errs **perrs,
     /* Initialize libcurl */
     grc = TLOG_GRC_FROM(curl, curl_global_init(CURL_GLOBAL_NOTHING));
     if (grc != TLOG_GRC_FROM(curl, CURLE_OK)) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed initializing libcurl");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed Failed initializing libcurl");
     }
     tlog_play_curl_initialized = true;
 
     /* Create log source */
     grc = tlog_play_create_log_source(perrs, &tlog_play_source, conf);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Failed creating log source");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed creating log source");
     }
 
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(tlog_play_exit_sig_list); i++) {
         if (sigaction(tlog_play_exit_sig_list[i], NULL, &sa) == -1) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed to retrieve an exit signal action");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed to retrieve "
+                              "an exit signal action");
         }
         if (sa.sa_handler != SIG_IGN) {
             sa.sa_handler = tlog_play_exit_sighandler;
@@ -655,9 +621,8 @@ tlog_play_init(struct tlog_errs **perrs,
             sa.sa_flags = 0;
             if (sigaction(tlog_play_exit_sig_list[i], &sa, NULL) == -1) {
                 grc = TLOG_GRC_ERRNO;
-                tlog_errs_pushc(perrs, grc);
-                tlog_errs_pushs(perrs, "Failed to set an exit signal action");
-                goto cleanup;
+                TLOG_ERRS_RAISECS(grc, "Failed to set "
+                                  "an exit signal action");
             }
         }
     }
@@ -670,41 +635,31 @@ tlog_play_init(struct tlog_errs **perrs,
     sa.sa_flags = 0;
     if (sigaction(SIGIO, &sa, NULL) == -1) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed to set SIGIO action");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed to set SIGIO action");
     }
 
     /* Setup signal-driven IO on stdin (and stdout) */
     if (fcntl(STDIN_FILENO, F_SETOWN, getpid()) < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed taking over stdin signals");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed taking over stdin signals");
     }
     tlog_play_stdin_flags = fcntl(STDIN_FILENO, F_GETFL);
     if (tlog_play_stdin_flags < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed getting stdin flags");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed getting stdin flags");
     }
     if (fcntl(STDIN_FILENO, F_SETFL,
               tlog_play_stdin_flags | O_ASYNC | O_NONBLOCK) < 0) {
         tlog_play_stdin_flags = -1;
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed setting stdin flags");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed setting stdin flags");
     }
 
     /* Get terminal attributes */
     rc = tcgetattr(STDOUT_FILENO, &tlog_play_orig_termios);
     if (rc < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed retrieving TTY attributes");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed retrieving TTY attributes");
     }
 
     /*
@@ -722,9 +677,7 @@ tlog_play_init(struct tlog_errs **perrs,
     rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw_termios);
     if (rc < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed setting TTY attributes");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed setting TTY attributes");
     }
     tlog_play_term_attrs_set = true;
 
@@ -736,9 +689,7 @@ tlog_play_init(struct tlog_errs **perrs,
     /* Set local last packet time to the current time */
     if (clock_gettime(CLOCK_MONOTONIC, &tlog_play_local_last_ts) != 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed retrieving current time");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed retrieving current time");
     }
 
     grc = TLOG_RC_OK;
@@ -804,9 +755,7 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
                 break;
             } else {
                 grc = TLOG_GRC_ERRNO;
-                tlog_errs_pushc(perrs, grc);
-                tlog_errs_pushs(perrs, "Failed reading stdin");
-                goto cleanup;
+                TLOG_ERRS_RAISECS(grc, "Failed reading stdin");
             }
         } else if (rc == 0) {
             break;
@@ -933,11 +882,8 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
                     if (clock_gettime(CLOCK_MONOTONIC,
                                       &tlog_play_local_last_ts) != 0) {
                         grc = TLOG_GRC_ERRNO;
-                        tlog_errs_pushc(perrs, grc);
-                        tlog_errs_pushs(
-                                perrs,
-                                "Failed retrieving current time");
-                        goto cleanup;
+                        TLOG_ERRS_RAISECS(grc,
+                                          "Failed retrieving current time");
                     }
                 }
                 tlog_play_paused = !tlog_play_paused;
@@ -1045,9 +991,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                 continue;
             } else {
                 grc = TLOG_GRC_FROM(errno, rc);
-                tlog_errs_pushc(perrs, grc);
-                tlog_errs_pushs(perrs, "Failed sleeping");
-                goto cleanup;
+                TLOG_ERRS_RAISECS(grc, "Failed sleeping");
             }
         }
 
@@ -1063,9 +1007,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                     continue;
                 } else if (rc != 0) {
                     grc = TLOG_GRC_FROM(errno, rc);
-                    tlog_errs_pushc(perrs, grc);
-                    tlog_errs_pushs(perrs, "Failed sleeping");
-                    goto cleanup;
+                    TLOG_ERRS_RAISECS(grc, "Failed sleeping");
                 }
             }
             /* Read a packet */
@@ -1076,8 +1018,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
             } else if (grc != TLOG_RC_OK) {
                 tlog_errs_pushc(perrs, grc);
                 loc_str = tlog_source_loc_fmt(tlog_play_source, loc_num);
-                tlog_errs_pushf(perrs, "Failed reading the source at %s", loc_str);
-                goto cleanup;
+                TLOG_ERRS_RAISEF("Failed reading the source at %s", loc_str);
             }
             /* If hit the end of stream */
             if (tlog_pkt_is_void(&pkt)) {
@@ -1101,9 +1042,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
         /* Get current time */
         if (clock_gettime(CLOCK_MONOTONIC, &local_this_ts) != 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed retrieving current time");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed retrieving current time");
         }
 
         /* If we're skipping the timing of this packet */
@@ -1140,10 +1079,8 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                     /* Get current time */
                     if (clock_gettime(CLOCK_MONOTONIC, &local_this_ts) != 0) {
                         grc = TLOG_GRC_ERRNO;
-                        tlog_errs_pushc(perrs, grc);
-                        tlog_errs_pushs(perrs,
-                                        "Failed retrieving current time");
-                        goto cleanup;
+                        TLOG_ERRS_RAISECS(grc,
+                                          "Failed retrieving current time");
                     }
                     /* Note the interruption time */
                     tlog_timespec_sub(&local_this_ts, &tlog_play_local_last_ts,
@@ -1156,9 +1093,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                     continue;
                 } else if (rc != 0) {
                     grc = TLOG_GRC_FROM(errno, rc);
-                    tlog_errs_pushc(perrs, grc);
-                    tlog_errs_pushs(perrs, "Failed sleeping");
-                    goto cleanup;
+                    TLOG_ERRS_RAISECS(grc, "Failed sleeping");
                 }
                 tlog_play_local_last_ts = local_next_ts;
             }
@@ -1177,9 +1112,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                 continue;
             } else {
                 grc = TLOG_GRC_ERRNO;
-                tlog_errs_pushc(perrs, grc);
-                tlog_errs_pushs(perrs, "Failed waiting for terminal I/O");
-                goto cleanup;
+                TLOG_ERRS_RAISECS(grc, "Failed waiting for terminal I/O");
             }
         } else if (std_pollfds[STDIN_FILENO].revents != 0) {
             /* Prioritize input handling */
@@ -1193,9 +1126,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                 continue;
             } else {
                 grc = TLOG_GRC_ERRNO;
-                tlog_errs_pushc(perrs, grc);
-                tlog_errs_pushs(perrs, "Failed writing output");
-                goto cleanup;
+                TLOG_ERRS_RAISECS(grc, "Failed writing output");
             }
         }
         tlog_play_pkt_last_ts = pkt.timestamp;
@@ -1233,11 +1164,9 @@ tlog_play(struct tlog_errs **perrs,
     /* Check if arguments are provided */
     if (json_object_object_get_ex(conf, "args", &obj) &&
         json_object_array_length(obj) > 0) {
-        tlog_errs_pushf(perrs,
-                        "Positional arguments are not accepted\n%s",
-                        cmd_help);
         grc = TLOG_RC_FAILURE;
-        goto cleanup;
+        TLOG_ERRS_RAISEF("Positional arguments are not accepted\n%s",
+                        cmd_help);
     }
 
     /* Check for the help flag */
