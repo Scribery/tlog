@@ -138,17 +138,13 @@ tlog_exec(struct tlog_errs **perrs, unsigned int opts,
         /* Drop the possibly-privileged EGID permanently */
         if (setresgid(gid, gid, gid) < 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed dropping EGID");
-            goto cleanup;
+            TLOG_ERRS_RAISECF(grc, "Failed dropping EGID");
         }
 
         /* Drop the possibly-privileged EUID permanently */
         if (setresuid(uid, uid, uid) < 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushf(perrs, "Failed dropping EUID");
-            goto cleanup;
+            TLOG_ERRS_RAISECF(grc, "Failed dropping EUID");
         }
     }
 

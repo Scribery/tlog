@@ -52,6 +52,7 @@ main(int argc, char **argv)
     uid_t euid;
     gid_t egid;
     struct tlog_errs *errs = NULL;
+    struct tlog_errs **perrs = &errs;
     struct json_object *conf = NULL;
     char *cmd_help = NULL;
     int std_fds[] = {0, 1, 2};
@@ -65,16 +66,12 @@ main(int argc, char **argv)
     egid = getegid();
     if (setresgid(egid, egid, egid) < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(&errs, grc);
-        tlog_errs_pushf(&errs, "Failed locking GID");
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed locking GID");
     }
     euid = geteuid();
     if (setresuid(euid, euid, euid) < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(&errs, grc);
-        tlog_errs_pushf(&errs, "Failed locking UID");
-        goto cleanup;
+        TLOG_ERRS_RAISECF(grc, "Failed locking UID");
     }
 
     /* Check if stdin/stdout/stderr are closed and stub them with /dev/null */
@@ -83,9 +80,7 @@ main(int argc, char **argv)
         int fd = open("/dev/null", O_RDWR);
         if (fd < 0) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(&errs, grc);
-            tlog_errs_pushs(&errs, "Failed opening /dev/null");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed opening /dev/null");
         } else if (fd >= (int)TLOG_ARRAY_SIZE(std_fds)) {
             close(fd);
             break;
@@ -97,10 +92,8 @@ main(int argc, char **argv)
     /* Set locale from environment variables */
     if (setlocale(LC_ALL, "") == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(&errs, grc);
-        tlog_errs_pushs(&errs,
-                        "Failed setting locale from environment variables");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed setting locale from "
+                          "environment variables");
     }
 
     /* Read configuration and command-line usage message */
@@ -118,8 +111,7 @@ main(int argc, char **argv)
                                    "and charset is UTF-8");
         } else {
             grc = TLOG_RC_FAILURE;
-            tlog_errs_pushf(&errs, "Unsupported locale charset: %s", charset);
-            goto cleanup;
+            TLOG_ERRS_RAISEF("Unsupported locale charset: %s", charset);
         }
     }
 
@@ -127,8 +119,7 @@ main(int argc, char **argv)
     grc = tlog_rec_conf_get_prog(&errs, conf,
                                   &prog_path, &prog_argv);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(&errs, "Failed retrieving recorded program command line");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed retrieving recorded program command line");
     }
 
     /* Run */

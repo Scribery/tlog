@@ -93,51 +93,41 @@ cleanup:
  * In case of an error setting/restoring EUID/EGID, sets the "grc" variable,
  * pushes messages to the specified error stack and jumps to "cleanup" label.
  *
- * @param _perrs    Location for the error stack. Can be NULL.
  * @param _euid     The EUID to set temporarily.
  * @param _egid     The EGID to set temporarily.
  * @param _expr     The expression to evaluate with EUID/EGID set.
  */
-#define EVAL_WITH_EUID_EGID(_perrs, _euid, _egid, _expr) \
-    do {                                                        \
-        struct tlog_errs **__perrs = (_perrs);                  \
-        uid_t _orig_euid = geteuid();                           \
-        gid_t _orig_egid = getegid();                           \
-                                                                \
-        /* Set EUID temporarily */                              \
-        if (seteuid(_euid) < 0) {                               \
-            grc = TLOG_GRC_ERRNO;                               \
-            tlog_errs_pushc(__perrs, grc);                      \
-            tlog_errs_pushs(__perrs, "Failed setting EUID");    \
-            goto cleanup;                                       \
-        }                                                       \
-                                                                \
-        /* Set EGID temporarily */                              \
-        if (setegid(_egid) < 0) {                               \
-            grc = TLOG_GRC_ERRNO;                               \
-            tlog_errs_pushc(__perrs, grc);                      \
-            tlog_errs_pushs(__perrs, "Failed setting EGID");    \
-            goto cleanup;                                       \
-        }                                                       \
-                                                                \
-        /* Evaluate */                                          \
-        _expr;                                                  \
-                                                                \
-        /* Restore EUID */                                      \
-        if (seteuid(_orig_euid) < 0) {                          \
-            grc = TLOG_GRC_ERRNO;                               \
-            tlog_errs_pushc(__perrs, grc);                      \
-            tlog_errs_pushs(__perrs, "Failed restoring EUID");  \
-            goto cleanup;                                       \
-        }                                                       \
-                                                                \
-        /* Restore EGID */                                      \
-        if (setegid(_orig_egid) < 0) {                          \
-            grc = TLOG_GRC_ERRNO;                               \
-            tlog_errs_pushc(__perrs, grc);                      \
-            tlog_errs_pushs(__perrs, "Failed restoring EGID");  \
-            goto cleanup;                                       \
-        }                                                       \
+#define EVAL_WITH_EUID_EGID(_euid, _egid, _expr) \
+    do {                                                                 \
+        uid_t _orig_euid = geteuid();                                    \
+        gid_t _orig_egid = getegid();                                    \
+                                                                         \
+        /* Set EUID temporarily */                                       \
+        if (seteuid(_euid) < 0) {                                        \
+            grc = TLOG_GRC_ERRNO;                                        \
+            TLOG_ERRS_RAISECS(grc, "Failed setting EUID");               \
+        }                                                                \
+                                                                         \
+        /* Set EGID temporarily */                                       \
+        if (setegid(_egid) < 0) {                                        \
+            grc = TLOG_GRC_ERRNO;                                        \
+            TLOG_ERRS_RAISECS(grc, "Failed setting EGID");               \
+        }                                                                \
+                                                                         \
+        /* Evaluate */                                                   \
+        _expr;                                                           \
+                                                                         \
+        /* Restore EUID */                                               \
+        if (seteuid(_orig_euid) < 0) {                                   \
+            grc = TLOG_GRC_ERRNO;                                        \
+            TLOG_ERRS_RAISECS(grc, "Failed restoring EUID");             \
+        }                                                                \
+                                                                         \
+        /* Restore EGID */                                               \
+        if (setegid(_orig_egid) < 0) {                                   \
+            grc = TLOG_GRC_ERRNO;                                        \
+            TLOG_ERRS_RAISECS(grc, "Failed restoring EGID");             \
+        }                                                                \
     } while (0)
 
 tlog_grc
@@ -156,9 +146,7 @@ tlog_session_lock(struct tlog_errs **perrs, unsigned int id,
     /* Format lock file path */
     grc = tlog_session_format_lock_path(&path, id);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed formatting lock file path");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed formatting lock file path");
     }
 
     /*
@@ -166,7 +154,7 @@ tlog_session_lock(struct tlog_errs **perrs, unsigned int id,
      * Assume session ID never repeats (never wraps around).
      * FIXME Handle repeating session IDs.
      */
-    EVAL_WITH_EUID_EGID(perrs, euid, egid,
+    EVAL_WITH_EUID_EGID(euid, egid,
                         fd = open(path, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR));
     if (fd < 0) {
         int open_errno = errno;
@@ -212,13 +200,11 @@ tlog_session_unlock(struct tlog_errs **perrs, unsigned int id,
     /* Format lock file path */
     grc = tlog_session_format_lock_path(&path, id);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed formatting lock file path");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed formatting lock file path");
     }
 
     /* Remove the lock file */
-    EVAL_WITH_EUID_EGID(perrs, euid, egid, rc = unlink(path));
+    EVAL_WITH_EUID_EGID(euid, egid, rc = unlink(path));
     if (rc < 0) {
         int unlink_errno = errno;
         tlog_grc unlink_grc = TLOG_GRC_ERRNO;
