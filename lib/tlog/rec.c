@@ -585,7 +585,6 @@ cleanup:
  * @param id            ID of the recording being created.
  * @param username      The name of the user being recorded.
  * @param session_id    The ID of the audit session being recorded.
- * @param clock_id      The clock to use for rate-limiting.
  *
  * @return Global return code.
  */
@@ -595,8 +594,7 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
                             struct json_object *conf,
                             const char *id,
                             const char *username,
-                            unsigned int session_id,
-                            clockid_t clock_id)
+                            unsigned int session_id)
 {
     tlog_grc grc;
     struct json_object *obj;
@@ -681,7 +679,7 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
 
     /* Create rate-limiting writer */
     grc = tlog_rec_create_rl_json_writer(perrs, &writer, writer_conf,
-                                         clock_id);
+                                         CLOCK_MONOTONIC);
     if (grc != TLOG_RC_OK) {
         goto cleanup;
     }
@@ -702,7 +700,6 @@ cleanup:
  * @param psink         Location for the created sink pointer.
  * @param conf          Configuration JSON object.
  * @param session_id    The ID of the session being recorded.
- * @param clock_id      The clock to use for rate-limiting.
  *
  * @return Global return code.
  */
@@ -710,8 +707,7 @@ static tlog_grc
 tlog_rec_create_log_sink(struct tlog_errs **perrs,
                          struct tlog_sink **psink,
                          struct json_object *conf,
-                         unsigned int session_id,
-                         clockid_t clock_id)
+                         unsigned int session_id)
 {
     tlog_grc grc;
     int64_t num;
@@ -755,8 +751,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
      * Create the writer
      */
     grc = tlog_rec_create_json_writer(perrs, &writer, conf,
-                                      id, passwd->pw_name, session_id,
-                                      clock_id);
+                                      id, passwd->pw_name, session_id);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed creating JSON message writer");
         goto cleanup;
@@ -1242,7 +1237,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
 
     /* Create the log sink */
     grc = tlog_rec_create_log_sink(perrs, &log_sink, conf,
-                                   session_id, clock_id);
+                                   session_id);
     if (grc != TLOG_RC_OK) {
         tlog_errs_pushs(perrs, "Failed creating log sink");
         goto cleanup;
