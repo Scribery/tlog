@@ -350,7 +350,7 @@ Otherwise you'll need to filter by something else. For example the program
 name (`ident` argument to syslog(3)), which tlog specifies as `tlog`. In that
 case the condition could be:
 
-    if $programname == "tlog" then {
+    if $programname == "tlog-rec-session" then {
         # ... actions ...
     }
 
