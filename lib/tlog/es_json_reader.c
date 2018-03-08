@@ -128,7 +128,7 @@ tlog_es_json_reader_format_url_pfx(char **purl_pfx,
 #undef ESC
 
     if (asprintf(&url_pfx,
-                 "%s?q=%s&fields=&_source&sort=%s&size=%zu&from=",
+                 "%s?q=%s&sort=%s&size=%zu&from=",
                  base_url, esc_query, esc_sort, size) < 0) {
         grc = TLOG_GRC_FROM(errno, ENOMEM);
         goto cleanup;
