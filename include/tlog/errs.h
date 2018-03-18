@@ -142,7 +142,7 @@ extern void tlog_errs_pushf(struct tlog_errs **perrs, const char *fmt, ...)
 extern int tlog_errs_print(FILE *stream, const struct tlog_errs *errs);
 
 /**
- * Push an error to the "perrs" stack, with message as a constant string
+ * Push an error to the "perrs" stack, with message as a constant string,
  * and then go to cleanup.
  *
  * @param _msg   The message string to copy and put into the pushed error.
@@ -157,7 +157,7 @@ extern int tlog_errs_print(FILE *stream, const struct tlog_errs *errs);
 /**
  * Push two errors to the "perrs" stack, first one with message being a global
  * return code description, and the second with message as a constant string.
- * And then go to cleanup.
+ * Then go to cleanup.
  *
  * @param _grc  The global return code, which description will be pushed to
  *              the stack.
@@ -173,7 +173,7 @@ extern int tlog_errs_print(FILE *stream, const struct tlog_errs *errs);
 
 /**
  * Push an error to the "perrs" stack, with a sprintf-formatted message.
- * And then go to cleanup.
+ * Then go to cleanup.
  *
  * @param _fmt  The message sprintf(3) format string. Cannot be NULL.
  * @param ...   The message format arguments.
@@ -187,7 +187,7 @@ extern int tlog_errs_print(FILE *stream, const struct tlog_errs *errs);
 /**
  * Push two errors to the "perrs" stack, first one with message being a global
  * return code description, and the second with a sprintf-formatted message.
- * And then go to cleanup.
+ * Then go to cleanup.
  *
  * @param _grc  The global return code, which description will be pushed to
  *              the stack.
