@@ -52,7 +52,7 @@ generate the build system files:
 After that, or if you're building a [release source tarball][releases], you
 need to follow the usual configure & make approach:
 
-    ./configure --prefix=/usr --sysconfdir=/etc && make
+    ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var && make
 
 To generate a source tarball:
 
