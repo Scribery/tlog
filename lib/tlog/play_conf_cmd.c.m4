@@ -66,47 +66,36 @@ tlog_play_conf_cmd_load(struct tlog_errs **perrs,
     conf = json_object_new_object();
     if (conf == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating configuration object");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating configuration object");
     }
 
     /* Extract program name */
     progpath = strdup(argv[0]);
     if (progpath == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed allocating a copy of program path");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed allocating a copy of program path");
     }
     progname = strdup(basename(progpath));
     if (progname == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed allocating program name");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed allocating program name");
     }
 
     /* Extract options and positional arguments */
     if (asprintf(&help, tlog_play_conf_cmd_help_fmt, progname) < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed formatting help message");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed formatting help message");
     }
     grc = tlog_play_conf_cmd_load_args(perrs, conf, help, argc, argv);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs,
-                        "Failed extracting configuration "
-                        "from options and arguments");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed extracting configuration "
+                         "from options and arguments");
     }
 
     /* Validate the result */
     grc = tlog_play_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ARGS);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Validation of loaded configuration failed");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Validation of loaded configuration failed");
     }
 
     *phelp = help;

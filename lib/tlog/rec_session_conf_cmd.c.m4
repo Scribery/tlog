@@ -75,18 +75,14 @@ tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
     conf = json_object_new_object();
     if (conf == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed creating configuration object");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed creating configuration object");
     }
 
     /* Get program path */
     progpath = strdup(argv[0]);
     if (progpath == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed allocating a copy of program path");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed allocating a copy of program path");
     }
 
     /* Check for and extract login dash prefix */
@@ -96,15 +92,11 @@ tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
         val = json_object_new_boolean(true);
         if (val == NULL) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating login flag");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed creating login flag");
         }
         grc = tlog_json_object_object_add_path(conf, "login", val);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed storing login flag");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed storing login flag");
         }
         val = NULL;
     }
@@ -121,11 +113,9 @@ tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
         shell = strdup(shell_start);
         if (shell == NULL) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs,
-                            "Failed allocating a copy of the shell part "
-                            "of the program name");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc,
+                              "Failed allocating a copy of the shell part "
+                              "of the program name");
         }
         /* Decode and unescape the shell path */
         for (dst = src = shell; ;) {
@@ -143,15 +133,11 @@ tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
         val = json_object_new_string(shell);
         if (val == NULL) {
             grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed creating shell path object");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed creating shell path object");
         }
         grc = tlog_json_object_object_add_path(conf, "shell", val);
         if (grc != TLOG_RC_OK) {
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed storing shell path");
-            goto cleanup;
+            TLOG_ERRS_RAISECS(grc, "Failed storing shell path");
         }
         val = NULL;
     }
@@ -160,31 +146,24 @@ tlog_rec_session_conf_cmd_load(struct tlog_errs **perrs,
     progname = strndup(progname_start, progname_end - progname_start);
     if (progname == NULL) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed allocating program name");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed allocating program name");
     }
 
     /* Extract options and positional arguments */
     if (asprintf(&help, tlog_rec_session_conf_cmd_help_fmt, progname) < 0) {
         grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed formatting help message");
-        goto cleanup;
+        TLOG_ERRS_RAISECS(grc, "Failed formatting help message");
     }
     grc = tlog_rec_session_conf_cmd_load_args(perrs, conf, help, argc, argv);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs,
-                        "Failed extracting configuration "
-                        "from options and arguments");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Failed extracting configuration "
+                         "from options and arguments");
     }
 
     /* Validate the result */
     grc = tlog_rec_session_conf_validate(perrs, conf, TLOG_CONF_ORIGIN_ARGS);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushs(perrs, "Validation of loaded configuration failed");
-        goto cleanup;
+        TLOG_ERRS_RAISES("Validation of loaded configuration failed");
     }
 
     *phelp = help;
