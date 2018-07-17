@@ -8,6 +8,9 @@ License:    GPLv2+
 URL:        https://github.com/Scribery/%{name}
 Source:     https://github.com/Scribery/%{name}/releases/download/v%{version}/%{name}-%{version}.tar.gz
 
+BuildRequires:  autoconf
+BuildRequires:  automake
+BuildRequires:  libtool
 BuildRequires:  json-c-devel
 BuildRequires:  curl-devel
 BuildRequires:  m4
