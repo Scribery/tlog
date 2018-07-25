@@ -21,35 +21,30 @@
 # limitations under the License.
 #
 set TLOG_USERS="/etc/security/tlog.users"
+set TLOG_CMD="/usr/bin/tlog-rec-session"
 
 if ( -f "$TLOG_USERS" ) then
   if ( ! ($?TLOG_RUNNING) ) then
 
-    set D='$'
-    set PATTERN="^(%$GROUP|$USER)$D"
-    set MATCH=`grep -E "$PATTERN" "$TLOG_USERS"`
+    set TLOG_D='$'
+    set TLOG_PATTERN="^(%$GROUP|$USER)$TLOG_D"
+    set TLOG_MATCH=`grep -E "$TLOG_PATTERN" "$TLOG_USERS"`
 
-    if ( "$MATCH" != "" ) then
+    if ( "$TLOG_MATCH" != "" ) then
       setenv TLOG_RUNNING true
 
       setenv TLOG_REC_SESSION_SHELL $SHELL
 
-      set CMD="/usr/bin/tlog-rec-session"
-
-      set PATTERN='-c .\+'
-      set PASSTHROUGH_CMD=`ps --no-headers -o args $$ | grep -oe "$PATTERN"`
-
       if ($?prompt || $?loginsh) then
-        set CMD="$CMD -l"
+        set TLOG_CMD="$TLOG_CMD -l"
       endif
 
-      if ( "$PASSTHROUGH_CMD" != "" ) then
-        set CMD="$CMD $PASSTHROUGH_CMD"
-      else
-        set CMD="exec $CMD"
-      endif
+      set TLOG_PATTERN='-c[[:space:]]\+.\+'
+      set TLOG_PASSTHROUGH_CMD=`ps --no-headers -o args $$ | grep -oe "$TLOG_PATTERN"`
 
-      $CMD
+      if ( "$TLOG_PASSTHROUGH_CMD" == "" ) then
+        exec $TLOG_CMD
+      endif
     endif
   endif
 endif

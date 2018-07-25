@@ -21,32 +21,38 @@
 # limitations under the License.
 #
 TLOG_USERS="/etc/security/tlog.users"
+TLOG_CMD="/usr/bin/tlog-rec-session"
+
+tlog_parent(){
+  retval=1
+
+  ppid=`ps --no-headers -o ppid $1`
+
+  if [ $ppid -gt 1 ]; then
+    if `ps --no-headers -o ppid,args $1 | grep -q 'tlog-rec-session'`; then
+      return 0
+    else
+      tlog_parent $ppid
+      retval=$?
+    fi
+
+  fi
+
+  return $retval
+}
 
 if [ -f "${TLOG_USERS}" ]; then
-  if [ -z "$TLOG_RUNNING" ]; then
-    MATCH=`grep -E "^(%${GROUP}|${USER})$" "${TLOG_USERS}"`
-
-    if [ -n "$MATCH" ]; then
-      export TLOG_RUNNING=true
-      readonly TLOG_RUNNING
-
-      TLOG_REC_SESSION_SHELL=$SHELL
-
-      CMD="/usr/bin/tlog-rec-session"
-
-      PASSTHROUGH_CMD=`ps --no-headers -o args $$ | grep -oe "-c .\+"`
-
+  if ! `tlog_parent $PPID`; then
+    if `grep -qE "^(%${GROUP}|${USER})$" "${TLOG_USERS}"`; then
       if [[ $- == *i* ]] || `shopt -q login_shell`; then
-        CMD="$CMD -l"
+        TLOG_CMD="${TLOG_CMD} -l"
       fi
 
-      if [ -n "$PASSTHROUGH_CMD" ]; then
-        CMD="$CMD $PASSTHROUGH_CMD"
-      else
-        CMD="exec $CMD"
-      fi
+      if ! `ps --no-headers -o args $$ | grep -qe "-c[[:space:]]\+.\+"`; then
+        TLOG_REC_SESSION_SHELL=$SHELL
 
-      $CMD
+        exec $TLOG_CMD
+      fi
     fi
   fi
 fi
