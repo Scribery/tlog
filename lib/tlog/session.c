@@ -22,10 +22,10 @@
 
 #include <config.h>
 #include <tlog/session.h>
+#include <tlog/misc.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -87,49 +87,6 @@ cleanup:
     return grc;
 }
 
-/**
- * Evaluate an expression with specified EUID/EGID set temporarily.
- *
- * In case of an error setting/restoring EUID/EGID, sets the "grc" variable,
- * pushes messages to the specified error stack and jumps to "cleanup" label.
- *
- * @param _euid     The EUID to set temporarily.
- * @param _egid     The EGID to set temporarily.
- * @param _expr     The expression to evaluate with EUID/EGID set.
- */
-#define EVAL_WITH_EUID_EGID(_euid, _egid, _expr) \
-    do {                                                                 \
-        uid_t _orig_euid = geteuid();                                    \
-        gid_t _orig_egid = getegid();                                    \
-                                                                         \
-        /* Set EUID temporarily */                                       \
-        if (seteuid(_euid) < 0) {                                        \
-            grc = TLOG_GRC_ERRNO;                                        \
-            TLOG_ERRS_RAISECS(grc, "Failed setting EUID");               \
-        }                                                                \
-                                                                         \
-        /* Set EGID temporarily */                                       \
-        if (setegid(_egid) < 0) {                                        \
-            grc = TLOG_GRC_ERRNO;                                        \
-            TLOG_ERRS_RAISECS(grc, "Failed setting EGID");               \
-        }                                                                \
-                                                                         \
-        /* Evaluate */                                                   \
-        _expr;                                                           \
-                                                                         \
-        /* Restore EUID */                                               \
-        if (seteuid(_orig_euid) < 0) {                                   \
-            grc = TLOG_GRC_ERRNO;                                        \
-            TLOG_ERRS_RAISECS(grc, "Failed restoring EUID");             \
-        }                                                                \
-                                                                         \
-        /* Restore EGID */                                               \
-        if (setegid(_orig_egid) < 0) {                                   \
-            grc = TLOG_GRC_ERRNO;                                        \
-            TLOG_ERRS_RAISECS(grc, "Failed restoring EGID");             \
-        }                                                                \
-    } while (0)
-
 tlog_grc
 tlog_session_lock(struct tlog_errs **perrs, unsigned int id,
                   uid_t euid, gid_t egid, bool *pacquired)
@@ -154,8 +111,9 @@ tlog_session_lock(struct tlog_errs **perrs, unsigned int id,
      * Assume session ID never repeats (never wraps around).
      * FIXME Handle repeating session IDs.
      */
-    EVAL_WITH_EUID_EGID(euid, egid,
-                        fd = open(path, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR));
+    TLOG_EVAL_WITH_EUID_EGID(euid, egid,
+                             fd = open(path, O_CREAT | O_EXCL,
+                                       S_IRUSR | S_IWUSR));
     if (fd < 0) {
         int open_errno = errno;
         tlog_grc open_grc = TLOG_GRC_ERRNO;
@@ -204,7 +162,7 @@ tlog_session_unlock(struct tlog_errs **perrs, unsigned int id,
     }
 
     /* Remove the lock file */
-    EVAL_WITH_EUID_EGID(euid, egid, rc = unlink(path));
+    TLOG_EVAL_WITH_EUID_EGID(euid, egid, rc = unlink(path));
     if (rc < 0) {
         int unlink_errno = errno;
         tlog_grc unlink_grc = TLOG_GRC_ERRNO;

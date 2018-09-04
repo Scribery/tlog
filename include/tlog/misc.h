@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <tlog/errs.h>
 #include <tlog/grc.h>
 
@@ -111,6 +112,49 @@ extern tlog_grc tlog_build_or_inst_path(char          **ppath,
                                         const char     *build_rel_path,
                                         const char     *inst_abs_path);
 
+
+/**
+ * Evaluate an expression with specified EUID/EGID set temporarily.
+ *
+ * In case of an error setting/restoring EUID/EGID, sets the "grc" variable,
+ * pushes messages to the specified error stack and jumps to "cleanup" label.
+ *
+ * @param _euid     The EUID to set temporarily.
+ * @param _egid     The EGID to set temporarily.
+ * @param _expr     The expression to evaluate with EUID/EGID set.
+ */
+#define TLOG_EVAL_WITH_EUID_EGID(_euid, _egid, _expr) \
+    do {                                                                 \
+        uid_t _orig_euid = geteuid();                                    \
+        gid_t _orig_egid = getegid();                                    \
+                                                                         \
+        /* Set EUID temporarily */                                       \
+        if (seteuid(_euid) < 0) {                                        \
+            grc = TLOG_GRC_ERRNO;                                        \
+            TLOG_ERRS_RAISECS(grc, "Failed setting EUID");               \
+        }                                                                \
+                                                                         \
+        /* Set EGID temporarily */                                       \
+        if (setegid(_egid) < 0) {                                        \
+            grc = TLOG_GRC_ERRNO;                                        \
+            TLOG_ERRS_RAISECS(grc, "Failed setting EGID");               \
+        }                                                                \
+                                                                         \
+        /* Evaluate */                                                   \
+        _expr;                                                           \
+                                                                         \
+        /* Restore EUID */                                               \
+        if (seteuid(_orig_euid) < 0) {                                   \
+            grc = TLOG_GRC_ERRNO;                                        \
+            TLOG_ERRS_RAISECS(grc, "Failed restoring EUID");             \
+        }                                                                \
+                                                                         \
+        /* Restore EGID */                                               \
+        if (setegid(_orig_egid) < 0) {                                   \
+            grc = TLOG_GRC_ERRNO;                                        \
+            TLOG_ERRS_RAISECS(grc, "Failed restoring EGID");             \
+        }                                                                \
+    } while (0)
 
 /** tlog_exec option bits (must be ascending powers of two) */
 enum tlog_exec_opt {
