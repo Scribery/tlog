@@ -262,6 +262,8 @@ cleanup:
  *
  * @param perrs         Location for the error stack. Can be NULL.
  * @param pwriter       Location for the created writer pointer.
+ * @param euid          EUID to use while opening the file.
+ * @param egid          EGID to use while opening the file.
  * @param conf          Writer configuration JSON object.
  *
  * @return Global return code.
@@ -269,6 +271,7 @@ cleanup:
 static tlog_grc
 tlog_rec_create_file_json_writer(struct tlog_errs **perrs,
                                  struct tlog_json_writer **pwriter,
+                                 uid_t euid, gid_t egid,
                                  struct json_object *conf)
 {
     tlog_grc grc;
@@ -289,7 +292,9 @@ tlog_rec_create_file_json_writer(struct tlog_errs **perrs,
     str = json_object_get_string(obj);
 
     /* Open the file */
-    fd = open(str, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
+    TLOG_EVAL_WITH_EUID_EGID(euid, egid,
+                             fd = open(str, O_WRONLY | O_CREAT | O_APPEND,
+                                       S_IRUSR | S_IWUSR));
     if (fd < 0) {
         grc = TLOG_GRC_ERRNO;
         TLOG_ERRS_RAISECF(grc, "Failed opening log file \"%s\"", str);
@@ -542,6 +547,8 @@ cleanup:
  *
  * @param perrs         Location for the error stack. Can be NULL.
  * @param pwriter       Location for the created writer pointer.
+ * @param euid          EUID to use while accessing sensitive resources.
+ * @param egid          EGID to use while accessing sensitive resources.
  * @param conf          Configuration JSON object.
  * @param id            ID of the recording being created.
  * @param username      The name of the user being recorded.
@@ -552,6 +559,7 @@ cleanup:
 static tlog_grc
 tlog_rec_create_json_writer(struct tlog_errs **perrs,
                             struct tlog_json_writer **pwriter,
+                            uid_t euid, gid_t egid,
                             struct json_object *conf,
                             const char *id,
                             const char *username,
@@ -587,7 +595,8 @@ tlog_rec_create_json_writer(struct tlog_errs **perrs,
         }
 
         /* Create file writer */
-        grc = tlog_rec_create_file_json_writer(perrs, &writer, writer_conf);
+        grc = tlog_rec_create_file_json_writer(perrs, &writer,
+                                               euid, egid, writer_conf);
         if (grc != TLOG_RC_OK) {
             goto cleanup;
         }
@@ -653,6 +662,8 @@ cleanup:
  *
  * @param perrs         Location for the error stack. Can be NULL.
  * @param psink         Location for the created sink pointer.
+ * @param euid          EUID to use while accessing sensitive resources.
+ * @param egid          EGID to use while accessing sensitive resources.
  * @param conf          Configuration JSON object.
  * @param session_id    The ID of the session being recorded.
  *
@@ -661,6 +672,7 @@ cleanup:
 static tlog_grc
 tlog_rec_create_log_sink(struct tlog_errs **perrs,
                          struct tlog_sink **psink,
+                         uid_t euid, gid_t egid,
                          struct json_object *conf,
                          unsigned int session_id)
 {
@@ -701,7 +713,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
     /*
      * Create the writer
      */
-    grc = tlog_rec_create_json_writer(perrs, &writer, conf,
+    grc = tlog_rec_create_json_writer(perrs, &writer, euid, egid, conf,
                                       id, passwd->pw_name, session_id);
     if (grc != TLOG_RC_OK) {
         TLOG_ERRS_RAISES("Failed creating JSON message writer");
@@ -1160,7 +1172,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     }
 
     /* Create the log sink */
-    grc = tlog_rec_create_log_sink(perrs, &log_sink, conf,
+    grc = tlog_rec_create_log_sink(perrs, &log_sink, euid, egid, conf,
                                    session_id);
     if (grc != TLOG_RC_OK) {
         TLOG_ERRS_RAISES("Failed creating log sink");
