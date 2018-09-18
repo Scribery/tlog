@@ -58,6 +58,15 @@ m4_define(
 )
 
 m4_define(
+    `M4_PARAM_LAST_FIELD',
+    `
+        m4_pushdef(`M4_APPEND_COMMA', `false')
+        M4_PARAM($@)
+        m4_popdef(`M4_APPEND_COMMA')
+    '
+)
+
+m4_define(
     `M4_PARAM',
     `
         m4_ifelse(

@@ -57,7 +57,7 @@ _M4_PARAM(`/log', `output', `file-',
           `If specified as ', `If ',
           `M4_LINES(`true, terminal output is logged.')')m4_dnl
 m4_dnl
-_M4_PARAM(`/log', `window', `file-',
+_M4_PARAM_LAST_FIELD(`/log', `window', `file-',
           `M4_TYPE_BOOL(true)', true,
           `', `[=BOOL]', `Enable/disable logging terminal window size changes',
           `If specified as ', `If ',
@@ -80,7 +80,7 @@ _M4_PARAM(`/limit', `burst', `file-',
           `M4_LINES(`number of bytes by which logged messages are allowed to exceed',
                     `the rate limit momentarily, i.e. "burstiness".')')m4_dnl
 m4_dnl
-_M4_PARAM(`/limit', `action', `file-',
+_M4_PARAM_LAST_FIELD(`/limit', `action', `file-',
           `M4_TYPE_CHOICE(`pass', `pass', `delay', `drop')', true,
           `', `=STRING', `Perform STRING action above limits (pass/delay/drop)',
           `STRING is the ', `The ',
@@ -130,7 +130,7 @@ _M4_PARAM(`/syslog', `facility', `file-',
           `STRING is the ', `The ',
           `M4_LINES(`syslog facility "syslog" writer should use for messages.')')m4_dnl
 m4_dnl
-_M4_PARAM(`/syslog', `priority', `file-',
+_M4_PARAM_LAST_FIELD(`/syslog', `priority', `file-',
           `M4_TYPE_CHOICE(`info',
                           `emerg',
                           `alert',
@@ -166,7 +166,7 @@ _M4_PARAM(`/journal', `priority', `file-',
           `STRING is the ', `The ',
           `M4_LINES(`syslog-style priority "journal" writer should use for messages.')')m4_dnl
 m4_dnl
-_M4_PARAM(`/journal', `augment', `file-',
+_M4_PARAM_LAST_FIELD(`/journal', `augment', `file-',
           `M4_TYPE_BOOL(true)',
           true,
           `', `[=BOOL]', `Enable/disable adding extra journal fields',
