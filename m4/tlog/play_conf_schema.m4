@@ -86,7 +86,7 @@ M4_PARAM(`/es', `baseurl', `file-',
          `M4_LINES(`base URL to request Elasticsearch through. Should not',
                    `contain query (?...) or fragment (#...) parts.')')m4_dnl
 m4_dnl
-M4_PARAM(`/es', `query', `file-',
+M4_PARAM_LAST_FIELD(`/es', `query', `file-',
          `M4_TYPE_STRING()', false,
          `', `=STRING', `Elasticsearch query',
          `STRING is the ', `The ',

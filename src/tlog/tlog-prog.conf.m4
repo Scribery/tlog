@@ -11,6 +11,7 @@ m4_divert(-1)
 m4_define(`M4_PREFIX', `')
 m4_define(`M4_INDENT', `')
 m4_define(`M4_FIRST', `true')
+m4_define(`M4_APPEND_COMMA', `true')
 
 m4_define(
     `M4_TYPE_INT',
@@ -57,6 +58,15 @@ m4_define(
 )
 
 m4_define(
+    `M4_PARAM_LAST_FIELD',
+    `
+        m4_pushdef(`M4_APPEND_COMMA', `false')
+        M4_PARAM($@)
+        m4_popdef(`M4_APPEND_COMMA')
+    '
+)
+
+m4_define(
     `M4_PARAM',
     `
         m4_ifelse(
@@ -71,7 +81,8 @@ m4_define(
                             M4_FIRST(),
                             `true',
                             `m4_define(`M4_FIRST', `false')',
-                            `m4_printl(`,', `')'
+                            `m4_printl(`')'
+                            `m4_printl(`')'
                         )
                         m4_print(M4_INDENT()`// m4_argn(`10', $@)')
                         m4_argn(`11', $@)
@@ -85,6 +96,11 @@ m4_define(
                             `m4_print(`// ')'
                         )
                         m4_print(`"$2" : ')$4
+                        m4_ifelse(
+                            M4_APPEND_COMMA(),
+                            `true',
+                            `m4_print(`,')',
+                        )
                     '
                 )
             '
@@ -110,7 +126,8 @@ m4_define(
                             M4_FIRST(),
                             `true',
                             `m4_define(`M4_FIRST', `false')',
-                            `m4_printl(`,', `')'
+                            `m4_printl(`')'
+                            `m4_printl(`')'
                         )
                         m4_ifelse(
                             `$2',

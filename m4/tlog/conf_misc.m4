@@ -57,12 +57,14 @@ m4_define(
 `m4_pushdef(`M4_CONF_CONTAINER_SIZE_VAL', `0')m4_dnl
 m4_pushdef(`M4_CONTAINER', `')m4_dnl
 m4_pushdef(`M4_PARAM', m4_defn(`_M4_CONF_CONTAINER_SIZE_ADD_PARAM'))m4_dnl
+m4_pushdef(`M4_PARAM_LAST_FIELD', m4_defn(`_M4_CONF_CONTAINER_SIZE_ADD_PARAM'))m4_dnl
 m4_pushdef(`M4_CONF_PREFIX', `$2')m4_dnl
 m4_pushdef(`M4_CONF_ORIGIN', `$3')m4_dnl
 m4_include(`$1')m4_dnl
 m4_popdef(`M4_CONF_ORIGIN')m4_dnl
 m4_popdef(`M4_CONF_PREFIX')m4_dnl
 m4_popdef(`M4_PARAM')m4_dnl
+m4_popdef(`M4_PARAM_LAST_FIELD')m4_dnl
 m4_popdef(`M4_CONTAINER')m4_dnl
 M4_CONF_CONTAINER_SIZE_VAL()m4_dnl
 m4_popdef(`M4_CONF_CONTAINER_SIZE_VAL')'m4_dnl
