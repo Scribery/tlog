@@ -8,13 +8,16 @@ License:    GPLv2+
 URL:        https://github.com/Scribery/%{name}
 Source:     https://github.com/Scribery/%{name}/releases/download/v%{version}/%{name}-%{version}.tar.gz
 
-BuildRequires:  json-c-devel
-BuildRequires:  curl-devel
-BuildRequires:  m4
+BuildRequires: json-c-devel
+BuildRequires: curl-devel
+BuildRequires: m4
+BuildRequires: libtool
 # If it's not RHEL6 and older
 %if 0%{?rhel} == 0 || 0%{?rhel} >= 7
-BuildRequires:  systemd-devel
-BuildRequires:  systemd-units
+BuildRequires: systemd-devel
+BuildRequires: systemd-units
+BuildRequires: autoconf
+BuildRequires: automake
 %endif
 Requires(post):     sed
 Requires(postun):   sed
