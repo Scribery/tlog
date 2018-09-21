@@ -1107,6 +1107,23 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
         }
     }
 
+    /* Check for the configuration flag */
+    if (json_object_object_get_ex(conf, "configuration", &obj)) {
+        if (json_object_get_boolean(obj)) {
+            const char *str;
+            str = json_object_to_json_string_ext(conf,
+                                                 JSON_C_TO_STRING_PRETTY);
+            if (str == NULL) {
+                grc = TLOG_GRC_ERRNO;
+                TLOG_ERRS_RAISECS(grc,
+                                  "Failed formatting configuration JSON");
+            }
+            printf("%s\n", str);
+            grc = TLOG_RC_OK;
+            goto cleanup;
+        }
+    }
+
     /*
      * Choose the clock: try to use coarse monotonic clock (which is faster),
      * if it provides the required resolution.
