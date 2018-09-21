@@ -529,7 +529,7 @@ m4_define(
            `',
            `    /* Description of short options */')
         m4_print(
-           `    static const char *shortopts = ":')
+           `    static const char *shortopts = "+:')
         M4_CONF_CMD_SHORTOPTS()
         m4_printl(
            `";',
