@@ -1187,6 +1187,23 @@ tlog_play(struct tlog_errs **perrs,
         }
     }
 
+    /* Check for the configuration flag */
+    if (json_object_object_get_ex(conf, "configuration", &obj)) {
+        if (json_object_get_boolean(obj)) {
+            const char *str;
+            str = json_object_to_json_string_ext(conf,
+                                                 JSON_C_TO_STRING_PRETTY);
+            if (str == NULL) {
+                grc = TLOG_GRC_ERRNO;
+                TLOG_ERRS_RAISECS(grc,
+                                  "Failed formatting configuration JSON");
+            }
+            printf("%s\n", str);
+            grc = TLOG_RC_OK;
+            goto cleanup;
+        }
+    }
+
     /* Output and discard any accumulated non-critical error messages */
     tlog_errs_print(stderr, *perrs);
     tlog_errs_destroy(perrs);

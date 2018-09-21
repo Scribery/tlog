@@ -96,3 +96,9 @@ M4_PARAM(`', `version', `opts',
          `v', `', `Output version information and exit',
          `', `',
          `M4_LINES(`')')m4_dnl
+m4_dnl
+M4_PARAM(`', `configuration', `opts',
+         `M4_TYPE_BOOL(false)', true,
+         `', `', `Output program configuration in JSON and exit',
+         `', `',
+         `M4_LINES(`')')m4_dnl
