@@ -500,21 +500,11 @@ tlog_play_cleanup(struct tlog_errs **perrs)
 
     /* Restore terminal attributes */
     if (tlog_play_term_attrs_set) {
-        const char newline = '\n';
-
         rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &tlog_play_orig_termios);
         if (rc < 0 && errno != EBADF) {
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed restoring TTY attributes");
-        }
-
-        /* Clear off remaining reproduced output */
-        rc = write(STDOUT_FILENO, &newline, sizeof(newline));
-        if (rc < 0 && errno != EBADF) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed writing newline to TTY");
         }
     }
 
@@ -1223,6 +1213,19 @@ cleanup:
     cleanup_grc = tlog_play_cleanup(perrs);
     if (cleanup_grc != TLOG_RC_OK) {
         grc = cleanup_grc;
+    }
+
+    /* Clear off remaining reproduced output */
+    {
+        const char newline = '\n';
+        ssize_t rc;
+
+        rc = write(STDOUT_FILENO, &newline, sizeof(newline));
+        if (rc < 0 && errno != EBADF) {
+            grc = TLOG_GRC_ERRNO;
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed writing newline to TTY");
+        }
     }
 
     if (grc == TLOG_RC_OK) {
