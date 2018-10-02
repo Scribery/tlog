@@ -420,31 +420,31 @@ cleanup:
 const int tlog_play_exit_sig_list[] = {SIGINT, SIGTERM, SIGHUP};
 
 /** True, if we should poll after EOF */
-bool tlog_play_follow;
+bool tlog_play_follow = false;
 /** Recorded data source */
-struct tlog_source *tlog_play_source;
+struct tlog_source *tlog_play_source = NULL;
 /** Current playback speed (time divisor) */
-struct timespec tlog_play_speed;
+struct timespec tlog_play_speed = {1, 0};
 /** True if "goto" function is active */
-bool tlog_play_goto_active;
+bool tlog_play_goto_active = false;
 /** Timestamp the "goto" function should go to */
 struct timespec tlog_play_goto_ts;
 /** True if "skip" function is active */
-bool tlog_play_skip;
+bool tlog_play_skip = false;
 /** True if playback is paused */
-bool tlog_play_paused;
+bool tlog_play_paused = false;
 /** True if commands to quit playback should be ignored */
-bool tlog_play_persist;
+bool tlog_play_persist = false;
 /** Original stdin file flags, -1 if not changed */
-int tlog_play_stdin_flags;
+int tlog_play_stdin_flags = -1;
 /* True if terminal attributes were changed */
-bool tlog_play_term_attrs_set;
+bool tlog_play_term_attrs_set = false;
 /** Original termios attributes */
 struct termios tlog_play_orig_termios;
 /** True if cURL global state was initialized, false otherwise */
-bool tlog_play_curl_initialized;
+bool tlog_play_curl_initialized = false;
 /** True if have received at least one character of a timestamp from user */
-bool tlog_play_got_ts;
+bool tlog_play_got_ts = false;
 /** Accumulated timestamp parser state, valid only if tlog_play_got_ts */
 struct tlog_timestr_parser tlog_play_timestr_parser;
 /** Local time of packet output last */
@@ -456,7 +456,7 @@ struct timespec tlog_play_pkt_last_ts;
 bool tlog_play_initialized = false;
 
 /**
- * Cleanup playback state.
+ * Cleanup playback state. Can be called repeatedly.
  *
  * @param perrs     Location for the error stack. Can be NULL.
  *
@@ -470,9 +470,14 @@ tlog_play_cleanup(struct tlog_errs **perrs)
     ssize_t rc;
     size_t i;
 
+    /* Destroy the source */
     tlog_source_destroy(tlog_play_source);
+    tlog_play_source = NULL;
+
+    /* Cleanup cURL */
     if (tlog_play_curl_initialized) {
         curl_global_cleanup();
+        tlog_play_curl_initialized = false;
     }
 
     /* Restore stdin flags, if changed */
@@ -482,6 +487,7 @@ tlog_play_cleanup(struct tlog_errs **perrs)
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed setting stdin flags");
         }
+        tlog_play_stdin_flags = -1;
     }
 
     /* Restore signal handlers */
@@ -506,8 +512,20 @@ tlog_play_cleanup(struct tlog_errs **perrs)
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed restoring TTY attributes");
         }
+        tlog_play_term_attrs_set = false;
     }
 
+    /* Reset variables */
+    tlog_play_follow = false;
+    tlog_play_speed.tv_sec = 1;
+    tlog_play_speed.tv_nsec = 0;
+    tlog_play_goto_active = false;
+    tlog_play_skip = false;
+    tlog_play_paused = false;
+    tlog_play_persist = false;
+    tlog_play_got_ts = false;
+
+    /* Mark playback state not initialized */
     tlog_play_initialized = false;
 
     return grc;
@@ -536,19 +554,6 @@ tlog_play_init(struct tlog_errs **perrs,
     size_t j;
 
     assert(!tlog_play_initialized);
-
-    tlog_play_follow = false;
-    tlog_play_source = NULL;
-    tlog_play_speed.tv_sec = 1;
-    tlog_play_speed.tv_nsec = 0;
-    tlog_play_goto_active = false;
-    tlog_play_skip = false;
-    tlog_play_paused = false;
-    tlog_play_persist = false;
-    tlog_play_stdin_flags = -1;
-    tlog_play_term_attrs_set = false;
-    tlog_play_curl_initialized = false;
-    tlog_play_got_ts = false;
 
     /* Get the "speed" option, if any */
     if (json_object_object_get_ex(conf, "speed", &obj)) {
@@ -682,6 +687,7 @@ tlog_play_init(struct tlog_errs **perrs,
         TLOG_ERRS_RAISECS(grc, "Failed retrieving current time");
     }
 
+    tlog_play_initialized = true;
     grc = TLOG_RC_OK;
 
 cleanup:
@@ -693,7 +699,6 @@ cleanup:
         }
     }
 
-    tlog_play_initialized = (grc == TLOG_RC_OK);
     return grc;
 }
 
