@@ -1,5 +1,5 @@
 Name:       tlog
-Version:    5
+Version:    6
 Release:    1%{?dist}
 Summary:    Terminal I/O logger
 Group:      Applications/System
@@ -111,6 +111,9 @@ rm -r %{buildroot}/usr/include/%{name}
 /sbin/ldconfig
 
 %changelog
+* Wed Dec 5 2018 Kirill Glebov <kgliebov@redhat.com> - 6-1
+- Release v6
+
 * Wed Dec 5 2018 Kirill Glebov <kgliebov@redhat.com> - 5-1
 - Release v5. Added features and implemented fixes follow. See README.md and
   manpages for documentation of new features.
