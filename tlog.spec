@@ -111,8 +111,26 @@ rm -r %{buildroot}/usr/include/%{name}
 /sbin/ldconfig
 
 %changelog
-* Wed Jan 24 2018 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 5-1
-- Release v5
+* Wed Dec 5 2018 Kirill Glebov <kgliebov@redhat.com> - 5-1
+- Release v5. Added features and implemented fixes follow. See README.md and
+  manpages for documentation of new features.
+- Implement support for --configuration option for all programs. 
+  The option makes the program output its configuration in JSON and then
+  exit.
+- Add BuildDependencies to allow yum-builddep.
+- Open JSON writer file with euid/egid. To allow creating protected log files
+  with tlog-rec-session, open the JSON writer's file with the EUID and 
+  GUID the program was started with. 
+- Installing Packages with the APT Addon instead of apt-get.
+- Switch to using TLOG_ERRS_RAISE macros.
+- Fix tlog-play cleanup-path segfault.
+- Modify command-line option parsing.
+- Remove "fields" field from ES query URL to fix compatibility with
+  Elasticsearch 5.
+- Remove unused _source parameter from ES query URL.
+- Fix tlog-rec-session file permissions bug.
+- Use CLOCK_MONOTONIC for rate-limiting writing.
+- Filter out some more input control sequences.
 
 * Wed Jan 24 2018 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 4-1
 - Release v4. Added features and implemented fixes follow. See README.md and
