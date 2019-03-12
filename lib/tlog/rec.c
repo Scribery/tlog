@@ -951,8 +951,13 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
     /* Flush the log */
     grc = tlog_sink_flush(log_sink);
     if (grc != TLOG_RC_OK) {
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed flushing the log");
+        if (grc == (TLOG_GRC_FROM(systemd, -ENOENT))) {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Systemd journal not available or not responsive");
+        } else {
+            tlog_errs_pushc(perrs, grc);
+            tlog_errs_pushs(perrs, "Failed flushing the log");
+        }
         if (return_grc == TLOG_RC_OK) {
             return_grc = grc;
         }
