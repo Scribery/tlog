@@ -1,0 +1,47 @@
+#!/bin/bash
+
+PKGS="
+python3-pytest
+python3-pexpect
+python3-systemd
+tcsh
+tlog
+"
+PKGSFILE="/tmp/tlitest-setup_packages_found"
+if [ -f "$PKGSFILE" ]; then
+    echo "Backing up previous runs found packages file"
+    mv "$PKGSFILE" "$PKGSFILE.$(date +%Y-%m-%h_%H:%M:%S)"
+fi
+
+echo "Check and install packages to run tlog integration tests"
+for P in $PKGS; do
+    rpm -q "$P" > /dev/null
+    if [ $? -ne 0 ]; then
+        echo "RPM [$P] missing..installing"
+        dnf -y install $P
+    else
+        echo "RPM [$P] already installed...saving"
+        echo "$P" >> $PKGSFILE
+    fi
+done
+
+USERS="
+tlitestlocaluser1
+tlitestlocaladmin1
+"
+USERSFILE="/tmp/tlitest-setup_users_found"
+echo "Check and create users to run tlog integration tests"
+for U in $USERS; do
+    id "$U" > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "User [$U] missing...adding"
+        useradd -m "$U" -s /usr/bin/tlog-rec-session
+        echo -e "Secret123\nSecret123" |passwd "$U"
+    else
+        echo "User [$U] already exists...saving"
+        echo "$U" >> $USERSFILE
+    fi
+done
+
+echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > \
+    /etc/sudoers.d/01_wheel_nopass_tlitest
