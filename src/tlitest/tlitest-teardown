@@ -1,0 +1,50 @@
+#!/bin/bash
+
+PKGS="
+python3-pytest
+python3-pexpect
+python3-systemd
+tcsh
+tlog
+"
+PKGSFILE="/tmp/tlitest-setup_packages_found"
+echo "Check and remove packages from tlog integration tests"
+for P in $PKGS; do
+    if [ -f $PKGSFILE ]; then
+        if grep -q "$P" $PKGSFILE; then
+            echo "RPM [$P] found before tests..skipping remove"
+            continue
+        fi
+    fi
+    rpm -q "$P" > /dev/null
+    if [ $? -eq 0 ]; then
+        echo "RPM [$P] missing..installing"
+        dnf -y remove $P
+    fi
+done
+
+USERS="
+tlitestlocaluser1
+tlitestlocaladmin1
+"
+USERSFILE="/tmp/tlitest-setup_users_found"
+echo "Check and create users to run tlog integration tests"
+for U in $USERS; do
+    if [ -f $USERSFILE ]; then
+        if grep -q "$U" $USERSFILE; then
+            echo "User [$U] found before tests...skipping remove"
+            continue
+        fi
+    fi
+    id "$U" > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "User [$U] missing...adding"
+        useradd -m "$U" -s /usr/bin/tlog-rec-session
+        echo -e "Secret123\nSecret123" |passwd "$U"
+    fi
+done
+
+if [ -f /etc/sudoers.d/01_wheel_nopass_tlitest ]; then
+    echo "Found test sudoers file...removing"
+    rm /etc/sudoers.d/01_wheel_nopass_tlitest
+fi

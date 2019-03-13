@@ -1,0 +1,3 @@
+#!/bin/bash
+
+pytest-3 -v "$(dirname $0)/../../lib/tlitest" "$@"
