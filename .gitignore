@@ -31,3 +31,5 @@
 *.la
 Makefile
 Makefile.in
+__pycache__/
+*.py[co]
