@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PKGS="
+glibc-all-langpacks
 python3-pytest
 python3-pexpect
 python3-systemd
@@ -45,3 +46,5 @@ done
 
 echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > \
     /etc/sudoers.d/01_wheel_nopass_tlitest
+
+usermod tlitestlocaladmin1 -aG wheel
