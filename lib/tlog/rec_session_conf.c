@@ -295,7 +295,7 @@ tlog_rec_session_conf_get_shell(struct tlog_errs **perrs,
     char **argv = NULL;
     size_t argi;
     char *arg = NULL;
-    int i;
+    size_t i;
 
     /* Read the login flag */
     login = json_object_object_get_ex(conf, "login", &obj) &&
@@ -363,7 +363,7 @@ tlog_rec_session_conf_get_shell(struct tlog_errs **perrs,
         argv[argi++] = arg;
         arg = NULL;
     }
-    for (i = 0; i < json_object_array_length(args); i++, argi++) {
+    for (i = 0; i < (size_t)json_object_array_length(args); i++, argi++) {
         obj = json_object_array_get_idx(args, i);
         arg = strdup(json_object_get_string(obj));
         if (arg == NULL) {
