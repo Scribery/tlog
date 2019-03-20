@@ -57,9 +57,9 @@ tlog_journal_json_writer_init(struct tlog_json_writer *writer, va_list ap)
     unsigned int session_id = va_arg(ap, unsigned int);
 
     assert(tlog_syslog_priority_is_valid(priority));
-    assert(!augment || recording != NULL);
-    assert(!augment || username != NULL);
-    assert(!augment || session_id != 0);
+    assert(recording != NULL);
+    assert(username != NULL);
+    assert(session_id != 0);
 
     journal_json_writer->priority = priority;
 

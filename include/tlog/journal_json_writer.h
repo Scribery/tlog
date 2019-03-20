@@ -68,9 +68,9 @@ tlog_journal_json_writer_create(struct tlog_json_writer **pwriter,
 {
     assert(pwriter != NULL);
     assert(tlog_syslog_priority_is_valid(priority));
-    assert(!augment || recording != NULL);
-    assert(!augment || username != NULL);
-    assert(!augment || session_id != 0);
+    assert(recording != NULL);
+    assert(username != NULL);
+    assert(session_id != 0);
     return tlog_json_writer_create(pwriter, &tlog_journal_json_writer_type,
                                    priority, augment,
                                    recording, username, session_id);
