@@ -5,47 +5,52 @@ import ast
 import stat
 import time
 import socket
-import pytest
-import pexpect
 import inspect
 from shutil import copyfile
-from pexpect import pxssh
-from systemd import journal
 from tempfile import mkdtemp
+from systemd import journal
 
+import pexpect
+from pexpect import pxssh
+
+import pytest
 
 def journal_find_last():
+    """ Find the last TLOG_REC journal entry """
     j = journal.Reader()
     j.seek_tail()
     entry = j.get_previous()
-    while('TLOG_REC' not in entry):
+    while 'TLOG_REC' not in entry:
         entry = j.get_previous()
     return entry
 
 
 def check_journal(pattern):
+    """ Check that last journal entry contains pattern """
     time.sleep(1)
     entry = journal_find_last()
     message = entry['MESSAGE']
     out_txt = ast.literal_eval(message)['out_txt']
-    if pattern in out_txt:
-        return 0
-    else:
-        return 1
+    retval = 0
+    if pattern not in out_txt:
+        retval = 1
+    return retval
 
 
 def check_outfile(pattern, filename):
+    """ Check that file contains pattern """
     time.sleep(1)
     file1 = open(filename, 'r')
     content = file1.read()
     file1.close()
-    if pattern in content:
-        return 0
-    else:
-        return 1
+    retval = 0
+    if pattern not in content:
+        retval = 1
+    return retval
 
 
 def check_recording(shell, pattern, filename=None):
+    """ Check that recording contains pattern """
     time.sleep(1)
     if filename is not None:
         cmd = 'tlog-play -i {}'.format(filename)
@@ -65,32 +70,34 @@ def check_recording(shell, pattern, filename=None):
 
 
 def ssh_pexpect(username, password, hostname, encoding='utf-8'):
-    s = pxssh.pxssh(options={
-                    "StrictHostKeyChecking": "no",
-                    "UserKnownHostsFile": "/dev/null"},
-                    encoding=encoding, codec_errors='replace')
-    s.force_password = True
-    s.login(hostname, username, password)
-    s.sendline('echo loggedin')
-    s.expect('loggedin')
-    # s.logfile = sys.stdout
-    return s
+    """ Setup an ssh connection to remote host """
+    ssh = pexpect.pxssh.pxssh(options={
+        "StrictHostKeyChecking": "no",
+        "UserKnownHostsFile": "/dev/null"
+        }, encoding=encoding, codec_errors='replace')
+    ssh.force_password = True
+    ssh.login(hostname, username, password)
+    ssh.sendline('echo loggedin')
+    ssh.expect('loggedin')
+    # ssh.logfile = sys.stdout
+    return ssh
 
 
 def mklogfile(directory, filename=None):
+    """ Create temporary logfile """
     # if filename not given, we use the name of the calling frame
     if filename is None:
         filename = '{}.tlog'.format(inspect.stack()[1][3])
     logfile = '{}/{}'.format(directory, filename)
     if not os.path.isdir(directory):
         os.makedirs(directory)
-        os.chmod(tempdir, stat.S_IRWXU + stat.S_IRWXG + stat.S_IRWXO +
+        os.chmod(directory, stat.S_IRWXU + stat.S_IRWXG + stat.S_IRWXO +
                  stat.S_ISUID + stat.S_ISGID + stat.S_ISVTX)
     return logfile
 
 
 def mkcfgfile(filename, content):
-    """ helper to create config file from string """
+    """ Create config file from string content """
     bkup = '{}.origtest'.format(filename)
     content = '\n'.join([line.lstrip() for line in content.split('\n')])
     if os.path.isfile(filename) and not os.path.isfile(bkup):
@@ -99,7 +106,9 @@ def mkcfgfile(filename, content):
         out.write(content)
 
 
-class TestTlogRec(object):
+class TestTlogRec:
+    """ tlog-rec tests """
+    orig_hostname = socket.gethostname()
     tempdir = mkdtemp(prefix='/tmp/TestTlogRec.')
     user1 = 'tlitestlocaluser1'
     admin1 = 'tlitestlocaladmin1'
@@ -121,7 +130,6 @@ class TestTlogRec(object):
         """
         As a user, record command output to the systemd journal
         """
-        logfile = mklogfile(self.tempdir)
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
         reccmd = 'echo test_record_to_journal'
         shell.sendline('tlog-rec -w journal {}'.format(reccmd))
