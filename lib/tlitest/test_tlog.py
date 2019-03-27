@@ -117,7 +117,7 @@ class TestTlogRec:
 
     def test_record_command_to_file(self):
         """
-        As a user, record command output to a file
+        Check tlog-rec preserves output when reording to file
         """
         logfile = mklogfile(self.tempdir)
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
@@ -128,7 +128,7 @@ class TestTlogRec:
 
     def test_record_command_to_journal(self):
         """
-        As a user, record command output to the systemd journal
+        Check tlog-rec preserves output when recording to journal
         """
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
         reccmd = 'echo test_record_to_journal'
@@ -139,7 +139,7 @@ class TestTlogRec:
 
     def test_record_command_to_syslog(self):
         """
-        As a user, record command output to syslog
+        Check tlog-rec preserves output when recording to syslog
         """
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
         reccmd = 'echo test_record_to_syslog'
