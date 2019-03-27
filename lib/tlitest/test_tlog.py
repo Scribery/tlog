@@ -20,9 +20,11 @@ def journal_find_last():
     j = journal.Reader()
     j.seek_tail()
     entry = j.get_previous()
-    while 'TLOG_REC' not in entry:
+    while 'TLOG_REC' not in entry and len(entry) != 0:
         entry = j.get_previous()
-    return entry
+    if 'TLOG_REC' in entry:
+        return entry
+    raise ValueError('Did not find TLOG_REC entry in journal')
 
 
 def check_journal(pattern):
