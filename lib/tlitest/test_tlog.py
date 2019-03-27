@@ -121,6 +121,7 @@ class TestTlogRec:
     os.chmod(tempdir, stat.S_IRWXU + stat.S_IRWXG + stat.S_IRWXO +
              stat.S_ISUID + stat.S_ISGID + stat.S_ISVTX)
 
+    @pytest.mark.tier1
     def test_record_command_to_file(self):
         """
         Check tlog-rec preserves output when reording to file
@@ -132,6 +133,7 @@ class TestTlogRec:
         check_recording(shell, self.user1, logfile)
         shell.close()
 
+    @pytest.mark.tier1
     def test_record_command_to_journal(self):
         """
         Check tlog-rec preserves output when recording to journal
@@ -143,6 +145,7 @@ class TestTlogRec:
         check_recording(shell, 'test_record_to_journal')
         shell.close()
 
+    @pytest.mark.tier1
     def test_record_command_to_syslog(self):
         """
         Check tlog-rec preserves output when recording to syslog
