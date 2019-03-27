@@ -122,8 +122,8 @@ class TestTlogRec:
         logfile = mklogfile(self.tempdir)
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
         shell.sendline('tlog-rec -o {} whoami'.format(logfile))
-        check_outfile('out_txt\":\"localuser1', logfile)
-        check_recording(shell, 'localuser1', logfile)
+        check_outfile('out_txt\":\"{}'.format(self.user1), logfile)
+        check_recording(shell, self.user1, logfile)
         shell.close()
 
     def test_record_command_to_journal(self):
