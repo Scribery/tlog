@@ -28,25 +28,29 @@ def journal_find_last():
 def check_journal(pattern):
     """ Check that last journal entry contains pattern """
     time.sleep(1)
-    entry = journal_find_last()
-    message = entry['MESSAGE']
-    out_txt = ast.literal_eval(message)['out_txt']
-    retval = 0
-    if pattern not in out_txt:
-        retval = 1
-    return retval
+    for _ in range(0, 10):
+        entry = journal_find_last()
+        message = entry['MESSAGE']
+        out_txt = ast.literal_eval(message)['out_txt']
+        if pattern in out_txt:
+            break
+        else:
+            time.sleep(5)
+    assert pattern in out_txt
 
 
 def check_outfile(pattern, filename):
     """ Check that file contains pattern """
     time.sleep(1)
-    file1 = open(filename, 'r')
-    content = file1.read()
-    file1.close()
-    retval = 0
-    if pattern not in content:
-        retval = 1
-    return retval
+    for _ in range(0, 10):
+        file1 = open(filename, 'r')
+        content = file1.read()
+        file1.close()
+        if pattern in content:
+            break
+        else:
+            time.sleep(5)
+    assert pattern in content
 
 
 def check_recording(shell, pattern, filename=None):
