@@ -20,9 +20,9 @@ def journal_find_last():
     j = journal.Reader()
     j.seek_tail()
     entry = j.get_previous()
-    while 'TLOG_REC' not in entry and len(entry) != 0:
+    while 'tlog-rec' not in entry['_COMM'] and len(entry) != 0:
         entry = j.get_previous()
-    if 'TLOG_REC' in entry:
+    if 'tlog-rec' in entry['_COMM']:
         return entry
     raise ValueError('Did not find TLOG_REC entry in journal')
 
