@@ -36,7 +36,7 @@ for U in $USERS; do
     id "$U" > /dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "User [$U] missing...adding"
-        useradd -m "$U" -s /usr/bin/tlog-rec-session
+        useradd -m "$U"
         echo -e "Secret123\nSecret123" |passwd "$U"
     else
         echo "User [$U] already exists...saving"
