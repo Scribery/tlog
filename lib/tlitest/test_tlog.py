@@ -19,13 +19,15 @@ def journal_find_last():
     """ Find the last TLOG_REC journal entry """
     j = journal.Reader()
     j.seek_tail()
-    entry = j.get_previous()
-    while 'tlog-rec' not in entry['_COMM'] and len(entry) != 0:
+    while True:
         entry = j.get_previous()
-    if 'tlog-rec' in entry['_COMM']:
-        return entry
-    raise ValueError('Did not find TLOG_REC entry in journal')
 
+        if '_COMM' not in entry:
+            continue
+        elif 'tlog-rec' in entry['_COMM']:
+            return entry
+        elif len(entry) == 0:
+            raise ValueError('Did not find TLOG_REC entry in journal')
 
 def check_journal(pattern):
     """ Check that last journal entry contains pattern """
