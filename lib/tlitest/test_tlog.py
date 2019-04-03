@@ -147,6 +147,32 @@ class TestTlogRec:
         check_recording(shell, 'test_record_to_journal')
         shell.close()
 
+    def test_record_journal_tlog_fields(self):
+        """
+        Check that documented TLOG fields are added to
+        journal messages
+        """
+        msgtext = 'test_tlog_fields'
+        command = f'tlog-rec -w journal echo {msgtext}'
+        shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
+        shell.sendline(command)
+        # avoid race condition with reading from the journal
+        time.sleep(5)
+
+        entry = journal_find_last()
+        message = entry['MESSAGE']
+
+        # match the message to ensure we found the right message
+        out_txt = ast.literal_eval(message)['out_txt']
+
+        assert msgtext in out_txt
+        tlog_fields = ['TLOG_USER', 'TLOG_SESSION', 'TLOG_REC', 'TLOG_ID']
+        for field in tlog_fields:
+            value = entry[field]
+            assert value
+        check_recording(shell, msgtext)
+        shell.close()
+
     @pytest.mark.tier1
     def test_record_command_to_syslog(self):
         """
