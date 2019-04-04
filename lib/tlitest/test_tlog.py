@@ -214,6 +214,40 @@ class TestTlogRec:
         check_recording(shell, 'test_record_to_syslog')
         shell.close()
 
+    def test_record_syslog_setting_priority_facility(self):
+        """
+        Write and validate a journal message with a
+        non-default priority
+        """
+        priority = 'err'
+        facility = 'auth'
+        expected_priority_num = 3
+        expected_facility_num = 4
+        msgtext = 'test_syslog_priority_facility'
+        command = f'tlog-rec -w syslog --syslog-priority={priority} ' \
+                  f'--syslog-facility={facility} echo {msgtext}'
+
+        shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
+        print(command)
+        shell.sendline(command)
+        # avoid race condition with reading from the journal
+        time.sleep(5)
+
+        entry = journal_find_last()
+        message = entry['MESSAGE']
+
+        # match the message to ensure we found the right message
+        out_txt = ast.literal_eval(message)['out_txt']
+
+        priority_entry = entry['PRIORITY']
+        facility_entry = entry['SYSLOG_FACILITY']
+
+        assert msgtext in out_txt
+        assert priority_entry == expected_priority_num
+        assert facility_entry == expected_facility_num
+        check_recording(shell, msgtext)
+        shell.close()
+
     def test_record_interactive_session(self):
         """
         Check tlog-rec preserves activity during interactive
