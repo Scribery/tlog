@@ -147,6 +147,61 @@ class TestTlogRec:
         check_recording(shell, 'test_record_to_journal')
         shell.close()
 
+    def test_record_journal_tlog_fields(self):
+        """
+        Check that documented TLOG fields are added to
+        journal messages
+        """
+        msgtext = 'test_tlog_fields'
+        command = f'tlog-rec -w journal echo {msgtext}'
+        shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
+        shell.sendline(command)
+        # avoid race condition with reading from the journal
+        time.sleep(5)
+
+        entry = journal_find_last()
+        message = entry['MESSAGE']
+
+        # match the message to ensure we found the right message
+        out_txt = ast.literal_eval(message)['out_txt']
+
+        assert msgtext in out_txt
+        tlog_fields = ['TLOG_USER', 'TLOG_SESSION', 'TLOG_REC', 'TLOG_ID']
+        for field in tlog_fields:
+            value = entry[field]
+            assert value
+        check_recording(shell, msgtext)
+        shell.close()
+
+    def test_record_journal_setting_priority(self):
+        """
+        Write and validate a journal message with a
+        non-default priority
+        """
+        priority = 'err'
+        expected_priority_num = 3
+        msgtext = 'test_journal_priority'
+        command = f'tlog-rec -w journal --journal-priority={priority} ' \
+                  f'echo {msgtext}'
+
+        shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
+        shell.sendline(command)
+        # avoid race condition with reading from the journal
+        time.sleep(5)
+
+        entry = journal_find_last()
+        message = entry['MESSAGE']
+        priority = entry['PRIORITY']
+
+        # match the message to ensure we found the right message
+        out_txt = ast.literal_eval(message)['out_txt']
+
+        assert msgtext in out_txt
+        priority_entry = entry['PRIORITY']
+        assert priority_entry == expected_priority_num
+        check_recording(shell, msgtext)
+        shell.close()
+
     @pytest.mark.tier1
     def test_record_command_to_syslog(self):
         """
@@ -157,6 +212,40 @@ class TestTlogRec:
         shell.sendline('tlog-rec --writer=syslog {}'.format(reccmd))
         check_journal('test_record_to_syslog')
         check_recording(shell, 'test_record_to_syslog')
+        shell.close()
+
+    def test_record_syslog_setting_priority_facility(self):
+        """
+        Write and validate a journal message with a
+        non-default priority
+        """
+        priority = 'err'
+        facility = 'auth'
+        expected_priority_num = 3
+        expected_facility_num = 4
+        msgtext = 'test_syslog_priority_facility'
+        command = f'tlog-rec -w syslog --syslog-priority={priority} ' \
+                  f'--syslog-facility={facility} echo {msgtext}'
+
+        shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
+        print(command)
+        shell.sendline(command)
+        # avoid race condition with reading from the journal
+        time.sleep(5)
+
+        entry = journal_find_last()
+        message = entry['MESSAGE']
+
+        # match the message to ensure we found the right message
+        out_txt = ast.literal_eval(message)['out_txt']
+
+        priority_entry = entry['PRIORITY']
+        facility_entry = entry['SYSLOG_FACILITY']
+
+        assert msgtext in out_txt
+        assert priority_entry == expected_priority_num
+        assert facility_entry == expected_facility_num
+        check_recording(shell, msgtext)
         shell.close()
 
     def test_record_interactive_session(self):
