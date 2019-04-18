@@ -74,7 +74,7 @@ tlog-play.conf.5: tlog-play.conf.5.m4 $(TLOG_PLAY_CONF_DEPS)
 	   $< > $@ || \
 	{ rm $@ && false; }
 
-dist_man_MANS = \
+nodist_man_MANS = \
     tlog-play.8             \
     tlog-play.conf.5        \
     tlog-rec.8              \
