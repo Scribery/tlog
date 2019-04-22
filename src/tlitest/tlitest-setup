@@ -29,6 +29,7 @@ done
 
 USERS="
 tlitestlocaluser1
+tlitestlocaluser2
 tlitestlocaladmin1
 "
 USERSFILE="/tmp/tlitest-setup_users_found"
@@ -54,3 +55,4 @@ echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > \
 
 usermod tlitestlocaladmin1 -aG wheel,systemd-journal
 usermod tlitestlocaluser1 -aG systemd-journal
+usermod tlitestlocaluser2 -s /usr/bin/tlog-rec-session
