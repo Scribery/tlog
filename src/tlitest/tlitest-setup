@@ -1,6 +1,7 @@
 #!/bin/bash
 
 PKGS="
+systemd-journal-remote
 glibc-all-langpacks
 python3-pytest
 python3-pexpect
