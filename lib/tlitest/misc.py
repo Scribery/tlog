@@ -136,6 +136,7 @@ def mkrecording(shell, filename=None, sleep=3):
         opts = '-w journal'
     else:
         opts = '-o {}'.format(filename)
+    shell.sendline('stty speed 50')
     shell.sendline('tlog-rec {}'.format(opts))
     shell.sendline('id')
     shell.expect('uid')

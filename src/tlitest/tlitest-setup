@@ -47,4 +47,9 @@ done
 echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > \
     /etc/sudoers.d/01_wheel_nopass_tlitest
 
-usermod tlitestlocaladmin1 -aG wheel
+# tlitestlocaluser1 and tlitestlocaladmin1 are required to be in the
+# systemd-journal group in RHEL8 in order to be able to read journal
+# for play tests
+
+usermod tlitestlocaladmin1 -aG wheel,systemd-journal
+usermod tlitestlocaluser1 -aG systemd-journal
