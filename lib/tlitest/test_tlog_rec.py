@@ -10,6 +10,7 @@ import pexpect
 
 import pytest
 
+from journal import find_journal_entry_with_match
 from misc import check_recording, ssh_pexpect, mklogfile, \
                  check_outfile, check_journal, mkcfgfile, \
                  journal_find_last
@@ -41,10 +42,11 @@ class TestTlogRec:
         """
         Check tlog-rec preserves output when recording to journal
         """
+        match_filter = '_COMM=tlog-rec'
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
-        reccmd = 'echo test_record_to_journal'
-        shell.sendline('tlog-rec -w journal {}'.format(reccmd))
-        check_journal('test_record_to_journal')
+        reccmd = 'test_record_to_journal'
+        shell.sendline('tlog-rec -w journal echo {}'.format(reccmd))
+        find_journal_entry_with_match(reccmd, match_filter, 10)
         check_recording(shell, 'test_record_to_journal')
         shell.close()
 
@@ -53,10 +55,11 @@ class TestTlogRec:
         """
         Check tlog-rec preserves output when recording to syslog
         """
+        match_filter = '_COMM=tlog-rec'
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
-        reccmd = 'echo test_record_to_syslog'
-        shell.sendline('tlog-rec --writer=syslog {}'.format(reccmd))
-        check_journal('test_record_to_syslog')
+        reccmd = 'test_record_to_syslog'
+        shell.sendline('tlog-rec --writer=syslog echo {}'.format(reccmd))
+        find_journal_entry_with_match(reccmd, match_filter, 10)
         check_recording(shell, 'test_record_to_syslog')
         shell.close()
 
