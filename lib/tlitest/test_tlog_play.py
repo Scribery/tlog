@@ -8,6 +8,8 @@ from tempfile import mkdtemp
 
 import pexpect
 
+import pytest
+
 from misc import ssh_pexpect, journal_find_last, \
                  mklogfile, mkrecording
 
@@ -19,6 +21,7 @@ class TestTlogPlay:
     os.chmod(tempdir, stat.S_IRWXU + stat.S_IRWXG + stat.S_IRWXO +
              stat.S_ISUID + stat.S_ISGID + stat.S_ISVTX)
 
+    @pytest.mark.tier1
     def test_play_from_file(self):
         """
         Check tlog-play can playback session from file
@@ -29,6 +32,7 @@ class TestTlogPlay:
         shell.sendline('tlog-play -i {}'.format(logfile))
         shell.expect('KNOWN BUGS')
 
+    @pytest.mark.tier1
     def test_play_from_journal(self):
         """
         Check tlog-play can playback session from journal
