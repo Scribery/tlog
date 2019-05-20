@@ -3,6 +3,8 @@ import os
 
 import pexpect
 
+import pytest
+
 
 class TestTlogPlayRemote:
     """ Test tlog-play for remotely recorded journal sessions """
@@ -41,6 +43,7 @@ class TestTlogPlayRemote:
         open(imported, 'a').close()
         shell.close()
 
+    @pytest.mark.tier1
     def test_play_remote_good_session(self):
         """
         Check tlog-play can playback remote session imported to

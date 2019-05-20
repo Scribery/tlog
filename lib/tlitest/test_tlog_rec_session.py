@@ -5,6 +5,8 @@ import time
 import inspect
 from tempfile import mkdtemp
 
+import pytest
+
 from misc import check_recording, mklogfile, mkcfgfile, \
                  ssh_pexpect, check_recording_missing, copyfile
 from config import TlogRecConfig, TlogRecSessionConfig
@@ -19,6 +21,7 @@ class TestTlogRecSession:
     os.chmod(tempdir, stat.S_IRWXU + stat.S_IRWXG + stat.S_IRWXO +
              stat.S_ISUID + stat.S_ISGID + stat.S_ISVTX)
 
+    @pytest.mark.tier1
     def test_session_record_to_file(self):
         """
         Check tlog-rec-session preserves session in a file
@@ -34,6 +37,7 @@ class TestTlogRecSession:
         check_recording(shell, myname, logfile)
         shell.close()
 
+    @pytest.mark.tier1
     def test_session_record_to_journal(self):
         """
         Check tlog-rec-session preserves session in journal
@@ -47,6 +51,7 @@ class TestTlogRecSession:
         check_recording(shell, myname)
         shell.close()
 
+    @pytest.mark.tier1
     def test_session_record_to_syslog(self):
         """
         Check tlog-rec-session preserves session via syslog
