@@ -19,9 +19,14 @@ def journal_find_last():
     while True:
         entry = j.get_previous()
 
-        if '_COMM' not in entry:
+        if '_COMM' in entry:
+            matchfield = '_COMM'
+        elif 'SYSLOG_IDENTIFIER' in entry:
+            matchfield = 'SYSLOG_IDENTIFIER'
+        else:
             continue
-        elif 'tlog-rec' in entry['_COMM']:
+
+        if 'tlog' in entry[matchfield]:
             return entry
         elif not entry:
             raise ValueError('Did not find TLOG_REC entry in journal')

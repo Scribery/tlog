@@ -10,7 +10,6 @@ import pexpect
 
 import pytest
 
-from journal import find_journal_entry_with_match
 from misc import check_recording, ssh_pexpect, mklogfile, \
                  check_outfile, check_journal, mkcfgfile, \
                  journal_find_last
@@ -46,8 +45,8 @@ class TestTlogRec:
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
         reccmd = 'test_record_to_journal'
         shell.sendline('tlog-rec -w journal echo {}'.format(reccmd))
-        find_journal_entry_with_match(reccmd, match_filter, 10)
-        check_recording(shell, 'test_record_to_journal')
+        check_journal(reccmd)
+        check_recording(shell, reccmd)
         shell.close()
 
     @pytest.mark.tier1
@@ -59,8 +58,8 @@ class TestTlogRec:
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
         reccmd = 'test_record_to_syslog'
         shell.sendline('tlog-rec --writer=syslog echo {}'.format(reccmd))
-        find_journal_entry_with_match(reccmd, match_filter, 10)
-        check_recording(shell, 'test_record_to_syslog')
+        check_journal(reccmd)
+        check_recording(shell, reccmd)
         shell.close()
 
     def test_record_interactive_session(self):
