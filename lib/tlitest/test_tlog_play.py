@@ -51,6 +51,32 @@ class TestTlogPlay:
         out = shell2.expect([pexpect.TIMEOUT, 'KNOWN BUGS'], timeout=10)
         assert out == 1
 
+    def test_play_output_file(self):
+        """
+        Ensure tlog-play will redirect output to file
+        """
+
+        outputfile = mklogfile(self.tempdir)
+        recordedtext = 'output_test'
+        shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
+        shell.sendline(f'tlog-rec -w journal echo {recordedtext}')
+        time.sleep(5)
+
+        entry = journal_find_last()
+        message = entry['MESSAGE']
+        rec = ast.literal_eval(message)['rec']
+        tlog_rec = 'TLOG_REC={}'.format(rec)
+
+        playcmd = f'tlog-play -r journal -M {tlog_rec} > {outputfile}'
+        shell2 = ssh_pexpect(self.user1, 'Secret123', 'localhost')
+        shell2.sendline(playcmd)
+        time.sleep(5)
+
+        with open(outputfile) as f:
+            read_data = f.read()
+            assert recordedtext in read_data
+        f.closed
+
     def test_play_at_speed_x2(self):
         """
         Check tlog-play can playback session at 2x speed
