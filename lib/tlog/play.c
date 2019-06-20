@@ -652,29 +652,27 @@ tlog_play_init(struct tlog_errs **perrs,
 
     /* Get terminal attributes */
     rc = tcgetattr(STDOUT_FILENO, &tlog_play_orig_termios);
-    if (rc < 0) {
-        grc = TLOG_GRC_ERRNO;
-        TLOG_ERRS_RAISECS(grc, "Failed retrieving TTY attributes");
+    /* If stdout is a terminal */
+    if (rc >= 0) {
+        /*
+         * Switch the terminal to raw mode,
+         * but keep signal generation, if not persistent
+         */
+        raw_termios = tlog_play_orig_termios;
+        raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO |
+                                 (tlog_play_persist ? ISIG : 0));
+        raw_termios.c_iflag &= ~(BRKINT | ICRNL | IGNBRK | IGNCR | INLCR |
+                                 INPCK | ISTRIP | IXON | PARMRK);
+        raw_termios.c_oflag &= ~OPOST;
+        raw_termios.c_cc[VMIN] = 1;
+        raw_termios.c_cc[VTIME] = 0;
+        rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw_termios);
+        if (rc < 0) {
+            grc = TLOG_GRC_ERRNO;
+            TLOG_ERRS_RAISECS(grc, "Failed setting TTY attributes");
+        }
+        tlog_play_term_attrs_set = true;
     }
-
-    /*
-     * Switch the terminal to raw mode,
-     * but keep signal generation, if not persistent
-     */
-    raw_termios = tlog_play_orig_termios;
-    raw_termios.c_lflag &= ~(ICANON | IEXTEN | ECHO |
-                             (tlog_play_persist ? ISIG : 0));
-    raw_termios.c_iflag &= ~(BRKINT | ICRNL | IGNBRK | IGNCR | INLCR |
-                             INPCK | ISTRIP | IXON | PARMRK);
-    raw_termios.c_oflag &= ~OPOST;
-    raw_termios.c_cc[VMIN] = 1;
-    raw_termios.c_cc[VTIME] = 0;
-    rc = tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw_termios);
-    if (rc < 0) {
-        grc = TLOG_GRC_ERRNO;
-        TLOG_ERRS_RAISECS(grc, "Failed setting TTY attributes");
-    }
-    tlog_play_term_attrs_set = true;
 
     /*
      * Start the time
