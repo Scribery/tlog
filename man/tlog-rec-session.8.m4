@@ -53,8 +53,8 @@ required and should contain shell commands to execute, the following
 arguments can specify first the script name (CMD_NAME, i.e. argv[0]) and then
 its arguments (CMD_ARG).
 
-If no non-option arguments are encountered, then the shell is started
-interactively.
+If no non-option arguments are encountered, or the "-i" option is specified
+then the shell is started interactively.
 
 If tlog-M4_PROG_NAME() is invoked under a name beginning with a dash (i.e.
 argv[0] beginning with '-'), then the executed shell name is also prepended

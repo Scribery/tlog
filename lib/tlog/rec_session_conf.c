@@ -289,6 +289,8 @@ tlog_rec_session_conf_get_shell(struct tlog_errs **perrs,
     struct json_object *args;
     bool login;
     bool command;
+    bool interactive;
+    bool option;
     const char *path;
     char *name = NULL;
     char *buf = NULL;
@@ -333,6 +335,10 @@ tlog_rec_session_conf_get_shell(struct tlog_errs **perrs,
     command = json_object_object_get_ex(conf, "command", &obj) &&
               json_object_get_boolean(obj);
 
+    /* Read the interactive flag */
+    interactive = json_object_object_get_ex(conf, "interactive", &obj) &&
+                  json_object_get_boolean(obj);
+
     /* Read and check the positional arguments */
     if (!json_object_object_get_ex(conf, "args", &args)) {
         grc = TLOG_RC_FAILURE;
@@ -344,7 +350,9 @@ tlog_rec_session_conf_get_shell(struct tlog_errs **perrs,
     }
 
     /* Create and fill argv list */
-    argv = calloc(1 + (command ? 1 : 0) + json_object_array_length(args) + 1,
+    option = interactive || command;
+
+    argv = calloc(1 + (option ? 1 : 0) + json_object_array_length(args) + 1,
                   sizeof(*argv));
     if (argv == NULL) {
         grc = TLOG_GRC_ERRNO;
@@ -353,8 +361,8 @@ tlog_rec_session_conf_get_shell(struct tlog_errs **perrs,
     argi = 0;
     argv[argi++] = name;
     name = NULL;
-    if (command) {
-        arg = strdup("-c");
+    if (option) {
+        arg = strdup(command ? "-c" : "-i");
         if (arg == NULL) {
             grc = TLOG_GRC_ERRNO;
             TLOG_ERRS_RAISECF(grc,
