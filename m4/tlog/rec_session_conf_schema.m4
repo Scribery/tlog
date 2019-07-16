@@ -38,6 +38,12 @@ M4_PARAM(`', `login', `name-',
                    `This is done by prepending argv[0] of the shell',
                    `with a dash character.')')m4_dnl
 m4_dnl
+M4_PARAM(`', `interactive', `name-',
+         `M4_TYPE_BOOL()', false,
+         `i', `', `Make the shell an interactive shell',
+         `If specified, ', `If true ',
+         `M4_LINES(`tlog-rec-session passes the -i option to the shell.')')m4_dnl
+m4_dnl
 M4_PARAM(`', `command', `opts',
          `M4_TYPE_BOOL()', false,
          `c', `', `Execute shell commands',
