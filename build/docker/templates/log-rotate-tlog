@@ -1,0 +1,7 @@
+/var/log/tlog.log {
+    rotate 7
+    weekly
+    compress
+    missingok
+}
+    
