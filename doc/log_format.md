@@ -47,10 +47,11 @@ starts with one for the first message in the recording and is incremented for
 each new message. The `pos` value is the message's temporal position from the
 start of recording, in milliseconds.
 
-The `in_txt`/`out_txt` properties store input and output text respectively.
-Any byte sequences which don't constitute a valid character are represented by
-[Unicode replacement characters][replacement_character] in those strings and
-are instead stored in `in_bin`/`out_bin` byte arrays.
+The `in_txt`/`out_txt` properties are optional, storing input and output
+text respectively. These property values default to an empty text string if
+absent. Any byte sequences which don't constitute a valid character are
+represented by [Unicode replacement characters][replacement_character] in
+those strings and are instead stored in `in_bin`/`out_bin` byte arrays.
 
 The `timing` value describes how much input and output was done and how
 terminal window size changed at which time offset since the time stored in
