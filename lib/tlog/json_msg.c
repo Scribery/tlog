@@ -164,17 +164,27 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
     GET_FIELD(timing, string);
     msg->timing_ptr = json_object_get_string(o);
 
-    GET_FIELD(in_txt, string);
-    msg->in_txt_ptr = json_object_get_string(o);
-    msg->in_txt_len = (size_t)json_object_get_string_len(o);
+    GET_OPTIONAL_FIELD(in_txt, string);
+    if (o == NULL) {
+        msg->in_txt_ptr = "";
+        msg->in_txt_len = 0;
+    } else {
+        msg->in_txt_ptr = json_object_get_string(o);
+        msg->in_txt_len = (size_t)json_object_get_string_len(o);
+    }
 
     GET_FIELD(in_bin, array);
     msg->in_bin_obj = o;
     msg->in_bin_pos = 0;
 
-    GET_FIELD(out_txt, string);
-    msg->out_txt_ptr = json_object_get_string(o);
-    msg->out_txt_len = (size_t)json_object_get_string_len(o);
+    GET_OPTIONAL_FIELD(out_txt, string);
+    if (o == NULL) {
+        msg->out_txt_ptr = "";
+        msg->out_txt_len = 0;
+    } else {
+        msg->out_txt_ptr = json_object_get_string(o);
+        msg->out_txt_len = (size_t)json_object_get_string_len(o);
+    }
 
     GET_FIELD(out_bin, array);
     msg->out_bin_obj = o;
