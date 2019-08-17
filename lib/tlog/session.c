@@ -35,12 +35,13 @@ tlog_session_get_id(unsigned int *pid)
 {  
     assert(pid != NULL);
 
-    *pid = (unsigned int) getsid(0);
+    pid_t session = getsid(0);
     
-    if (*pid == -1) {
+    if (session == -1) {
         return TLOG_RC_FAILURE;
     }
     else {
+	*pid = (unsigned int) session;
         return TLOG_RC_OK;
     }
 }
