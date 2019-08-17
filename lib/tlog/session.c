@@ -28,31 +28,21 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 tlog_grc
 tlog_session_get_id(unsigned int *pid)
-{
-    FILE *file;
-    int orig_errno;
-    int rc;
-
+{  
     assert(pid != NULL);
 
-    file = fopen("/proc/self/sessionid", "r");
-    if (file == NULL) {
+    *pid = (unsigned int) getsid(0);
+    
+    if (*pid == -1) {
         return TLOG_RC_FAILURE;
     }
-    rc = fscanf(file, "%u", pid);
-    orig_errno = errno;
-    fclose(file);
-    if (rc == 1) {
+    else {
         return TLOG_RC_OK;
     }
-    if (rc == 0) {
-        return TLOG_GRC_FROM(errno, EINVAL);
-    }
-
-    return TLOG_GRC_FROM(errno, orig_errno);
 }
 
 /**
