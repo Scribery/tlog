@@ -7,6 +7,12 @@
 %bcond_without systemd
 %endif
 
+%if %{_vendor} == "debbuild"
+# Set values to make debian builds work well
+%global _buildshell /bin/bash
+%global _lib lib/%(%{__dpkg_architecture} -qDEB_HOST_MULTIARCH)
+%endif
+
 # Compatibility macros
 %{!?_tmpfilesdir:%global _tmpfilesdir %{_prefix}/lib/tmpfiles.d}
 %{!?make_build:%global make_build %{__make} %{?_smp_mflags}}
@@ -15,8 +21,17 @@ Name:           tlog
 Version:        6
 Release:        1%{?dist}
 Summary:        Terminal I/O logger
+
+%if %{_vendor} == "debbuild"
+# Required for Debian
+Packager:       Justin Stephenson <jstephen@redhat.com>
+Group:          admin
+License:        GPL-2.0+
+%else
 Group:          Applications/System
 License:        GPLv2+
+%endif
+
 URL:            https://github.com/Scribery/%{name}
 Source:         %{url}/releases/download/v%{version}/%{name}-%{version}.tar.gz
 
@@ -27,12 +42,27 @@ BuildRequires:  m4
 BuildRequires:  gcc
 BuildRequires:  make
 
+%if %{_vendor} == "debbuild"
+BuildRequires:  libjson-c-dev
+BuildRequires:  libcurl4-gnutls-dev
+
+%if %{with systemd}
+BuildRequires:  libsystemd-dev
+# Expanded form of systemd_requires macro
+Requires:         systemd-sysv
+Requires(preun):  systemd
+Requires(post):   systemd
+Requires(postun): systemd
+%endif
+
+%else
 BuildRequires:  pkgconfig(json-c)
 BuildRequires:  pkgconfig(libcurl)
 
 %if %{with systemd}
 BuildRequires:  pkgconfig(libsystemd)
 %{?systemd_requires}
+%endif
 %endif
 
 %description
@@ -106,6 +136,10 @@ getent passwd %{name} >/dev/null ||
 %if 0%{?el7} || 0%{?suse_version} >= 1315
 # For RHEL7 and SUSE Linux distributions, creation doesn't happen automatically
 %tmpfiles_create %{name}.conf
+%endif
+%if 0%{?ubuntu} || 0%{?debian}
+# For Debian/Ubuntu, creation doesn't happen automatically
+systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 %endif
 
 %postun
