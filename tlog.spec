@@ -1,28 +1,39 @@
-Name:       tlog
-Version:    6
-Release:    1%{?dist}
-Summary:    Terminal I/O logger
-Group:      Applications/System
+%global _hardened_build 1
 
-License:    GPLv2+
-URL:        https://github.com/Scribery/%{name}
-Source:     https://github.com/Scribery/%{name}/releases/download/v%{version}/%{name}-%{version}.tar.gz
+%if 0%{?rhel} == 0 && 0%{?rhel} < 7
+# If it's RHEL6 and older
+%bcond_with systemd
+%else
+%bcond_without systemd
+%endif
+
+# Compatibility macros
+%{!?_tmpfilesdir:%global _tmpfilesdir %{_prefix}/lib/tmpfiles.d}
+%{!?make_build:%global make_build %{__make} %{?_smp_mflags}}
+
+Name:           tlog
+Version:        6
+Release:        1%{?dist}
+Summary:        Terminal I/O logger
+Group:          Applications/System
+License:        GPLv2+
+URL:            https://github.com/Scribery/%{name}
+Source:         %{url}/releases/download/v%{version}/%{name}-%{version}.tar.gz
 
 BuildRequires:  autoconf
 BuildRequires:  automake
 BuildRequires:  libtool
-BuildRequires:  json-c-devel
-BuildRequires:  curl-devel
 BuildRequires:  m4
-# If it's not RHEL6 and older
-%if 0%{?rhel} == 0 || 0%{?rhel} >= 7
-BuildRequires:  systemd-devel
-BuildRequires:  systemd-units
-%endif
-Requires(post):     sed
-Requires(postun):   sed
+BuildRequires:  gcc
+BuildRequires:  make
 
-BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+BuildRequires:  pkgconfig(json-c)
+BuildRequires:  pkgconfig(libcurl)
+
+%if %{with systemd}
+BuildRequires:  pkgconfig(libsystemd)
+%{?systemd_requires}
+%endif
 
 %description
 Tlog is a terminal I/O recording program similar to "script", but used in
@@ -30,49 +41,31 @@ place of a user's shell, starting the recording and executing the real user's
 shell afterwards. The recorded I/O can then be forwarded to a logging server
 in JSON format.
 
-%global _hardened_build 1
-
 %prep
 %setup -q
 
 %build
-# If it's not RHEL6 and older
-%if 0%{?rhel} == 0 || 0%{?rhel} >= 7
-%configure --disable-rpath --disable-static
-# Else, if it's RHEL6 or older
-%else
-%configure --disable-rpath --disable-static --disable-journal
-%endif
-make %{?_smp_mflags}
+%configure --disable-rpath --disable-static %{!?with_systemd:--disable-journal}
+%make_build
 
 %check
-make %{?_smp_mflags} check
-
-%pre
-getent group %{name} >/dev/null ||
-    groupadd -r %{name}
-getent passwd %{name} >/dev/null ||
-    useradd -r -g %{name} -d %{_localstatedir}/run/%{name} -s /sbin/nologin \
-            -c "Tlog terminal I/O logger" %{name}
+%make_build check
 
 %install
-make install DESTDIR=%{buildroot}
+%make_install
 rm %{buildroot}/%{_libdir}/*.la
+
 # Remove development files as we're not doing a devel package yet
 rm %{buildroot}/%{_libdir}/*.so
 rm -r %{buildroot}/usr/include/%{name}
 
-# If it's not RHEL6 and older
-%if 0%{?rhel} == 0 || 0%{?rhel} >= 7
+%if %{with systemd}
     # Create tmpfiles.d configuration for the lock dir
     mkdir -p %{buildroot}%{_tmpfilesdir}
     {
         echo "# Type Path Mode UID GID Age Argument"
         echo "d /run/%{name} 0755 %{name} %{name}"
     } > %{buildroot}%{_tmpfilesdir}/%{name}.conf
-    # Create the lock dir
-    mkdir -p %{buildroot}/run
-    install -d -m 0755 %{buildroot}/run/%{name}
 # Else, if it's RHEL6 or older
 %else
     # Create the lock dir
@@ -81,7 +74,6 @@ rm -r %{buildroot}/usr/include/%{name}
 %endif
 
 %files
-%{!?_licensedir:%global license %doc}
 %license COPYING
 %doc %{_defaultdocdir}/%{name}
 %{_bindir}/%{name}-rec
@@ -91,12 +83,10 @@ rm -r %{buildroot}/usr/include/%{name}
 %{_datadir}/%{name}
 %{_mandir}/man5/*
 %{_mandir}/man8/*
-# If it's not RHEL6 and older
-%if 0%{?rhel} == 0 || 0%{?rhel} >= 7
-%config(noreplace) %{_tmpfilesdir}/%{name}.conf
-%dir %attr(-,%{name},%{name}) /run/%{name}
-# Else if it's RHEL6 or older
+%if %{with systemd}
+%{_tmpfilesdir}/%{name}.conf
 %else
+# If it's RHEL6 and older
 %dir %attr(-,%{name},%{name}) %{_localstatedir}/run/%{name}
 %endif
 %dir %{_sysconfdir}/%{name}
@@ -104,8 +94,19 @@ rm -r %{buildroot}/usr/include/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-rec-session.conf
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-play.conf
 
+%pre
+getent group %{name} >/dev/null ||
+    groupadd -r %{name}
+getent passwd %{name} >/dev/null ||
+    useradd -r -g %{name} -d %{_localstatedir}/run/%{name} -s /sbin/nologin \
+            -c "Tlog terminal I/O logger" %{name}
+
 %post
 /sbin/ldconfig
+%if 0%{?el7} || 0%{?suse_version} >= 1315
+# For RHEL7 and SUSE Linux distributions, creation doesn't happen automatically
+%tmpfiles_create %{name}.conf
+%endif
 
 %postun
 /sbin/ldconfig
