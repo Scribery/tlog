@@ -31,7 +31,7 @@ script:
 - $CLANG_SCAN_BUILD make
 - $CLANG_SCAN_BUILD make check
 - make distcheck
-- rpmbuild --define "_tmpfilesdir /usr/lib/tmpfiles.d" -ta --nodeps tlog-*.tar.gz
+- rpmbuild -ta --nodeps tlog-*.tar.gz
 - test "x$DISTCHECK" = xyes && make distcheck || true
 after_success:
 - test "x$COVERAGE" = xyes -a "x$CC" = "xgcc" && lcov --compat-libtool --directory ./lib/tlog/ --capture --output-file coverage.info && coveralls-lcov coverage.info
