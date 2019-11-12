@@ -18,7 +18,7 @@
 %{!?make_build:%global make_build %{__make} %{?_smp_mflags}}
 
 Name:           tlog
-Version:        6
+Version:        7
 Release:        1%{?dist}
 Summary:        Terminal I/O logger
 
@@ -146,6 +146,14 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 /sbin/ldconfig
 
 %changelog
+* Tue Nov 12 2019 Justin Stephenson <jstephen@redhat.com> - 7-1
+- Release v7
+- Allow tlog-play redirection of stdout
+- Add -i/--interactive option to tlog-rec-session. Allows login
+  programs to call tlog-rec-session more transparently.
+- Make in_txt/out_txt fields optional. This handles missing fields
+  when reading from ElasticSearch or other backends.
+
 * Wed Dec 5 2018 Kirill Glebov <kgliebov@redhat.com> - 6-1
 - Release v6
 
