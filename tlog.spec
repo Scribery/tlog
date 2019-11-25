@@ -2,9 +2,9 @@
 
 %if 0%{?rhel} == 0 && 0%{?rhel} < 7
 # If it's RHEL6 and older
-%bcond_with systemd
-%else
 %bcond_without systemd
+%else
+%bcond_with systemd
 %endif
 
 %if %{_vendor} == "debbuild"
@@ -104,6 +104,7 @@ rm -r %{buildroot}/usr/include/%{name}
 %endif
 
 %files
+%{!?_licensedir:%global license %doc}
 %license COPYING
 %doc %{_defaultdocdir}/%{name}
 %{_bindir}/%{name}-rec
