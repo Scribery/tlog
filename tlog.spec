@@ -75,7 +75,7 @@ in JSON format.
 %setup -q
 
 %build
-%configure --disable-rpath --disable-static %{!?with_systemd:--disable-journal}
+%configure --disable-rpath --disable-static %{!?with systemd:--disable-journal}
 %make_build
 
 %check
