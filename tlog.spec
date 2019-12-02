@@ -45,6 +45,8 @@ BuildRequires:  make
 %if %{_vendor} == "debbuild"
 BuildRequires:  libjson-c-dev
 BuildRequires:  libcurl4-gnutls-dev
+# Debian/Ubuntu doesn't automatically pull this in...
+BuildRequires:  pkg-config
 
 %if %{with systemd}
 BuildRequires:  libsystemd-dev
