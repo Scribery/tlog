@@ -1,10 +1,10 @@
 %global _hardened_build 1
 
-%if 0%{?rhel} == 0 && 0%{?rhel} < 7
+%if 0%{?rhel} && 0%{?rhel} < 7
 # If it's RHEL6 and older
-%bcond_without systemd
-%else
 %bcond_with systemd
+%else
+%bcond_without systemd
 %endif
 
 %if %{_vendor} == "debbuild"
@@ -75,7 +75,7 @@ in JSON format.
 %setup -q
 
 %build
-%configure --disable-rpath --disable-static %{!?with systemd:--disable-journal}
+%configure --disable-rpath --disable-static %{!?with_systemd:--disable-journal}
 %make_build
 
 %check
