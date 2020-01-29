@@ -8,8 +8,12 @@ actions:
   post-upstream-clone:
   - autoreconf -if
   - ./configure --prefix=/usr --sysconfdir=/etc
-create_tarball_command: ["make", "dist"]
-current_version_command: ["git", "describe", "--abbrev=0"]
+  get-current-version:
+  - git describe --abbrev=0
+  create-archive:
+  - make dist
+  # packit needs this to know that tarball path
+  - bash -c 'ls -1 ./tlog*.tar.gz'
 jobs:
 - job: copr_build
   trigger: pull_request
