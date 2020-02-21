@@ -52,6 +52,20 @@ tlog_tty_sink_is_valid(const struct tlog_sink *sink)
 }
 
 static void
+tlog_tty_sink_io_close(struct tlog_sink *sink, bool output)
+{
+    struct tlog_tty_sink *tty_sink =
+                                (struct tlog_tty_sink *)sink;
+
+    int *fd = output ? &tty_sink->out_fd : &tty_sink->in_fd;
+
+    if (*fd >= 0) {
+        close(*fd);
+        *fd = -1;
+    }
+}
+
+static void
 tlog_tty_sink_cleanup(struct tlog_sink *sink)
 {
     struct tlog_tty_sink *tty_sink =
@@ -124,4 +138,5 @@ const struct tlog_sink_type tlog_tty_sink_type = {
     .cleanup    = tlog_tty_sink_cleanup,
     .is_valid   = tlog_tty_sink_is_valid,
     .write      = tlog_tty_sink_write,
+    .io_close   = tlog_tty_sink_io_close,
 };

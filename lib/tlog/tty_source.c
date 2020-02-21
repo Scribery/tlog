@@ -178,6 +178,26 @@ tlog_tty_source_loc_fmt(const struct tlog_source *source, size_t loc)
 }
 
 /**
+ * Return true if any TTY source FDs are active, otherwise false
+ *
+ * @param fds       FD list pointer.
+ *
+ * @return True if any TTY source FDs are active, false if all FDs are inactive.
+ *
+ */
+static bool
+tlog_tty_source_fds_active(struct pollfd *fds)
+{
+    for (int i = 0; i < TLOG_TTY_SOURCE_FD_IDX_NUM; i++) {
+        if (fds[i].fd >= 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
  * Call poll(2) if at least one FD in the poll FD list is "active"
  * (i.e. non-negative), and poll(2) will be able to return an event.
  *
@@ -243,6 +263,12 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
                 goto success;
             }
         }
+    } else {
+        /* If all FDs are closed and win_fd is invalid, return Void packet
+         * to indicate no more data from source */
+        if (!tlog_tty_source_fds_active(tty_source->fd_list)) {
+            goto success;
+        }
     }
 
     /* Wait for I/O until interrupted by SIGWINCH or other signal */
@@ -264,20 +290,24 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
         if (tty_source->fd_list[tty_source->fd_idx].revents &
                 (POLLIN | POLLHUP | POLLERR)) {
             ssize_t rc;
+            bool output;
+
+            output = tty_source->fd_idx == TLOG_TTY_SOURCE_FD_IDX_OUT;
 
             rc = read(tty_source->fd_list[tty_source->fd_idx].fd,
                       tty_source->io_buf, tty_source->io_size);
 
+            if (clock_gettime(tty_source->clock_id, &ts) < 0) {
+                return TLOG_GRC_ERRNO;
+            }
+
             if (rc < 0) {
                 return TLOG_GRC_ERRNO;
             } else if (rc > 0) {
-                if (clock_gettime(tty_source->clock_id, &ts) < 0) {
-                    return TLOG_GRC_ERRNO;
-                }
-                tlog_pkt_init_io(pkt, &ts,
-                                 tty_source->fd_idx ==
-                                    TLOG_TTY_SOURCE_FD_IDX_OUT,
-                                 tty_source->io_buf, false, rc);
+                tlog_pkt_init_io(pkt, &ts, output, tty_source->io_buf, false, rc);
+            } else if (rc == 0) {
+                tty_source->fd_list[tty_source->fd_idx].fd = -1;
+                tlog_pkt_init_eof(pkt, &ts, output);
             }
             goto success;
         }

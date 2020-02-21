@@ -66,6 +66,21 @@ tlog_pkt_init_window(struct tlog_pkt *pkt,
 }
 
 void
+tlog_pkt_init_eof(struct tlog_pkt *pkt,
+                  const struct timespec *timestamp,
+                  bool output)
+{
+    assert(pkt != NULL);
+    memset(pkt, 0, sizeof(*pkt));
+    pkt->timestamp = *timestamp;
+    pkt->type = TLOG_PKT_TYPE_IO;
+    pkt->data.io.output = output;
+    pkt->data.io.len = 0;
+    assert(tlog_pkt_is_valid(pkt));
+    assert(tlog_pkt_is_eof(pkt));
+}
+
+void
 tlog_pkt_init_io(struct tlog_pkt *pkt,
                  const struct timespec *timestamp,
                  bool output,
@@ -112,6 +127,13 @@ tlog_pkt_is_void(const struct tlog_pkt *pkt)
 {
     assert(tlog_pkt_is_valid(pkt));
     return pkt->type == TLOG_PKT_TYPE_VOID;
+}
+
+bool
+tlog_pkt_is_eof(const struct tlog_pkt *pkt)
+{
+    assert(tlog_pkt_is_valid(pkt));
+    return pkt->type == TLOG_PKT_TYPE_IO && pkt->data.io.len == 0;
 }
 
 bool

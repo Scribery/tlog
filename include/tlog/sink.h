@@ -106,6 +106,15 @@ extern tlog_grc tlog_sink_cut(struct tlog_sink *sink);
 extern tlog_grc tlog_sink_flush(struct tlog_sink *sink);
 
 /**
+ * Close I/O fd of a tty sink.
+ *
+ * @param sink   The sink to close an associated I/O file descriptor.
+ * @param output True if sink output will be closed, false if sink
+ *               input will be closed.
+ */
+extern void tlog_sink_io_close(struct tlog_sink *sink, bool output);
+
+/**
  * Destroy (cleanup and free) a log sink.
  *
  * @param sink  Pointer to the sink to destroy, can be NULL.

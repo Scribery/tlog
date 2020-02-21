@@ -66,12 +66,21 @@ static volatile sig_atomic_t tlog_rec_alarm_set;
 /* Number of ALRM signals caught */
 static volatile sig_atomic_t tlog_rec_alarm_caught;
 
+/* True if child stopped or terminated */
+static volatile sig_atomic_t tlog_rec_child_exited;
+
 static void
 tlog_rec_alarm_sighandler(int signum)
 {
     (void)signum;
     tlog_rec_alarm_set = false;
     tlog_rec_alarm_caught++;
+}
+
+static void
+tlog_rec_sigchld_handler()
+{
+    tlog_rec_child_exited = true;
 }
 
 /**
@@ -808,7 +817,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
     tlog_grc return_grc = TLOG_RC_OK;
-    tlog_grc grc;
+    tlog_grc grc = TLOG_RC_OK;
     size_t i, j;
     struct sigaction sa;
     bool log_pending = false;
@@ -821,6 +830,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
     tlog_rec_exit_signum = 0;
     tlog_rec_alarm_set = false;
     tlog_rec_alarm_caught = 0;
+    tlog_rec_child_exited = false;
 
     /* Setup signal handlers to terminate gracefully */
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
@@ -856,10 +866,28 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                           "Failed to set a SIGALRM signal action");
     }
 
+    /* Setup SIGCHLD signal handler */
+    sa.sa_handler = tlog_rec_sigchld_handler;
+    sigemptyset(&sa.sa_mask);
+    /* NOTE: no SA_RESTART on purpose */
+    sa.sa_flags = 0;
+    if(sigaction(SIGCHLD, &sa, NULL) == -1) {
+        grc = TLOG_GRC_ERRNO;
+        TLOG_ERRS_RAISECS(grc,
+                          "Failed to set a SIGCHLD signal action");
+    }
+
     /*
      * Transfer I/O and window changes
      */
     while (tlog_rec_exit_signum == 0) {
+        /* Expected exit conditions */
+        if (tlog_rec_child_exited) {
+            if (grc == TLOG_GRC_FROM(errno, EIO) || (tlog_pkt_is_eof(&pkt))) {
+                break;
+            }
+        }
+
         /* Handle latency limit */
         new_alarm_caught = tlog_rec_alarm_caught;
         if (new_alarm_caught != last_alarm_caught) {
@@ -925,9 +953,8 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                 tlog_errs_pushs(perrs, "Failed reading terminal data");
                 return_grc = grc;
             }
-            break;
-        } else if (tlog_pkt_is_void(&pkt)) {
-            break;
+        } else if (tlog_pkt_is_eof(&pkt)) {
+            tlog_sink_io_close(tty_sink, pkt.data.io.output);
         }
     }
 
@@ -978,6 +1005,7 @@ cleanup:
     }
     /* Restore signal handlers */
     signal(SIGALRM, SIG_DFL);
+    signal(SIGCHLD, SIG_DFL);
     for (i = 0; i < TLOG_ARRAY_SIZE(exit_sig); i++) {
         sigaction(exit_sig[i], NULL, &sa);
         if (sa.sa_handler != SIG_IGN) {

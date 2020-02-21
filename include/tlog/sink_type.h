@@ -95,6 +95,15 @@ typedef tlog_grc (*tlog_sink_type_cut_fn)(struct tlog_sink *sink);
 typedef tlog_grc (*tlog_sink_type_flush_fn)(struct tlog_sink *sink);
 
 /**
+ * IO Close function prototype.
+ *
+ * @param sink    The sink to close an associated I/O file descriptor.
+ * @param output  Indicates which sink file descriptor to close.
+ */
+typedef void (*tlog_sink_type_io_close_fn)(struct tlog_sink *sink,
+                                           bool output);
+
+/**
  * Cleanup function prototype.
  *
  * @param sink  The sink to cleanup.
@@ -109,6 +118,7 @@ struct tlog_sink_type {
     tlog_sink_type_write_fn     write;      /**< Writing function */
     tlog_sink_type_cut_fn       cut;        /**< I/O-cutting function */
     tlog_sink_type_flush_fn     flush;      /**< Flushing function */
+    tlog_sink_type_io_close_fn  io_close;   /**< I/O-close function */
     tlog_sink_type_cleanup_fn   cleanup;    /**< Cleanup function */
 };
 
