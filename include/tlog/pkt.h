@@ -158,6 +158,16 @@ extern void tlog_pkt_init_window(struct tlog_pkt *pkt,
                                  unsigned short int height);
 
 /**
+ * Initialize an I/O EOF packet.
+ *
+ * @param pkt       The packet to initialize.
+ * @param timestamp Timestamp of the EOF arrival.
+ * @param output    True if output originated I/O, false if input.
+ */
+extern void tlog_pkt_init_eof(struct tlog_pkt *pkt,
+                              const struct timespec *timestamp,
+                              bool output);
+/**
  * Initialize an I/O data packet.
  *
  * @param pkt       The packet to initialize.
@@ -191,6 +201,15 @@ extern bool tlog_pkt_is_valid(const struct tlog_pkt *pkt);
  * @return True if the packet is void, false otherwise.
  */
 extern bool tlog_pkt_is_void(const struct tlog_pkt *pkt);
+
+/**
+ * Check if a packet signalled an I/O EOF.
+ *
+ * @param pkt   The packet to check.
+ *
+ * @return True if the packet indicates EOF, false otherwise.
+ */
+extern bool tlog_pkt_is_eof(const struct tlog_pkt *pkt);
 
 /**
  * Check if contents of one packet is equal to the contents of another one.

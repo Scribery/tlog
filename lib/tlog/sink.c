@@ -136,6 +136,17 @@ tlog_sink_flush(struct tlog_sink *sink)
 }
 
 void
+tlog_sink_io_close(struct tlog_sink *sink,
+                bool output)
+{
+    assert(tlog_sink_is_valid(sink));
+
+    if (sink->type->io_close != NULL) {
+        sink->type->io_close(sink, output);
+    }
+}
+
+void
 tlog_sink_destroy(struct tlog_sink *sink)
 {
     assert(sink == NULL || tlog_sink_is_valid(sink));
