@@ -4,7 +4,7 @@ import stat
 import time
 import inspect
 from tempfile import mkdtemp
-
+from subprocess import Popen, PIPE, STDOUT
 import pytest
 
 from misc import check_recording, mklogfile, mkcfgfile, \
@@ -202,6 +202,17 @@ class TestTlogRecSession:
         shell.sendline('echo $SHELL')
         check_recording(shell, '/usr/bin/tcsh', logfile)
         shell.sendline('exit')
+
+    def test_session_record_pipe_io_stdin(self):
+        """
+        Pipe I/O through stdin
+        """
+        text_in_stdio = 'print("hello world")\n'
+        text_out = "hello world"
+        p = Popen(['sshpass', '-p', 'Secret123', 'ssh', 'tlitestlocaluser2@localhost', 'python3.7'],
+        stdout=PIPE, stdin=PIPE, stderr=PIPE, encoding='utf8')
+        stdout_data = p.communicate(input=text_in_stdio)[0]
+        assert text_out in stdout_data
 
     @classmethod
     def teardown_class(cls):
