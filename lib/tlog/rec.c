@@ -82,7 +82,7 @@ tlog_rec_alarm_sighandler(int signum)
  * @return Global return code.
  */
 static tlog_grc
-tlog_rec_get_fqdn(char **pfqdn)
+tlog_rec_get_fqdn(struct tlog_errs **perrs, char **pfqdn)
 {
     char hostname[HOST_NAME_MAX + 1];
     struct addrinfo hints = {.ai_family = AF_UNSPEC,
@@ -100,6 +100,12 @@ tlog_rec_get_fqdn(char **pfqdn)
     /* Resolve hostname to FQDN */
     gai_error = getaddrinfo(hostname, NULL, &hints, &info);
     if (gai_error != 0) {
+        if (gai_error == EAI_NONAME) {
+            *pfqdn = strdup("");
+            tlog_errs_pushs(perrs, "Host FQDN resolution failure");
+            tlog_errs_pushs(perrs, "Falling back to empty hostname value");
+            return TLOG_RC_OK;
+        }
         return TLOG_GRC_FROM(gai, gai_error);
     }
 
@@ -723,7 +729,7 @@ tlog_rec_create_log_sink(struct tlog_errs **perrs,
      * Create the sink
      */
     /* Get host FQDN */
-    grc = tlog_rec_get_fqdn(&fqdn);
+    grc = tlog_rec_get_fqdn(perrs, &fqdn);
     if (grc != TLOG_RC_OK) {
         TLOG_ERRS_RAISECS(grc, "Failed retrieving host FQDN");
     }
