@@ -82,6 +82,7 @@ tlog_play_create_es_json_reader(struct tlog_errs **perrs,
     tlog_grc grc;
     const char *baseurl;
     const char *query;
+    bool verbose;
     struct tlog_json_reader *reader = NULL;
     struct json_object *obj;
 
@@ -94,6 +95,10 @@ tlog_play_create_es_json_reader(struct tlog_errs **perrs,
         TLOG_ERRS_RAISES("Elasticsearch base URL is not specified");
     }
     baseurl = json_object_get_string(obj);
+
+    /* Check for the verbose flag */
+    verbose = json_object_object_get_ex(conf, "verbose", &obj) &&
+        json_object_get_boolean(obj);
 
     /* Check base URL validity */
     if (!tlog_es_json_reader_base_url_is_valid(baseurl)) {
@@ -109,7 +114,7 @@ tlog_play_create_es_json_reader(struct tlog_errs **perrs,
     query = json_object_get_string(obj);
 
     /* Create the reader */
-    grc = tlog_es_json_reader_create(&reader, baseurl, query, 10);
+    grc = tlog_es_json_reader_create(&reader, baseurl, query, 10, verbose);
     if (grc != TLOG_RC_OK) {
         TLOG_ERRS_RAISECS(grc, "Failed creating the Elasticsearch reader");
     }

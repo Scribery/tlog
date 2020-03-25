@@ -78,13 +78,14 @@ static inline tlog_grc
 tlog_es_json_reader_create(struct tlog_json_reader **preader,
                            const char *base_url,
                            const char *query,
-                           size_t size)
+                           size_t size,
+                           bool verbose)
 {
     assert(preader != NULL);
     assert(tlog_es_json_reader_base_url_is_valid(base_url));
     assert(query != NULL);
     return tlog_json_reader_create(preader, &tlog_es_json_reader_type,
-                                   base_url, query, size);
+                                   base_url, query, size, verbose);
 }
 
 #endif /* _TLOG_ES_JSON_READER_H */
