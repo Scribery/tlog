@@ -210,6 +210,7 @@ tlog_es_json_reader_init(struct tlog_json_reader *reader, va_list ap)
     const char *base_url = va_arg(ap, const char *);
     const char *query = va_arg(ap, const char *);
     size_t size = va_arg(ap, size_t);
+    bool verbose = (bool)va_arg(ap, int);
     CURLcode rc;
     tlog_grc grc;
 
@@ -229,6 +230,47 @@ tlog_es_json_reader_init(struct tlog_json_reader *reader, va_list ap)
         grc = TLOG_GRC_FROM(curl, rc);
         goto error;
     }
+
+    /* Allow kerberos (negotiate) authentication */
+    rc = curl_easy_setopt(es_json_reader->curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+    if (rc != CURLE_OK)
+        if (rc != CURLE_UNKNOWN_OPTION && rc != CURLE_NOT_BUILT_IN) {
+            grc = TLOG_GRC_FROM(curl, rc);
+            goto error;
+        }
+
+    /* Read credentials from .netrc if present */
+    rc = curl_easy_setopt(es_json_reader->curl, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
+    if (rc != CURLE_OK)
+        if (rc != CURLE_UNKNOWN_OPTION && rc != CURLE_NOT_BUILT_IN) {
+            grc = TLOG_GRC_FROM(curl, rc);
+            goto error;
+        }
+
+    /* On >= 400 responses fail immediately, before trying to parse JSON */
+    rc = curl_easy_setopt(es_json_reader->curl, CURLOPT_FAILONERROR, 1);
+    if (rc != CURLE_OK)
+        if (rc != CURLE_UNKNOWN_OPTION && rc != CURLE_NOT_BUILT_IN) {
+            grc = TLOG_GRC_FROM(curl, rc);
+            goto error;
+        }
+
+    /* Take credentials from TLOG_CURL_USERPWD environment variable if present */
+    if (getenv("TLOG_CURL_USERPWD")) {
+        rc = curl_easy_setopt(es_json_reader->curl, CURLOPT_USERPWD, getenv("TLOG_CURL_USERPWD"));
+        if (rc != CURLE_OK) {
+            grc = TLOG_GRC_FROM(curl, rc);
+            goto error;
+        }
+    }
+
+    /* Configure verbose logging on the curl client. */
+    rc = curl_easy_setopt(es_json_reader->curl, CURLOPT_VERBOSE, verbose);
+    if (rc != CURLE_OK)
+        if (rc != CURLE_UNKNOWN_OPTION && rc != CURLE_NOT_BUILT_IN) {
+            grc = TLOG_GRC_FROM(curl, rc);
+            goto error;
+        }
 
     /* Format URL prefix */
     grc = tlog_es_json_reader_format_url_pfx(&es_json_reader->url_pfx,

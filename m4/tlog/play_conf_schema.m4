@@ -92,6 +92,12 @@ M4_PARAM(`/es', `query', `file-',
          `STRING is the ', `The ',
          `M4_LINES(`query string to send to Elasticsearch')')m4_dnl
 m4_dnl
+M4_PARAM(`/es', `verbose', `file-',
+         `M4_TYPE_BOOL(false)', true,
+         `', `', `Enable verbose output on Elasticsearch HTTP client',
+         `If specified, ', `If true, ',
+         `M4_LINES(`enable verbose output on Elasticsearch HTTP client.')')m4_dnl
+m4_dnl
 m4_dnl
 m4_dnl
 m4_ifelse(M4_JOURNAL_ENABLED(), `1', `m4_dnl
