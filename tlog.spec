@@ -7,7 +7,7 @@
 %bcond_without systemd
 %endif
 
-%if %{_vendor} == "debbuild"
+%if "%{_vendor}" == "debbuild"
 # Set values to make debian builds work well
 %global _buildshell /bin/bash
 %global _lib lib/%(%{__dpkg_architecture} -qDEB_HOST_MULTIARCH)
@@ -22,7 +22,7 @@ Version:        7
 Release:        1%{?dist}
 Summary:        Terminal I/O logger
 
-%if %{_vendor} == "debbuild"
+%if "%{_vendor}" == "debbuild"
 # Required for Debian
 Packager:       Justin Stephenson <jstephen@redhat.com>
 Group:          admin
@@ -42,7 +42,7 @@ BuildRequires:  m4
 BuildRequires:  gcc
 BuildRequires:  make
 
-%if %{_vendor} == "debbuild"
+%if "%{_vendor}" == "debbuild"
 BuildRequires:  libjson-c-dev
 BuildRequires:  libcurl4-gnutls-dev
 # Debian/Ubuntu doesn't automatically pull this in...
