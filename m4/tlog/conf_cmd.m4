@@ -42,7 +42,7 @@ m4_define(
                     `
                         m4_print(
                             `        OPT',
-                            m4_translit(m4_translit(`$1/$2', `/', `_'), `a-z', `A-Z'),
+                            m4_translit(`$1/$2', `-/a-z', `__A-Z'),
                             ` = ',
                             `m4_singlequote(`$6')')
                         m4_printl(`,')
@@ -72,7 +72,7 @@ m4_define(
                     `
                         m4_print(
                             `        OPT',
-                            m4_translit(m4_translit(`$1/$2', `/', `_'), `a-z', `A-Z'))
+                            m4_translit(`$1/$2', `-/a-z', `__A-Z'))
                         m4_ifelse(
                             M4_FIRST(),
                             `true',
@@ -175,7 +175,7 @@ m4_define(
                    `            .name = "m4_substr(m4_translit(`$1/$2', `/', `-'), 1)",')
                 m4_print(
                    `            .val = OPT',
-                   m4_translit(m4_translit(`$1/$2', `/', `_'), `a-z', `A-Z'))
+                   m4_translit(`$1/$2', `-/a-z', `__A-Z'))
                 m4_printl(
                    `,',
                    `            .has_arg = $4,',
@@ -473,7 +473,7 @@ m4_define(
             `
                 m4_print(
                    `        case OPT',
-                   m4_translit(m4_translit(`$1/$2', `/', `_'), `a-z', `A-Z'))
+                   m4_translit(`$1/$2', `-/a-z', `__A-Z'))
                 m4_printl(
                     `:')
                 m4_print(
