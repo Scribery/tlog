@@ -1126,6 +1126,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     unsigned int item_mask;
     int signal = 0;
     struct tlog_sink *log_sink = NULL;
+    bool update_utmp;
     struct tlog_tap tap = TLOG_TAP_VOID;
 
     assert(cmd_help != NULL);
@@ -1243,10 +1244,14 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
         fprintf(stderr, "%s", json_object_get_string(obj));
     }
 
+    /* Check if we will update utmp */
+    update_utmp = json_object_object_get_ex(conf, "update-utmp", &obj) &&
+        json_object_get_boolean(obj);
+
     /* Setup the tap */
     grc = tlog_tap_setup(perrs, &tap, euid, egid,
                          opts & TLOG_EXEC_OPT_MASK, path, argv,
-                         in_fd, out_fd, err_fd, clock_id);
+                         in_fd, out_fd, err_fd, clock_id, update_utmp);
     if (grc != TLOG_RC_OK) {
         TLOG_ERRS_RAISES("Failed setting up the I/O tap");
     }

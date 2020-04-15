@@ -58,4 +58,5 @@ echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > \
 
 usermod tlitestlocaladmin1 -aG wheel,systemd-journal
 usermod tlitestlocaluser1 -aG systemd-journal
+usermod tlitestlocaluser2 -aG utmp
 usermod tlitestlocaluser2 -s /usr/bin/tlog-rec-session
