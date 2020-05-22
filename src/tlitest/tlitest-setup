@@ -3,6 +3,7 @@
 PKGS="
 systemd-journal-remote
 glibc-all-langpacks
+python3
 python3-pytest
 python3-pexpect
 python3-systemd
@@ -17,6 +18,7 @@ if [ -f "$PKGSFILE" ]; then
 fi
 
 echo "Check and install packages to run tlog integration tests"
+dnf config-manager --enable epel
 for P in $PKGS; do
     rpm -q "$P" > /dev/null
     if [ $? -ne 0 ]; then
