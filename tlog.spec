@@ -18,7 +18,7 @@
 %{!?make_build:%global make_build %{__make} %{?_smp_mflags}}
 
 Name:           tlog
-Version:        7
+Version:        9
 Release:        1%{?dist}
 Summary:        Terminal I/O logger
 
@@ -149,6 +149,21 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 /sbin/ldconfig
 
 %changelog
+* Thu May 28 2020 Justin Stephenson <jstephen@redhat.com> - 9-1
+- Release v9
+
+* Tue May 26 2020 Justin Stephenson <jstephen@redhat.com> - 8-2
+- Minor test fixes.
+
+* Tue May 19 2020 Justin Stephenson <jstephen@redhat.com> - 8-1
+- Release v8.
+- Spec file fixes for EL6.
+- Spec file improvements for Debian/Ubuntu pkg-config.
+- tlog-play improve authentication options.
+- Handle piped in I/O from stdin and improve the main recording
+  transfer exit condition.
+- Use empty string on hostname resolution failure.
+
 * Tue Nov 12 2019 Justin Stephenson <jstephen@redhat.com> - 7-1
 - Release v7
 - Allow tlog-play redirection of stdout
