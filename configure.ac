@@ -59,7 +59,7 @@ AC_ARG_ENABLE(
 # Output features to preprocessor and compiler
 if test "$tlog_debug_enabled" = "yes"; then
     CPPFLAGS="$CPPFLAGS -UNDEBUG"
-    CFLAGS="$CFLAGS -Wall -Wextra -Werror -g -O0"
+    CFLAGS="$CFLAGS -Wall -Wextra -Werror -g -Og"
 fi
 
 # Check for libraries
