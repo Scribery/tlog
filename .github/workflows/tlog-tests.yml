@@ -33,6 +33,6 @@ jobs:
     - name: permission setup
       run: sudo chmod g+s /usr/bin/tlog-rec-session
     - name: permission setup
-      run: sudo chown tlog:tlog /var/run/tlog
+      run: sudo chown tlog:utmp /var/run/tlog
     - name: intg tests
       run: sudo src/tlitest/tlitest-run
