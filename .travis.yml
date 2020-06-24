@@ -18,6 +18,7 @@ addons:
             - libjson-c-dev
             - libcurl4-gnutls-dev
             - libsystemd-dev
+            - libutempter-dev
             - clang
             - lcov
             - rpm

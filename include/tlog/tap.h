@@ -32,6 +32,9 @@
 #include <termios.h>
 #include <unistd.h>
 #include <time.h>
+#ifdef HAVE_UTEMPTER
+#include <utempter.h>
+#endif
 
 /** I/O tap state */
 struct tlog_tap {

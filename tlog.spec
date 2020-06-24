@@ -45,6 +45,7 @@ BuildRequires:  make
 %if "%{_vendor}" == "debbuild"
 BuildRequires:  libjson-c-dev
 BuildRequires:  libcurl4-gnutls-dev
+BuildRequires:  libutempter-dev
 # Debian/Ubuntu doesn't automatically pull this in...
 BuildRequires:  pkg-config
 
@@ -60,6 +61,7 @@ Requires(postun): systemd
 %else
 BuildRequires:  pkgconfig(json-c)
 BuildRequires:  pkgconfig(libcurl)
+BuildRequires:  libutempter-devel
 
 %if %{with systemd}
 BuildRequires:  pkgconfig(libsystemd)
@@ -77,7 +79,7 @@ in JSON format.
 %setup -q
 
 %build
-%configure --disable-rpath --disable-static %{!?with_systemd:--disable-journal}
+%configure --disable-rpath --disable-static --enable-utempter %{!?with_systemd:--disable-journal}
 %make_build
 
 %check

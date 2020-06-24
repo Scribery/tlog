@@ -56,10 +56,30 @@ AC_ARG_ENABLE(
     AS_HELP_STRING([--disable-journal], [disable support for Systemd Journal]),
     [tlog_journal_enabled="$enableval"], [tlog_journal_enabled="yes"])
 
+AC_ARG_ENABLE(
+    utempter,
+    AS_HELP_STRING([--enable-utempter], [enable support for utempter]),
+    [tlog_utempter_enabled="$enableval"], [tlog_utempter_enabled="no"])
+
 # Output features to preprocessor and compiler
 if test "$tlog_debug_enabled" = "yes"; then
     CPPFLAGS="$CPPFLAGS -UNDEBUG"
     CFLAGS="$CFLAGS -Wall -Wextra -Werror -g -O0"
+fi
+
+if test "$tlog_utempter_enabled" = "yes"; then
+    AC_SEARCH_LIBS(
+       utempter_add_record,
+       utempter,
+       tlog_utempter_enabled=yes,
+       tlog_utempter_enabled=no
+    )
+    if test "$tlog_utempter_enabled" = "yes"; then
+        AC_DEFINE([HAVE_UTEMPTER], [1],
+                  [Define to 1 if utempter support is enabled])
+    else
+        AC_MSG_ERROR([libutempter not found])
+    fi
 fi
 
 # Check for libraries

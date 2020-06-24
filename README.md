@@ -32,10 +32,11 @@ and `tlog-rec-session`.
 Building
 --------
 
-Build dependencies are systemd, cURL, and json-c, which development packages
-are `systemd-devel`, `json-c-devel`, and `libcurl-devel` on RPM-based distros,
-and `pkg-config`, `libjson-c-dev`, `libsystemd-journal-dev`/`libsystemd-dev`
-and `libcurl-*-dev` on Debian-based distros.
+Build dependencies are systemd, cURL, json-c, and libutempter, which development
+packages are `systemd-devel`, `json-c-devel`, `libcurl-devel`, and
+`libutempter-devel` on RPM-based distros, and `pkg-config`, `libjson-c-dev`,
+`libsystemd-journal-dev`/`libsystemd-dev`, `libcurl-*-dev`, and `libutempter-dev`
+on Debian-based distros.
 
 To build from Git you'll need `autoconf`, `automake` and `libtool` packages.
 For creating RPM package `rpm-build` is also required.
@@ -43,6 +44,9 @@ For creating RPM package `rpm-build` is also required.
 If Systemd Journal support is not required, it can be disabled with
 configure's `--disable-journal` option, removing the systemd dependency as
 well.
+
+Updating the system utmp and wtmp files can be enabled with the
+`--enable-utempter` configure option, utilizing the libutempter library.
 
 If you'd like to build `tlog` from the Git source tree, you need to first
 generate the build system files:

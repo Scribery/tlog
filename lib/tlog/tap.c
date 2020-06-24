@@ -178,19 +178,19 @@ tlog_tap_setup(struct tlog_errs **perrs,
         tap.tty_fd = -1;
     }
 
-    /* Allocate privilege-locking semaphore */
+    /* Allocate privilege-escalation semaphore */
     sem = mmap(NULL, sizeof(*sem), PROT_READ | PROT_WRITE,
                MAP_SHARED | MAP_ANONYMOUS, 0, 0);
     if (sem == MAP_FAILED) {
         grc = TLOG_GRC_ERRNO;
         TLOG_ERRS_RAISECS(grc,
-                          "Failed mmapping privilege-locking semaphore");
+                          "Failed mapping privilege-escalation semaphore");
     }
-    /* Initialize privilege-locking semaphore */
+    /* Initialize privilege-escalation semaphore */
     if (sem_init(sem, 1, 0) < 0) {
         grc = TLOG_GRC_ERRNO;
         TLOG_ERRS_RAISECS(grc,
-                          "Failed creating privilege-locking semaphore");
+                          "Failed creating privilege-escalation semaphore");
     }
     sem_initialized = true;
 
@@ -221,6 +221,13 @@ tlog_tap_setup(struct tlog_errs **perrs,
                 grc = TLOG_GRC_ERRNO;
                 TLOG_ERRS_RAISECS(grc, "Failed duplicating PTY master FD");
             }
+
+#ifdef HAVE_UTEMPTER
+            if (utempter_add_record(master_fd, NULL) == 0) {
+		grc = TLOG_RC_FAILURE;
+		TLOG_ERRS_RAISES("Failed adding a utmp record");
+	    }
+#endif
         }
     } else {
         /* Fork a child connected via pipes */
@@ -235,11 +242,11 @@ tlog_tap_setup(struct tlog_errs **perrs,
 
     /* Execute the program to record in the child */
     if (tap.pid == 0) {
-        /* Wait for the parent to lock the privileges */
+        /* Wait for the parent to escalate the privileges */
         if (sem_wait(sem) < 0) {
             grc = TLOG_GRC_ERRNO;
             TLOG_ERRS_RAISECF(grc,"Failed waiting for "
-                              "parent to lock privileges");
+                              "parent to escalate privileges");
         }
 
         /* Execute the program to record */
@@ -249,23 +256,23 @@ tlog_tap_setup(struct tlog_errs **perrs,
         _exit(127);
     }
 
-    /* Lock the possibly-privileged GID permanently */
-    if (setresgid(egid, egid, egid) < 0) {
+    /* Escalate the possibly-privileged GID */
+    if (setegid(egid) < 0) {
         grc = TLOG_GRC_ERRNO;
-        TLOG_ERRS_RAISECF(grc, "Failed locking GID");
+        TLOG_ERRS_RAISECF(grc, "Failed setting EGID");
     }
 
-    /* Lock the possibly-privileged UID permanently */
-    if (setresuid(euid, euid, euid) < 0) {
+    /* Escalate the possibly-privileged UID */
+    if (seteuid(euid) < 0) {
         grc = TLOG_GRC_ERRNO;
-        TLOG_ERRS_RAISECF(grc, "Failed locking UID");
+        TLOG_ERRS_RAISECF(grc, "Failed setting EUID");
     }
 
-    /* Signal the child we locked our privileges */
+    /* Signal the child we escalated our privileges */
     if (sem_post(sem) < 0) {
         grc = TLOG_GRC_ERRNO;
         TLOG_ERRS_RAISECF(grc, "Failed signaling the child "
-                          "the privileges are locked");
+                          "the privileges are escalated");
     }
 
     /* Create the TTY source */
@@ -331,6 +338,14 @@ tlog_tap_teardown(struct tlog_errs **perrs,
     tap->source = NULL;
 
     if (tap->in_fd >= 0) {
+#ifdef HAVE_UTEMPTER
+	if (utempter_remove_record(tap->in_fd) == 0) {
+	    grc = TLOG_GRC_ERRNO;
+	    tlog_errs_pushc(perrs, grc);
+	    tlog_errs_pushs(perrs, "Failed removing utmp record");
+	    return grc;
+	}
+#endif
         close(tap->in_fd);
         tap->in_fd = -1;
     }
