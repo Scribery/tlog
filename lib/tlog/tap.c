@@ -32,133 +32,6 @@
 #include <time.h>
 #include <semaphore.h>
 #include <assert.h>
-#include <limits.h>
-#include <ctype.h>
-#include <string.h>
-#include <sys/types.h>
-#include <pwd.h>
-
-/**
- * Add an utmp entry for this session.
- *
- * @param tap   tlog_tap structure address.
- * @param path  The filename of the slave pty.
- * @param perrs Location for the error stack
- * @param euid  The EUID to use while updating utmp
- * @param egid  The EGID to use while updating utmp
- *
- * @return Global return code.
- */
-static tlog_grc
-tlog_tap_add_utmp_entry(struct tlog_tap *tap, char *path,
-                        struct tlog_errs **perrs,
-                        uid_t euid, gid_t egid)
-{
-    tlog_grc grc;
-    int ofs;
-    struct timeval tv;
-    char *ses_line;
-    struct utmpx ut;
-    struct utmpx *ut_ptr;
-
-    if ((ses_line = ttyname(tap->tty_fd)) == NULL) {
-        grc = TLOG_GRC_ERRNO;
-        TLOG_ERRS_RAISECS(grc, "Failed retrieving terminal name");
-    }
-
-    if (gettimeofday(&tv, NULL) < 0) {
-        grc = TLOG_RC_FAILURE;
-        TLOG_ERRS_RAISES("Failure obtaining the current time");
-    }
-
-    if ((tap->ut = calloc(sizeof(*tap->ut), 1)) == NULL) {
-        grc = TLOG_GRC_FROM(errno, ENOMEM);
-        goto cleanup;
-    }
-
-    /* Set basic utmp entry data */
-    memset(&ut, 0, sizeof(struct utmpx));
-    strncpy(ut.ut_user, getpwuid(getuid())->pw_name, sizeof(ut.ut_user));
-    ut.ut_type = USER_PROCESS;
-    ut.ut_pid = tap->pid;
-
-    /* Strip the leading "/dev/" to get the line name */
-    ofs = strncmp(path, TLOG_TAP_DEVPATH, TLOG_TAP_DEVSIZE) == 0 ? TLOG_TAP_DEVSIZE : 0;
-    strcpy(ut.ut_line, path + ofs);
-
-    /* Copy the trailing pty number to ut_id */
-    strcpy(ut.ut_id, path + strlen(TLOG_TAP_PTSPATH));
-
-    /* Set the session start time */
-    ut.ut_tv.tv_sec = tv.tv_sec;
-    ut.ut_tv.tv_usec = tv.tv_usec;
-
-    /* Find the current session utmp entry, if any, and copy the remaining
-     * data to the new entry */
-    ofs = strncmp(ses_line, TLOG_TAP_DEVPATH, TLOG_TAP_DEVSIZE) == 0 ? TLOG_TAP_DEVSIZE : 0;
-    ses_line += ofs;
-    while ((ut_ptr = getutxent()) != NULL &&
-            (ut_ptr->ut_type != USER_PROCESS || strncmp(ut_ptr->ut_line, ses_line, TLOG_TAP_UTMP_LINESIZE)))
-        ;
-    if (ut_ptr) {
-        memcpy(ut.ut_host, ut_ptr->ut_host, sizeof(ut_ptr->ut_host));
-        ut.ut_session = ut_ptr->ut_session;
-        memcpy(ut.ut_addr_v6, ut_ptr->ut_addr_v6, sizeof(ut_ptr->ut_addr_v6));
-    }
-
-    /* Add the new session entry */
-    setutxent();
-    TLOG_EVAL_WITH_EUID_EGID(euid, egid, ut_ptr = pututxline(&ut));
-    endutxent();
-
-    if (ut_ptr == NULL) {
-        free(tap->ut);
-        tap->ut = NULL;
-        grc = TLOG_GRC_ERRNO;
-        TLOG_ERRS_RAISECS(grc, "Failed writing utmp entry to file");
-    }
-
-    memcpy(tap->ut, &ut, sizeof(ut));
-    grc = TLOG_RC_OK;
-
-cleanup:
-
-    return grc;
-}
-
-/**
- * Remove the utmp entry for this session.
- *
- * @param tap       tlog_tap structure address.
- * @param wstatus   process status information.
- *
- * @return zero, or -1 in case of error with errno set.
- */
-static int
-tlog_tap_remove_utmp_entry(struct tlog_tap *tap, int wstatus)
-{
-    int res = 0;
-    struct utmpx ut;
-
-    if (tap->ut) {
-        memcpy(&ut, tap->ut, sizeof(ut));
-        free(tap->ut);
-        tap->ut = NULL;
-        ut.ut_type = DEAD_PROCESS;
-        memset(&ut.ut_user, 0, sizeof(ut.ut_user));
-        memset(ut.ut_host, 0, sizeof(ut.ut_host));
-        ut.ut_exit.e_termination = WIFSIGNALED(wstatus) ? WTERMSIG(wstatus) : 0;
-        ut.ut_exit.e_exit = WEXITSTATUS(wstatus);
-        ut.ut_tv.tv_sec = 0;
-        ut.ut_tv.tv_usec = 0;
-        setutxent();
-        if (pututxline(&ut) == NULL) {
-            res = -1;
-        }
-        endutxent();
-    }
-    return res;
-}
 
 /**
  * Fork a child connected via a pair of pipes.
@@ -273,8 +146,7 @@ tlog_tap_setup(struct tlog_errs **perrs,
                uid_t euid, gid_t egid,
                unsigned int opts, const char *path, char **argv,
                int in_fd, int out_fd, int err_fd,
-               clockid_t clock_id,
-               bool update_utmp)
+               clockid_t clock_id)
 {
     tlog_grc grc;
     struct tlog_tap tap = TLOG_TAP_VOID;
@@ -326,7 +198,6 @@ tlog_tap_setup(struct tlog_errs **perrs,
     if (tap.tty_fd >= 0) {
         struct winsize winsize;
         int master_fd;
-        char slave_path[PATH_MAX];
 
         /* Get terminal window size */
         if (ioctl(tap.tty_fd, TIOCGWINSZ, &winsize) < 0) {
@@ -335,7 +206,7 @@ tlog_tap_setup(struct tlog_errs **perrs,
         }
 
         /* Fork a child connected via a PTY */
-        tap.pid = forkpty(&master_fd, slave_path, &tap.termios_orig, &winsize);
+        tap.pid = forkpty(&master_fd, NULL, &tap.termios_orig, &winsize);
         if (tap.pid < 0) {
             grc = TLOG_GRC_ERRNO;
             TLOG_ERRS_RAISECS(grc,
@@ -349,15 +220,6 @@ tlog_tap_setup(struct tlog_errs **perrs,
             if (tap.out_fd < 0) {
                 grc = TLOG_GRC_ERRNO;
                 TLOG_ERRS_RAISECS(grc, "Failed duplicating PTY master FD");
-            }
-
-            /* Add the utmp entry */
-            if (update_utmp) {
-                grc = tlog_tap_add_utmp_entry(&tap, slave_path, perrs,
-                                              euid, egid);
-                if (grc != TLOG_RC_OK) {
-                    TLOG_ERRS_RAISES("Failed adding utmp entry");
-                }
             }
         }
     } else {
@@ -459,8 +321,7 @@ tlog_tap_teardown(struct tlog_errs **perrs,
                   struct tlog_tap *tap,
                   int *pstatus)
 {
-    tlog_grc grc = TLOG_RC_OK;
-    int wstatus = 0;
+    tlog_grc grc;
 
     assert(tap != NULL);
 
@@ -488,7 +349,7 @@ tlog_tap_teardown(struct tlog_errs **perrs,
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed restoring TTY attributes");
-            goto cleanup;
+            return grc;
         }
         tap->termios_set = false;
 
@@ -498,31 +359,24 @@ tlog_tap_teardown(struct tlog_errs **perrs,
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed writing newline to TTY");
-            goto cleanup;
+            return grc;
         }
     }
 
     /* Wait for the child, if any */
     if (tap->pid > 0) {
-        if (waitpid(tap->pid, &wstatus, 0) < 0) {
+        if (waitpid(tap->pid, pstatus, 0) < 0) {
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
             tlog_errs_pushs(perrs, "Failed waiting for the child");
-            goto cleanup;
+            return grc;
         }
         tap->pid = 0;
-        if (tlog_tap_remove_utmp_entry(tap, wstatus) < 0) {
-            grc = TLOG_GRC_ERRNO;
-            tlog_errs_pushc(perrs, grc);
-            tlog_errs_pushs(perrs, "Failed removing utmp entry");
-            goto cleanup;
+    } else {
+        if (pstatus != NULL) {
+            *pstatus = 0;
         }
     }
 
-cleanup:
-
-    if (pstatus != NULL) {
-        *pstatus = wstatus;
-    }
-    return grc;
+    return TLOG_RC_OK;
 }

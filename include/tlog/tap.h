@@ -32,25 +32,18 @@
 #include <termios.h>
 #include <unistd.h>
 #include <time.h>
-#include <utmpx.h>
-
-#define TLOG_TAP_UTMP_LINESIZE (sizeof(((struct utmpx *)0)->ut_line))
-#define TLOG_TAP_DEVPATH "/dev/"
-#define TLOG_TAP_PTSPATH TLOG_TAP_DEVPATH "pts/"
-#define TLOG_TAP_DEVSIZE (sizeof(TLOG_TAP_DEVPATH) - 1)
 
 /** I/O tap state */
 struct tlog_tap {
-    pid_t               pid;                    /**< Shell PID */
-    struct tlog_source *source;                 /**< TTY data source */
-    struct tlog_sink   *sink;                   /**< TTY data sink */
-    struct utmpx       *ut;                     /**< utmp entry */
-    int                 in_fd;                  /**< Shell input FD */
-    int                 out_fd;                 /**< Shell output FD */
-    int                 tty_fd;                 /**< Controlling terminal FD, or -1 */
-    struct termios      termios_orig;           /**< Original terminal attributes */
-    bool                termios_set;            /**< True if terminal attributes were
-                                                     changed from the original */
+    pid_t               pid;            /**< Shell PID */
+    struct tlog_source *source;         /**< TTY data source */
+    struct tlog_sink   *sink;           /**< TTY data sink */
+    int                 in_fd;          /**< Shell input FD */
+    int                 out_fd;         /**< Shell output FD */
+    int                 tty_fd;         /**< Controlling terminal FD, or -1 */
+    struct termios      termios_orig;   /**< Original terminal attributes */
+    bool                termios_set;    /**< True if terminal attributes were
+                                             changed from the original */
 };
 
 /** A void I/O tap state initializer */
@@ -58,7 +51,6 @@ struct tlog_tap {
     (struct tlog_tap) {      \
         .source = NULL, \
         .sink   = NULL, \
-        .ut     = NULL, \
         .in_fd  = -1,   \
         .out_fd = -1,   \
         .tty_fd = -1,   \
@@ -67,18 +59,17 @@ struct tlog_tap {
 /**
  * Setup I/O tap.
  *
- * @param perrs        Location for the error stack. Can be NULL.
- * @param ptap         Location for the tap state.
- * @param euid         The effective UID the program was started with.
- * @param egid         The effective GID the program was started with.
- * @param opts         Execution options: a bitmask of TLOG_EXEC_OPT_* bits.
- * @param path         Path to the recorded program to execute.
- * @param argv         ARGV array for the recorded program.
- * @param in_fd        Stdin to connect to, or -1 if none.
- * @param out_fd       Stdout to connect to, or -1 if none.
- * @param err_fd       Stderr to connect to, or -1 if none.
- * @param clock_id     Clock to use for timestamps.
- * @param update_utmp  Attempt updating utmp if true.
+ * @param perrs     Location for the error stack. Can be NULL.
+ * @param ptap      Location for the tap state.
+ * @param euid      The effective UID the program was started with.
+ * @param egid      The effective GID the program was started with.
+ * @param opts      Execution options: a bitmask of TLOG_EXEC_OPT_* bits.
+ * @param path      Path to the recorded program to execute.
+ * @param argv      ARGV array for the recorded program.
+ * @param in_fd     Stdin to connect to, or -1 if none.
+ * @param out_fd    Stdout to connect to, or -1 if none.
+ * @param err_fd    Stderr to connect to, or -1 if none.
+ * @param clock_id  Clock to use for timestamps.
  *
  * @return Global return code.
  */
@@ -88,8 +79,7 @@ extern tlog_grc tlog_tap_setup(struct tlog_errs **perrs,
                                unsigned int opts,
                                const char *path, char **argv,
                                int in_fd, int out_fd, int err_fd,
-                               clockid_t clock_id,
-                               bool update_utmp);
+                               clockid_t clock_id);
 
 /**
  * Teardown an I/O tap state.
