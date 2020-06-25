@@ -61,16 +61,6 @@ M4_PARAM(`', `notice', `file-env',
                    `recording and the user shell. Can be used to warn',
                    `the user that the session is recorded.')')m4_dnl
 m4_dnl
-M4_PARAM(`', `update-utmp', `name-file-env',
-          `M4_TYPE_BOOL(false)', true,
-          `u', `', `Enable/disable updating the system utmp file',
-          `If specified, ', `If true, ',
-          `M4_LINES(`tlog-rec-session attempts to set a USER_PROCESS utmp entry.',
-                    `The recorded user must have permission to update the utmp',
-                    `file, likely as a member of the utmp group. Alternatively',
-                    `tlog-rec-session may be installed belonging to the utmp',
-                    `group and with the setgit bit set.')')m4_dnl
-m4_dnl
 m4_dnl
 m4_dnl Include common schema, but limit its scope to environment
 m4_dnl

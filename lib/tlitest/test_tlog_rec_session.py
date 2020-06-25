@@ -214,21 +214,6 @@ class TestTlogRecSession:
         stdout_data = p.communicate(input=text_in_stdio)[0]
         assert text_out in stdout_data
 
-    def test_session_record_update_utmp(self):
-        """
-        Update_utmp functionality test
-        """
-        myname = inspect.stack()[0][3]
-        logfile = mklogfile(self.tempdir)
-        sessionclass = TlogRecSessionConfig(update_utmp=True,
-                                            writer="file",
-                                            file_writer_path=logfile)
-        sessionclass.generate_config(SYSTEM_TLOG_REC_SESSION_CONF)
-        shell = ssh_pexpect(self.user, 'Secret123', 'localhost')
-        shell.sendline('echo {}'.format(myname))
-        check_recording(shell, myname, logfile)
-        shell.close()
-
     @classmethod
     def teardown_class(cls):
         """ Copy original conf file back into place """
