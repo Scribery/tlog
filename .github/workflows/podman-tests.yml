@@ -1,0 +1,64 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  # Build and install rpm and run integration tests in Fedora container
+  fedora-build:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: fedora-img
+      CONTAINER: fedora-container
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Build the Docker image
+      run: sudo podman build . --file Dockerfile.fedora --tag ${IMAGE}
+    - name: Run the container
+      run: sudo podman run --privileged --security-opt seccomp=unconfined --detach -p 80:80 --name=${CONTAINER} ${IMAGE}
+    - name: Check the container is up
+      run: sudo podman ps
+    - name: Setup ./configure
+      run: sudo podman exec ${CONTAINER} autoreconf -if
+    - name: Configure
+      run: sudo podman exec ${CONTAINER} ./configure --disable-dependency-tracking --prefix=/usr --sysconfdir=/etc --localstatedir=/var
+    - name: Make dist
+      run: sudo podman exec ${CONTAINER} make dist
+    - name: Build and Install the RPM
+      run: sudo podman exec ${CONTAINER} sh -c 'rpmbuild -tb *tar.gz && dnf install -y ~/rpmbuild/RPMS/x86_64/tlog*'
+    - name: Integration tests setup
+      run: sudo podman exec -e CONTAINER_ENV=true ${CONTAINER} ./src/tlitest/tlitest-setup
+    - name: Run tests
+      # Hostnames test won't work in a container
+      run: sudo podman exec -t ${CONTAINER} ./src/tlitest/tlitest-run -k "not hostnames"
+
+  # Build with --enable-debug, make install and run integration tests in Fedora container
+  fedora-debug-build:
+    needs: fedora-build
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: fedora-img-debug
+      CONTAINER: fedora-container-debug
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      run: sudo podman build . --file Dockerfile.fedora --tag ${IMAGE}
+    - name: Run the container
+      run: sudo podman run --privileged --security-opt seccomp=unconfined --detach -p 80:80 --name=${CONTAINER} ${IMAGE}
+    - name: Check the container is up
+      run: sudo podman ps
+    - name: Setup ./configure
+      run: sudo podman exec ${CONTAINER} autoreconf -if
+    - name: Configure
+      run: sudo podman exec ${CONTAINER} ./configure --enable-debug --disable-dependency-tracking --enable-utempter --prefix=/usr --sysconfdir=/etc --localstatedir=/var
+    - name: Make install
+      run: sudo podman exec ${CONTAINER} make install
+    - name: Integration tests setup
+      run: sudo podman exec -e CONTAINER_ENV=true ${CONTAINER} ./src/tlitest/tlitest-setup
+    - name: Run tests
+      # Hostnames test won't work in a container
+      run: sudo podman exec -t ${CONTAINER} ./src/tlitest/tlitest-run -k "not hostnames"

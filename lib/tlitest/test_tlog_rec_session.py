@@ -209,7 +209,9 @@ class TestTlogRecSession:
         """
         text_in_stdio = 'print("hello world")\n'
         text_out = "hello world"
-        p = Popen(['sshpass', '-p', 'Secret123', 'ssh', 'tlitestlocaluser2@localhost', 'python3'],
+        p = Popen(['sshpass', '-p', 'Secret123', 'ssh', '-o',
+                   'StrictHostKeyChecking=no',
+                   'tlitestlocaluser2@localhost', 'python3'],
         stdout=PIPE, stdin=PIPE, stderr=PIPE, encoding='utf8')
         stdout_data = p.communicate(input=text_in_stdio)[0]
         assert text_out in stdout_data

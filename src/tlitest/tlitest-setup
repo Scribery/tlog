@@ -9,8 +9,10 @@ python3-pexpect
 python3-systemd
 tcsh
 sshpass
-tlog
 "
+
+[[ -z "${CONTAINER_ENV}" ]] && PKGS+="tlog"
+
 PKGSFILE="/tmp/tlitest-setup_packages_found"
 if [ -f "$PKGSFILE" ]; then
     echo "Backing up previous runs found packages file"
