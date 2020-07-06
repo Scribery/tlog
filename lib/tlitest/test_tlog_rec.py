@@ -99,21 +99,19 @@ class TestTlogRec:
         logfile = '{}-ru_RU'.format(mklogfile(self.tempdir))
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
         shell.sendline('tlog-rec -o {} /bin/bash'.format(logfile))
-        shell.sendline('export LANG=ru_RU.utf8')
-        shell.sendline('badcommand')
+        shell.sendline('LANG=ru_RU.utf8 locale -ck LC_TIME')
         shell.sendline('exit')
-        check_outfile('найдена', logfile)
-        check_recording(shell, 'найдена', logfile)
+        check_outfile('Январь', logfile)
+        check_recording(shell, 'Январь', logfile)
         shell.close()
 
         logfile = '{}-el_GR'.format(mklogfile(self.tempdir))
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
         shell.sendline('tlog-rec -o {} /bin/bash'.format(logfile))
-        shell.sendline('export LANG=el_GR.utf8')
-        shell.sendline('badcommand')
+        shell.sendline('LANG=el_GR.utf8 locale -ck LC_TIME')
         shell.sendline('exit')
-        check_outfile('βρέθηκε', logfile)
-        check_recording(shell, 'βρέθηκε', logfile)
+        check_outfile('Ιανουάριος', logfile)
+        check_recording(shell, 'Ιανουάριος', logfile)
         shell.close()
 
         logfile = '{}-en_US'.format(mklogfile(self.tempdir))
@@ -177,14 +175,13 @@ class TestTlogRec:
         shell.sendline('sleep 2')
         shell.sendline('echo test1223')
         shell.expect('test1223')
-        shell.sendline('sudo ls -ltr /var/log/audit')
-        shell.expect('audit.log')
+        shell.sendline('sudo cd /root')
         shell.sendline('exit')
         check_outfile('test1223', logfile)
         check_recording(shell, 'test1223', logfile)
         shell.close()
         shell = ssh_pexpect(self.admin1, 'Secret123', 'localhost')
-        check_recording(shell, 'audit.log', logfile)
+        check_recording(shell, 'cd /root', logfile)
         shell.close()
 
     # diable no-self-use in this function.  Otherwise pylint
@@ -217,8 +214,3 @@ class TestTlogRec:
             time.sleep(1)
         socket.sethostname(oldname)
         open('/etc/hostname', 'w').write(oldname)
-
-    @classmethod
-    def teardown_class(cls):
-        """ teardown for TestTlogRec """
-        socket.sethostname(cls.orig_hostname)

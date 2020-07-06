@@ -30,7 +30,7 @@ class TestTlogPlay:
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
         mkrecording(shell, logfile)
         shell.sendline('tlog-play -i {}'.format(logfile))
-        shell.expect('KNOWN BUGS')
+        shell.expect('localhost')
 
     @pytest.mark.tier1
     def test_play_from_journal(self):
@@ -48,7 +48,7 @@ class TestTlogPlay:
         cmd = 'tlog-play -r journal -M {}'.format(tlog_rec)
         shell2 = ssh_pexpect(self.user1, 'Secret123', 'localhost')
         shell2.sendline(cmd)
-        out = shell2.expect([pexpect.TIMEOUT, 'KNOWN BUGS'], timeout=10)
+        out = shell2.expect([pexpect.TIMEOUT, 'localhost'], timeout=10)
         assert out == 1
 
     def test_play_output_file(self):
@@ -90,7 +90,7 @@ class TestTlogPlay:
         time_start = time.time()
         opts = '-i {} --speed=2'.format(logfile)
         shell.sendline('tlog-play {}'.format(opts))
-        shell.expect('KNOWN BUGS')
+        shell.expect('localhost')
         time_stop = time.time()
         assert time_stop-time_start < 9
 
