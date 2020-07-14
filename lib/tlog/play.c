@@ -199,6 +199,9 @@ tlog_play_create_journal_json_reader(struct tlog_errs **perrs,
                                  i + 1, str_list[i]);
             }
         }
+    } else {
+        grc = TLOG_RC_FAILURE;
+        TLOG_ERRS_RAISES("Journal match list not specified");
     }
 
     /* Create the reader */
