@@ -75,6 +75,13 @@ M4_PARAM(`/file', `path', `file-',
          `FILE is the ', `The ',
          `M4_LINES(`path to the file the "file" reader should read logs from.')')m4_dnl
 m4_dnl
+M4_PARAM(`/file', `match', `file-',
+         `M4_TYPE_STRING()', false,
+         `m', `=STRING', `Playback explicit recording id specified in STRING',
+         `STRING is the ', `The ',
+         `M4_LINES(`recording id of the recording the "file" reader should seek to',
+                   `for playback.')')m4_dnl
+m4_dnl
 m4_dnl
 m4_dnl
 M4_CONTAINER(`', `/es', `Elasticsearch reader')m4_dnl

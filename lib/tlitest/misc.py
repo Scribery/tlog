@@ -5,6 +5,7 @@ import ast
 import stat
 import time
 import inspect
+import json
 from shutil import copyfile
 from systemd import journal
 
@@ -142,6 +143,20 @@ def mkrecording(shell, filename=None, sleep=3):
     else:
         opts = '-o {}'.format(filename)
     shell.sendline('tlog-rec {}'.format(opts))
+    time.sleep(sleep)
     shell.sendline('id')
     shell.sendline('cat /etc/hosts')
     shell.sendline('exit')
+
+def read_tlog_recording_file(recording_file):
+    """ Read tlog message(s) from file. JSON Objects are
+        decoded and returned into list of dictionaries.
+    """
+    messages = []
+
+    with open(recording_file) as f:
+        for line in f:
+            obj = json.loads(line)
+            messages.append(obj)
+
+    return messages

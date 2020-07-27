@@ -241,6 +241,7 @@ tlog_play_create_file_json_reader(struct tlog_errs **perrs,
 {
     tlog_grc grc;
     const char *str;
+    const char *match;
     int fd = -1;
     struct tlog_json_reader *reader = NULL;
     struct json_object *obj;
@@ -255,6 +256,10 @@ tlog_play_create_file_json_reader(struct tlog_errs **perrs,
     }
     str = json_object_get_string(obj);
 
+    /* Get the recording to match, if any */
+    json_object_object_get_ex(conf, "match", &obj);
+    match = json_object_get_string(obj);
+
     /* Open the file */
     fd = open(str, O_RDONLY);
     if (fd < 0) {
@@ -263,7 +268,7 @@ tlog_play_create_file_json_reader(struct tlog_errs **perrs,
     }
 
     /* Create the reader, letting it take over the FD */
-    grc = tlog_fd_json_reader_create(&reader, fd, true, 65536);
+    grc = tlog_fd_json_reader_create(&reader, fd, true, 65536, match);
     if (grc != TLOG_RC_OK) {
         TLOG_ERRS_RAISECS(grc, "Failed creating file reader");
     }

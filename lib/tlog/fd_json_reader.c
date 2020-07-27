@@ -36,6 +36,7 @@ struct tlog_fd_json_reader {
     int                     fd;         /**< Filed descriptor to read from */
     bool                    fd_owned;   /**< True if FD is owned */
     size_t                  line;       /**< Number of the line being read */
+    char                   *match;      /**< Recording ID to match, if provided */
     char                   *buf;        /**< Text buffer pointer */
     size_t                  size;       /**< Text buffer size */
     char                   *pos;        /**< Text buffer reading position */
@@ -53,6 +54,12 @@ tlog_fd_json_reader_cleanup(struct tlog_json_reader *reader)
     }
     free(fd_json_reader->buf);
     fd_json_reader->buf = NULL;
+
+    if (fd_json_reader->match != NULL) {
+        free(fd_json_reader->match);
+        fd_json_reader->match = NULL;
+    }
+
     if (fd_json_reader->fd_owned) {
         close(fd_json_reader->fd);
         fd_json_reader->fd_owned = false;
@@ -67,6 +74,7 @@ tlog_fd_json_reader_init(struct tlog_json_reader *reader, va_list ap)
     int fd = va_arg(ap, int);
     bool fd_owned = (bool)va_arg(ap, int);
     size_t size = va_arg(ap, size_t);
+    const char *match = va_arg(ap, const char *);
     tlog_grc grc;
 
     assert(fd >= 0);
@@ -84,6 +92,14 @@ tlog_fd_json_reader_init(struct tlog_json_reader *reader, va_list ap)
     if (fd_json_reader->tok == NULL) {
         grc = TLOG_GRC_ERRNO;
         goto error;
+    }
+
+    if (match != NULL) {
+        fd_json_reader->match = strdup(match);
+        if (fd_json_reader->match == NULL) {
+            grc = TLOG_GRC_ERRNO;
+            goto error;
+        }
     }
 
     fd_json_reader->fd = fd;
@@ -249,8 +265,34 @@ tlog_fd_json_reader_skip_line(struct tlog_fd_json_reader *fd_json_reader)
 }
 
 /**
+ * Determine if a JSON object "rec" field match is made.
+ *
+ * @param fd_json_reader     The fd reader to parse the match for.
+ * @param object             The JSON object to check against the "rec" field.
+ *
+ * @return False if a comparison match is inequal. True otherwise.
+ */
+static bool
+tlog_fd_json_reader_object_matches(struct tlog_fd_json_reader *fd_json_reader,
+                                   struct json_object *object)
+{
+    const char *rec;
+    json_object *obj = NULL;
+
+    if (json_object_object_get_ex(object, "rec", &obj)) {
+        rec = json_object_get_string(obj);
+
+        if (strcmp(fd_json_reader->match, rec) != 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
  * Read the fd reader text as (a part of) a JSON object line, don't consume
- * terminating newline.
+ * terminating newline. Skips any non-matches.
  *
  * @param fd_json_reader     The fd reader to parse the object for.
  * @param pobject       Location for the parsed object pointer.
@@ -293,6 +335,25 @@ tlog_fd_json_reader_read_json(struct tlog_fd_json_reader *fd_json_reader,
 
             /* If we finished parsing an object */
             if (object != NULL) {
+                /* Skip non-matching objects */
+                if (fd_json_reader->match != NULL) {
+                    if (!tlog_fd_json_reader_object_matches(fd_json_reader, object)) {
+                        json_object_put(object);
+                        grc = tlog_fd_json_reader_skip_line(fd_json_reader);
+                        if (grc != TLOG_RC_OK) {
+                            return grc;
+                        }
+
+                        grc = tlog_fd_json_reader_skip_whitespace(fd_json_reader);
+                        if (grc != TLOG_RC_OK) {
+                            return grc;
+                        }
+
+                        got_text = false;
+                        continue;
+                    }
+                }
+
                 *pobject = object;
                 return TLOG_RC_OK;
             } else {
