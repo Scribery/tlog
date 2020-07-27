@@ -113,7 +113,7 @@ test(const char *file, int line, const char *n, const struct test t)
                 strerror(errno));
         exit(1);
     }
-    grc = tlog_fd_json_reader_create(&reader, fd, false, BUF_SIZE);
+    grc = tlog_fd_json_reader_create(&reader, fd, false, BUF_SIZE, NULL);
     if (grc != TLOG_RC_OK) {
         fprintf(stderr, "Failed creating FD reader: %s\n",
                 tlog_grc_strerror(grc));

@@ -43,18 +43,20 @@ extern const struct tlog_json_reader_type tlog_fd_json_reader_type;
  * @param fd_owned  True if the file descriptor should be closed upon
  *                  destruction of the reader, false otherwise.
  * @param size      Text buffer size (non-zero).
+ * @param match     Recording ID string to match, NULL if not provided.
  *
  * @return Global return code.
  */
 static inline tlog_grc
 tlog_fd_json_reader_create(struct tlog_json_reader **preader,
-                           int fd, bool fd_owned, size_t size)
+                           int fd, bool fd_owned, size_t size,
+                           const char *match)
 {
     assert(preader != NULL);
     assert(fd >= 0);
     assert(size > 0);
     return tlog_json_reader_create(preader, &tlog_fd_json_reader_type,
-                                   fd, fd_owned, size);
+                                   fd, fd_owned, size, match);
 }
 
 #endif /* _TLOG_FD_JSON_READER_H */

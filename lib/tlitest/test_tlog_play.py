@@ -11,7 +11,8 @@ import pexpect
 import pytest
 
 from misc import ssh_pexpect, journal_find_last, \
-                 mklogfile, mkrecording
+                 mklogfile, mkrecording, \
+                 read_tlog_recording_file
 
 
 class TestTlogPlay:
@@ -274,3 +275,30 @@ class TestTlogPlayControl:
         time_stop = time.time()
         assert time_stop-time_start > 30
         shell.close()
+
+    def test_play_from_file_match(self):
+        """
+        File reader matching functionality test
+        """
+        logfile = mklogfile(self.tempdir)
+        shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
+        shell.sendline('tlog-rec -o {} whoami'.format(logfile))
+        time.sleep(5)
+        shell.sendline('tlog-rec -o {} lsblk'.format(logfile))
+        time.sleep(5)
+        shell.sendline('tlog-rec -o {} ls -l /usr/bin'.format(logfile))
+        time.sleep(5)
+
+        rec_ids = []
+        recording = read_tlog_recording_file(logfile)
+        for msg in recording:
+            rec = msg['rec']
+            if rec not in rec_ids:
+                rec_ids.append(rec)
+
+        shell.sendline('tlog-play -i {} -m {}'.format(logfile, rec_ids[0]))
+        shell.expect(self.user1)
+        shell.sendline('tlog-play -i {} -m {}'.format(logfile, rec_ids[1]))
+        shell.expect('MOUNTPOINT')
+        shell.sendline('tlog-play -i {} -m {}'.format(logfile, rec_ids[2]))
+        shell.expect('uname')
