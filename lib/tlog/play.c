@@ -994,7 +994,7 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
                     int hour = pkt.timestamp.tv_sec/3600;
                     int min = (pkt.timestamp.tv_sec-hour*3600)/60;
                     int sec = (pkt.timestamp.tv_sec-hour*3600-min*60);
-                    printf("\r\nPaused at %02ld:%02ld:%02ld\r\n",hour,min,sec);
+                    printf("\r\nPaused at %02d:%02d:%02d\r\n",hour,min,sec);
                 }
 
                 rc = clock_nanosleep(CLOCK_MONOTONIC, 0,
