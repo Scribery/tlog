@@ -462,7 +462,6 @@ struct timespec tlog_play_pkt_last_ts;
 /** Should output timestamp on pause */
 bool tlog_print_timestamp = false;
 
-
 /** True if playback state was initialized succesfully */
 bool tlog_play_initialized = false;
 
