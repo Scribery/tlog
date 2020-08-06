@@ -708,6 +708,7 @@ cleanup:
     return grc;
 }
 
+bool tlog_print_timestamp = false;
 /**
  * Read playback input, interpreting user input.
  *
@@ -892,6 +893,9 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
             case '\x7f':
                 tlog_play_speed = (struct timespec){1, 0};
                 break;
+	    case 'T':
+	      tlog_print_timestamp = !tlog_print_timestamp;
+	      break;
             case '}':
                 tlog_timespec_fp_mul(&tlog_play_speed, &accel,
                                      &new_speed);
@@ -985,6 +989,13 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
         /* Handle pausing, unless ignoring timing */
         if (tlog_play_paused && !(tlog_play_goto_active || tlog_play_skip)) {
             do {
+	      if(tlog_print_timestamp) {
+		int hour = pkt.timestamp.tv_sec/3600;
+		int min = (pkt.timestamp.tv_sec-hour*3600)/60;
+		int sec = (pkt.timestamp.tv_sec-hour*3600-min*60);
+		printf("\r\nPaused at %02ld:%02ld:%02ld\r\n",hour,min,sec);
+	      }
+
                 rc = clock_nanosleep(CLOCK_MONOTONIC, 0,
                                      &tlog_timespec_max, NULL);
             } while (rc == 0);
