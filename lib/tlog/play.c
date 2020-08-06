@@ -459,6 +459,9 @@ struct tlog_timestr_parser tlog_play_timestr_parser;
 struct timespec tlog_play_local_last_ts;
 /** Recording's time of packet output last */
 struct timespec tlog_play_pkt_last_ts;
+/** Should output timestamp on pause */
+bool tlog_print_timestamp = false;
+
 
 /** True if playback state was initialized succesfully */
 bool tlog_play_initialized = false;
@@ -708,7 +711,6 @@ cleanup:
     return grc;
 }
 
-bool tlog_print_timestamp = false;
 /**
  * Read playback input, interpreting user input.
  *
