@@ -35,6 +35,10 @@ jobs:
     - name: Run tests
       # Hostnames test won't work in a container
       run: sudo podman exec -t ${CONTAINER} ./src/tlitest/tlitest-run -k "not hostnames"
+        #- uses: actions/upload-artifact@v2
+        #with:
+        #name: configlog
+        #path: /path/to/config.log
 
   # Build with --enable-debug, make install and run integration tests in Fedora container
   fedora-debug-build:
