@@ -11,6 +11,9 @@ compiler:
 - clang
 - gcc
 os: linux
+arch:
+  - amd64
+  - ppc64le
 addons:
     apt:
         packages:
