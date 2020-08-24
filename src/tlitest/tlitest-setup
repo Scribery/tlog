@@ -25,7 +25,7 @@ for P in $PKGS; do
     rpm -q "$P" > /dev/null
     if [ $? -ne 0 ]; then
         echo "RPM [$P] missing..installing"
-        dnf -y install $P
+        dnf -y --nogpgcheck install $P
     else
         echo "RPM [$P] already installed...saving"
         echo "$P" >> $PKGSFILE

@@ -1,6 +1,6 @@
-FROM fedora:latest
+FROM fedora:rawhide
 COPY . .
-RUN dnf -y install autoconf \
+RUN dnf -y --nogpgcheck install autoconf \
                    automake \
                    make \
                    libtool \
