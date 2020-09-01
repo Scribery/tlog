@@ -42,6 +42,10 @@
 #include <string.h>
 
 #define POLL_PERIOD 1
+#define CSI_COMMAND "\x1b["
+#define SGR_RESET_ATTRS CSI_COMMAND "0m"
+#define DEC_CURSOR_VISIBLE CSI_COMMAND "?25h"
+#define TLOG_PLAY_CLEANUP_ATTRS SGR_RESET_ATTRS DEC_CURSOR_VISIBLE "\n"
 
 /**< Number of the signal causing exit */
 static volatile sig_atomic_t tlog_play_exit_signum;
@@ -482,8 +486,6 @@ tlog_play_cleanup(struct tlog_errs **perrs)
     struct sigaction sa;
     ssize_t rc;
     size_t i;
-    char *color_reset = "\033[0m";
-    char *cursor_show = "\033[?25h";
 
     /* Destroy the source */
     tlog_source_destroy(tlog_play_source);
@@ -529,21 +531,6 @@ tlog_play_cleanup(struct tlog_errs **perrs)
         }
         tlog_play_term_attrs_set = false;
     }
-
-    /* Restore color and cursor visibility */
-    rc = write(STDOUT_FILENO, color_reset, sizeof(color_reset));
-    if (rc < 0 && errno != EBADF) {
-        grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed restoring display attributes");
-    }
-
-    rc = write(STDOUT_FILENO, cursor_show, sizeof(cursor_show));
-    if (rc < 0 && errno != EBADF) {
-        grc = TLOG_GRC_ERRNO;
-        tlog_errs_pushc(perrs, grc);
-        tlog_errs_pushs(perrs, "Failed restoring cursor visibility");
-	}
 
     /* Reset variables */
     tlog_play_follow = false;
@@ -1248,12 +1235,13 @@ cleanup:
         grc = cleanup_grc;
     }
 
-    /* Clear off remaining reproduced output */
+    /* Restore color and cursor visibility, clear
+     * off remaining reproduced output */
     {
-        const char newline = '\n';
+        const char resetattrs[] = TLOG_PLAY_CLEANUP_ATTRS;
         ssize_t rc;
 
-        rc = write(STDOUT_FILENO, &newline, sizeof(newline));
+        rc = write(STDOUT_FILENO, &resetattrs, sizeof(resetattrs));
         if (rc < 0 && errno != EBADF) {
             grc = TLOG_GRC_ERRNO;
             tlog_errs_pushc(perrs, grc);
