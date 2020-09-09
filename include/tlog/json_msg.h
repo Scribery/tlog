@@ -56,6 +56,7 @@ struct tlog_json_msg {
     unsigned int        session;        /**< Audit session ID */
     size_t              id;             /**< Message ID */
     struct timespec     pos;            /**< Position timestamp */
+    struct timespec     time;           /**< Real timestamp */
 
     const char         *timing_ptr;     /**< Timing string position */
 

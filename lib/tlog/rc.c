@@ -41,6 +41,8 @@ static const char *tlog_rc_desc_list[TLOG_RC_MAX_PLUS_ONE - TLOG_RC_MIN] = {
         "Message has invalid \"id\" field value",
     [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_POS] =
         "Message has invalid \"pos\" field value",
+    [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TIME] =
+        "Message has invalid \"time\" field value",
     [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TIMING] =
         "Message has invalid \"timing\" field value",
     [TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TXT] =

@@ -41,7 +41,10 @@
             "type":         "integer",
             "minimum":      0
         },
-
+        "time":       {
+            "description":  "System clock timestamp of the message",
+            "type":         "double"
+        },
         "timing":   {
             "description":  "Distribution of this message's events in time",
             "type":         "string"

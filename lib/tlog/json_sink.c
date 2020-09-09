@@ -32,6 +32,7 @@
 #include <tlog/json_sink.h>
 #include <tlog/json_misc.h>
 #include <tlog/timespec.h>
+#include <tlog/timestr.h>
 #include <tlog/delay.h>
 #include <tlog/misc.h>
 
@@ -67,7 +68,10 @@ struct tlog_json_sink {
     size_t                      message_id;     /**< Next message ID */
     bool                        started;        /**< True if a packet
                                                      was written */
-    struct timespec             start;          /**< First packet timestamp */
+    struct timespec             start;          /**< First packet
+                                                     elapsed timestamp */
+    struct timespec             start_real;     /**< First packet
+                                                     real timestamp */
     struct tlog_json_chunk      chunk;          /**< Chunk buffer */
     uint8_t                    *message_buf;    /**< Message buffer pointer */
     size_t                      message_len;    /**< Message buffer length */
@@ -179,6 +183,7 @@ tlog_json_sink_flush(struct tlog_sink *sink)
     char pos_buf[32];
     int len;
     struct timespec pos;
+    struct timespec real_ts;
 
     if (tlog_json_chunk_is_empty(&json_sink->chunk)) {
         return TLOG_RC_OK;
@@ -201,10 +206,12 @@ tlog_json_sink_flush(struct tlog_sink *sink)
         return TLOG_GRC_FROM(errno, ENOMEM);
     }
 
+    tlog_timespec_add(&json_sink->start_real, &pos, &real_ts);
+
     len = snprintf(
         (char *)json_sink->message_buf, json_sink->message_len,
         "{"
-            "\"ver\":"      "\"2.2\","
+            "\"ver\":"      "\"2.3\","
             "\"host\":"     "\"%s\","
             "\"rec\":"      "\"%s\","
             "\"user\":"     "\"%s\","
@@ -212,6 +219,7 @@ tlog_json_sink_flush(struct tlog_sink *sink)
             "\"session\":"  "%u,"
             "\"id\":"       "%zu,"
             "\"pos\":"      "%s,"
+            "\"time\":"     "%ld.%03ld,"
             "\"timing\":"   "\"%.*s\","
             "\"in_txt\":"   "\"%.*s\","
             "\"in_bin\":"   "[%.*s],"
@@ -225,6 +233,7 @@ tlog_json_sink_flush(struct tlog_sink *sink)
         json_sink->session_id,
         json_sink->message_id,
         pos_buf,
+        real_ts.tv_sec, real_ts.tv_nsec / 1000000,
         (int)(json_sink->chunk.timing_ptr - json_sink->chunk.timing_buf),
         json_sink->chunk.timing_buf,
         (int)json_sink->chunk.input.txt_len, json_sink->chunk.input.txt_buf,
@@ -288,6 +297,7 @@ tlog_json_sink_write(struct tlog_sink *sink,
     } else {
         json_sink->started = true;
         json_sink->start = pkt->timestamp;
+        json_sink->start_real = pkt->real_ts;
     }
 
     /* While the packet is not yet written completely */
