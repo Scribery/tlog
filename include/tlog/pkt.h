@@ -82,7 +82,8 @@ struct tlog_pkt_data_io {
 
 /** Packet */
 struct tlog_pkt {
-    struct timespec     timestamp;      /**< Timestamp */
+    struct timespec     timestamp;      /**< Elapsed(Monotonic) Timestamp */
+    struct timespec     real_ts;        /**< Real(Wall clock) Timestamp */
     enum tlog_pkt_type  type;           /**< Packet type */
     union {
         struct tlog_pkt_data_window     window; /**< Window change data */
@@ -95,9 +96,11 @@ struct tlog_pkt {
     ((struct tlog_pkt){.type = TLOG_PKT_TYPE_VOID})
 
 /** Window packet initializer */
-#define TLOG_PKT_WINDOW(_tv_sec, _tv_nsec, _width, _height) \
+#define TLOG_PKT_WINDOW(_tv_sec, _tv_nsec, _real_sec,       \
+                        _real_nsec, _width, _height)        \
     ((struct tlog_pkt){                                     \
         .timestamp  = {_tv_sec, _tv_nsec},                  \
+        .real_ts    = {_real_sec, _real_nsec},              \
         .type       = TLOG_PKT_TYPE_WINDOW,                 \
         .data       = {                                     \
             .window = {                                     \
@@ -108,9 +111,11 @@ struct tlog_pkt {
     })
 
 /** Constant buffer I/O packet initializer */
-#define TLOG_PKT_IO(_tv_sec, _tv_nsec, _output, _buf, _len) \
+#define TLOG_PKT_IO(_tv_sec, _tv_nsec, _real_sec,           \
+                    _real_nsec, _output, _buf, _len)        \
     ((struct tlog_pkt){                                     \
         .timestamp  = {_tv_sec, _tv_nsec},                  \
+        .real_ts    = {_real_sec, _real_nsec},              \
         .type       = TLOG_PKT_TYPE_IO,                     \
         .data       = {                                     \
             .io = {                                         \
@@ -123,9 +128,11 @@ struct tlog_pkt {
     })
 
 /** Constant string I/O packet initializer */
-#define TLOG_PKT_IO_STR(_tv_sec, _tv_nsec, _output, _str) \
+#define TLOG_PKT_IO_STR(_tv_sec, _tv_nsec, _real_sec,       \
+                        _real_nsec, _output, _str)          \
     ((struct tlog_pkt){                                     \
         .timestamp  = {_tv_sec, _tv_nsec},                  \
+        .real_ts    = {_real_sec, _real_nsec},                  \
         .type       = TLOG_PKT_TYPE_IO,                     \
         .data       = {                                     \
             .io = {                                         \
@@ -148,12 +155,14 @@ extern void tlog_pkt_init(struct tlog_pkt *pkt);
  * Initialize a window change packet.
  *
  * @param pkt       The packet to initialize.
- * @param timestamp Timestamp of the window change.
+ * @param timestamp Elapsed timestamp of the window change.
+ * @param real_ts   Real timestamp of the window change.
  * @param width     Window width in characters.
  * @param height    Window height in characters.
  */
 extern void tlog_pkt_init_window(struct tlog_pkt *pkt,
                                  const struct timespec *timestamp,
+                                 const struct timespec *real_ts,
                                  unsigned short int width,
                                  unsigned short int height);
 
@@ -161,17 +170,20 @@ extern void tlog_pkt_init_window(struct tlog_pkt *pkt,
  * Initialize an I/O EOF packet.
  *
  * @param pkt       The packet to initialize.
- * @param timestamp Timestamp of the EOF arrival.
+ * @param timestamp Elapsed timestamp of the EOF arrival.
+ * @param real_ts   Real timestamp of the EOF arrival.
  * @param output    True if output originated I/O, false if input.
  */
 extern void tlog_pkt_init_eof(struct tlog_pkt *pkt,
                               const struct timespec *timestamp,
+                              const struct timespec *real_ts,
                               bool output);
 /**
  * Initialize an I/O data packet.
  *
  * @param pkt       The packet to initialize.
- * @param timestamp Timestamp of the I/O arrival.
+ * @param timestamp Elapsed timestamp of the I/O arrival.
+ * @param real_ts   Real timestamp of the I/O arrival.
  * @param output    True if writing output, false if input.
  * @param buf       I/O buffer pointer.
  * @param buf_owned True if the I/O buffer should be freed on packet cleanup.
@@ -179,6 +191,7 @@ extern void tlog_pkt_init_eof(struct tlog_pkt *pkt,
  */
 extern void tlog_pkt_init_io(struct tlog_pkt *pkt,
                              const struct timespec *timestamp,
+                             const struct timespec *real_ts,
                              bool output,
                              uint8_t *buf,
                              bool buf_owned,

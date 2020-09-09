@@ -38,6 +38,9 @@
         "pos": {
             "type": "long"
         },
+        "time": {
+            "type": "double"
+        },
         "timing": {
             "type": "string",
             "index":    "not_analyzed"

@@ -19,6 +19,8 @@ properties:
 | id        | Unsigned integer > 0      | ID of the message within recording
 | pos       | Unsigned integer          | Message position in recording,
 |           |                           | milliseconds
+| time      | Double                    | Message timestamp, seconds and
+|           |                           | milliseconds since the Epoch
 | timing    | String                    | Distribution of events in time
 | in_txt    | String                    | Input text with invalid characters
 |           |                           | scrubbed
@@ -45,7 +47,8 @@ and `session` property values. The `rec` value is an opaque string uniquely
 identifying a particular recording on the recording host. The `id` value
 starts with one for the first message in the recording and is incremented for
 each new message. The `pos` value is the message's temporal position from the
-start of recording, in milliseconds.
+start of recording, in milliseconds. The `time` value is a real clock
+timestamp, formatted as seconds.milliseconds since the Epoch.
 
 The `in_txt`/`out_txt` properties are optional, storing input and output
 text respectively. These property values default to an empty text string if
@@ -104,6 +107,7 @@ terminal, the command output, and a fresh shell prompt:
         "session":  324,
         "id":       23,
         "pos":      345349,
+        "time":     1600718060.667,
         "timing":   "=80x24<5+1>6+3>30+6>20",
         "in_txt":   "date\r",
         "in_bin":   [],
@@ -113,6 +117,10 @@ terminal, the command output, and a fresh shell prompt:
 
 Changelog
 ---------
+
+### 2.3 - 2020-09-21
+#### Added
+- Added wall clock timestamp field - "time".
 
 ### 2.2 - 2017-09-07
 #### Added

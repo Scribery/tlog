@@ -226,6 +226,7 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
     struct tlog_tty_source *tty_source =
                                 (struct tlog_tty_source *)source;
     struct timespec ts;
+    struct timespec real_ts;
 
     assert(tlog_pkt_is_void(pkt));
 
@@ -250,7 +251,12 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
                 if (clock_gettime(tty_source->clock_id, &ts) < 0) {
                     return TLOG_GRC_ERRNO;
                 }
-                tlog_pkt_init_window(pkt, &ts, win.ws_col, win.ws_row);
+
+                if (clock_gettime(CLOCK_REALTIME, &real_ts) < 0) {
+                    return TLOG_GRC_ERRNO;
+                }
+                tlog_pkt_init_window(pkt, &ts, &real_ts,
+                                     win.ws_col, win.ws_row);
                 /* Remember last window */
                 tty_source->last_win = win;
             }
@@ -300,14 +306,18 @@ tlog_tty_source_read(struct tlog_source *source, struct tlog_pkt *pkt)
             if (clock_gettime(tty_source->clock_id, &ts) < 0) {
                 return TLOG_GRC_ERRNO;
             }
+            if (clock_gettime(CLOCK_REALTIME, &real_ts) < 0) {
+                return TLOG_GRC_ERRNO;
+            }
 
             if (rc < 0) {
                 return TLOG_GRC_ERRNO;
             } else if (rc > 0) {
-                tlog_pkt_init_io(pkt, &ts, output, tty_source->io_buf, false, rc);
+                tlog_pkt_init_io(pkt, &ts, &real_ts, output,
+                                 tty_source->io_buf, false, rc);
             } else if (rc == 0) {
                 tty_source->fd_list[tty_source->fd_idx].fd = -1;
-                tlog_pkt_init_eof(pkt, &ts, output);
+                tlog_pkt_init_eof(pkt, &ts, &real_ts, output);
             }
             goto success;
         }

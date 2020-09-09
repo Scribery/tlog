@@ -52,6 +52,7 @@ tlog_pkt_init(struct tlog_pkt *pkt)
 void
 tlog_pkt_init_window(struct tlog_pkt *pkt,
                      const struct timespec *timestamp,
+                     const struct timespec *real_ts,
                      unsigned short int width,
                      unsigned short int height)
 {
@@ -59,6 +60,7 @@ tlog_pkt_init_window(struct tlog_pkt *pkt,
     assert(timestamp != NULL);
     memset(pkt, 0, sizeof(*pkt));
     pkt->timestamp = *timestamp;
+    pkt->real_ts = *real_ts;
     pkt->type = TLOG_PKT_TYPE_WINDOW;
     pkt->data.window.width = width;
     pkt->data.window.height = height;
@@ -68,11 +70,13 @@ tlog_pkt_init_window(struct tlog_pkt *pkt,
 void
 tlog_pkt_init_eof(struct tlog_pkt *pkt,
                   const struct timespec *timestamp,
+                  const struct timespec *real_ts,
                   bool output)
 {
     assert(pkt != NULL);
     memset(pkt, 0, sizeof(*pkt));
     pkt->timestamp = *timestamp;
+    pkt->real_ts = *real_ts;
     pkt->type = TLOG_PKT_TYPE_IO;
     pkt->data.io.output = output;
     pkt->data.io.len = 0;
@@ -83,6 +87,7 @@ tlog_pkt_init_eof(struct tlog_pkt *pkt,
 void
 tlog_pkt_init_io(struct tlog_pkt *pkt,
                  const struct timespec *timestamp,
+                 const struct timespec *real_ts,
                  bool output,
                  uint8_t *buf,
                  bool buf_owned,
@@ -93,6 +98,7 @@ tlog_pkt_init_io(struct tlog_pkt *pkt,
     assert(buf != NULL || len == 0);
     memset(pkt, 0, sizeof(*pkt));
     pkt->timestamp = *timestamp;
+    pkt->real_ts = *real_ts;
     pkt->type = TLOG_PKT_TYPE_IO;
     pkt->data.io.output = output;
     pkt->data.io.buf = buf;

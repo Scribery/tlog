@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <string.h>
 #include <limits.h>
+#include <float.h>
 #include <stdio.h>
 #include <tlog/rc.h>
 #include <tlog/timespec.h>
@@ -71,6 +72,7 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
     int64_t session;
     int64_t id;
     int64_t pos;
+    double time;
 
     assert(msg != NULL);
 
@@ -160,6 +162,22 @@ tlog_json_msg_init(struct tlog_json_msg *msg, struct json_object *obj)
     }
     msg->pos.tv_sec = pos / 1000;
     msg->pos.tv_nsec = pos % 1000 * 1000000;
+
+    GET_OPTIONAL_FIELD(time, double);
+    time = json_object_get_double(o);
+    if (time < 0 || time > DBL_MAX) {
+        return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TIME;
+    }
+    str = json_object_get_string(o);
+    if (str == NULL) {
+        msg->time = TLOG_TIMESPEC_ZERO;
+    } else {
+        rc = sscanf(str, "%ld.%03ld",
+                    &msg->time.tv_sec, &msg->time.tv_nsec);
+        if (rc < 1) {
+            return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TIME;
+        }
+    }
 
     GET_FIELD(timing, string);
     msg->timing_ptr = json_object_get_string(o);
@@ -333,7 +351,7 @@ tlog_json_msg_read(struct tlog_json_msg *msg, struct tlog_pkt *pkt,
                     return TLOG_RC_JSON_MSG_FIELD_INVALID_VALUE_TIMING;
                 }
                 /* Return window packet */
-                tlog_pkt_init_window(pkt, &msg->pos,
+                tlog_pkt_init_window(pkt, &msg->pos, &msg->time,
                                      (unsigned short int)first_val,
                                      (unsigned short int)second_val);
                 /* Timing record consumed */
@@ -493,7 +511,7 @@ tlog_json_msg_read(struct tlog_json_msg *msg, struct tlog_pkt *pkt,
     } while (!io_full);
 
     if (io_len > 0) {
-        tlog_pkt_init_io(pkt, &msg->pos, pkt_output, io_buf, false, io_len);
+        tlog_pkt_init_io(pkt, &msg->pos, &msg->time, pkt_output, io_buf, false, io_len);
     }
 
     return TLOG_RC_OK;

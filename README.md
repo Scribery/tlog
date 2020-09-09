@@ -160,7 +160,7 @@ recording. For example, to playback a recording which contains this message
         TLOG_USER=nkondras
         TLOG_SESSION=2
         TLOG_ID=1
-        MESSAGE={"ver":"2.2","host":"bard","rec":"12ca5b356065453fb50adfe57007658a-306a-26f2910",...
+        MESSAGE={"ver":"2.3","host":"bard","rec":"12ca5b356065453fb50adfe57007658a-306a-26f2910",...
         SYSLOG_IDENTIFIER=tlog-rec
         _PID=12394
         _COMM=tlog-rec
