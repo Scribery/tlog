@@ -18,7 +18,7 @@
 %{!?make_build:%global make_build %{__make} %{?_smp_mflags}}
 
 Name:           tlog
-Version:        9
+Version:        10
 Release:        1%{?dist}
 Summary:        Terminal I/O logger
 
@@ -151,8 +151,17 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 /sbin/ldconfig
 
 %changelog
+* Tue Oct 13 2020 Justin Stephenson <jstephen@redhat.com> - 10-1
+- Release v10
+
 * Thu May 28 2020 Justin Stephenson <jstephen@redhat.com> - 9-1
 - Release v9
+- Add libutempter support
+- Require journal match filter
+- Add file reader match functionality
+- Restore cursor visibility and color attributes on tlog-play exit
+- Add "time" real clock timestamp message field
+- Various upstream CI improvements
 
 * Tue May 26 2020 Justin Stephenson <jstephen@redhat.com> - 8-2
 - Minor test fixes.
