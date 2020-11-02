@@ -337,7 +337,7 @@ tlog_tap_teardown(struct tlog_errs **perrs,
     tlog_source_destroy(tap->source);
     tap->source = NULL;
 
-    if (tap->in_fd >= 0) {
+    if ((tap->in_fd >= 0) && (isatty(tap->in_fd))) {
 #ifdef HAVE_UTEMPTER
 	if (utempter_remove_record(tap->in_fd) == 0) {
 	    grc = TLOG_GRC_ERRNO;
