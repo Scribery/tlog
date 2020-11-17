@@ -11,8 +11,16 @@ from misc import check_recording, mklogfile, mkcfgfile, \
                  ssh_pexpect, check_recording_missing, copyfile
 from config import TlogRecConfig, TlogRecSessionConfig
 
-
+TLOG_REC_SESSION_PROG = "/usr/bin/tlog-rec-session"
 SYSTEM_TLOG_REC_SESSION_CONF = "/etc/tlog/tlog-rec-session.conf"
+
+@pytest.fixture
+def utempter_enabled():
+    p = Popen(['ldd', TLOG_REC_SESSION_PROG],
+              stdout=PIPE, stdin=PIPE, stderr=PIPE, encoding='utf8')
+    stdout_data = p.communicate()[0]
+    return 'libutempter.so' in stdout_data
+
 
 class TestTlogRecSession:
     """ Test tlog-rec-session functionality """
@@ -215,6 +223,26 @@ class TestTlogRecSession:
         stdout=PIPE, stdin=PIPE, stderr=PIPE, encoding='utf8')
         stdout_data = p.communicate(input=text_in_stdio)[0]
         assert text_out in stdout_data
+
+    def test_session_record_user_in_utmp(self, utempter_enabled):
+        """
+        Check tlog-rec-session preserves session in a file
+        """
+        if not utempter_enabled:
+            pytest.skip('utempter not enabled, skipping test')
+        myname = inspect.stack()[0][3]
+        whoami = '{} pts'.format(self.user)
+        logfile = mklogfile(self.tempdir)
+        sessionclass = TlogRecSessionConfig(writer="file",
+                                            file_writer_path=logfile)
+        sessionclass.generate_config(SYSTEM_TLOG_REC_SESSION_CONF)
+        shell = ssh_pexpect(self.user, 'Secret123', 'localhost')
+        shell.sendline('echo {}'.format(myname))
+        shell.sendline('who am i')
+        shell.sendline('exit')
+        check_recording(shell, myname, logfile)
+        check_recording(shell, whoami, logfile)
+        shell.close()
 
     @classmethod
     def teardown_class(cls):
