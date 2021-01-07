@@ -9,6 +9,7 @@
 
 %if "%{_vendor}" == "debbuild"
 # Set values to make debian builds work well
+%global _defaultdocdir /usr/share/doc/%{name}
 %global _buildshell /bin/bash
 %global _lib lib/%(%{__dpkg_architecture} -qDEB_HOST_MULTIARCH)
 %endif
@@ -61,7 +62,11 @@ Requires(postun): systemd
 %else
 BuildRequires:  pkgconfig(json-c)
 BuildRequires:  pkgconfig(libcurl)
+%if %{defined suse_version}
+BuildRequires:  utempter-devel
+%else
 BuildRequires:  libutempter-devel
+%endif
 
 %if %{with systemd}
 BuildRequires:  pkgconfig(libsystemd)
@@ -79,7 +84,7 @@ in JSON format.
 %setup -q
 
 %build
-%configure --disable-rpath --disable-static --enable-utempter %{!?with_systemd:--disable-journal}
+%configure --disable-rpath --disable-static --enable-utempter %{!?with_systemd:--disable-journal} --docdir=%{_defaultdocdir}/%{name}
 %make_build
 
 %check

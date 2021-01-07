@@ -41,8 +41,8 @@ before_install:
 - mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS,SDEBS,DEBS}
 - ln -sr ~/rpmbuild ~/debbuild
 before_script:
-- wget https://github.com/debbuild/debbuild/releases/download/18.8.1/debbuild_18.8.1-ascherer.ubuntu16.04_all.deb
-- sudo dpkg -i debbuild_18.8.1-ascherer.ubuntu16.04_all.deb
+- wget https://github.com/debbuild/debbuild/releases/download/20.12.1/debbuild_20.12.1-0ubuntu18.04_all.deb
+- sudo dpkg -i debbuild_20.12.1-0ubuntu18.04_all.deb
 - echo "%_default_verbosity 2" >> ~/.debmacros
 - autoreconf -i -f
 - $CLANG_SCAN_BUILD ./configure --disable-silent-rules $CONFIGURE_ARGS
