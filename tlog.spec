@@ -9,6 +9,7 @@
 
 %if "%{_vendor}" == "debbuild"
 # Set values to make debian builds work well
+%global _defaultdocdir /usr/share/doc/%{name}
 %global _buildshell /bin/bash
 %global _lib lib/%(%{__dpkg_architecture} -qDEB_HOST_MULTIARCH)
 %endif
