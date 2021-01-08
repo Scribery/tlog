@@ -158,6 +158,8 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 %changelog
 * Tue Oct 13 2020 Justin Stephenson <jstephen@redhat.com> - 10-1
 - Release v10
+- Correct suse rpmbuild
+- Update debbuild for travis CI
 
 * Thu May 28 2020 Justin Stephenson <jstephen@redhat.com> - 9-1
 - Release v9
