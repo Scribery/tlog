@@ -1,4 +1,4 @@
-FROM fedora:rawhide
+FROM fedora:33
 WORKDIR /tlbuild
 COPY . .
 RUN dnf -y --nogpgcheck install autoconf \
