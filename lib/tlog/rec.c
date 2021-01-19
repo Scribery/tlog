@@ -819,6 +819,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                   struct tlog_sink     *tty_sink,
                   unsigned int          latency,
                   unsigned              item_mask,
+                  int                   in_fd,
                   int                  *psignal)
 {
     const int exit_sig[] = {SIGINT, SIGTERM, SIGHUP};
@@ -881,6 +882,11 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
         grc = TLOG_GRC_ERRNO;
         TLOG_ERRS_RAISECS(grc,
                           "Failed to set a SIGCHLD signal action");
+    }
+    if (isatty(in_fd)) {
+#ifdef HAVE_UTEMPTER
+        raise(SIGCHLD);
+#endif
     }
 
     /*
@@ -1259,7 +1265,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
 
     /* Transfer and log the data until interrupted or either end is closed */
     grc = tlog_rec_transfer(perrs, tap.source, log_sink, tap.sink,
-                            latency, item_mask, &signal);
+                            latency, item_mask, in_fd, &signal);
     if (grc != TLOG_RC_OK) {
         TLOG_ERRS_RAISES("Failed transferring TTY data");
     }

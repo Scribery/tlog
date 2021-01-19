@@ -223,10 +223,12 @@ tlog_tap_setup(struct tlog_errs **perrs,
             }
 
 #ifdef HAVE_UTEMPTER
+        if (isatty(in_fd)) {
             if (utempter_add_record(master_fd, NULL) == 0) {
-		grc = TLOG_RC_FAILURE;
-		TLOG_ERRS_RAISES("Failed adding a utmp record");
-	    }
+                grc = TLOG_RC_FAILURE;
+                TLOG_ERRS_RAISES("Failed adding a utmp record");
+            }
+        }
 #endif
         }
     } else {
