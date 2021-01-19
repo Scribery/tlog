@@ -156,6 +156,10 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 /sbin/ldconfig
 
 %changelog
+* Tue Jan 19 2020 Justin Stephenson <jstephen@redhat.com> - 11-1
+- Release v11
+- Fire SIGCHLD after utempter_add_record since it probably eats it.
+
 * Tue Oct 13 2020 Justin Stephenson <jstephen@redhat.com> - 10-1
 - Release v10
 - Correct suse rpmbuild
