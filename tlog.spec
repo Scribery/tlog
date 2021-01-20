@@ -19,7 +19,7 @@
 %{!?make_build:%global make_build %{__make} %{?_smp_mflags}}
 
 Name:           tlog
-Version:        11
+Version:        12
 Release:        1%{?dist}
 Summary:        Terminal I/O logger
 
@@ -156,7 +156,7 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 /sbin/ldconfig
 
 %changelog
-* Tue Jan 19 2020 Justin Stephenson <jstephen@redhat.com> - 11-1
+* Tue Jan 19 2021 Justin Stephenson <jstephen@redhat.com> - 11-1
 - Release v11
 - Fire SIGCHLD after utempter_add_record since it probably eats it.
 
