@@ -1126,6 +1126,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
     clockid_t clock_id;
     unsigned int session_id;
     bool lock_acquired = false;
+    bool session_locking = true;
     struct json_object *obj;
     int64_t num;
     unsigned int latency;
@@ -1142,6 +1143,11 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
             fprintf(stdout, "%s\n", cmd_help);
             goto exit;
         }
+    }
+
+    /* Check for the session_locking flag */
+    if (json_object_object_get_ex(conf, "session_locking", &obj)) {
+        session_locking = json_object_get_boolean(obj);
     }
 
     /* Check for the version flag */
@@ -1198,7 +1204,7 @@ tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
         TLOG_ERRS_RAISECS(grc, "Failed retrieving session ID");
     }
 
-    if (opts & TLOG_REC_OPT_LOCK_SESS) {
+    if (opts & TLOG_REC_OPT_LOCK_SESS && session_locking) {
         /* Attempt to lock the session */
         grc = tlog_session_lock(perrs, session_id, euid, egid, &lock_acquired);
         if (grc != TLOG_RC_OK) {
