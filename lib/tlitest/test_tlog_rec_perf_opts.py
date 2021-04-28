@@ -99,7 +99,7 @@ class TestTlogRecPerformanceOptions:
                        '-o {} /bin/bash'.format(opts, logfile))
         for num in range(0, 200):
             shell.sendline('echo test_{}'.format(num))
-        check_outfile('test_199', logfile)
+        check_outfile('test_199', logfile, maxchecks=100)
         shell.sendline('exit')
         check_recording(shell, 'test_199', logfile)
         shell.close()

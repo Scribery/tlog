@@ -47,10 +47,10 @@ def check_journal(pattern):
     assert pattern in out_txt
 
 
-def check_outfile(pattern, filename):
+def check_outfile(pattern, filename, maxchecks=10):
     """ Check that file contains pattern """
     time.sleep(1)
-    for _ in range(0, 10):
+    for _ in range(0, maxchecks):
         file1 = open(filename, 'r')
         content = file1.read()
         file1.close()
