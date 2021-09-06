@@ -255,10 +255,10 @@ a warning.
 To work that around, you can implement the approach Debian and derived distros
 use. I.e. use PAM's pam_env.so module to read and set the locale environment
 variables before shell or `tlog-rec-session` starts. To accomplish that on
-Fedora or RHEL, put this into the `/etc/pam.d/system-auth` file, along with
-all other `session` lines:
+Fedora or RHEL, put this into the `/etc/pam.d/system-auth` file, at the top of
+the `session` section:
 
-    session     required      pam_env.so readenv=1 envfile=/etc/locale.conf
+    session     optional      pam_env.so readenv=1 envfile=/etc/locale.conf
 
 However, tlog only supports UTF-8 so far, so the above workaround only serves
 to silent the fallback warning.
