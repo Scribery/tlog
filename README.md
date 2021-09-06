@@ -235,6 +235,26 @@ Customize `tlog-rec-session` configuration in
 `/etc/tlog/tlog-rec-session.conf` as necessary (see `tlog-rec-session.conf(5)`
 for details).
 
+#### Automatically recording login sessions for users
+
+Sample scripts have been made available in `/usr/share/doc/tlog/profile.d` that
+provide an automatic method for recording sessions from users or groups
+specified in `/etc/security/tlog.users`.
+
+To use these scripts, simply copy them into `/etc/profile.d`.
+
+A valid `tlog.users` file might look like the following:
+
+```
+# Log all actions by the 'root' user
+root
+
+# Log all actions by anyone in the 'admins' group
+%admins
+```
+
+Note: Whitespace is **not** ignored.
+
 #### Locale configuration issue on Fedora and RHEL
 
 Fedora and RHEL (and some other distros) use an approach for configuring
