@@ -468,6 +468,8 @@ struct tlog_timestr_parser tlog_play_timestr_parser;
 struct timespec tlog_play_local_last_ts;
 /** Recording's time of packet output last */
 struct timespec tlog_play_pkt_last_ts;
+/** Should output timestamp on pause */
+bool tlog_print_timestamp = false;
 
 /** True if playback state was initialized succesfully */
 bool tlog_play_initialized = false;
@@ -901,6 +903,9 @@ tlog_play_run_read_input(struct tlog_errs **perrs, bool *pquit)
             case '\x7f':
                 tlog_play_speed = (struct timespec){1, 0};
                 break;
+	    case 'T':
+	        tlog_print_timestamp = !tlog_print_timestamp;
+	        break;
             case '}':
                 tlog_timespec_fp_mul(&tlog_play_speed, &accel,
                                      &new_speed);
@@ -994,6 +999,13 @@ tlog_play_run(struct tlog_errs **perrs, int *psignal)
         /* Handle pausing, unless ignoring timing */
         if (tlog_play_paused && !(tlog_play_goto_active || tlog_play_skip)) {
             do {
+                if(tlog_print_timestamp) {
+                    int hour = pkt.timestamp.tv_sec/3600;
+                    int min = (pkt.timestamp.tv_sec-hour*3600)/60;
+                    int sec = (pkt.timestamp.tv_sec-hour*3600-min*60);
+                    printf("\r\nPaused at %02d:%02d:%02d\r\n",hour,min,sec);
+                }
+
                 rc = clock_nanosleep(CLOCK_MONOTONIC, 0,
                                      &tlog_timespec_max, NULL);
             } while (rc == 0);
