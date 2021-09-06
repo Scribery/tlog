@@ -456,6 +456,61 @@ Interrupt `tlog-play` (e.g. press Ctrl-C) to stop the playback at any moment.
 Instead of specifying the reader and the base URL on the command line every
 time, you can put them in `/etc/tlog/tlog-play.conf` configuration file.
 
+### Example usage tlog with elk cluster
+
+Filebeat config:
+
+    - type: log
+      paths:
+        - /var/log/tlog.log
+      tags: ["tlog"]
+    
+    output.logstash:
+      enabled: true
+      bulk_max_size: 2048
+      timeout: 15
+      hosts: ["logstash-node1:5044","logstash-node2:5044","logstash-node3:5044"]
+      ssl.certificate_authorities: ["/etc/filebeat/keys/ca.crt"]
+      ssl.certificate: "/etc/filebeat/keys/instance.crt"
+      ssl.key: "/etc/filebeat/keys/instance.key"
+
+Logstash config:
+
+    filter {
+      if "tlog" in [tags] {
+        json {
+          source => "message"
+        }
+        mutate {
+          remove_field => [ "message", "beat" ]
+        }
+        elasticsearch {
+          hosts => ["127.0.0.1:9200"]
+          manage_template => false
+          index => "tlog-%{+YYYY.MM.dd}"
+        }
+      }   
+    }
+
+For play logs from cluster elasticsearch use nginx proxy:
+
+    upstream elasticsearch_cluster {
+      least_conn;
+      server elasticsearch_node_1:9200; #servers closed by basic auth
+      server elasticsearch_node_1:9200;
+      server elasticsearch_node_1:9200;
+    }
+    server {
+      listen 9200;
+        location / {
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header Authorization "Basic BASIC_AUTH"; #hash basic auth password
+          proxy_pass http://elasticsearch_cluster;
+          }
+        }
+
 #### Limitations
 
 Currently `tlog-play` functionality is limited. It doesn't provide a way to

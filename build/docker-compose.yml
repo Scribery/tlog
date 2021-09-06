@@ -1,0 +1,33 @@
+version: "3.7"
+services:
+  ubuntu16_build:
+    build:
+      context: ./docker/ubuntu16
+    volumes:
+      - ./entrypoint.sh:/usr/bin/entrypoint.sh:ro
+      - ./docker/ubuntu16/tlog.ctl:/tmp/tlog.ctl:ro
+      - ./docker/packages:/packages:rw
+      - ./docker/templates:/templates:ro
+    environment:
+      - CURRENT_VERSION
+      - PKG_RELEASE=ubuntu16
+      - DEPENDS=libjson-c2
+      - REVISION=rev3
+    command:
+      - /usr/bin/entrypoint.sh
+      
+  ubuntu18_build:
+    build:
+      context: ./docker/ubuntu18
+    volumes:
+      - ./entrypoint.sh:/usr/bin/entrypoint.sh:ro
+      - ./docker/ubuntu18/tlog.ctl:/tmp/tlog.ctl:ro
+      - ./docker/packages:/packages:rw
+      - ./docker/templates:/templates:ro
+    environment:
+      - CURRENT_VERSION
+      - PKG_RELEASE=ubuntu18
+      - DEPENDS=libjson-c3
+      - REVISION=rev3
+    command:
+      - /usr/bin/entrypoint.sh
