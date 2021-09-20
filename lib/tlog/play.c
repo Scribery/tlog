@@ -150,6 +150,7 @@ tlog_play_create_journal_json_reader(struct tlog_errs **perrs,
 {
     tlog_grc grc;
     const char **str_list = NULL;
+    const char *namespace;
     int64_t since = 0;
     int64_t until = INT64_MAX;
     size_t i;
@@ -183,6 +184,13 @@ tlog_play_create_journal_json_reader(struct tlog_errs **perrs,
         until = INT64_MAX;
     }
 
+    /* Get the "namespace" */
+    if (json_object_object_get_ex(conf, "namespace", &obj)) {
+        namespace = json_object_get_string(obj);
+    } else {
+        namespace = NULL;
+    }
+
     /* Get the match array, if any */
 
     if (json_object_object_get_ex(conf, "match", &obj)) {
@@ -212,7 +220,8 @@ tlog_play_create_journal_json_reader(struct tlog_errs **perrs,
     grc = tlog_journal_json_reader_create(&reader,
                                           (uint64_t)since * 1000000,
                                           (uint64_t)until * 1000000,
-                                          str_list);
+                                          str_list,
+                                          namespace);
     if (grc != TLOG_RC_OK) {
         TLOG_ERRS_RAISECS(grc, "Failed creating the systemd journal reader");
     }

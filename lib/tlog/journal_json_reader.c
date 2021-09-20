@@ -66,6 +66,7 @@ tlog_journal_json_reader_init(struct tlog_json_reader *reader, va_list ap)
     uint64_t since = va_arg(ap, uint64_t);
     uint64_t until = va_arg(ap, uint64_t);
     const char * const *match_sym_list = va_arg(ap, const char * const *);
+    const char *namespace = va_arg(ap, const char *);
     int sd_rc;
     tlog_grc grc;
 
@@ -77,7 +78,15 @@ tlog_journal_json_reader_init(struct tlog_json_reader *reader, va_list ap)
     }
 
     /* Open journal */
+#if HAVE_JOURNAL_OPEN_NAMESPACE == 1
+    sd_rc = sd_journal_open_namespace(&journal_json_reader->journal, namespace, 0);
+#else
+    if (namespace != NULL) {
+        grc = TLOG_RC_SYSTEMD_NAMESPACE_NOT_SUPPORTED;
+        goto error;
+    }
     sd_rc = sd_journal_open(&journal_json_reader->journal, 0);
+#endif
     if (sd_rc < 0) {
         grc = TLOG_GRC_FROM(systemd, sd_rc);
         goto error;
