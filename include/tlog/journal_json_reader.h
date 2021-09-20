@@ -47,19 +47,23 @@ extern const struct tlog_json_reader_type tlog_journal_json_reader_type;
  * @param match_sym_list    NULL-terminated array of string pointers,
  *                          containing journal matche symbols to filter entries with.
  *                          See sd_journal_add_match(3). NULL means empty.
+ * @param namespace         Optional Journal namespace to read recordings from.
+ *                          See sd_journal_open_namespace(3). If NULL - default
+ *                          namespace is used.
  *
  * @return Global return code.
  */
 static inline tlog_grc
 tlog_journal_json_reader_create(struct tlog_json_reader **preader,
                                 uint64_t since, uint64_t until,
-                                const char * const *match_sym_list)
+                                const char * const *match_sym_list,
+                                const char *namespace)
 {
     assert(preader != NULL);
     assert(match_sym_list == NULL ||
            tlog_journal_match_sym_list_is_valid(match_sym_list));
     return tlog_json_reader_create(preader, &tlog_journal_json_reader_type,
-                                   since, until, match_sym_list);
+                                   since, until, match_sym_list, namespace);
 }
 
 #endif /* _TLOG_JOURNAL_JSON_READER_H */

@@ -172,6 +172,9 @@ whole recording like this:
 
     tlog-play -r journal -M TLOG_REC=12ca5b356065453fb50adfe57007658a-306a-26f2910
 
+When compiled with Systemd >= 245 it is possible to read log entries from a specific
+Journal namespace using parameters `-N/--journal-namespace`.
+
 ### Playing back ongoing recordings
 
 By default, once `tlog-play` reaches the last message a recording has so far,
