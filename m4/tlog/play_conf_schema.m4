@@ -134,11 +134,14 @@ M4_PARAM(`/journal', `match', `opts-',
                    `string signifying disjunction or conjunction, as with',
                    `sd_journal_add_disjunction(3) and sd_journal_add_conjunction(3)')')m4_dnl
 m4_dnl
+m4_ifelse(M4_JOURNAL_NAMESPACE(), `1', `m4_dnl
+m4_dnl
 M4_PARAM(`/journal', `namespace', `opts-',
          `M4_TYPE_STRING()', true,
          `N', `=STRING', `Search for the records in STRING namespace only',
          `STRING is the ', `The ',
          `M4_LINES(`Specifies a specific journal namespace to use.')')m4_dnl
+')m4_dnl m4_ifelse M4_JOURNAL_NAMESPACE
 m4_dnl
 ')m4_dnl m4_ifelse M4_JOURNAL_ENABLED
 m4_dnl

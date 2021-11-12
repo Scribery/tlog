@@ -91,12 +91,17 @@ if test "$tlog_journal_enabled" = "yes"; then
     AC_DEFINE([TLOG_JOURNAL_ENABLED], [1],
               [Define to 1 if Systemd Journal support is enabled])
     PKG_CHECK_MODULES([SYSTEMD_JOURNAL], [libsystemd >= 245],
-                      AC_DEFINE(HAVE_JOURNAL_OPEN_NAMESPACE, 1,
-                                [Defined if systemd has namespace support]))
+                      [tlog_journal_namespace="yes"],
+                      [tlog_journal_namespace="no"])
 else
     AC_SUBST([TLOG_JOURNAL_ENABLED], [0])
 fi
 AM_CONDITIONAL([TLOG_JOURNAL_ENABLED], [test "$tlog_journal_enabled" = "yes"])
+if test "$tlog_journal_namespace" = "yes"; then
+    AC_SUBST([TLOG_JOURNAL_NAMESPACE], [1])
+    AC_DEFINE([TLOG_JOURNAL_NAMESPACE], [1],
+              [Define to 1 if Systemd Journal support is enabled])
+fi
 
 LIBCURL_CHECK_CONFIG([yes], [7.15.4], ,
                      AC_MSG_ERROR([libcurl not found]))
