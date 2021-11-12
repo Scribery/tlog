@@ -28,7 +28,8 @@ pkgconfdefaultdir = $(pkgdatadir)
 M4FLAGS = \
     -I $(top_srcdir)/m4/tlog                        \
     --prefix-builtins                               \
-    -D M4_JOURNAL_ENABLED=$(TLOG_JOURNAL_ENABLED)
+    -D M4_JOURNAL_ENABLED=$(TLOG_JOURNAL_ENABLED)   \
+    -D M4_JOURNAL_NAMESPACE=$(TLOG_JOURNAL_NAMESPACE)
 
 # Common configuration info dependencies
 TLOG_CONF_DEPS = \

@@ -54,7 +54,6 @@ typedef enum tlog_rc {
     TLOG_RC_ES_JSON_READER_CURL_INIT_FAILED,
     TLOG_RC_ES_JSON_READER_REPLY_INVALID,
     TLOG_RC_MEM_JSON_READER_INCOMPLETE_LINE,
-    TLOG_RC_SYSTEMD_NAMESPACE_NOT_SUPPORTED,
     /* Return code upper boundary (not a valid return code) */
     TLOG_RC_MAX_PLUS_ONE
 } tlog_rc;

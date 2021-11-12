@@ -78,15 +78,14 @@ tlog_journal_json_reader_init(struct tlog_json_reader *reader, va_list ap)
     }
 
     /* Open journal */
-#if HAVE_JOURNAL_OPEN_NAMESPACE == 1
+#ifdef TLOG_JOURNAL_NAMESPACE
     sd_rc = sd_journal_open_namespace(&journal_json_reader->journal, namespace, 0);
-#else
-    if (namespace != NULL) {
-        grc = TLOG_RC_SYSTEMD_NAMESPACE_NOT_SUPPORTED;
+    if (sd_rc < 0) {
+        grc = TLOG_GRC_FROM(systemd, sd_rc);
         goto error;
     }
-    sd_rc = sd_journal_open(&journal_json_reader->journal, 0);
 #endif
+    sd_rc = sd_journal_open(&journal_json_reader->journal, 0);
     if (sd_rc < 0) {
         grc = TLOG_GRC_FROM(systemd, sd_rc);
         goto error;
