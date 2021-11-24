@@ -14,10 +14,6 @@
 %global _lib lib/%(%{__dpkg_architecture} -qDEB_HOST_MULTIARCH)
 %endif
 
-# Compatibility macros
-%{!?_tmpfilesdir:%global _tmpfilesdir %{_prefix}/lib/tmpfiles.d}
-%{!?make_build:%global make_build %{__make} %{?_smp_mflags}}
-
 Name:           tlog
 Version:        12
 Release:        1%{?dist}
@@ -34,14 +30,13 @@ License:        GPLv2+
 %endif
 
 URL:            https://github.com/Scribery/%{name}
-Source:         %{url}/releases/download/v%{version}/%{name}-%{version}.tar.gz
+Source0:        %{url}/releases/download/v%{version}/%{name}-%{version}.tar.gz
+Source1:        %{name}-tmpfiles.conf
 
-BuildRequires:  autoconf
-BuildRequires:  automake
-BuildRequires:  libtool
 BuildRequires:  m4
 BuildRequires:  gcc
 BuildRequires:  make
+BuildRequires:  libutempter-devel
 
 %if "%{_vendor}" == "debbuild"
 BuildRequires:  libjson-c-dev
@@ -70,7 +65,7 @@ BuildRequires:  libutempter-devel
 
 %if %{with systemd}
 BuildRequires:  pkgconfig(libsystemd)
-%{?systemd_requires}
+BuildRequires:  systemd-rpm-macros
 %endif
 %endif
 
@@ -96,20 +91,17 @@ rm %{buildroot}/%{_libdir}/*.la
 
 # Remove development files as we're not doing a devel package yet
 rm %{buildroot}/%{_libdir}/*.so
-rm -r %{buildroot}/usr/include/%{name}
+rm --recursive %{buildroot}/usr/include/%{name}
 
 %if %{with systemd}
     # Create tmpfiles.d configuration for the lock dir
-    mkdir -p %{buildroot}%{_tmpfilesdir}
-    {
-        echo "# Type Path Mode UID GID Age Argument"
-        echo "d /run/%{name} 0755 %{name} %{name}"
-    } > %{buildroot}%{_tmpfilesdir}/%{name}.conf
+    mkdir --parents %{buildroot}%{_tmpfilesdir}
+    install --preserve-timestamps --mode 0644 %{SOURCE1} %{buildroot}%{_tmpfilesdir}/%{name}.conf
 # Else, if it's RHEL6 or older
 %else
     # Create the lock dir
-    mkdir -p %{buildroot}%{_localstatedir}/run
-    install -d -m 0755 %{buildroot}%{_localstatedir}/run/%{name}
+    mkdir --parents %{buildroot}%{_localstatedir}/run
+    install --preserve-timestamps --mode 0755 %{buildroot}%{_localstatedir}/run/%{name}
 %endif
 
 %files
@@ -136,13 +128,12 @@ rm -r %{buildroot}/usr/include/%{name}
 
 %pre
 getent group %{name} >/dev/null ||
-    groupadd -r %{name}
+    groupadd --system %{name}
 getent passwd %{name} >/dev/null ||
-    useradd -r -g %{name} -d %{_localstatedir}/run/%{name} -s /sbin/nologin \
-            -c "Tlog terminal I/O logger" %{name}
+    useradd --system --gid %{name} --home-dir %{_localstatedir}/run/%{name} \
+    --shell /sbin/nologin --comment "Tlog terminal I/O logger" %{name}
 
 %post
-/sbin/ldconfig
 %if 0%{?el7} || 0%{?suse_version} >= 1315
 # For RHEL7 and SUSE Linux distributions, creation doesn't happen automatically
 %tmpfiles_create %{name}.conf
@@ -152,20 +143,27 @@ getent passwd %{name} >/dev/null ||
 systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 %endif
 
-%postun
-/sbin/ldconfig
-
 %changelog
-* Tue Jan 19 2021 Justin Stephenson <jstephen@redhat.com> - 11-1
-- Release v11
-- Fire SIGCHLD after utempter_add_record since it probably eats it.
+* Wed Nov 24 2021 K. de Jong <keesdejong@fedoraproject.org> - 12-1
+- New upstream release
 
-* Tue Oct 13 2020 Justin Stephenson <jstephen@redhat.com> - 10-1
-- Release v10
-- Correct suse rpmbuild
-- Update debbuild for travis CI
+* Wed Aug 25 2021 K. de Jong <keesdejong@fedoraproject.org> - 11-5
+- Removed tmpfilesdir conditions, added systemd-rpm-macros as build requirement
+- Replacing short command options with the long notation, e.g. -m is now --mode
+- Removed compatibility macros, not needed anymore
+- Cleaned up build dependencies
+- Removed ldconfig commands from post and postun
 
-* Thu May 28 2020 Justin Stephenson <jstephen@redhat.com> - 9-1
+* Fri Jul 23 2021 Fedora Release Engineering <releng@fedoraproject.org> - 11-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Sat Jul 10 2021 Björn Esser besser82@fedoraproject.org - 11-3
+- Rebuild for versioned symbols in json-c
+
+* Wed Jan 27 2021 Fedora Release Engineering <releng@fedoraproject.org> - 11-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
+* Tue Oct 13 2020 Justin Stephenson <jstephen@redhat.com> - 9-1
 - Release v9
 - Add libutempter support
 - Require journal match filter
@@ -174,17 +172,35 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 - Add "time" real clock timestamp message field
 - Various upstream CI improvements
 
-* Tue May 26 2020 Justin Stephenson <jstephen@redhat.com> - 8-2
-- Minor test fixes.
+* Wed Jul 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 8-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Fri May 22 2020 Justin Stephenson <jstephen@redhat.com> - 8-2
+- Minor test fixups
 
 * Tue May 19 2020 Justin Stephenson <jstephen@redhat.com> - 8-1
-- Release v8.
-- Spec file fixes for EL6.
-- Spec file improvements for Debian/Ubuntu pkg-config.
-- tlog-play improve authentication options.
+- Release v8
+- Spec file fixes for EL6
+- Spec file improvements for Debian/Ubuntu pkg-config
+- Tlog-play improve authentication options
 - Handle piped in I/O from stdin and improve the main recording
   transfer exit condition.
-- Use empty string on hostname resolution failure.
+- Use empty string on hostname resolution failure
+
+* Tue Apr 21 2020 Björn Esser <besser82@fedoraproject.org> - 7-3
+- Rebuild (json-c)
+
+* Fri Jan 31 2020 Fedora Release Engineering <releng@fedoraproject.org> - 7-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
+
+* Sun Jan 19 2020 Justin Stephenson <jstephen@redhat.com> - 11-1
+- Release v11
+- Fire SIGCHLD after utempter_add_record since it probably eats it.
+
+* Wed Jan 8 2020 Justin Stephenson <jstephen@redhat.com> - 10-1
+- Release v10
+- Correct suse rpmbuild
+- Update debbuild for travis CI
 
 * Tue Nov 12 2019 Justin Stephenson <jstephen@redhat.com> - 7-1
 - Release v7
@@ -192,21 +208,33 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 - Add -i/--interactive option to tlog-rec-session. Allows login
   programs to call tlog-rec-session more transparently.
 - Make in_txt/out_txt fields optional. This handles missing fields
-  when reading from ElasticSearch or other backends.
+  when reading from Elasticsearch or other backends.
 
-* Wed Dec 5 2018 Kirill Glebov <kgliebov@redhat.com> - 6-1
-- Release v6
+* Sat Jul 27 2019 Fedora Release Engineering <releng@fedoraproject.org> - 6-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
+* Tue May 28 2019 Justin Stephenson <jstephen@redhat.com> - 6-1
+- Release v6. Added features and implemented fixes follow. See README.md and
+  manpages for documentation of new features.
+- Add integration tests for end-to-end test coverage.
+- Fix compiler type comparison error with json-c json_object_array_length
+  return value.
+- Fix a distribution issue causing incorrect M4_CONF_PATH expansion.
+- Log more detailed error when systemd journal is not present.
+
+* Sun Feb 03 2019 Fedora Release Engineering <releng@fedoraproject.org> - 5-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
 
 * Wed Dec 5 2018 Kirill Glebov <kgliebov@redhat.com> - 5-1
 - Release v5. Added features and implemented fixes follow. See README.md and
   manpages for documentation of new features.
-- Implement support for --configuration option for all programs. 
+- Implement support for --configuration option for all programs.
   The option makes the program output its configuration in JSON and then
   exit.
 - Add BuildDependencies to allow yum-builddep.
 - Open JSON writer file with euid/egid. To allow creating protected log files
-  with tlog-rec-session, open the JSON writer's file with the EUID and 
-  GUID the program was started with. 
+  with tlog-rec-session, open the JSON writer's file with the EUID and
+  GUID the program was started with.
 - Installing Packages with the APT Addon instead of apt-get.
 - Switch to using TLOG_ERRS_RAISE macros.
 - Fix tlog-play cleanup-path segfault.
@@ -217,6 +245,15 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 - Fix tlog-rec-session file permissions bug.
 - Use CLOCK_MONOTONIC for rate-limiting writing.
 - Filter out some more input control sequences.
+
+* Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 4-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
+* Tue Mar 06 2018 Björn Esser <besser82@fedoraproject.org> - 4-3
+- Rebuilt for libjson-c.so.4 (json-c v0.13.1)
+
+* Fri Feb 09 2018 Fedora Release Engineering <releng@fedoraproject.org> - 4-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
 
 * Wed Jan 24 2018 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 4-1
 - Release v4. Added features and implemented fixes follow. See README.md and
@@ -252,13 +289,22 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
   packaging to prevent users from changing their shells themselves once it has
   been assigned.
 - Add support for specifying the shell to start via the tlog-rec-session
-  executable name. E.g. by making a tlog-rec-session-shell-bin-zsh ->
+  executable name. E.g. by making a tlog-rec-session-shell-zsh ->
   tlog-rec-session symlink and executing it. That can be used to specify
   particular shells to be recorded for specific users by assigning these
   symlinks as their login shells.
 - Make error messages from all the tools a bit less noisy and more readable.
 
-* Tue Apr 12 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3-1
+* Sun Dec 10 2017 Björn Esser <besser82@fedoraproject.org> - 3-4
+- Rebuilt for libjson-c.so.3
+
+* Thu Aug 03 2017 Fedora Release Engineering <releng@fedoraproject.org> - 3-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
+
+* Thu Jul 27 2017 Fedora Release Engineering <releng@fedoraproject.org> - 3-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
+* Wed Feb 22 2017 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 3-1
 - Release v3. Added features and implemented fixes follow.
 - Make each JSON message timing data start with window size.
   This makes it possible to pick up the stream from any message and also
@@ -293,6 +339,9 @@ systemd-tmpfiles --create %{name}.conf >/dev/null 2>&1 || :
 - Update and expand README.md to describe secure log message filtering with
   rsyslog, and playback directly from Elasticsearch, among other, smaller
   additions.
+
+* Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
 
 * Wed Apr 6 2016 Nikolai Kondrashov <Nikolai.Kondrashov@redhat.com> - 2-1
 - Release v2. Not ready for production. Following features are added.
