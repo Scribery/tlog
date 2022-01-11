@@ -1,0 +1,32 @@
+name: Build
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  make-check:
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    env:
+      CFLAGS: -Wall -Wextra -Werror -g
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+       dnf -y install autoconf automake make libtool \
+       systemd-devel json-c-devel libcurl-devel libutempter-devel
+    - name: Build
+      run: |
+       autoreconf -if && ./configure
+       make
+       make check
+       make distcheck
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: config logs
+        path: config.log
