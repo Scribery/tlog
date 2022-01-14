@@ -28,6 +28,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+       sudo apt update
        sudo apt -y install autoconf automake make libtool \
        pkg-config libjson-c-dev libsystemd-dev libcurl-*-dev \
        libutempter-dev
