@@ -1,0 +1,25 @@
+name: cppcheck
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  cppcheck:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Run cppcheck
+        uses: deep5050/cppcheck-action@main
+        with:
+          github_token: $GITHUB_TOKEN
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck report file
+          path: cppcheck_report.txt
