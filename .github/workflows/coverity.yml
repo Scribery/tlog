@@ -54,6 +54,6 @@ jobs:
           --form token=$TOKEN \
           --form email=jstephen@redhat.com \
           --form file=@build.tgz \
-          --form version=master \
+          --form version=main \
           --form description="daily build" \
           https://scan.coverity.com/builds?project=Scribery%2Ftlog
