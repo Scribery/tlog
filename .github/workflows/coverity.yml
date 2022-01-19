@@ -7,6 +7,7 @@ on:
 
 jobs:
   coverity:
+    if: github.repository_owner == 'Scribery'
     runs-on: ubuntu-latest
     env:
       TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
