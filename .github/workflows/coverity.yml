@@ -3,29 +3,15 @@ on:
   # run daily at 12:30 UTC due to
   # https://scan.coverity.com/faq#frequency
   schedule:
-    - cron:  '30 12 * * *'
+    - cron:  '* * * * *'
+    #- cron:  '30 12 * * *'
 
 jobs:
   coverity:
-    if: github.repository_owner == 'Scribery'
     runs-on: ubuntu-latest
-    env:
-      TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
     steps:   
     - name: Checkout repository
       uses: actions/checkout@v2
-
-    - name: Download Coverity Build Tool
-      run: |
-        set -ex
-
-        curl \
-          --data "token=$TOKEN&project=Scribery%2Ftlog" \
-          -o covscan.tar.gz \
-          https://scan.coverity.com/download/linux64
-        mkdir covscan
-        tar -xzf covscan.tar.gz --strip 1 -C covscan
-        rm covscan.tar.gz
 
     - name: Install dependencies
       run: |
@@ -37,23 +23,8 @@ jobs:
     - name: Configure
       run: autoreconf -if && ./configure
 
-    - name: Build with cov-build
-      run: |
-        export PATH="$(pwd)/covscan/bin:$PATH"
-        cov-build --dir cov-int make
-
-    - name: Print logs
-      run: |
-        cat cov-int/build-log.txt
-
-    - name: Submit the result to Coverity Scan
-      run: |
-        tar -czvf build.tgz cov-int
-        curl \
-          --form project=Scribery/tlog \
-          --form token=$TOKEN \
-          --form email=jstephen@redhat.com \
-          --form file=@build.tgz \
-          --form version=main \
-          --form description="daily build" \
-          https://scan.coverity.com/builds?project=Scribery%2Ftlog
+    - name: Execute coverity scan
+      uses: vapier/coverity-scan-action@v1
+      with:
+        email: ${{ jstephen@redhat.com }}
+        token: ${{ secrets.COVERITY_SCAN_TOKEN }}
