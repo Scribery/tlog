@@ -934,24 +934,21 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
             continue;
         }
 
-        /* No data to log from EOF packet */
-        if (!tlog_pkt_is_eof(&pkt)) {
-            /* Log the received data, if any */
-            if (tlog_pkt_pos_is_in(&log_pos, &pkt)) {
-                /* If asked to log this type of packet */
-                if (item_mask & (1 << tlog_rec_item_from_pkt(&pkt))) {
-                    grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
-                    if (grc == TLOG_RC_OK) {
-                        log_pending = true;
-                    } else if (grc != TLOG_GRC_FROM(errno, EINTR)) {
-                        return_grc = grc;
-                        TLOG_ERRS_RAISECS(grc, "Failed logging terminal data");
-                    }
-                } else {
-                    tlog_pkt_pos_move_past(&log_pos, &pkt);
+        /* Log the received data, if any */
+        if (tlog_pkt_pos_is_in(&log_pos, &pkt)) {
+            /* If asked to log this type of packet */
+            if (item_mask & (1 << tlog_rec_item_from_pkt(&pkt))) {
+                grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
+                if (grc == TLOG_RC_OK) {
+                    log_pending = true;
+                } else if (grc != TLOG_GRC_FROM(errno, EINTR)) {
+                    return_grc = grc;
+                    TLOG_ERRS_RAISECS(grc, "Failed logging terminal data");
                 }
-                continue;
+            } else {
+                tlog_pkt_pos_move_past(&log_pos, &pkt);
             }
+            continue;
         }
 
         /* Read new data */
@@ -968,9 +965,6 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                 tlog_errs_pushs(perrs, "Failed reading terminal data");
                 return_grc = grc;
             }
-        /* No more active File Descriptors to read */
-        } else if (tlog_pkt_is_void(&pkt)) {
-            break;
         } else if (tlog_pkt_is_eof(&pkt)) {
             tlog_sink_io_close(tty_sink, pkt.data.io.output);
         }
