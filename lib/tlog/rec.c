@@ -967,6 +967,10 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
             }
         } else if (tlog_pkt_is_eof(&pkt)) {
             tlog_sink_io_close(tty_sink, pkt.data.io.output);
+            /* Continue if only input was closed */
+            if (pkt.data.io.output) {
+                break;
+            }
         }
     }
 
