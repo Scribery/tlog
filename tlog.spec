@@ -30,7 +30,7 @@ Group:          admin
 License:        GPL-2.0+
 %else
 Group:          Applications/System
-License:        GPLv2+
+License:        GPL-2.0-or-later
 %endif
 
 URL:            https://github.com/Scribery/%{name}
