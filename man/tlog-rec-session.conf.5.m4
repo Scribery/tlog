@@ -68,7 +68,7 @@ A configuration specifying logging to a file:
 .nf
 
 {
-    "writer": "file"
+    "writer": "file",
     "file" : {
         "path": "/var/log/tlog-rec-session.log"
     }
