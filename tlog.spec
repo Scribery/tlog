@@ -19,7 +19,7 @@
 %{!?make_build:%global make_build %{__make} %{?_smp_mflags}}
 
 Name:           tlog
-Version:        12
+Version:        13
 Release:        1%{?dist}
 Summary:        Terminal I/O logger
 
