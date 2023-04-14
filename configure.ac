@@ -20,7 +20,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([tlog], [12])
+AC_INIT([tlog], [13])
 AM_INIT_AUTOMAKE([1.9 -Wall foreign])
 AM_MAINTAINER_MODE
 AC_CONFIG_HEADER([config.h])
