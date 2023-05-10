@@ -1,0 +1,24 @@
+specfile_path: tlog.spec
+synced_files:
+  - tlog.spec
+  - .packit.yml
+upstream_package_name: tlog
+downstream_package_name: tlog
+actions:
+  post-upstream-clone:
+  - autoreconf -if
+  - ./configure --prefix=/usr --sysconfdir=/etc
+  get-current-version:
+  - git describe --abbrev=0
+  create-archive:
+  - make dist
+  # packit needs this to know that tarball path
+  - bash -c 'ls -1 ./tlog*.tar.gz'
+jobs:
+- job: copr_build
+  trigger: pull_request
+  metadata:
+    targets:
+    - fedora-29-x86_64
+    - fedora-30-x86_64
+    - fedora-rawhide-x86_64
