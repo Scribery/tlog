@@ -90,7 +90,7 @@ if test "$tlog_journal_enabled" = "yes"; then
     AC_SUBST([TLOG_JOURNAL_ENABLED], [1])
     AC_DEFINE([TLOG_JOURNAL_ENABLED], [1],
               [Define to 1 if Systemd Journal support is enabled])
-    PKG_CHECK_MODULES([SYSTEMD_JOURNAL], [libsystemd >= 245],
+    PKG_CHECK_MODULES([SYSTEMD_JOURNAL_NAMESPACE], [libsystemd >= 245],
                       [tlog_journal_namespace="yes"],
                       [tlog_journal_namespace="no"])
 else
