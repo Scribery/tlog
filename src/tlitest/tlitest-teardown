@@ -48,3 +48,8 @@ if [ -f /etc/sudoers.d/01_wheel_nopass_tlitest ]; then
     echo "Found test sudoers file...removing"
     rm /etc/sudoers.d/01_wheel_nopass_tlitest
 fi
+
+user="tlitestlocaluser2"
+if [ -f ~/.ssh/id_rsa_${user} ]; then
+    rm -rf ~/.ssh/id_rsa_${user}*
+fi

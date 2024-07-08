@@ -8,7 +8,6 @@ python3-pytest
 python3-pexpect
 python3-systemd
 tcsh
-sshpass
 "
 
 [[ -z "${CONTAINER_ENV}" ]] && PKGS+="tlog"
@@ -61,3 +60,12 @@ echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > \
 usermod tlitestlocaladmin1 -aG wheel,systemd-journal
 usermod tlitestlocaluser1 -aG systemd-journal
 usermod tlitestlocaluser2 -s /usr/bin/tlog-rec-session
+
+# Generate ssh key for testing
+user="tlitestlocaluser2"
+rm -rf ~/.ssh/id_rsa_${user}*
+ssh-keygen -t rsa -b 2048 -N "" -C stdin_test -f ~/.ssh/id_rsa_${user}
+user_dir=$(eval echo "~${user}")
+mkdir -p ${user_dir}/.ssh
+cat ~/.ssh/id_rsa_${user}.pub >> ${user_dir}/.ssh/authorized_keys
+chown -R ${user}:${user} ${user_dir}/.ssh
