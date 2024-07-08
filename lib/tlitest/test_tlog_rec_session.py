@@ -217,10 +217,14 @@ class TestTlogRecSession:
         """
         text_in_stdio = 'print("hello world")\n'
         text_out = "hello world"
-        p = Popen(['sshpass', '-p', 'Secret123', 'ssh', '-o',
-                   'StrictHostKeyChecking=no',
-                   'tlitestlocaluser2@localhost', 'python3'],
-        stdout=PIPE, stdin=PIPE, stderr=PIPE, encoding='utf8')
+
+        sessionclass = TlogRecSessionConfig(writer="syslog")
+        sessionclass.generate_config(SYSTEM_TLOG_REC_SESSION_CONF)
+
+        p = Popen(['ssh', '-i', f'~/.ssh/id_rsa_{self.user}',
+                   '-o', 'StrictHostKeyChecking=no',
+                   f'{self.user}@localhost', 'python3'],
+                  stdout=PIPE, stdin=PIPE, stderr=PIPE, encoding='utf8')
         stdout_data = p.communicate(input=text_in_stdio)[0]
         assert text_out in stdout_data
 
