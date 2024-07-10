@@ -15,7 +15,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Build the Docker image
-      run: sudo podman build . --file Dockerfile.fedora --tag ${IMAGE}
+      run: sudo -E XDG_RUNTIME_DIR= podman build . --file Dockerfile.fedora --tag ${IMAGE}
     - name: Run the container
       run: sudo podman run --privileged --security-opt seccomp=unconfined --detach -p 80:80 --name=${CONTAINER} ${IMAGE}
     - name: Check the container is up
