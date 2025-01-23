@@ -17,7 +17,7 @@ jobs:
     - name: Build the Docker image
       run: sudo -E XDG_RUNTIME_DIR= podman build . --file Dockerfile.fedora --tag ${IMAGE}
     - name: Run the container
-      run: sudo podman run --privileged --security-opt seccomp=unconfined --detach -p 80:80 --name=${CONTAINER} ${IMAGE}
+      run: sudo podman run --privileged --security-opt seccomp=unconfined --security-opt apparmor=unconfined --security-opt label=disable --detach -p 80:80 --cap-add=CAP_DAC_READ_SEARCH --cap-add=CAP_DAC_OVERRIDE --name=${CONTAINER} ${IMAGE}
     - name: Check the container is up
       run: sudo podman ps
     - name: Setup ./configure
