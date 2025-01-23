@@ -80,6 +80,7 @@ tlog_rec_alarm_sighandler(int signum)
 static void
 tlog_rec_sigchld_handler(int signum)
 {
+    (void)signum;
     tlog_rec_child_exited = true;
 }
 
