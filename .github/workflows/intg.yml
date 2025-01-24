@@ -30,6 +30,11 @@ jobs:
       run: sudo podman exec ${CONTAINER} sh -c 'rpmbuild -tb *tar.gz && dnf install -y ~/rpmbuild/RPMS/x86_64/tlog*'
     - name: Integration tests setup
       run: sudo podman exec -e CONTAINER_ENV=true ${CONTAINER} ./src/tlitest/tlitest-setup
+    - name: Workaround failing login
+      # login during tests calls 'unix_chkpwd' and this fails with
+      # openat(AT_FDCWD</>, "/etc/shadow", O_RDONLY|O_CLOEXEC) = -1 EACCES
+      # for unclear reason (CAP_DAC_* are granted)
+      run: sudo podman exec -t ${CONTAINER} chmod 777 /etc/shadow
     - name: Run tests
       # Hostnames test won't work in a container
       run: sudo podman exec -t ${CONTAINER} ./src/tlitest/tlitest-run -k "not hostnames"
