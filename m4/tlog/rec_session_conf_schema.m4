@@ -30,6 +30,12 @@ M4_PARAM(`', `shell', `file-env',
          `SHELL is the ', `The ',
          `M4_LINES(`path to the shell executable which should be spawned.')')m4_dnl
 m4_dnl
+M4_PARAM(`', `session_locking', `file-env',
+         `M4_TYPE_BOOL(true)', true,
+         `n', `true', `Enable locking by session ID',
+         `If specified, ', `If true ',
+         `M4_LINES(`locking by session ID is enabled.')')m4_dnl
+m4_dnl
 M4_PARAM(`', `login', `name-',
          `M4_TYPE_BOOL()', false,
          `l', `', `Make the shell a login shell',
