@@ -1,0 +1,15 @@
+provision:
+  # use bootc plugin
+  # plugin configuration doc: https://tmt.readthedocs.io/en/stable/plugins/provision.html#bootc
+  how: bootc
+  container-file: /gatting/tests/Containerfile
+  container-file-workdir: .
+  disk: 20
+summary: Execute wget test
+execute:
+  how: tmt
+  # run test here
+  script: |
+    set -xeu
+    wget --version
+    wget --help

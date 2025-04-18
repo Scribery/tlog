@@ -1,0 +1,24 @@
+# Choose nightly base image from https://images.paas.redhat.com/repository/bootc/rhel-bootc?tab=tags
+FROM images.paas.redhat.com/bootc/rhel-bootc:latest-9.6
+
+# Add nightly compose repo into container image to install wget
+RUN cat <<EOF >> /etc/yum.repos.d/rhel-96.repo
+[rhel96-baseos]
+name=rhel96-baseos
+baseurl=http://download-node-02.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.6.0/compose/BaseOS/\$basearch/os/
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0
+
+[rhel96-appstream]
+name=rhel96-appstream
+baseurl=http://download-node-02.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.6.0/compose/AppStream/\$basearch/os/
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0
+EOF
+
+# Install wget from nightly compose
+RUN dnf -y install tlog, systemd-journal-remote, glibc-all-langpacks, python3, python3-pytest, python3-pexpect, python3-systemd, tcsh && \
+    dnf clean all
+
