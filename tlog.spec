@@ -34,7 +34,8 @@ License:        GPL-2.0-or-later
 %endif
 
 URL:            https://github.com/Scribery/%{name}
-Source:         %{url}/releases/download/v%{version}/%{name}-%{version}.tar.gz
+Source0:        %{url}/releases/download/v%{version}/%{name}-%{version}.tar.gz
+Source1:        tlog.sysusers
 
 BuildRequires:  autoconf
 BuildRequires:  automake
@@ -57,6 +58,7 @@ Requires:         systemd-sysv
 Requires(preun):  systemd
 Requires(post):   systemd
 Requires(postun): systemd
+%{?sysusers_requires_compat}
 %endif
 
 %else
@@ -112,6 +114,8 @@ rm -r %{buildroot}/usr/include/%{name}
     install -d -m 0755 %{buildroot}%{_localstatedir}/run/%{name}
 %endif
 
+install -p -D -m 0644 %{SOURCE1} %{buildroot}%{_sysusersdir}/%{name}.conf
+
 %files
 %{!?_licensedir:%global license %doc}
 %license COPYING
@@ -133,13 +137,10 @@ rm -r %{buildroot}/usr/include/%{name}
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-rec.conf
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-rec-session.conf
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-play.conf
+%{_sysusersdir}/%{name}.conf
 
 %pre
-getent group %{name} >/dev/null ||
-    groupadd -r %{name}
-getent passwd %{name} >/dev/null ||
-    useradd -r -g %{name} -d %{_localstatedir}/run/%{name} -s /sbin/nologin \
-            -c "Tlog terminal I/O logger" %{name}
+%sysusers_create_compat %{SOURCE1}
 
 %post
 /sbin/ldconfig
