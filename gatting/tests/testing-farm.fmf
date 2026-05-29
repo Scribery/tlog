@@ -1,0 +1,3 @@
+summary: Deploy testing farm runner to run wget tmt test
+test: cd ../.. && tmt run -vvvvv plans --name /gatting/plans/tlog
+duration: 10m
