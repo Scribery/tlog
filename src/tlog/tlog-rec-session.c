@@ -35,6 +35,8 @@
 #include <tlog/rec_session_conf.h>
 #include <tlog/misc.h>
 
+#define BUF_LEN 64
+
 /**
  * Let GNU TLS know we don't need implicit global initialization, which opens
  * /dev/urandom and can replace standard FDs in case they were closed.
@@ -43,6 +45,54 @@ int
 _gnutls_global_init_skip(void)
 {
     return 1;
+}
+
+static bool
+is_ignore_rec_command(char *cmd)
+{
+    char *s;
+    size_t i;
+    /*
+     * rsync, scp, or sftp command executed by tlog:
+     *
+     *   rsync --server ...
+     *   rsync --server --sender ...
+     *   scp -t ...
+     *   scp -f ...
+     *
+     *   RHEL 7/8/9
+     *   /usr/libexec/openssh/sftp-server
+     *
+     *   Debian 10/12/13
+     *   /usr/lib/openssh/sftp-server
+     */
+    static const char *const cmd_list[] = {
+        "rsync",
+        "scp",
+        "/usr/libexec/openssh/sftp-server",
+        "/usr/lib/openssh/sftp-server",
+    };
+
+    if (cmd == NULL) {
+        return false;
+    }
+
+    char buf_cmd[BUF_LEN];
+    // truncate command at the first space
+    strncpy(buf_cmd, cmd, BUF_LEN);
+    buf_cmd[BUF_LEN - 1] = '\0';
+    s = strchr(buf_cmd, ' ');
+    if (s != NULL) {
+        *s = '\0';
+    }
+
+    for (i = 0; i < TLOG_ARRAY_SIZE(cmd_list); i++) {
+        if (strcmp(cmd_list[i], buf_cmd) == 0) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 int
@@ -132,6 +182,17 @@ main(int argc, char **argv)
     if (setenv("SHELL", shell_path, /*overwrite=*/1) != 0) {
         grc = TLOG_GRC_ERRNO;
         TLOG_ERRS_RAISECS(grc, "Failed to set SHELL environment variable");
+    }
+
+    /* check whether command is rsync, scp, or sftp */
+    if (argc > 2 && is_ignore_rec_command(argv[2])) {
+        tlog_exec_without_rec(&errs, euid, egid, conf, shell_path, shell_argv);
+
+        /* should not reach here if shell_argv exec successfully by
+         * tlog_exec_without_rec() */
+        tlog_errs_print(stderr, errs);
+        tlog_errs_destroy(&errs);
+        _exit(127);
     }
 
     /* Run */
