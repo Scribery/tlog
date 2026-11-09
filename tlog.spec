@@ -139,9 +139,6 @@ install -p -D -m 0644 %{SOURCE1} %{buildroot}%{_sysusersdir}/%{name}.conf
 %config(noreplace) %{_sysconfdir}/%{name}/%{name}-play.conf
 %{_sysusersdir}/%{name}.conf
 
-%pre
-%sysusers_create_compat %{SOURCE1}
-
 %post
 /sbin/ldconfig
 %if 0%{?el7} || 0%{?suse_version} >= 1315
