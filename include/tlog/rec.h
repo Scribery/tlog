@@ -76,4 +76,9 @@ extern tlog_grc tlog_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
                          int in_fd, int out_fd, int err_fd,
                          int *pstatus, int *psignal);
 
+/** exec command without recording, use for rsync, scp, sftp etc. */
+tlog_grc tlog_exec_without_rec(struct tlog_errs **perrs, uid_t euid,
+                               gid_t egid, struct json_object *conf,
+                               const char *shell_path, char **shell_argv);
+
 #endif /* _TLOG_REC_H */

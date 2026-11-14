@@ -1290,3 +1290,84 @@ cleanup:
     }
     return grc;
 }
+
+static tlog_grc
+direct_log_msg(struct tlog_errs **perrs, uid_t euid, gid_t egid,
+               struct json_object *conf, const char *msg, const int msg_len)
+{
+    tlog_grc grc;
+    unsigned int session_id;
+    struct timespec real_ts;
+    struct tlog_pkt_pos log_pos = TLOG_PKT_POS_VOID;
+    struct tlog_sink *log_sink = NULL;
+
+    grc = tlog_session_get_id(&session_id);
+    if (grc != TLOG_RC_OK) {
+        TLOG_ERRS_RAISECS(grc, "Failed retrieving session ID");
+    }
+
+    grc = tlog_rec_create_log_sink(perrs, &log_sink, euid, egid, conf,
+                                   session_id);
+    if (grc != TLOG_RC_OK) {
+        TLOG_ERRS_RAISES("Failed creating log sink");
+    }
+
+    if (clock_gettime(CLOCK_REALTIME, &real_ts) < 0) {
+        return TLOG_GRC_ERRNO;
+    }
+
+    struct tlog_pkt pkt = TLOG_PKT_IO(
+        real_ts.tv_sec, real_ts.tv_nsec,
+        real_ts.tv_sec, real_ts.tv_nsec,
+        true, msg, msg_len
+    );
+
+    grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
+    if (grc != TLOG_RC_OK) {
+        TLOG_ERRS_RAISES("Failed log direct message");
+    }
+
+    grc = tlog_sink_flush(log_sink);
+
+cleanup:
+
+    tlog_sink_destroy(log_sink);
+    return grc;
+}
+
+tlog_grc
+tlog_exec_without_rec(struct tlog_errs **perrs, uid_t euid, gid_t egid,
+                      struct json_object *conf, const char *path, char **argv)
+{
+    tlog_grc grc;
+
+    /* drop privileges before run rsync, scp et.al. */
+    uid_t uid = getuid();
+    gid_t gid = getgid();
+    /* Drop the possibly-privileged EGID permanently */
+    if (setresgid(gid, gid, gid) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        TLOG_ERRS_RAISECF(grc, "Failed dropping EGID");
+    }
+
+    /* Drop the possibly-privileged EUID permanently */
+    if (setresuid(uid, uid, uid) < 0) {
+        grc = TLOG_GRC_ERRNO;
+        TLOG_ERRS_RAISECF(grc, "Failed dropping EUID");
+    }
+
+    grc = direct_log_msg(perrs, euid, egid, conf, argv[2], strlen(argv[2]));
+    if (grc != TLOG_RC_OK) {
+        goto cleanup;
+    }
+
+    execv(path, argv);
+    /* execv returns only if an error has occurred. */
+    grc = TLOG_GRC_ERRNO;
+    tlog_errs_pushc(perrs, grc);
+    tlog_errs_pushf(perrs, "Failed executing %s", path);
+
+cleanup:
+
+    return grc;
+}
