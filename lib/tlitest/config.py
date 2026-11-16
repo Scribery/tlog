@@ -19,6 +19,7 @@ DEFAULT_TLOG_REC_SYSLOG_PRIORITY = "info"
 DEFAULT_TLOG_REC_SESSION_SHELL = "/bin/bash"
 DEFAULT_TLOG_REC_SESSION_NOTICE = "ATTENTION: Your session is being recorded!"
 DEFAULT_TLOG_REC_SESSION_WRITER = "journal"
+DEFAULT_TLOG_REC_SESSION_SESSION_LOCKING = True
 
 DEFAULT_TLOG_PLAY_READER = "file"
 DEFAULT_TLOG_PLAY_PERSIST = False
@@ -184,7 +185,8 @@ class TlogRecConfig:
 
 class TlogRecSessionConfig(TlogRecConfig):
     """TlogPlaySession configuration class, child of TlogRecConfig"""
-    def __init__(self, shell=DEFAULT_TLOG_REC_SESSION_SHELL,
+    def __init__(self, session_locking = DEFAULT_TLOG_REC_SESSION_SESSION_LOCKING,
+                 shell=DEFAULT_TLOG_REC_SESSION_SHELL,
                  notice=DEFAULT_TLOG_REC_SESSION_NOTICE,
                  latency=DEFAULT_TLOG_REC_LATENCY,
                  payload=DEFAULT_TLOG_REC_PAYLOAD,
@@ -201,6 +203,7 @@ class TlogRecSessionConfig(TlogRecConfig):
                  syslog_priority=DEFAULT_TLOG_REC_SYSLOG_PRIORITY):
         self.shell = shell
         self.notice = notice
+        self.session_locking = session_locking
         super().__init__(latency, payload, log_input, log_output, log_window,
                          limit_rate, limit_burst, limit_action,
                          writer, file_writer_path, journal_priority,
@@ -212,6 +215,7 @@ class TlogRecSessionConfig(TlogRecConfig):
         tlog_rec_session_config = {
             "shell": self.shell,
             "notice": self.notice,
+            "session_locking": self.session_locking
         }
 
         return tlog_rec_session_config

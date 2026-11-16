@@ -30,6 +30,42 @@ class TestTlogRecSession:
              stat.S_ISUID + stat.S_ISGID + stat.S_ISVTX)
 
     @pytest.mark.tier1
+    def test_session_record_to_file_locking_enabled(self):
+        """
+        Check multiple recordings in a session only records one at a time (default)
+        """
+        myname = inspect.stack()[0][3]
+        logfile = mklogfile(self.tempdir)
+        sessionclass = TlogRecSessionConfig(writer="file", file_writer_path=logfile)
+        sessionclass.generate_config(SYSTEM_TLOG_REC_SESSION_CONF)
+        shell = ssh_pexpect(self.user, 'Secret123', 'localhost')
+        shell.sendline('echo {}_shell0'.format(myname))
+        shell.sendline('stty -echo')
+        shell.sendline("tlog-rec-session -c 'echo {}_nested_session' >/dev/null".format(myname))
+        shell.sendline('exit')
+        check_recording(shell, "{}_shell0".format(myname), logfile)
+        check_recording_missing(shell, "{}_nested_session".format(myname), logfile)
+        shell.close()
+
+    @pytest.mark.tier1
+    def test_session_record_to_file_locking_disabled(self):
+        """
+        Check multiple recordings in a session works in tlog-rec-session with locking-enabled setting
+        """
+        myname = inspect.stack()[0][3]
+        logfile = mklogfile(self.tempdir)
+        sessionclass = TlogRecSessionConfig(writer="file", file_writer_path=logfile, session_locking=False)
+        sessionclass.generate_config(SYSTEM_TLOG_REC_SESSION_CONF)
+        shell = ssh_pexpect(self.user, 'Secret123', 'localhost')
+        shell.sendline('echo {}_shell0'.format(myname))
+        shell.sendline('stty -echo')
+        shell.sendline("tlog-rec-session -c 'echo {}_nested_session' >/dev/null".format(myname))
+        shell.sendline('exit')
+        check_recording(shell, "{}_shell0".format(myname))
+        check_recording(shell, "{}_nested_session".format(myname))
+        shell.close()
+
+    @pytest.mark.tier1
     def test_session_record_to_file(self):
         """
         Check tlog-rec-session preserves session in a file
