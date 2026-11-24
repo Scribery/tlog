@@ -94,11 +94,12 @@ class TestTlogRecPerformanceOptions:
         """
         logfile = mklogfile(self.tempdir)
         shell = ssh_pexpect(self.user1, 'Secret123', 'localhost')
-        opts = '--limit-rate=10 --limit-action=delay'
+        opts = '--limit-rate=1000 --limit-action=delay'
         shell.sendline('tlog-rec {} '
                        '-o {} /bin/bash'.format(opts, logfile))
         for num in range(0, 200):
             shell.sendline('echo test_{}'.format(num))
+            shell.expect('echo test_{}'.format(num))
         check_outfile('test_199', logfile, maxchecks=100)
         shell.sendline('exit')
         check_recording(shell, 'test_199', logfile)

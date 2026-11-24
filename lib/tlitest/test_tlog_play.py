@@ -120,6 +120,7 @@ class TestTlogPlay:
         time_start = time.time()
         opts = '-i {} -g start'.format(logfile)
         shell.sendline('tlog-play {}'.format(opts))
+        shell.expect('echo end')
         shell.expect('end')
         time_stop = time.time()
         assert time_stop-time_start > 15
@@ -264,13 +265,10 @@ class TestTlogPlayControl:
         time_start = time.time()
         shell.sendline('tlog-play -i {}'.format(self.ctl_log))
         time.sleep(1)
-        shell.sendline('}')
-        time.sleep(1)
-        shell.sendline('}')
-        time.sleep(1)
         shell.sendline('{')
         time.sleep(1)
         shell.sendline('{')
+        shell.expect('end')
         shell.expect('end', timeout=40)
         time_stop = time.time()
         assert time_stop-time_start > 30

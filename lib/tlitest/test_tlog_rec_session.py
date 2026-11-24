@@ -169,12 +169,13 @@ class TestTlogRecSession:
         logfile = mklogfile(self.tempdir)
         sessionclass = TlogRecSessionConfig(writer="file",
                                             file_writer_path=logfile,
-                                            limit_rate=500,
+                                            limit_rate=1000,
                                             limit_action="delay")
         sessionclass.generate_config(SYSTEM_TLOG_REC_SESSION_CONF)
         shell = ssh_pexpect(self.user, 'Secret123', 'localhost')
         for num in range(0, 200):
             shell.sendline('echo {}_{}'.format(myname, num))
+            shell.expect('echo {}_{}'.format(myname, num))
         shell.sendline('exit')
         check_recording(shell, '{}_199'.format(myname), logfile)
         shell.close()
