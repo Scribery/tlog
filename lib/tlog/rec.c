@@ -23,6 +23,7 @@
 #include <config.h>
 #include <tlog/rec.h>
 #include <tlog/rec_item.h>
+#include <time.h>
 #include <tlog/json_sink.h>
 #include <tlog/syslog_json_writer.h>
 #ifdef TLOG_JOURNAL_ENABLED
@@ -834,6 +835,12 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
     struct tlog_pkt pkt = TLOG_PKT_VOID;
     struct tlog_pkt_pos tty_pos = TLOG_PKT_POS_VOID;
     struct tlog_pkt_pos log_pos = TLOG_PKT_POS_VOID;
+    /*
+     * Watchdog: detect tlog_pkt_pos_cmp / tlog_sink_write spin loop
+     * that occurs after the wrapped child exits with buffered data
+     * that the position state machine never finishes flushing.
+     */
+    time_t watchdog_last_progress = time(NULL);
 
     tlog_rec_exit_signum = 0;
     tlog_rec_alarm_set = false;
@@ -894,6 +901,17 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
      * Transfer I/O and window changes
      */
     while (tlog_rec_exit_signum == 0) {
+        /*
+         * Watchdog: child has exited but we've made no progress in 30s.
+         * That's a bug: tlog_pkt_pos_cmp / tlog_sink_write is in a spin
+         * loop that never reaches a terminal state. Force exit to avoid
+         * burning a CPU forever (cf armoirjaune incident 2026-05-06).
+         */
+        if (tlog_rec_child_exited && (time(NULL) - watchdog_last_progress > 30)) {
+            tlog_errs_pushs(perrs, "Watchdog: child exited and no flush progress in 30s, forcing exit");
+            return_grc = TLOG_GRC_FROM(errno, ETIMEDOUT);
+            break;
+        }
         /* Expected exit conditions */
         if (tlog_rec_child_exited) {
             if (grc == TLOG_GRC_FROM(errno, EIO) || (tlog_pkt_is_eof(&pkt))) {
@@ -932,6 +950,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                 }
                 break;
             }
+            watchdog_last_progress = time(NULL);
             continue;
         }
 
@@ -942,6 +961,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                 grc = tlog_sink_write(log_sink, &pkt, &log_pos, NULL);
                 if (grc == TLOG_RC_OK) {
                     log_pending = true;
+                    watchdog_last_progress = time(NULL);
                 } else if (grc != TLOG_GRC_FROM(errno, EINTR)) {
                     return_grc = grc;
                     TLOG_ERRS_RAISECS(grc, "Failed logging terminal data");
@@ -967,6 +987,7 @@ tlog_rec_transfer(struct tlog_errs    **perrs,
                 return_grc = grc;
             }
         } else if (tlog_pkt_is_eof(&pkt)) {
+            watchdog_last_progress = time(NULL);
             tlog_sink_io_close(tty_sink, pkt.data.io.output);
             /* Continue if only input was closed */
             if (pkt.data.io.output) {
