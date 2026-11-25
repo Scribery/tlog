@@ -175,6 +175,9 @@ tlog_rec_conf_load(struct tlog_errs **perrs,
     assert(pcmd_help != NULL);
     assert(pconf != NULL);
     assert(argv != NULL);
+    /* Check validate the config */
+    assert(tlog_rec_conf_validate(NULL, conf, TLOG_CONF_ORIGIN_ARGS) ==
+            TLOG_RC_OK);
 
     /* Create empty config */
     conf = json_object_new_object();
@@ -249,6 +252,10 @@ tlog_rec_conf_load(struct tlog_errs **perrs,
     }
     json_object_put(overlay);
     overlay = NULL;
+
+    /* Check validate the config */
+    assert(tlog_rec_conf_validate(NULL, conf, TLOG_CONF_ORIGIN_ARGS) ==
+            TLOG_RC_OK);
 
     grc = TLOG_RC_OK;
     *pcmd_help = cmd_help;
